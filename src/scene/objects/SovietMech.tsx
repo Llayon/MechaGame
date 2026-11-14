@@ -81,9 +81,9 @@ export function SovietMech({
     const elapsed = sim.simTime;
     const control = resolveMechControl(driveInputRef.current, driveMode);
     const motion = stepMechMovement(rig, sim, control, driveMode, dt, elapsed);
-    const anyInWater = stepMechIK(rig, sim, fxParent, dt, elapsed, isSoftwareGl, control, motion);
-    stepWeaponSystem(rig, sim, fxParent, mats, dt, elapsed, control.isFiring, motion.gPitch);
-    stepMechEffects(rig, sim, fxParent, mats, dt, elapsed, driveMode, control, motion);
+    const ik = stepMechIK(rig, sim, dt, control, motion);
+    const shots = stepWeaponSystem(rig, dt, control.isFiring, motion.gPitch);
+    stepMechEffects(rig, sim, fxParent, mats, dt, elapsed, driveMode, control, motion, ik.footImpacts, shots, isSoftwareGl);
     const { targetSpeed, isFiring, isCrouched } = control;
     const { tYaw, surfCenter } = motion;
     // Publish lightweight telemetry snapshot for camera rig & minimap HUD
@@ -97,7 +97,7 @@ export function SovietMech({
     mechPoseRef.current.isFiring = isFiring;
     mechPoseRef.current.isBraced = false;
     mechPoseRef.current.isCrouched = isCrouched;
-    mechPoseRef.current.inWater = anyInWater;
+    mechPoseRef.current.inWater = ik.inWater;
     mechPoseRef.current.onBridge = surfCenter.onBridge;
   });
   return (

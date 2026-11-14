@@ -3,6 +3,10 @@ import type { MechRig, MechMaterials } from './MechModel';
 import type { MechState } from './MechState';
 import type { MechControl } from './MechController';
 import type { MechMotion } from './MechMovementSystem';
+import type { MechFootImpact } from './MechIKSystem';
+import type { MechShot } from './WeaponSystem';
+import { WATER_LEVEL } from '../../map/terrainMath';
+import { MECH_SCALE, MECH_SOLE_HEIGHT } from '../../map/mechKinematics';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -28,15 +32,112 @@ const _tmpNextPt = new THREE.Vector3();
 const _tmpP1Dyn = new THREE.Vector3();
 const _tmpP2Dyn = new THREE.Vector3();
 const _tmpExhaustPos = new THREE.Vector3();
+const _tmpLook = new THREE.Vector3();
 
 /** Cosmetic-only vibration, ammo feeds, antennae, smoke and particle lifecycle. */
 export function stepMechEffects(
   rig: MechRig, sim: MechState, fxParent: THREE.Group | null,
   mats: MechMaterials, dt: number, elapsed: number,
   driveMode: boolean, control: MechControl, motion: MechMotion,
+  footImpacts: readonly MechFootImpact[], shots: readonly MechShot[],
+  isSoftwareGl: boolean,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
+
+  // Translate IK contact events into dust and water splashes.
+  for (const impact of footImpacts) {
+    if (!fxParent ||
+        elapsed - sim.lastStepParticleTime[impact.index] <= 0.22 ||
+        sim.gaitBlend <= 0.2 || sim.particles.length >= 75) continue;
+    sim.lastStepParticleTime[impact.index] = elapsed;
+    const footInWater = impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE < WATER_LEVEL + 0.08;
+    const puffCount = isSoftwareGl ? 3 : 5;
+    for (let d = 0; d < puffCount; d++) {
+      const ang = (d / puffCount) * Math.PI * 2;
+      const pMat = new THREE.MeshBasicMaterial({
+        color: footInWater ? 0xbbe8f7 : 0xa08866,
+        transparent: true, opacity: footInWater ? 0.52 : 0.4,
+        depthWrite: false,
+      });
+      const pm = new THREE.Mesh(rig.dustGeom, pMat);
+      pm.position.set(
+        impact.position.x + Math.cos(ang) * 0.35,
+        Math.max(WATER_LEVEL + 0.08, impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE + 0.1),
+        impact.position.z + Math.sin(ang) * 0.35,
+      );
+      fxParent.add(pm);
+      sim.particles.push({
+        type: footInWater ? 'splash' : 'dust',
+        mesh: pm, mat: pMat,
+        vel: new THREE.Vector3(
+          Math.cos(ang) * (footInWater ? 1.5 : 1.05),
+          (footInWater ? 1.2 : 0.65) + Math.random() * 0.5,
+          Math.sin(ang) * (footInWater ? 1.5 : 1.05),
+        ),
+        rotVel: new THREE.Vector3(), life: 0,
+        maxLife: footInWater ? 0.65 : 0.8,
+        initialOpacity: footInWater ? 0.52 : 0.4,
+      });
+    }
+  }
+
+  // Gunfire events are simulated by WeaponSystem, rendered here.
+  for (const shot of shots) {
+    const b = rig.gunBarrels[shot.barrelIndex];
+    b.flashTimer = 0.095;
+    b.recoilOffset = 0.17;
+    sim.springTurretYaw.v += -b.side * (0.36 + Math.random() * 0.14);
+    sim.springPelvisPitch.v -= 0.2;
+    sim.springSurgeZ.v -= 0.32;
+    sim.springBounceY.v -= 0.18;
+
+    if (!fxParent || sim.particles.length >= 85) continue;
+    const tracerMat = new THREE.MeshBasicMaterial({
+      color: 0xffe57f, transparent: true, opacity: 0.96, toneMapped: false,
+    });
+    const tracerMesh = new THREE.Mesh(rig.tracerGeom, tracerMat);
+    tracerMesh.position.copy(shot.muzzlePosition).addScaledVector(shot.direction, 1.25);
+    _tmpLook.copy(tracerMesh.position).add(shot.direction);
+    tracerMesh.lookAt(_tmpLook);
+    fxParent.add(tracerMesh);
+    sim.particles.push({
+      type: 'tracer', mesh: tracerMesh, mat: tracerMat,
+      vel: shot.direction.clone().multiplyScalar(68),
+      rotVel: new THREE.Vector3(), life: 0, maxLife: 0.9, initialOpacity: 0.96,
+    });
+    if (Math.random() < 0.55) {
+      const shellMesh = new THREE.Mesh(rig.shellGeom, mats.brassMat);
+      shellMesh.position.copy(shot.ejectPosition);
+      fxParent.add(shellMesh);
+      sim.particles.push({
+        type: 'shell', mesh: shellMesh, mat: mats.brassMat,
+        vel: new THREE.Vector3(
+          shot.side * (1.8 + Math.random() * 1.4),
+          2.4 + Math.random() * 1.2,
+          (Math.random() - 0.5) * 1.8,
+        ),
+        rotVel: new THREE.Vector3(
+          (Math.random() - 0.5) * 14,
+          (Math.random() - 0.5) * 14, 0,
+        ),
+        life: 0, maxLife: 0.9, initialOpacity: 1,
+      });
+    }
+  }
+
+  rig.gunBarrels.forEach((b, bIndex) => {
+    if (b.flashTimer > 0) {
+      b.flashTimer = Math.max(0, b.flashTimer - dt);
+      b.flashMat.opacity = 0.92;
+      b.flashMesh.rotation.z = elapsed * 31 + bIndex * 1.7;
+    } else {
+      b.flashMat.opacity = 0;
+    }
+    b.recoilOffset = THREE.MathUtils.lerp(b.recoilOffset, 0, dt * 16);
+    b.mesh.position.z = b.baseZ - b.recoilOffset;
+  });
+
     // Diesel chassis & grab rail subtle mechanical vibration
     rig.mtoBlock.position.y = rig.mtoBaseY + dieselVib;
     rig.mtoGrille.position.y = rig.mtoGrilleBaseY + dieselVib * 1.35;

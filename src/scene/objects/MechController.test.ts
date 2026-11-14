@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveMechControl } from './MechController';
+import { resolveMechControl, syncMechInputFromKeys, clearMechInput } from './MechController';
 import type { MechDriveInput } from './MechState';
 
 const neutral: MechDriveInput = {
@@ -28,4 +28,20 @@ test('analog commands clamp without mutating input', () => {
   assert.equal(c.turn, 1);
   assert.equal(c.turTurn, -1);
   assert.equal(input.forward, -10);
+});
+
+test('keyboard input mapping preserves existing bindings, priority and crouch toggle', () => {
+  const keys = new Set(['KeyW', 'ArrowDown', 'KeyA', 'KeyQ', 'Space', 'ShiftRight']);
+  const input: MechDriveInput = { ...neutral, crouch: true };
+  syncMechInputFromKeys(keys, input);
+  assert.equal(input.forward, 0);
+  assert.equal(input.turn, 1);
+  assert.equal(input.turretTurn, 1);
+  assert.equal(input.fire, true);
+  assert.equal(input.sprint, true);
+  clearMechInput(keys, input);
+  assert.equal(keys.size, 0);
+  assert.equal(input.forward, 0);
+  assert.equal(input.fire, false);
+  assert.equal(input.crouch, true);
 });

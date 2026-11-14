@@ -25,3 +25,25 @@ export function resolveMechControl(input: Readonly<MechDriveInput>, driveMode: b
     targetTurnRate, activity, targetOmega, stepLength, stepClearance, crouchOffset, isMoving };
 }
 export type MechControl = ReturnType<typeof resolveMechControl>;
+
+/** Map keyboard state to commands while keeping event listeners in the UI adapter. */
+export function syncMechInputFromKeys(keys: ReadonlySet<string>, input: MechDriveInput): void {
+  input.forward =
+    (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) -
+    (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+  input.turn =
+    (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) -
+    (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0);
+  input.turretTurn = (keys.has('KeyQ') ? 1 : 0) - (keys.has('KeyE') ? 1 : 0);
+  input.fire = keys.has('Space');
+  input.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
+}
+export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
+  keys.clear();
+  input.forward = 0;
+  input.turn = 0;
+  input.turretTurn = 0;
+  input.fire = false;
+  input.sprint = false;
+  // Crouch is a persistent toggle, matching the existing input contract.
+}

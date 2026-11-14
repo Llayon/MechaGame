@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { WATER_LEVEL } from '../../map/terrainMath';
 import {
-  MECH_PELVIS_BASE_Y, MECH_SCALE, MECH_SOLE_HEIGHT,
+  MECH_PELVIS_BASE_Y, MECH_SCALE,
   sampleMechFootSupport, solveReverseJointIKAngles,
 } from '../../map/mechKinematics';
 import type { MechRig } from './MechModel';
@@ -16,16 +15,18 @@ const _tmpDir = new THREE.Vector3();
 const _tmpUp = new THREE.Vector3(0, 1, 0);
 const _tmpQuat = new THREE.Quaternion();
 
+export interface MechFootImpact { index: number; position: THREE.Vector3 }
+
 /** Grounded/swinging feet, three-joint IK, toe articulation and hydraulic rods. */
 export function stepMechIK(
-  rig: MechRig, sim: MechState, fxParent: THREE.Group | null,
-  dt: number, elapsed: number, isSoftwareGl: boolean,
+  rig: MechRig, sim: MechState, dt: number,
   control: MechControl, motion: MechMotion,
-): boolean {
+) {
   const { fwd, stepLength, stepClearance, crouchOffset } = control;
   const { sinY, cosY, bounceY, surfCenter } = motion;
     let lowestFootAnkleY = Infinity;
     let anyInWater = surfCenter.inWater;
+  const footImpacts: MechFootImpact[] = [];
 
     rig.legs.forEach((leg, idx) => {
       const phase = sim.gaitPhase + idx * Math.PI;
@@ -77,48 +78,7 @@ export function stepMechIK(
           sim.springPelvisRoll.v += leg.side * 0.48 * sim.gaitBlend;
           sim.springPelvisPitch.v += 0.28 * sim.gaitBlend;
 
-          // Spawn dust or river water splash on foot impact
-          if (
-            fxParent &&
-            elapsed - sim.lastStepParticleTime[idx] > 0.22 &&
-            sim.gaitBlend > 0.2 &&
-            sim.particles.length < 75
-          ) {
-            sim.lastStepParticleTime[idx] = elapsed;
-            const footInWater =
-              leg.plantedWorld.y - MECH_SOLE_HEIGHT * MECH_SCALE < WATER_LEVEL + 0.08;
-            const puffCount = isSoftwareGl ? 3 : 5;
-            for (let d = 0; d < puffCount; d++) {
-              const ang = (d / puffCount) * Math.PI * 2;
-              const pMat = new THREE.MeshBasicMaterial({
-                color: footInWater ? 0xbbe8f7 : 0xa08866,
-                transparent: true,
-                opacity: footInWater ? 0.52 : 0.4,
-                depthWrite: false,
-              });
-              const pm = new THREE.Mesh(rig.dustGeom, pMat);
-              pm.position.set(
-                leg.plantedWorld.x + Math.cos(ang) * 0.35,
-                Math.max(WATER_LEVEL + 0.08, leg.plantedWorld.y - MECH_SOLE_HEIGHT * MECH_SCALE + 0.1),
-                leg.plantedWorld.z + Math.sin(ang) * 0.35,
-              );
-              fxParent.add(pm);
-              sim.particles.push({
-                type: footInWater ? 'splash' : 'dust',
-                mesh: pm,
-                mat: pMat,
-                vel: new THREE.Vector3(
-                  Math.cos(ang) * (footInWater ? 1.5 : 1.05),
-                  (footInWater ? 1.2 : 0.65) + Math.random() * 0.5,
-                  Math.sin(ang) * (footInWater ? 1.5 : 1.05),
-                ),
-                rotVel: new THREE.Vector3(0, 0, 0),
-                life: 0,
-                maxLife: footInWater ? 0.65 : 0.8,
-                initialOpacity: footInWater ? 0.52 : 0.4,
-              });
-            }
-          }
+          footImpacts.push({ index: idx, position: leg.plantedWorld.clone() });
         }
 
         if (sim.gaitBlend < 0.08) {
@@ -221,5 +181,5 @@ export function stepMechIK(
         }
       });
     });
-  return anyInWater;
+  return { inWater: anyInWater, footImpacts };
 }
