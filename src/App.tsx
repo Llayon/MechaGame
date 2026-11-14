@@ -8,6 +8,7 @@ import {
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
+import { syncMechInputFromKeys, clearMechInput } from './scene/objects/MechController';
 
 export default function App() {
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
@@ -47,27 +48,11 @@ export default function App() {
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
   const syncDriveInputFromKeys = useCallback(() => {
-    const keys = pressedKeysRef.current;
-    const input = driveInputRef.current;
-    input.forward =
-      (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) -
-      (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
-    input.turn =
-      (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) -
-      (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0);
-    input.turretTurn =
-      (keys.has('KeyQ') ? 1 : 0) - (keys.has('KeyE') ? 1 : 0);
-    input.fire = keys.has('Space');
-    input.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    syncMechInputFromKeys(pressedKeysRef.current, driveInputRef.current);
   }, []);
 
   const clearDriveInput = useCallback(() => {
-    pressedKeysRef.current.clear();
-    driveInputRef.current.forward = 0;
-    driveInputRef.current.turn = 0;
-    driveInputRef.current.turretTurn = 0;
-    driveInputRef.current.fire = false;
-    driveInputRef.current.sprint = false;
+    clearMechInput(pressedKeysRef.current, driveInputRef.current);
   }, []);
 
   const handleSelectSector = useCallback(
