@@ -1,0 +1,8 @@
+{
+  "name": "Sector 7 — Tactical 3D Map",
+  "description": "Interactive 3D tactical terrain diorama built with Three.js and React Three Fiber, featuring a river canyon, industrial refinery island, bridges, staging airfield, and highland citadel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

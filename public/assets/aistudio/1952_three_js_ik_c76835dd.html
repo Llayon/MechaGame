@@ -1,0 +1,3516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Проект 1952 — Советский Мех ПВО (Three.js + IK)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #141715;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      touch-action: none; user-select: none;
+    }
+    #canvas-container { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    .hud-glass {
+      background: rgba(18, 22, 19, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(168, 178, 128, 0.28);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.48);
+    }
+    .btn-tac {
+      transition: all 0.16s ease;
+      border: 1px solid rgba(168, 178, 128, 0.26);
+      background: rgba(34, 40, 35, 0.78);
+      color: #d9decb;
+    }
+    .btn-tac:hover {
+      background: rgba(66, 76, 56, 0.88);
+      border-color: rgba(212, 196, 98, 0.65);
+    }
+    .btn-tac.active {
+      background: linear-gradient(135deg, #6d7830, #4d5722);
+      border-color: #d9c85b;
+      color: #fffbe6;
+      box-shadow: 0 0 14px rgba(186, 178, 68, 0.35);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Виртуальный джойстик для мобильных устройств */
+    #joystick-zone {
+      position: fixed; left: 18px; bottom: 84px;
+      width: 118px; height: 118px; border-radius: 9999px;
+      background: rgba(20, 25, 21, 0.65);
+      border: 2px solid rgba(190, 198, 130, 0.42);
+      z-index: 30; display: none; touch-action: none;
+    }
+    #joystick-knob {
+      position: absolute; left: 50%; top: 50%;
+      width: 46px; height: 46px; margin: -23px 0 0 -23px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 35%, #b5be52, #5c6626);
+      border: 2px solid #ebe5a8;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- Сообщение об ошибке -->
+  <div id="error-box" class="hidden fixed inset-4 z-50 bg-red-950/95 text-red-100 p-4 rounded-xl border border-red-500 overflow-auto text-xs font-mono"></div>
+
+  <!-- Кнопка скрытия/показа интерфейса -->
+  <button id="toggle-hud-btn" title="Скрыть / показать интерфейс"
+    class="fixed top-3 right-3 z-40 hud-glass px-3 py-2 rounded-xl text-xs font-semibold text-amber-100 flex items-center gap-1.5 active:scale-95">
+    <span id="hud-eye-icon">👁</span>
+    <span id="hud-eye-label" class="hidden sm:inline">Скрыть UI</span>
+  </button>
+
+  <!-- Весь интерфейс HUD -->
+  <div id="hud-root" class="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between p-3 sm:p-4 transition-opacity duration-200">
+    <!-- Верхняя панель -->
+    <div class="flex items-start justify-between gap-2 pr-24 sm:pr-32">
+      <div class="hud-glass pointer-events-auto rounded-2xl px-3.5 py-2.5 max-w-xs sm:max-w-md">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></span>
+          <h1 class="text-xs sm:text-sm font-bold tracking-wider uppercase text-amber-100">
+            СССР • ПРОЕКТ 1952 • БОРТ № 316
+          </h1>
+        </div>
+        <p class="text-[11px] text-stone-300/90 mt-0.5 hidden sm:block">
+          Тяжёлый шагающий комплекс ПВО (4×37-мм автопушки) • 3-звенная обратная кинематика (IK)
+        </p>
+        <div id="telemetry-line" class="text-[10px] sm:text-[11px] font-mono text-lime-300/90 mt-1">
+          РЕЖИМ: СТРОЕВОЙ МАРШ • СКОРОСТЬ: 6.4 КМ/Ч
+        </div>
+      </div>
+
+      <!-- Кнопка раскрытия опций на мобильных -->
+      <button id="mobile-opts-btn"
+        class="sm:hidden hud-glass pointer-events-auto px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 active:scale-95">
+        ⚙ Опции
+      </button>
+    </div>
+
+    <!-- Правая панель настроек (камера, свет, диагностика, тест попаданий, экспорт) -->
+    <div id="options-panel"
+      class="hidden sm:flex pointer-events-auto fixed right-3 top-14 w-64 hud-glass rounded-2xl p-3 flex-col gap-3 text-xs text-stone-200 max-h-[80vh] overflow-y-auto">
+      <div>
+        <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mb-1.5">Ракурс камеры</div>
+        <div class="grid grid-cols-2 gap-1.5" id="camera-presets">
+          <button data-cam="concept" class="btn-tac active rounded-lg px-2 py-1.5 text-[11px] font-medium">3/4 Концепт</button>
+          <button data-cam="turret" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Башня крупно</button>
+          <button data-cam="foot" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Ступня / IK</button>
+          <button data-cam="rear" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Корма и ЗИП</button>
+          <button data-cam="front" class="btn-tac col-span-2 rounded-lg px-2 py-1.5 text-[11px] font-medium">Маска / Лоб</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mb-1.5">Освещение и фон</div>
+        <div class="grid grid-cols-2 gap-1.5" id="light-presets">
+          <button data-light="studio1952" class="btn-tac active rounded-lg px-2 py-1.5 text-[11px] font-medium">Арт-студия 1952</button>
+          <button data-light="range" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Полигон</button>
+          <button data-light="sunset" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Закат 1952</button>
+          <button data-light="hangar" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium">Ангар</button>
+          <button data-light="night" class="btn-tac col-span-2 rounded-lg px-2 py-1.5 text-[11px] font-medium">Ночь / Оптика</button>
+        </div>
+      </div>
+
+      <div class="border-t border-stone-700/70 pt-2 flex flex-col gap-1.5">
+        <label class="flex items-center justify-between cursor-pointer py-0.5">
+          <span class="text-[11px] text-stone-300">Тушь-контур (Арт-стиль)</span>
+          <input id="toggle-outline" type="checkbox" checked class="accent-lime-500 w-4 h-4 rounded" />
+        </label>
+        <label class="flex items-center justify-between cursor-pointer py-0.5">
+          <span class="text-[11px] text-stone-300">Схема IK-костей и контактов</span>
+          <input id="toggle-ik-debug" type="checkbox" class="accent-lime-500 w-4 h-4 rounded" />
+        </label>
+        <label class="flex items-center justify-between cursor-pointer py-0.5">
+          <span class="text-[11px] text-stone-300">Механик (масштаб 1.75 м)</span>
+          <input id="toggle-pilot" type="checkbox" checked class="accent-lime-500 w-4 h-4 rounded" />
+        </label>
+        <label class="flex items-center justify-between cursor-pointer py-0.5">
+          <span class="text-[11px] text-stone-300">Каркас геометрии (Wireframe)</span>
+          <input id="toggle-wire" type="checkbox" class="accent-lime-500 w-4 h-4 rounded" />
+        </label>
+      </div>
+
+      <div class="border-t border-stone-700/70 pt-2.5 flex flex-col gap-1.5">
+        <div class="text-[10px] uppercase tracking-wider text-stone-400 font-semibold">Тест попаданий (клик по меху)</div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button id="btn-hit-turret" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-200 border-amber-500/35 active:scale-95">
+            💥 В башню
+          </button>
+          <button id="btn-hit-leg" class="btn-tac rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-200 border-amber-500/35 active:scale-95">
+            💥 В щиток ноги
+          </button>
+          <button id="btn-hit-heavy" class="btn-tac col-span-2 rounded-lg px-2 py-1.5 text-[11px] font-medium text-red-200 border-red-500/45 active:scale-95">
+            🔥 Тяжёлый снаряд (стан + контузия)
+          </button>
+        </div>
+      </div>
+
+      <div class="border-t border-stone-700/70 pt-2.5 flex flex-col gap-1.5">
+        <button id="btn-export-glb"
+          class="btn-tac w-full rounded-xl px-2.5 py-2 text-[11px] font-bold tracking-wide text-amber-100 border-amber-400/40 bg-gradient-to-r from-lime-900/70 to-stone-800/90 hover:border-amber-300 active:scale-95">
+          ⬇ Экспорт в .GLB (8 анимаций)
+        </button>
+        <div id="export-status" class="text-[10px] font-mono text-lime-300/90 text-center hidden">
+          Подготовка...
+        </div>
+      </div>
+    </div>
+
+    <!-- Мобильные кнопки управления в ручном режиме -->
+    <div id="mobile-manual-actions" class="hidden pointer-events-auto fixed right-4 bottom-20 z-30 flex flex-col items-end gap-2">
+      <div class="flex gap-2">
+        <button id="btn-turret-left" class="hud-glass w-12 h-12 rounded-2xl text-lg font-bold text-amber-100 active:scale-90">↺</button>
+        <button id="btn-turret-right" class="hud-glass w-12 h-12 rounded-2xl text-lg font-bold text-amber-100 active:scale-90">↻</button>
+      </div>
+      <button id="btn-mobile-fire"
+        class="px-4 py-3 rounded-2xl font-bold text-xs tracking-wider uppercase text-amber-50 bg-gradient-to-r from-red-700 to-amber-700 border border-amber-300/60 shadow-lg active:scale-95">
+        ★ Огонь 37-мм
+      </button>
+    </div>
+
+    <!-- Нижняя панель режимов походки и огня -->
+    <div class="flex justify-center">
+      <div class="hud-glass pointer-events-auto rounded-2xl p-1.5 flex items-center gap-1.5 max-w-full overflow-x-auto no-scrollbar" id="mode-buttons">
+        <button data-mode="march" class="btn-tac active rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Строевой марш</button>
+        <button data-mode="prowl" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Крадущийся шаг</button>
+        <button data-mode="turn" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Разворот на месте</button>
+        <button data-mode="brace" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Стабилизация ПВО</button>
+        <button data-mode="shutdown" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Обслуживание / Заглушить</button>
+        <button data-mode="fire" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Зенитный огонь</button>
+        <button data-mode="idle" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Боевая стойка</button>
+        <button data-mode="manual" class="btn-tac rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap">Ручное (WASD / Стикер)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Сенсорный джойстик -->
+  <div id="joystick-zone"><div id="joystick-knob"></div></div>
+
+  <!-- Подключение Three.js r128, OrbitControls и GLTFExporter -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+
+  <script>
+    /* Перехват ошибок выполнения */
+    window.onerror = function(msg, src, line, col) {
+      const box = document.getElementById('error-box');
+      if (box) {
+        box.classList.remove('hidden');
+        box.textContent = 'Ошибка сцены: ' + msg + ' (строка ' + line + ':' + col + ')';
+      }
+    };
+
+    window.addEventListener('load', function() {
+      if (typeof THREE === 'undefined') {
+        throw new Error('Не удалось загрузить библиотеку Three.js');
+      }
+
+      const isMobile = window.innerWidth < 768 || ('ontouchstart' in window && window.innerWidth < 1024);
+
+      /* ==========================================
+         1. СЦЕНА, КАМЕРА, РЕНДЕРЕР И ОСВЕЩЕНИЕ
+         ========================================== */
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 140);
+      camera.position.set(isMobile ? 6.8 : 5.5, isMobile ? 3.5 : 2.95, isMobile ? 7.2 : 5.9);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 2.1;
+      controls.maxDistance = 22;
+      controls.maxPolarAngle = Math.PI * 0.495;
+      controls.target.set(0, 2.30, 0);
+
+      const hemiLight = new THREE.HemisphereLight(0xf0f4f7, 0x8f9294, 0.96);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfff5e4, 1.65);
+      dirLight.position.set(10, 16, 11);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.set(2048, 2048);
+      dirLight.shadow.camera.near = 2;
+      dirLight.shadow.camera.far = 45;
+      const dShadow = 11;
+      dirLight.shadow.camera.left = -dShadow;
+      dirLight.shadow.camera.right = dShadow;
+      dirLight.shadow.camera.top = dShadow;
+      dirLight.shadow.camera.bottom = -dShadow;
+      dirLight.shadow.bias = -0.0005;
+      scene.add(dirLight);
+      scene.add(dirLight.target);
+
+      const rimLight = new THREE.DirectionalLight(0xa3cce8, 0.88);
+      rimLight.position.set(-10, 9, -9);
+      scene.add(rimLight);
+
+      const spotSearchlight = new THREE.SpotLight(0xffe9b0, 0, 26, Math.PI / 5, 0.45, 1.2);
+      spotSearchlight.position.set(5, 8, 6);
+      scene.add(spotSearchlight);
+      scene.add(spotSearchlight.target);
+
+      /* ==========================================
+         1.1 ПЛАКАТНЫЙ ЗАДНИК «АРТ-СТУДИЯ 1952»
+         ========================================== */
+      function createPosterBackdropTexture() {
+        const c = document.createElement('canvas');
+        c.width = 1024;
+        c.height = 1024;
+        const ctx = c.getContext('2d');
+
+        /* Левая серо-синяя градиентная зона */
+        const leftGrad = ctx.createLinearGradient(0, 0, 0, 1024);
+        leftGrad.addColorStop(0, '#2a3742');
+        leftGrad.addColorStop(0.55, '#68747b');
+        leftGrad.addColorStop(0.82, '#d6dad9');
+        leftGrad.addColorStop(1, '#e8eae9');
+        ctx.fillStyle = leftGrad;
+        ctx.fillRect(0, 0, 460, 1024);
+
+        /* Правая агитационная красная зона с фактурными мазками кисти */
+        ctx.fillStyle = '#9b222a';
+        ctx.fillRect(435, 0, 589, 770);
+
+        for (let i = 0; i < 85; i++) {
+          ctx.fillStyle = i % 2 === 0 ? 'rgba(128, 22, 28, 0.38)' : 'rgba(182, 46, 54, 0.28)';
+          const bx = 435 + Math.random() * 570;
+          const by = Math.random() * 730;
+          ctx.fillRect(bx, by, 14 + Math.random() * 28, 80 + Math.random() * 220);
+        }
+
+        /* Светло-серый студийный пол внизу */
+        const floorGrad = ctx.createLinearGradient(0, 750, 0, 1024);
+        floorGrad.addColorStop(0, '#dfe3e2');
+        floorGrad.addColorStop(1, '#cfd4d3');
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, 760, 1024, 264);
+
+        /* Крапчатый переход между левой и правой зоной */
+        for (let i = 0; i < 3800; i++) {
+          const x = 355 + Math.random() * 145;
+          const y = Math.random() * 780;
+          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(224,228,232,0.26)' : 'rgba(155,34,42,0.28)';
+          ctx.fillRect(x, y, 3, 3);
+        }
+
+        /* Эмблема «С.С.С.Р ★ 1952» в левой верхней зоне кадра */
+        ctx.save();
+        ctx.translate(165, 118);
+        ctx.fillStyle = '#c4272b';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText('С.С.С.Р.', 0, 0);
+        ctx.fillRect(0, 7, 110, 4);
+        ctx.fillRect(0, 14, 110, 2);
+
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? 24 : 10;
+          const a = (i * Math.PI) / 5 - Math.PI / 2;
+          const sx = 138 + Math.cos(a) * r;
+          const sy = -4 + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillText('1952', 166, 0);
+        ctx.fillRect(166, 7, 90, 4);
+        ctx.fillRect(166, 14, 90, 2);
+        ctx.restore();
+
+        return new THREE.CanvasTexture(c);
+      }
+
+      const studioPosterTex = createPosterBackdropTexture();
+      const studioFloorMat = new THREE.MeshStandardMaterial({
+        color: 0xd8dcdb,
+        roughness: 0.88,
+        metalness: 0.02
+      });
+
+      /* ==========================================
+         2. РЕЛЬЕФ ПОЛИГОНА (ЧАНКИ И ФУНКЦИЯ ВЫСОТЫ)
+         ========================================== */
+      let isStudioMode = true;
+      let outlineEnabled = true;
+      let mechX = 0;
+      let mechZ = 0;
+      let mechYaw = 0;
+
+      function getGroundHeight(x, z) {
+        if (isStudioMode) return 0.0;
+        const wave = Math.sin(x * 0.22) * Math.cos(z * 0.19) * 0.11 + Math.sin(x * 0.55 + z * 0.42) * 0.04;
+        const rut = -Math.exp(-Math.pow((Math.abs(x) - 1.35) * 1.6, 2)) * 0.05;
+        const slabCellZ = ((z % 6.0) + 6.0) % 6.0;
+        const onRoadX = Math.abs(x) < 2.9;
+        const slab = (onRoadX && slabCellZ > 0.35 && slabCellZ < 5.65) ? 0.055 : 0.0;
+        return wave + rut + slab;
+      }
+
+      const CHUNK_SIZE = 12;
+      const CHUNK_SEGS = 28;
+      const terrainChunks = new Map();
+      const terrainGroup = new THREE.Group();
+      scene.add(terrainGroup);
+
+      function createGroundTexture() {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#534d3e';
+        ctx.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 6500; i++) {
+          const x = Math.random() * 512;
+          const y = Math.random() * 512;
+          const v = 58 + Math.floor(Math.random() * 48);
+          ctx.fillStyle = `rgba(${v + 12}, ${v + 4}, ${v - 10}, 0.35)`;
+          ctx.fillRect(x, y, 2 + Math.random() * 3, 2 + Math.random() * 3);
+        }
+        ctx.strokeStyle = 'rgba(32, 29, 24, 0.5)';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(20, 20, 472, 472);
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(3, 3);
+        return tex;
+      }
+
+      const groundMat = new THREE.MeshStandardMaterial({
+        map: createGroundTexture(),
+        roughness: 0.92,
+        metalness: 0.04
+      });
+
+      function buildTerrainChunk(cx, cz) {
+        const geom = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SEGS, CHUNK_SEGS);
+        const pos = geom.attributes.position;
+        const baseX = cx * CHUNK_SIZE;
+        const baseZ = cz * CHUNK_SIZE;
+        for (let i = 0; i < pos.count; i++) {
+          const lx = pos.getX(i);
+          const ly = pos.getY(i);
+          const wx = baseX + lx;
+          const wz = baseZ - ly;
+          pos.setZ(i, getGroundHeight(wx, wz));
+        }
+        geom.rotateX(-Math.PI / 2);
+        geom.computeVertexNormals();
+        const mesh = new THREE.Mesh(geom, isStudioMode ? studioFloorMat : groundMat);
+        mesh.position.set(baseX, 0, baseZ);
+        mesh.receiveShadow = true;
+        return mesh;
+      }
+
+      function rebuildAllTerrain() {
+        for (const [, mesh] of terrainChunks.entries()) {
+          terrainGroup.remove(mesh);
+          mesh.geometry.dispose();
+        }
+        terrainChunks.clear();
+        syncTerrainChunks(mechX, mechZ);
+      }
+
+      function syncTerrainChunks(wx, wz) {
+        const ccx = Math.round(wx / CHUNK_SIZE);
+        const ccz = Math.round(wz / CHUNK_SIZE);
+        const needed = new Set();
+        for (let dx = -2; dx <= 2; dx++) {
+          for (let dz = -2; dz <= 2; dz++) {
+            const key = `${ccx + dx},${ccz + dz}`;
+            needed.add(key);
+            if (!terrainChunks.has(key)) {
+              const m = buildTerrainChunk(ccx + dx, ccz + dz);
+              terrainChunks.set(key, m);
+              terrainGroup.add(m);
+            }
+          }
+        }
+        for (const [key, mesh] of terrainChunks.entries()) {
+          if (!needed.has(key)) {
+            terrainGroup.remove(mesh);
+            mesh.geometry.dispose();
+            terrainChunks.delete(key);
+          }
+        }
+      }
+
+      /* ==========================================
+         3. ПРОЦЕДУРНЫЕ PBR-ТЕКСТУРЫ, КОНТУР И ДЕКАЛИ
+         ========================================== */
+      const allWireframeMaterials = [];
+      const outlineMeshes = [];
+      const outlineMat = new THREE.MeshBasicMaterial({
+        color: 0x181a16,
+        side: THREE.BackSide
+      });
+
+      function regMat(m) {
+        allWireframeMaterials.push(m);
+        return m;
+      }
+
+      function addOutline(mesh, thickness = 0.022) {
+        const outline = new THREE.Mesh(mesh.geometry, outlineMat);
+        outline.scale.setScalar(1.0 + thickness);
+        outline.visible = outlineEnabled;
+        outline.renderOrder = -1;
+        mesh.add(outline);
+        outlineMeshes.push(outline);
+        return outline;
+      }
+
+      function updateOutlineVisibility() {
+        outlineMeshes.forEach(o => {
+          o.visible = outlineEnabled;
+        });
+      }
+
+      function createCastArmorTextures() {
+        const size = 512;
+        const diffCanvas = document.createElement('canvas');
+        const heightCanvas = document.createElement('canvas');
+        const roughCanvas = document.createElement('canvas');
+        diffCanvas.width = heightCanvas.width = roughCanvas.width = size;
+        diffCanvas.height = heightCanvas.height = roughCanvas.height = size;
+
+        const dCtx = diffCanvas.getContext('2d');
+        const hCtx = heightCanvas.getContext('2d');
+        const rCtx = roughCanvas.getContext('2d');
+
+        dCtx.fillStyle = '#5c6440';
+        dCtx.fillRect(0, 0, size, size);
+        hCtx.fillStyle = '#808080';
+        hCtx.fillRect(0, 0, size, size);
+        rCtx.fillStyle = '#a8a8a8';
+        rCtx.fillRect(0, 0, size, size);
+
+        for (let i = 0; i < 200; i++) {
+          const x = Math.random() * size;
+          const y = Math.random() * size;
+          const rad = 18 + Math.random() * 56;
+          const g = dCtx.createRadialGradient(x, y, 2, x, y, rad);
+          if (i % 3 === 0) {
+            g.addColorStop(0, 'rgba(134, 136, 64, 0.25)');
+          } else if (i % 3 === 1) {
+            g.addColorStop(0, 'rgba(54, 62, 38, 0.34)');
+          } else {
+            g.addColorStop(0, 'rgba(116, 94, 58, 0.22)');
+          }
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          dCtx.fillStyle = g;
+          dCtx.beginPath();
+          dCtx.arc(x, y, rad, 0, Math.PI * 2);
+          dCtx.fill();
+        }
+
+        for (let i = 0; i < 16000; i++) {
+          const x = Math.random() * size;
+          const y = Math.random() * size;
+          const r = 1 + Math.random() * 2.4;
+          const shade = 68 + Math.floor(Math.random() * 54);
+          dCtx.fillStyle = `rgba(${shade + 6}, ${shade + 12}, ${shade - 18}, 0.28)`;
+          dCtx.fillRect(x, y, r, r);
+
+          const hVal = 108 + Math.floor(Math.random() * 42);
+          hCtx.fillStyle = `rgb(${hVal},${hVal},${hVal})`;
+          hCtx.fillRect(x, y, r, r);
+        }
+
+        for (let row = 44; row < size; row += 128) {
+          for (let col = 28; col < size; col += 64) {
+            hCtx.fillStyle = '#e4e4e4';
+            hCtx.beginPath();
+            hCtx.arc(col, row, 4.4, 0, Math.PI * 2);
+            hCtx.fill();
+
+            const streakLen = 22 + Math.random() * 54;
+            const grad = dCtx.createLinearGradient(col, row, col, row + streakLen);
+            grad.addColorStop(0, 'rgba(68, 38, 18, 0.65)');
+            grad.addColorStop(0.5, 'rgba(84, 46, 20, 0.34)');
+            grad.addColorStop(1, 'rgba(54, 34, 20, 0)');
+            dCtx.fillStyle = grad;
+            dCtx.fillRect(col - 3, row, 6, streakLen);
+
+            rCtx.fillStyle = 'rgba(65, 65, 65, 0.55)';
+            rCtx.fillRect(col - 2.5, row, 5, streakLen * 0.7);
+          }
+        }
+
+        for (let i = 0; i < 75; i++) {
+          const x = Math.random() * size;
+          const y = Math.random() * size;
+          const w = 5 + Math.random() * 18;
+          const h = 2 + Math.random() * 5;
+          dCtx.fillStyle = 'rgba(158, 165, 154, 0.56)';
+          dCtx.fillRect(x, y, w, h);
+          rCtx.fillStyle = 'rgba(52, 52, 52, 0.7)';
+          rCtx.fillRect(x, y, w, h);
+        }
+
+        const srcData = hCtx.getImageData(0, 0, size, size).data;
+        const normCanvas = document.createElement('canvas');
+        normCanvas.width = normCanvas.height = size;
+        const nCtx = normCanvas.getContext('2d');
+        const outImg = nCtx.createImageData(size, size);
+        const out = outImg.data;
+        const sample = (x, y) => {
+          const wx = (x + size) % size;
+          const wy = (y + size) % size;
+          return srcData[(wy * size + wx) * 4] / 255.0;
+        };
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const tl = sample(x - 1, y - 1);
+            const t = sample(x, y - 1);
+            const tr = sample(x + 1, y - 1);
+            const l = sample(x - 1, y);
+            const r = sample(x + 1, y);
+            const bl = sample(x - 1, y + 1);
+            const b = sample(x, y + 1);
+            const br = sample(x + 1, y + 1);
+            const dx = (tr + 2 * r + br) - (tl + 2 * l + bl);
+            const dy = (bl + 2 * b + br) - (tl + 2 * t + tr);
+            const nx = -dx * 2.5;
+            const ny = -dy * 2.5;
+            const nz = 1.0;
+            const len = Math.hypot(nx, ny, nz);
+            const idx = (y * size + x) * 4;
+            out[idx] = ((nx / len) * 0.5 + 0.5) * 255;
+            out[idx + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+            out[idx + 2] = ((nz / len) * 0.5 + 0.5) * 255;
+            out[idx + 3] = 255;
+          }
+        }
+        nCtx.putImageData(outImg, 0, 0);
+
+        const map = new THREE.CanvasTexture(diffCanvas);
+        const normalMap = new THREE.CanvasTexture(normCanvas);
+        const roughnessMap = new THREE.CanvasTexture(roughCanvas);
+        [map, normalMap, roughnessMap].forEach(t => {
+          t.wrapS = t.wrapT = THREE.RepeatWrapping;
+          t.repeat.set(2, 2);
+        });
+        return { map, normalMap, roughnessMap };
+      }
+
+      /* Текстура горчично-жёлтого забрала с диагональной белой полосой */
+      function createMustardMaskTexture() {
+        const size = 512;
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, size);
+        grad.addColorStop(0, '#9c9428');
+        grad.addColorStop(0.5, '#898826');
+        grad.addColorStop(1, '#646720');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+
+        for (let i = 0; i < 6500; i++) {
+          const x = Math.random() * size;
+          const y = Math.random() * size;
+          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(54, 58, 16, 0.28)' : 'rgba(192, 192, 78, 0.20)';
+          ctx.fillRect(x, y, 2 + Math.random() * 3.5, 2 + Math.random() * 3.5);
+        }
+
+        ctx.strokeStyle = 'rgba(34, 38, 16, 0.65)';
+        ctx.lineWidth = 14;
+        ctx.strokeRect(4, 4, size - 8, size - 8);
+
+        ctx.save();
+        ctx.translate(size * 0.28, size * 0.46);
+        ctx.rotate(-0.30);
+        ctx.fillStyle = 'rgba(240, 238, 224, 0.90)';
+        ctx.fillRect(-16, -220, 32, 410);
+
+        for (let i = 0; i < 240; i++) {
+          ctx.fillStyle = '#8b8a27';
+          const sx = (Math.random() > 0.5 ? -18 : 10) + (Math.random() - 0.5) * 12;
+          const sy = -220 + Math.random() * 410;
+          ctx.fillRect(sx, sy, 4 + Math.random() * 10, 3 + Math.random() * 10);
+        }
+        ctx.restore();
+
+        return new THREE.CanvasTexture(c);
+      }
+
+      /* Текстура витого стального буксирного троса */
+      function createTowCableTexture() {
+        const c = document.createElement('canvas');
+        c.width = 128;
+        c.height = 128;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#3c4042';
+        ctx.fillRect(0, 0, 128, 128);
+        for (let i = -128; i < 256; i += 12) {
+          ctx.strokeStyle = '#73797d';
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i + 128, 128);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#1b1d1e';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(i + 6, 0);
+          ctx.lineTo(i + 134, 128);
+          ctx.stroke();
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(14, 2);
+        return tex;
+      }
+
+      /* Текстура брезентовой скатки со складками */
+      function createCanvasRollTexture() {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 256;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#6d6648';
+        ctx.fillRect(0, 0, 256, 256);
+        for (let i = 0; i < 4000; i++) {
+          const x = Math.random() * 256;
+          const y = Math.random() * 256;
+          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(42,38,24,0.22)' : 'rgba(145,136,102,0.20)';
+          ctx.fillRect(x, y, 2, 2);
+        }
+        for (let y = 16; y < 256; y += 28) {
+          ctx.fillStyle = 'rgba(36, 32, 20, 0.35)';
+          ctx.fillRect(0, y, 256, 4);
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(2, 2);
+        return tex;
+      }
+
+      const armorTex = createCastArmorTextures();
+      const armorMat = regMat(new THREE.MeshStandardMaterial({
+        map: armorTex.map,
+        normalMap: armorTex.normalMap,
+        roughnessMap: armorTex.roughnessMap,
+        normalScale: new THREE.Vector2(0.95, 0.95),
+        roughness: 0.72,
+        metalness: 0.26
+      }));
+
+      const mustardArmorMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x9b9328,
+        normalMap: armorTex.normalMap,
+        roughnessMap: armorTex.roughnessMap,
+        normalScale: new THREE.Vector2(0.75, 0.75),
+        roughness: 0.52,
+        metalness: 0.22
+      }));
+
+      const faceMaskMat = regMat(new THREE.MeshStandardMaterial({
+        map: createMustardMaskTexture(),
+        normalMap: armorTex.normalMap,
+        normalScale: new THREE.Vector2(0.75, 0.75),
+        roughness: 0.42,
+        metalness: 0.18
+      }));
+
+      const greenAmmoMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x4b7334,
+        normalMap: armorTex.normalMap,
+        roughness: 0.58,
+        metalness: 0.25
+      }));
+
+      const darkSteelMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x262b29,
+        roughness: 0.42,
+        metalness: 0.82
+      }));
+
+      const towCableMat = regMat(new THREE.MeshStandardMaterial({
+        map: createTowCableTexture(),
+        roughness: 0.38,
+        metalness: 0.86
+      }));
+
+      const tarpRollMat = regMat(new THREE.MeshStandardMaterial({
+        map: createCanvasRollTexture(),
+        roughness: 0.88,
+        metalness: 0.05
+      }));
+
+      const leatherStrapMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x4a2916,
+        roughness: 0.62,
+        metalness: 0.12
+      }));
+
+      const gunmetalBlueMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x242b36,
+        roughness: 0.30,
+        metalness: 0.88
+      }));
+
+      const chromeRodMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0xd0d8dc,
+        roughness: 0.16,
+        metalness: 0.95
+      }));
+
+      const brassMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0xd1a33c,
+        roughness: 0.30,
+        metalness: 0.88
+      }));
+
+      const canvasBootMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x252320,
+        roughness: 0.90,
+        metalness: 0.08
+      }));
+
+      const terracottaMudMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0x9c4c24,
+        normalMap: armorTex.normalMap,
+        normalScale: new THREE.Vector2(1.2, 1.2),
+        roughness: 0.94,
+        metalness: 0.04
+      }));
+
+      const whiteStripeMat = regMat(new THREE.MeshStandardMaterial({
+        color: 0xe6e4d5,
+        roughness: 0.65,
+        metalness: 0.12
+      }));
+
+      const opticLensMat = new THREE.MeshStandardMaterial({
+        color: 0x101814,
+        emissive: 0x1ee074,
+        emissiveIntensity: 0.45,
+        roughness: 0.10,
+        metalness: 0.6
+      });
+
+      const redSensorGlintMat = new THREE.MeshStandardMaterial({
+        color: 0x450d0d,
+        emissive: 0xff261b,
+        emissiveIntensity: 1.35,
+        roughness: 0.12
+      });
+
+      const amberLampMat = new THREE.MeshStandardMaterial({
+        color: 0x6b4c12,
+        emissive: 0xffb82e,
+        emissiveIntensity: 0.90,
+        roughness: 0.2
+      });
+
+      const redBeaconMat = new THREE.MeshStandardMaterial({
+        color: 0x6e1818,
+        emissive: 0xff2a1a,
+        emissiveIntensity: 0.70,
+        roughness: 0.25
+      });
+
+      function createDecalMaterial(type) {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 128;
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, 256, 128);
+
+        if (type === '316') {
+          ctx.fillStyle = 'rgba(242, 240, 226, 0.95)';
+          ctx.font = 'bold 78px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('316', 128, 66);
+        } else if (type === 'star') {
+          ctx.fillStyle = '#bd2622';
+          ctx.strokeStyle = 'rgba(242, 236, 218, 0.90)';
+          ctx.lineWidth = 4.5;
+          ctx.beginPath();
+          for (let i = 0; i < 10; i++) {
+            const r = i % 2 === 0 ? 48 : 20;
+            const a = (i * Math.PI) / 5 - Math.PI / 2;
+            const x = 128 + Math.cos(a) * r;
+            const y = 64 + Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (type === 'recoil') {
+          ctx.fillStyle = 'rgba(240, 214, 92, 0.92)';
+          ctx.font = 'bold 20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('ОПАСНО • ОТКАТ', 128, 46);
+          ctx.fillStyle = 'rgba(235, 234, 222, 0.88)';
+          ctx.font = 'bold 17px monospace';
+          ctx.fillText('37-ММ АЗП', 128, 76);
+        } else if (type === 'nostep') {
+          ctx.strokeStyle = 'rgba(220, 68, 52, 0.90)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(24, 34, 208, 60);
+          ctx.fillStyle = 'rgba(238, 234, 216, 0.92)';
+          ctx.font = 'bold 19px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('НЕ НАСТУПАТЬ', 128, 71);
+        } else if (type === 'fuel') {
+          ctx.fillStyle = 'rgba(242, 218, 96, 0.92)';
+          ctx.font = 'bold 24px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('МАСЛО / ГСМ', 128, 70);
+        } else if (type === 'scale') {
+          ctx.strokeStyle = 'rgba(242, 240, 224, 0.90)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(128, 118, 92, Math.PI * 1.15, Math.PI * 1.85);
+          ctx.stroke();
+          for (let a = -50; a <= 50; a += 10) {
+            const rad = (a - 90) * Math.PI / 180;
+            const r1 = 92;
+            const r2 = a % 20 === 0 ? 78 : 84;
+            ctx.beginPath();
+            ctx.moveTo(128 + Math.cos(rad) * r1, 118 + Math.sin(rad) * r1);
+            ctx.lineTo(128 + Math.cos(rad) * r2, 118 + Math.sin(rad) * r2);
+            ctx.stroke();
+          }
+        }
+
+        const tex = new THREE.CanvasTexture(c);
+        return new THREE.MeshStandardMaterial({
+          map: tex,
+          transparent: true,
+          roughness: 0.72,
+          depthWrite: false,
+          polygonOffset: true,
+          polygonOffsetFactor: -4
+        });
+      }
+
+      const decal316Mat = createDecalMaterial('316');
+      const decalStarMat = createDecalMaterial('star');
+      const decalRecoilMat = createDecalMaterial('recoil');
+      const decalNoStepMat = createDecalMaterial('nostep');
+      const decalFuelMat = createDecalMaterial('fuel');
+      const decalScaleMat = createDecalMaterial('scale');
+
+      function applyLightingPreset(preset) {
+        const wasStudio = isStudioMode;
+        isStudioMode = (preset === 'studio1952');
+
+        if (isStudioMode) {
+          scene.background = studioPosterTex;
+          scene.fog = null;
+          hemiLight.color.setHex(0xf0f4f7);
+          hemiLight.groundColor.setHex(0x8f9294);
+          hemiLight.intensity = 0.96;
+          dirLight.color.setHex(0xfff5e4);
+          dirLight.intensity = 1.65;
+          rimLight.color.setHex(0xa3cce8);
+          rimLight.intensity = 0.88;
+          spotSearchlight.intensity = 0;
+          opticLensMat.emissiveIntensity = 0.45;
+          redBeaconMat.emissiveIntensity = 0.75;
+        } else if (preset === 'sunset') {
+          scene.background = new THREE.Color(0x472d24);
+          scene.fog = new THREE.FogExp2(0x472d24, 0.015);
+          hemiLight.color.setHex(0xffb482);
+          hemiLight.groundColor.setHex(0x3b2820);
+          hemiLight.intensity = 0.76;
+          dirLight.color.setHex(0xff8c42);
+          dirLight.intensity = 1.9;
+          rimLight.color.setHex(0x7c9eb2);
+          rimLight.intensity = 0.7;
+          spotSearchlight.intensity = 0.6;
+          opticLensMat.emissiveIntensity = 1.15;
+          redBeaconMat.emissiveIntensity = 1.0;
+        } else if (preset === 'hangar') {
+          scene.background = new THREE.Color(0x1f2428);
+          scene.fog = new THREE.FogExp2(0x1f2428, 0.014);
+          hemiLight.color.setHex(0xb8cde0);
+          hemiLight.groundColor.setHex(0x282c30);
+          hemiLight.intensity = 0.96;
+          dirLight.color.setHex(0xe8f3ff);
+          dirLight.intensity = 1.40;
+          rimLight.color.setHex(0x88b4d8);
+          rimLight.intensity = 0.75;
+          spotSearchlight.intensity = 0.45;
+          opticLensMat.emissiveIntensity = 0.85;
+          redBeaconMat.emissiveIntensity = 0.8;
+        } else if (preset === 'night') {
+          scene.background = new THREE.Color(0x0b1014);
+          scene.fog = new THREE.FogExp2(0x0b1014, 0.016);
+          hemiLight.color.setHex(0x3a526b);
+          hemiLight.groundColor.setHex(0x181c20);
+          hemiLight.intensity = 0.52;
+          dirLight.color.setHex(0x6d8eb0);
+          dirLight.intensity = 0.5;
+          rimLight.color.setHex(0x4b7499);
+          rimLight.intensity = 0.65;
+          spotSearchlight.intensity = 2.5;
+          opticLensMat.emissiveIntensity = 2.2;
+          redBeaconMat.emissiveIntensity = 1.9;
+        } else {
+          scene.background = new THREE.Color(0x283029);
+          scene.fog = new THREE.FogExp2(0x283029, 0.015);
+          hemiLight.color.setHex(0xdbe4cf);
+          hemiLight.groundColor.setHex(0x3b3528);
+          hemiLight.intensity = 0.82;
+          dirLight.color.setHex(0xfff1d6);
+          dirLight.intensity = 1.62;
+          rimLight.color.setHex(0x9bc4e2);
+          rimLight.intensity = 0.78;
+          spotSearchlight.intensity = 0;
+          opticLensMat.emissiveIntensity = 0.55;
+          redBeaconMat.emissiveIntensity = 0.65;
+        }
+
+        if (wasStudio !== isStudioMode) {
+          rebuildAllTerrain();
+        }
+      }
+
+      applyLightingPreset('studio1952');
+      syncTerrainChunks(0, 0);
+
+      /* ==========================================
+         4. СБОРКА МЕХА «ОБЪЕКТ 316» И ПОЛЕВОЙ ОБВЕС
+         ========================================== */
+      const mechRoot = new THREE.Group();
+      scene.add(mechRoot);
+
+      const pelvisGroup = new THREE.Group();
+      pelvisGroup.position.set(0, 2.48, 0);
+      mechRoot.add(pelvisGroup);
+
+      /* Яйцевидный литой тазовый корпус с передним вертикальным килем */
+      const pelvisGeom = new THREE.SphereGeometry(1.10, 28, 22);
+      const pPos = pelvisGeom.attributes.position;
+      for (let i = 0; i < pPos.count; i++) {
+        let vx = pPos.getX(i);
+        let vy = pPos.getY(i);
+        let vz = pPos.getZ(i);
+        vx *= 1.12 - Math.max(0, -vy) * 0.22;
+        vy *= 0.68;
+        vz *= 1.12;
+        if (vz > 0.25) {
+          vz += 0.24 * Math.max(0, 1 - Math.abs(vx) * 1.4);
+        }
+        pPos.setXYZ(i, vx, vy, vz);
+      }
+      pelvisGeom.computeVertexNormals();
+      const pelvisCore = new THREE.Mesh(pelvisGeom, armorMat);
+      pelvisCore.castShadow = pelvisCore.receiveShadow = true;
+      addOutline(pelvisCore, 0.022);
+      pelvisGroup.add(pelvisCore);
+
+      const frontKeel = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.36), armorMat);
+      frontKeel.position.set(0, -0.06, 1.22);
+      frontKeel.rotation.x = 0.18;
+      addOutline(frontKeel, 0.03);
+      pelvisGroup.add(frontKeel);
+
+      /* Буксирные рымы и коуши на передней броне таза */
+      [-0.50, 0.50].forEach(rx => {
+        const pelvisLug = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.028, 8, 16), darkSteelMat);
+        pelvisLug.position.set(rx, 0.18, 1.18);
+        pelvisGroup.add(pelvisLug);
+
+        const thimble = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.020, 8, 14), chromeRodMat);
+        thimble.position.set(rx, 0.14, 1.24);
+        thimble.rotation.y = Math.PI / 2;
+        pelvisGroup.add(thimble);
+      });
+
+      /* Витой стальной буксирный трос на передней броне таза */
+      const pelvisCableCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.50, 0.14, 1.24),
+        new THREE.Vector3(-0.26, -0.08, 1.34),
+        new THREE.Vector3(0.0, -0.14, 1.38),
+        new THREE.Vector3(0.26, -0.08, 1.34),
+        new THREE.Vector3(0.50, 0.14, 1.24)
+      ]);
+      const pelvisTowCable = new THREE.Mesh(
+        new THREE.TubeGeometry(pelvisCableCurve, 28, 0.024, 8, false),
+        towCableMat
+      );
+      pelvisTowCable.castShadow = true;
+      pelvisGroup.add(pelvisTowCable);
+
+      /* Кормовой моторно-трансмиссионный отсек (МТО) */
+      const mtoBaseY = 0.08;
+      const mtoGrilleBaseY = 0.42;
+      const mtoBlock = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.66, 1.14), armorMat);
+      mtoBlock.position.set(0, mtoBaseY, -1.16);
+      mtoBlock.castShadow = mtoBlock.receiveShadow = true;
+      addOutline(mtoBlock, 0.022);
+      pelvisGroup.add(mtoBlock);
+
+      const mtoGrille = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.09, 0.78), darkSteelMat);
+      mtoGrille.position.set(0, mtoGrilleBaseY, -1.14);
+      pelvisGroup.add(mtoGrille);
+
+      /* Трафарет «НЕ НАСТУПАТЬ» на полках МТО */
+      [-0.58, 0.58].forEach(nx => {
+        const noStepDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.23), decalNoStepMat);
+        noStepDecal.position.set(nx, 0.425, -0.76);
+        noStepDecal.rotation.x = -Math.PI / 2;
+        pelvisGroup.add(noStepDecal);
+      });
+
+      /* Погон башни */
+      const turretRing = new THREE.Mesh(new THREE.CylinderGeometry(1.14, 1.24, 0.24, 28), gunmetalBlueMat);
+      turretRing.position.set(0, 0.46, 0.04);
+      pelvisGroup.add(turretRing);
+
+      const turretPivot = new THREE.Group();
+      turretPivot.position.set(0, 0.56, 0.04);
+      pelvisGroup.add(turretPivot);
+
+      /* ==========================================
+         4.1 ВЫСОКОДЕТАЛИЗИРОВАННАЯ «ЧЕРЕПАШЬЯ» БАШНЯ
+         ========================================== */
+      const hullGeom = new THREE.SphereGeometry(1.48, 36, 26);
+      const hPos = hullGeom.attributes.position;
+      for (let i = 0; i < hPos.count; i++) {
+        let vx = hPos.getX(i);
+        let vy = hPos.getY(i);
+        let vz = hPos.getZ(i);
+        vy *= vy > 0 ? 0.62 : 0.42;
+        vx *= 1.16 - Math.max(0, vy) * 0.14;
+        vz *= 1.06;
+        if (Math.abs(vx) > 1.10 && vz > -0.10 && vz < 0.95 && vy > -0.15 && vy < 0.35) {
+          vx *= 0.92;
+        }
+        hPos.setXYZ(i, vx, vy, vz);
+      }
+      hullGeom.computeVertexNormals();
+      const turretHull = new THREE.Mesh(hullGeom, armorMat);
+      turretHull.position.set(0, 0.54, -0.15);
+      turretHull.castShadow = turretHull.receiveShadow = true;
+      addOutline(turretHull, 0.020);
+      turretPivot.add(turretHull);
+
+      const lowerSkirt = new THREE.Mesh(new THREE.CylinderGeometry(1.38, 1.48, 0.24, 32), armorMat);
+      lowerSkirt.scale.set(1.12, 1.0, 1.08);
+      lowerSkirt.position.set(0, 0.20, -0.04);
+      addOutline(lowerSkirt, 0.022);
+      turretPivot.add(lowerSkirt);
+
+      /* Выступающая передняя жёлтая маска-забрало с диагональной белой полосой */
+      const maskGeom = new THREE.SphereGeometry(0.92, 32, 24);
+      const mPos = maskGeom.attributes.position;
+      for (let i = 0; i < mPos.count; i++) {
+        let vx = mPos.getX(i);
+        let vy = mPos.getY(i);
+        let vz = mPos.getZ(i);
+        vx *= 0.96 - Math.max(0, vy) * 0.14;
+        vy *= 0.68;
+        vz *= 0.88;
+        if (vz > 0.22) {
+          vz += 0.16 * Math.cos(vx * 1.5);
+        }
+        mPos.setXYZ(i, vx, vy, vz);
+      }
+      maskGeom.computeVertexNormals();
+      const frontMask = new THREE.Mesh(maskGeom, faceMaskMat);
+      frontMask.position.set(0, 0.64, 1.18);
+      frontMask.rotation.y = -Math.PI / 2;
+      frontMask.castShadow = true;
+      addOutline(frontMask, 0.022);
+      turretPivot.add(frontMask);
+
+      const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.11, 12, 28, Math.PI * 1.32), armorMat);
+      collarRing.position.set(0, 0.60, 1.16);
+      collarRing.rotation.set(-0.58, 0, -Math.PI * 0.16);
+      addOutline(collarRing, 0.028);
+      turretPivot.add(collarRing);
+
+      /* Верхние шарнирные петли и продольные рёбра жёсткости на лбу маски */
+      [-0.24, 0.24].forEach(hx => {
+        const hingeKnuckle = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.18, 12), mustardArmorMat);
+        hingeKnuckle.rotation.z = Math.PI / 2;
+        hingeKnuckle.position.set(hx, 1.18, 0.92);
+        addOutline(hingeKnuckle, 0.035);
+        turretPivot.add(hingeKnuckle);
+
+        const hingeStrap = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.11, 0.32), mustardArmorMat);
+        hingeStrap.position.set(hx, 1.15, 1.06);
+        hingeStrap.rotation.x = 0.30;
+        addOutline(hingeStrap, 0.035);
+        turretPivot.add(hingeStrap);
+
+        const foreheadRib = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.13, 0.48), mustardArmorMat);
+        foreheadRib.position.set(hx * 1.08, 0.92, 1.54);
+        foreheadRib.rotation.set(0.66, hx > 0 ? -0.12 : 0.12, 0);
+        addOutline(foreheadRib, 0.035);
+        turretPivot.add(foreheadRib);
+      });
+
+      /* Трапециевидная переносица и вентиляционная прорезь */
+      const noseBridge = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.21, 0.32, 4), mustardArmorMat);
+      noseBridge.rotation.y = Math.PI / 4;
+      noseBridge.rotation.x = 0.26;
+      noseBridge.position.set(0, 0.48, 1.88);
+      addOutline(noseBridge, 0.03);
+      turretPivot.add(noseBridge);
+
+      const noseVent = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.065, 0.09), darkSteelMat);
+      noseVent.position.set(0, 0.34, 1.94);
+      turretPivot.add(noseVent);
+
+      /* Глубокие глазницы со скошенными веками и красными оптическими зрачками */
+      [-0.42, 0.42].forEach(sx => {
+        const yawAngle = sx > 0 ? -0.34 : 0.34;
+        const tiltAngle = sx > 0 ? -0.18 : 0.18;
+
+        const brow = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.11, 0.34), mustardArmorMat);
+        brow.position.set(sx, 0.62, 1.76);
+        brow.rotation.set(0.24, yawAngle, tiltAngle);
+        addOutline(brow, 0.035);
+        turretPivot.add(brow);
+
+        const lowerLid = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.075, 0.26), mustardArmorMat);
+        lowerLid.position.set(sx, 0.43, 1.78);
+        lowerLid.rotation.set(-0.14, yawAngle, tiltAngle * 0.6);
+        addOutline(lowerLid, 0.035);
+        turretPivot.add(lowerLid);
+
+        const socket = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.16, 0.24), darkSteelMat);
+        socket.position.set(sx, 0.52, 1.72);
+        socket.rotation.y = yawAngle;
+        turretPivot.add(socket);
+
+        const lens = new THREE.Mesh(new THREE.SphereGeometry(0.095, 14, 12), opticLensMat);
+        lens.scale.set(1.35, 0.72, 0.65);
+        lens.position.set(sx, 0.52, 1.84);
+        lens.rotation.y = yawAngle;
+        turretPivot.add(lens);
+
+        const glint = new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 10), redSensorGlintMat);
+        glint.position.set(sx + (sx > 0 ? -0.02 : 0.02), 0.52, 1.89);
+        turretPivot.add(glint);
+      });
+
+      /* Скуловой оптический датчик с поворотным кронштейном, кабелем и парными скобами */
+      const cheekSensorGroup = new THREE.Group();
+      cheekSensorGroup.position.set(0.78, 0.46, 1.44);
+      cheekSensorGroup.rotation.y = -0.38;
+      turretPivot.add(cheekSensorGroup);
+
+      const sensorBracket = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.20), armorMat);
+      addOutline(sensorBracket, 0.035);
+      cheekSensorGroup.add(sensorBracket);
+
+      const sensorCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.11, 0.28, 14), armorMat);
+      sensorCyl.rotation.x = Math.PI / 2;
+      sensorCyl.position.set(0, 0.06, 0.14);
+      addOutline(sensorCyl, 0.035);
+      cheekSensorGroup.add(sensorCyl);
+
+      const sensorFrontGlass = new THREE.Mesh(new THREE.CircleGeometry(0.08, 14), opticLensMat);
+      sensorFrontGlass.position.set(0, 0.06, 0.282);
+      cheekSensorGroup.add(sensorFrontGlass);
+
+      const cableCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.07, 0.06, 0.06),
+        new THREE.Vector3(0.18, 0.02, -0.02),
+        new THREE.Vector3(0.16, -0.09, -0.10),
+        new THREE.Vector3(0.02, -0.12, -0.12)
+      ]);
+      const sensorCable = new THREE.Mesh(new THREE.TubeGeometry(cableCurve, 12, 0.022, 8, false), darkSteelMat);
+      cheekSensorGroup.add(sensorCable);
+
+      [-0.08, 0.08].forEach(gx => {
+        const sideHandle = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.018, 8, 14, Math.PI), darkSteelMat);
+        sideHandle.position.set(gx, -0.18, 0.08);
+        sideHandle.rotation.z = Math.PI / 2;
+        cheekSensorGroup.add(sideHandle);
+      });
+
+      /* Массивная нижняя «челюсть» с крюками, серьгами, коушами и вторым тросом */
+      const lowerJaw = new THREE.Mesh(new THREE.SphereGeometry(0.76, 22, 16), armorMat);
+      lowerJaw.scale.set(1.26, 0.38, 0.90);
+      lowerJaw.position.set(0, 0.18, 1.38);
+      lowerJaw.castShadow = true;
+      addOutline(lowerJaw, 0.024);
+      turretPivot.add(lowerJaw);
+
+      const chinLip = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.15, 0.42), armorMat);
+      chinLip.position.set(0, 0.18, 1.72);
+      chinLip.rotation.x = 0.22;
+      addOutline(chinLip, 0.028);
+      turretPivot.add(chinLip);
+
+      [-0.36, 0.36].forEach(hx => {
+        const hookHorn = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.036, 8, 16, Math.PI * 1.15), armorMat);
+        hookHorn.position.set(hx, 0.18, 1.84);
+        hookHorn.rotation.set(0.2, Math.PI / 2, -0.4);
+        addOutline(hookHorn, 0.035);
+        turretPivot.add(hookHorn);
+
+        const shackleRing = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.024, 8, 16), darkSteelMat);
+        shackleRing.position.set(hx, 0.07, 1.86);
+        shackleRing.rotation.y = hx > 0 ? -0.25 : 0.25;
+        turretPivot.add(shackleRing);
+
+        const jawBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.26, 14), armorMat);
+        jawBoss.rotation.z = Math.PI / 2;
+        jawBoss.position.set(hx * 2.25, 0.18, 1.48);
+        jawBoss.rotation.y = hx > 0 ? -0.35 : 0.35;
+        addOutline(jawBoss, 0.032);
+        turretPivot.add(jawBoss);
+
+        const jawThimble = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.018, 8, 14), chromeRodMat);
+        jawThimble.position.set(hx, 0.05, 1.90);
+        turretPivot.add(jawThimble);
+      });
+
+      const jawCableCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.36, 0.05, 1.90),
+        new THREE.Vector3(-0.18, -0.05, 1.95),
+        new THREE.Vector3(0.0, -0.08, 1.97),
+        new THREE.Vector3(0.18, -0.05, 1.95),
+        new THREE.Vector3(0.36, 0.05, 1.90)
+      ]);
+      const jawTowCable = new THREE.Mesh(
+        new THREE.TubeGeometry(jawCableCurve, 24, 0.020, 8, false),
+        towCableMat
+      );
+      jawTowCable.castShadow = true;
+      turretPivot.add(jawTowCable);
+
+      /* Скуловые ниши, поручни десанта с фланцами и трафареты «316» */
+      const grabRails = [];
+      [-1, 1].forEach(side => {
+        const cheekRib = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.58, 0.26), armorMat);
+        cheekRib.position.set(side * 1.48, 0.56, 0.94);
+        cheekRib.rotation.set(0.18, side * 0.42, side * -0.15);
+        addOutline(cheekRib, 0.03);
+        turretPivot.add(cheekRib);
+
+        const sideCheekPlate = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.54, 0.88), armorMat);
+        sideCheekPlate.position.set(side * 1.54, 0.56, 0.42);
+        sideCheekPlate.rotation.y = side * 0.12;
+        addOutline(sideCheekPlate, 0.026);
+        turretPivot.add(sideCheekPlate);
+
+        const numDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.36), decal316Mat);
+        numDecal.position.set(side * 1.62, 0.56, 0.42);
+        numDecal.rotation.y = side * (Math.PI / 2 + 0.12);
+        turretPivot.add(numDecal);
+
+        const railCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 1.56, 0.88, -0.58),
+          new THREE.Vector3(side * 1.70, 0.90, -0.46),
+          new THREE.Vector3(side * 1.72, 0.90, 0.26),
+          new THREE.Vector3(side * 1.58, 0.88, 0.38)
+        ]);
+        const grabRail = new THREE.Mesh(new THREE.TubeGeometry(railCurve, 20, 0.022, 8, false), darkSteelMat);
+        grabRail.castShadow = true;
+        turretPivot.add(grabRail);
+        grabRails.push({ mesh: grabRail, baseX: 0, baseY: 0 });
+
+        [-0.58, 0.38].forEach(rz => {
+          const flange = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.052, 0.05, 10), armorMat);
+          flange.rotation.z = Math.PI / 2;
+          flange.position.set(side * 1.56, 0.88, rz);
+          turretPivot.add(flange);
+        });
+      });
+
+      /* ==========================================
+         4.2 КОМАНДИРСКАЯ БАШЕНКА С 5 ПЕРИСКОПАМИ И АНТЕННА КУЛИКОВА
+         ========================================== */
+      const cupolaGroup = new THREE.Group();
+      cupolaGroup.position.set(-0.22, 1.40, -0.14);
+      turretPivot.add(cupolaGroup);
+
+      const cupolaBase = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.70, 0.26, 24), armorMat);
+      cupolaBase.castShadow = true;
+      addOutline(cupolaBase, 0.025);
+      cupolaGroup.add(cupolaBase);
+
+      const hatchLid = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.52, 0.09, 22), armorMat);
+      hatchLid.position.y = 0.15;
+      addOutline(hatchLid, 0.028);
+      cupolaGroup.add(hatchLid);
+
+      for (let p = 0; p < 5; p++) {
+        const ang = -0.85 + p * 0.425;
+        const periGrp = new THREE.Group();
+        periGrp.position.set(Math.sin(ang) * 0.56, 0.07, Math.cos(ang) * 0.56);
+        periGrp.rotation.y = ang;
+
+        const hood = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.13, 0.16), armorMat);
+        addOutline(hood, 0.035);
+        periGrp.add(hood);
+
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.06, 0.03), darkSteelMat);
+        glass.position.set(0, -0.01, 0.075);
+        periGrp.add(glass);
+
+        cupolaGroup.add(periGrp);
+      }
+
+      const gunnerDome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), armorMat);
+      gunnerDome.scale.set(1.0, 0.72, 1.1);
+      gunnerDome.position.set(0.54, 1.40, 0.12);
+      addOutline(gunnerDome, 0.03);
+      turretPivot.add(gunnerDome);
+
+      const domeGuard = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.024, 8, 16, Math.PI), darkSteelMat);
+      domeGuard.position.set(0.54, 1.42, 0.12);
+      domeGuard.rotation.x = 0.35;
+      turretPivot.add(domeGuard);
+
+      const roofMast = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.115, 0.48, 14), armorMat);
+      roofMast.position.set(-0.46, 1.54, -0.72);
+      addOutline(roofMast, 0.032);
+      turretPivot.add(roofMast);
+
+      /* Гибкая штыревая антенна Куликова (пружинно-изоляторный стакан + 10 сегментов) */
+      const antennaBaseGroup = new THREE.Group();
+      antennaBaseGroup.position.set(-0.84, 1.36, -0.84);
+      turretPivot.add(antennaBaseGroup);
+
+      const antFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.08, 14), armorMat);
+      addOutline(antFlange, 0.03);
+      antennaBaseGroup.add(antFlange);
+
+      const antInsulator = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.082, 0.16, 12), darkSteelMat);
+      antInsulator.position.y = 0.11;
+      antennaBaseGroup.add(antInsulator);
+
+      const antSpringCup = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.018, 8, 14), chromeRodMat);
+      antSpringCup.rotation.x = Math.PI / 2;
+      antSpringCup.position.y = 0.20;
+      antennaBaseGroup.add(antSpringCup);
+
+      const antennaSegments = [];
+      let prevAntParent = antennaBaseGroup;
+      for (let i = 0; i < 10; i++) {
+        const segPivot = new THREE.Group();
+        segPivot.position.set(0, i === 0 ? 0.21 : 0.195, 0);
+        const rTop = 0.021 * (1 - i * 0.075);
+        const rBot = 0.023 * (1 - i * 0.07);
+        const segMesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, 0.205, 8), darkSteelMat);
+        segMesh.position.y = 0.10;
+        segPivot.add(segMesh);
+        prevAntParent.add(segPivot);
+        antennaSegments.push(segPivot);
+        prevAntParent = segPivot;
+      }
+      const antTipBall = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), chromeRodMat);
+      antTipBall.position.y = 0.205;
+      prevAntParent.add(antTipBall);
+
+      /* Кормовой обвес: выхлопные трубы, запасные башмаки, брезентовая скатка, ящик ЗИП и канистра */
+      const exhaustTips = [];
+      const exhaustPipes = [];
+      [-0.58, 0.58].forEach(ex => {
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.65, 12), darkSteelMat);
+        pipe.position.set(ex, 0.90, -1.62);
+        pipe.rotation.x = -0.35;
+        turretPivot.add(pipe);
+        exhaustPipes.push({ mesh: pipe, baseX: ex, baseY: 0.90 });
+
+        const tip = new THREE.Object3D();
+        tip.position.set(0, 0.34, 0);
+        pipe.add(tip);
+        exhaustTips.push(tip);
+
+        const sparePad = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.52, 0.14), armorMat);
+        sparePad.position.set(ex * 1.15, 0.36, -1.72);
+        sparePad.rotation.x = 0.18;
+        addOutline(sparePad, 0.028);
+        turretPivot.add(sparePad);
+      });
+
+      /* Скрученная брезентовая скатка-тент на корме башни с кожаными ремнями и латунными пряжками */
+      const tarpRollGroup = new THREE.Group();
+      tarpRollGroup.position.set(0, 0.74, -1.76);
+      turretPivot.add(tarpRollGroup);
+
+      const tarpCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.19, 1.18, 18), tarpRollMat);
+      tarpCyl.rotation.z = Math.PI / 2;
+      tarpCyl.castShadow = true;
+      addOutline(tarpCyl, 0.024);
+      tarpRollGroup.add(tarpCyl);
+
+      [-0.59, 0.59].forEach(rx => {
+        const rollEnd = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.055, 8, 14), tarpRollMat);
+        rollEnd.rotation.y = Math.PI / 2;
+        rollEnd.position.x = rx;
+        tarpRollGroup.add(rollEnd);
+      });
+
+      [-0.36, 0.36].forEach(sx => {
+        const strap = new THREE.Mesh(new THREE.TorusGeometry(0.195, 0.022, 8, 18), leatherStrapMat);
+        strap.rotation.y = Math.PI / 2;
+        strap.position.x = sx;
+        tarpRollGroup.add(strap);
+
+        const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.07, 0.04), brassMat);
+        buckle.position.set(sx, 0.04, -0.20);
+        tarpRollGroup.add(buckle);
+      });
+
+      const zipBox = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.36, 0.34), armorMat);
+      zipBox.position.set(0, 0.40, -1.78);
+      addOutline(zipBox, 0.026);
+      turretPivot.add(zipBox);
+
+      [-0.26, 0.26].forEach(lx => {
+        const latch = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.11, 0.04), darkSteelMat);
+        latch.position.set(lx, 0.44, -1.96);
+        turretPivot.add(latch);
+      });
+      const zipHandle = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 12, Math.PI), darkSteelMat);
+      zipHandle.position.set(0, 0.42, -1.96);
+      zipHandle.rotation.x = Math.PI;
+      turretPivot.add(zipHandle);
+
+      /* Детализированная канистра ГСМ с горловиной, ручкой и трафаретом «МАСЛО / ГСМ» */
+      const jerryCanGroup = new THREE.Group();
+      jerryCanGroup.position.set(0.84, 0.88, -1.42);
+      turretPivot.add(jerryCanGroup);
+
+      const jerryCan = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.42, 0.32), mustardArmorMat);
+      jerryCan.castShadow = true;
+      addOutline(jerryCan, 0.03);
+      jerryCanGroup.add(jerryCan);
+
+      const canCap = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.06, 10), darkSteelMat);
+      canCap.position.set(0, 0.23, 0.09);
+      jerryCanGroup.add(canCap);
+
+      const canHandle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.16), darkSteelMat);
+      canHandle.position.set(0, 0.22, -0.04);
+      jerryCanGroup.add(canHandle);
+
+      const fuelDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.30, 0.15), decalFuelMat);
+      fuelDecal.position.set(0.125, 0.02, 0);
+      fuelDecal.rotation.y = Math.PI / 2;
+      jerryCanGroup.add(fuelDecal);
+
+      /* ==========================================
+         5. ПЛЕЧЕВЫЕ СПОНСОНЫ С 37-ММ АВТОПУШКАМИ И ТЕХНИЧКОЙ
+         ========================================== */
+      const gunBarrels = [];
+      const dynamicAmmoBelts = [];
+
+      function buildWeaponPod(side) {
+        const podRoot = new THREE.Group();
+        podRoot.position.set(side * 2.02, 0.86, -0.05);
+        turretPivot.add(podRoot);
+
+        const trunnionArm = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.56, 18), darkSteelMat);
+        trunnionArm.rotation.z = Math.PI / 2;
+        trunnionArm.position.set(-side * 0.42, -0.02, 0.02);
+        podRoot.add(trunnionArm);
+
+        const housing = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.72, 1.48), armorMat);
+        housing.castShadow = housing.receiveShadow = true;
+        addOutline(housing, 0.022);
+        podRoot.add(housing);
+
+        const topShoulder = new THREE.Mesh(new THREE.SphereGeometry(0.46, 18, 14), armorMat);
+        topShoulder.scale.set(0.88, 0.68, 1.56);
+        topShoulder.position.set(0, 0.34, -0.06);
+        topShoulder.castShadow = true;
+        addOutline(topShoulder, 0.022);
+        podRoot.add(topShoulder);
+
+        const frontAmberLamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), amberLampMat);
+        frontAmberLamp.position.set(side * 0.22, 0.32, 0.64);
+        podRoot.add(frontAmberLamp);
+
+        const rearRedLamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), redBeaconMat);
+        rearRedLamp.position.set(side * 0.28, 0.28, -0.68);
+        podRoot.add(rearRedLamp);
+
+        const starMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.48), decalStarMat);
+        starMesh.position.set(side * 0.365, 0.06, 0.14);
+        starMesh.rotation.y = side * (Math.PI / 2);
+        podRoot.add(starMesh);
+
+        /* Трафаретная техничка «ОПАСНО • ОТКАТ / 37-ММ АЗП» и угломерная шкала */
+        const recoilDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.28), decalRecoilMat);
+        recoilDecal.position.set(side * 0.365, -0.22, 0.28);
+        recoilDecal.rotation.y = side * (Math.PI / 2);
+        podRoot.add(recoilDecal);
+
+        const scaleDecal = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.21), decalScaleMat);
+        scaleDecal.position.set(-side * 0.36, 0.02, 0.46);
+        scaleDecal.rotation.y = -side * (Math.PI / 2);
+        podRoot.add(scaleDecal);
+
+        /* Подствольный зелёный патронный короб */
+        const ammoDrum = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.40, 0.68), greenAmmoMat);
+        ammoDrum.position.set(0, -0.56, -0.22);
+        ammoDrum.castShadow = true;
+        addOutline(ammoDrum, 0.026);
+        podRoot.add(ammoDrum);
+
+        const ammoCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 14), darkSteelMat);
+        ammoCap.rotation.x = Math.PI / 2;
+        ammoCap.position.set(0, -0.56, 0.14);
+        podRoot.add(ammoCap);
+
+        /* Спаренные 37-мм автопушки с белыми тактическими ободками у дульных тормозов */
+        const gunElevPivot = new THREE.Group();
+        gunElevPivot.position.set(-side * 0.10, -0.04, 0.64);
+        podRoot.add(gunElevPivot);
+
+        [-0.22, 0.22].forEach((by, bIdx) => {
+          const mantlet = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.145, 0.38, 14), darkSteelMat);
+          mantlet.rotation.x = Math.PI / 2;
+          mantlet.position.set(0, by, 0.16);
+          gunElevPivot.add(mantlet);
+
+          const barrelGrp = new THREE.Group();
+          barrelGrp.position.set(0, by, 0.32);
+          gunElevPivot.add(barrelGrp);
+
+          const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.086, 1.34, 12), gunmetalBlueMat);
+          tube.rotation.x = Math.PI / 2;
+          tube.position.z = 0.64;
+          tube.castShadow = true;
+          addOutline(tube, 0.03);
+          barrelGrp.add(tube);
+
+          const whiteBand = new THREE.Mesh(new THREE.CylinderGeometry(0.066, 0.068, 0.11, 12), whiteStripeMat);
+          whiteBand.rotation.x = Math.PI / 2;
+          whiteBand.position.z = 1.14;
+          barrelGrp.add(whiteBand);
+
+          const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.104, 0.070, 0.28, 12), darkSteelMat);
+          muzzle.rotation.x = Math.PI / 2;
+          muzzle.position.z = 1.36;
+          barrelGrp.add(muzzle);
+
+          const flashGrp = new THREE.Group();
+          flashGrp.position.set(0, 0, 1.54);
+          const flashMesh = new THREE.Mesh(
+            new THREE.ConeGeometry(0.24, 0.68, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffd269, transparent: true, opacity: 0 })
+          );
+          flashMesh.rotation.x = Math.PI / 2;
+          flashGrp.add(flashMesh);
+          barrelGrp.add(flashGrp);
+
+          gunBarrels.push({
+            side,
+            mesh: barrelGrp,
+            baseZ: 0.32,
+            flashGrp,
+            freq: 25.5 + (side > 0 ? 0 : 1.4) + bIdx * 0.7,
+            phase: (side > 0 ? 0 : Math.PI) + bIdx * Math.PI * 0.5,
+            prevShotWave: 0
+          });
+        });
+
+        /* 22-звенная изогнутая латунная патронная лента */
+        const links = [];
+        const linkGeom = new THREE.BoxGeometry(0.22, 0.048, 0.075);
+        for (let i = 0; i < 22; i++) {
+          const m = new THREE.Mesh(linkGeom, brassMat);
+          podRoot.add(m);
+          links.push({ mesh: m, t: i / 21 });
+        }
+        dynamicAmmoBelts.push({
+          side,
+          links,
+          p0: new THREE.Vector3(side * 0.14, -0.48, -0.48),
+          p1: new THREE.Vector3(side * 0.48, -0.74, -1.04),
+          p2: new THREE.Vector3(side * 0.46, 0.14, -1.12),
+          p3: new THREE.Vector3(side * 0.12, 0.14, -0.68)
+        });
+      }
+
+      buildWeaponPod(-1);
+      buildWeaponPod(1);
+
+      /* ==========================================
+         6. МНОГОСЛОЙНЫЕ S-ОБРАЗНЫЕ НОГИ И СКУЛЬПТУРНЫЕ СТУПНИ
+         ========================================== */
+      const L1 = 1.12;
+      const L2 = 1.16;
+      const L3 = 0.88;
+      const SOLE_HEIGHT = 0.34;
+
+      const legs = [];
+      const ikMarkers = [];
+
+      function createCylinderPair(parent) {
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 1, 10), darkSteelMat);
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.046, 1, 10), chromeRodMat);
+        parent.add(barrel);
+        parent.add(rod);
+        return { barrel, rod };
+      }
+
+      function createSculptedClayMesh(radius, sx, sy, sz, seed) {
+        const geom = new THREE.IcosahedronGeometry(radius, 2);
+        const pos = geom.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          let vx = pos.getX(i);
+          let vy = pos.getY(i);
+          let vz = pos.getZ(i);
+          const n = Math.sin(vx * 7.1 + seed) * Math.cos(vz * 6.7 - seed) * 0.24 +
+                    Math.sin(vy * 9.3 + vx * 4.2) * 0.14;
+          const factor = 1.0 + n;
+          vx *= factor * sx;
+          vy *= factor * sy;
+          vz *= factor * sz;
+          if (vy < -radius * sy * 0.55) vy = -radius * sy * 0.55;
+          pos.setXYZ(i, vx, vy, vz);
+        }
+        geom.computeVertexNormals();
+        const m = new THREE.Mesh(geom, terracottaMudMat);
+        m.castShadow = m.receiveShadow = true;
+        addOutline(m, 0.026);
+        return m;
+      }
+
+      function buildReverseLeg(side) {
+        const hipAnchor = new THREE.Group();
+        hipAnchor.position.set(side * 1.24, -0.14, 0.04);
+        pelvisGroup.add(hipAnchor);
+
+        /* Открытая ребристая ось-цапфа из таза */
+        const innerHipDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.44, 18), darkSteelMat);
+        innerHipDrum.rotation.z = Math.PI / 2;
+        hipAnchor.add(innerHipDrum);
+
+        for (let r = 0; r < 6; r++) {
+          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.94), gunmetalBlueMat);
+          rib.rotation.x = (r / 6) * Math.PI;
+          rib.position.x = side * 0.06;
+          hipAnchor.add(rib);
+        }
+
+        const bootPts = [];
+        for (let i = 0; i <= 10; i++) {
+          const t = i / 10;
+          bootPts.push(new THREE.Vector2(0.32 + Math.sin(t * Math.PI * 5) * 0.048, -t * 0.42));
+        }
+        const hipBoot = new THREE.Mesh(new THREE.LatheGeometry(bootPts, 16), canvasBootMat);
+        hipBoot.position.set(side * 0.10, -0.14, 0);
+        hipAnchor.add(hipBoot);
+
+        /* Сустав 1: Бедро */
+        const hipJoint = new THREE.Group();
+        hipJoint.position.set(side * 0.24, 0, 0);
+        hipAnchor.add(hipJoint);
+
+        /* Крупный внешний набедренный барабан с глубокой утопленной ступицей и двумя болтовыми приливами */
+        const outerHipShield = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.46, 24), armorMat);
+        outerHipShield.rotation.z = Math.PI / 2;
+        outerHipShield.position.set(side * 0.14, -0.04, 0);
+        outerHipShield.castShadow = true;
+        addOutline(outerHipShield, 0.022);
+        hipJoint.add(outerHipShield);
+
+        const outerHubRing = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.12, 12, 20), armorMat);
+        outerHubRing.rotation.y = Math.PI / 2;
+        outerHubRing.position.set(side * 0.36, -0.04, 0);
+        addOutline(outerHubRing, 0.025);
+        hipJoint.add(outerHubRing);
+
+        const hubRecess = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.14, 16), darkSteelMat);
+        hubRecess.rotation.z = Math.PI / 2;
+        hubRecess.position.set(side * 0.33, -0.04, 0);
+        hipJoint.add(hubRecess);
+
+        [-0.24, 0.24].forEach(bz => {
+          const boltBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.11, 0.16, 12), armorMat);
+          boltBoss.rotation.z = Math.PI / 2;
+          boltBoss.position.set(side * 0.32, 0.44, bz);
+          addOutline(boltBoss, 0.032);
+          hipJoint.add(boltBoss);
+
+          const boltPin = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.19, 10), darkSteelMat);
+          boltPin.rotation.z = Math.PI / 2;
+          boltPin.position.set(side * 0.33, 0.44, bz);
+          hipJoint.add(boltPin);
+        });
+
+        /* Широкий трёхреберный горчично-жёлтый панцирный гребень бедра */
+        const thighCrest = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.16, 12, 24, Math.PI * 0.72), mustardArmorMat);
+        thighCrest.position.set(side * 0.16, -0.04, 0.04);
+        thighCrest.rotation.set(0, Math.PI / 2, -0.18);
+        thighCrest.castShadow = true;
+        addOutline(thighCrest, 0.026);
+        hipJoint.add(thighCrest);
+
+        [-0.24, 0.22, 0.68].forEach(ribAng => {
+          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.11, 0.20), armorMat);
+          rib.position.set(side * 0.16, -0.04 + Math.cos(ribAng) * 0.70, 0.04 + Math.sin(ribAng) * 0.70);
+          rib.rotation.x = -ribAng;
+          addOutline(rib, 0.03);
+          hipJoint.add(rib);
+        });
+
+        /* Нижняя оливковая юбка бедра и трафарет «316» */
+        const thighArmor = new THREE.Mesh(new THREE.BoxGeometry(0.52, L1 * 0.94, 0.66), armorMat);
+        thighArmor.position.set(side * 0.04, -L1 * 0.48, 0.04);
+        thighArmor.castShadow = thighArmor.receiveShadow = true;
+        addOutline(thighArmor, 0.022);
+        hipJoint.add(thighArmor);
+
+        const thighPlate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.44, 0.58), armorMat);
+        thighPlate.position.set(side * 0.32, -L1 * 0.54, 0.06);
+        addOutline(thighPlate, 0.026);
+        hipJoint.add(thighPlate);
+
+        const sideNum = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.24), decal316Mat);
+        sideNum.position.set(side * 0.39, -L1 * 0.54, 0.06);
+        sideNum.rotation.y = side * (Math.PI / 2);
+        hipJoint.add(sideNum);
+
+        /* Массивный откидной жёлтый коленный щиток-ковш с шарнирными пальцами и глиной по нижней кромке */
+        const kneeScoop = new THREE.Mesh(new THREE.SphereGeometry(0.46, 20, 16), mustardArmorMat);
+        kneeScoop.scale.set(0.84, 0.88, 0.92);
+        kneeScoop.position.set(side * 0.04, -L1 * 0.86, 0.36);
+        kneeScoop.castShadow = true;
+        addOutline(kneeScoop, 0.024);
+        hipJoint.add(kneeScoop);
+
+        [-0.34, 0.34].forEach(px => {
+          const hingePin = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.14, 12), armorMat);
+          hingePin.rotation.z = Math.PI / 2;
+          hingePin.position.set(side * 0.04 + px, -L1 * 0.82, 0.22);
+          addOutline(hingePin, 0.032);
+          hipJoint.add(hingePin);
+        });
+
+        const kneeMud = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.22, 0.46), terracottaMudMat);
+        kneeMud.position.set(side * 0.04, -L1 * 1.08, 0.36);
+        addOutline(kneeMud, 0.026);
+        hipJoint.add(kneeMud);
+
+        const p1A = new THREE.Object3D();
+        p1A.position.set(side * 0.04, -0.45, 0.26);
+        hipJoint.add(p1A);
+
+        /* Сустав 2: S-образный балансир голени с двумя дисковыми шарнирами */
+        const kneeJoint = new THREE.Group();
+        kneeJoint.position.set(side * 0.04, -L1, 0);
+        hipJoint.add(kneeJoint);
+
+        const kneeDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.64, 18), armorMat);
+        kneeDrum.rotation.z = Math.PI / 2;
+        addOutline(kneeDrum, 0.024);
+        kneeJoint.add(kneeDrum);
+
+        const kneeCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.20, 0.68, 14), darkSteelMat);
+        kneeCap.rotation.z = Math.PI / 2;
+        kneeJoint.add(kneeCap);
+
+        const shinArmor = new THREE.Mesh(new THREE.BoxGeometry(0.46, L2 * 0.92, 0.38), armorMat);
+        shinArmor.position.set(0, -L2 * 0.48, -0.04);
+        shinArmor.rotation.x = -0.14;
+        shinArmor.castShadow = shinArmor.receiveShadow = true;
+        addOutline(shinArmor, 0.024);
+        kneeJoint.add(shinArmor);
+
+        const shinSideRib = new THREE.Mesh(new THREE.BoxGeometry(0.54, L2 * 0.62, 0.24), armorMat);
+        shinSideRib.position.set(0, -L2 * 0.48, -0.14);
+        addOutline(shinSideRib, 0.026);
+        kneeJoint.add(shinSideRib);
+
+        const shinMud = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.34, 0.40), terracottaMudMat);
+        shinMud.position.set(0, -L2 * 0.78, -0.04);
+        addOutline(shinMud, 0.026);
+        kneeJoint.add(shinMud);
+
+        const p1B = new THREE.Object3D();
+        p1B.position.set(0, -0.48, 0.26);
+        kneeJoint.add(p1B);
+
+        const p2A = new THREE.Object3D();
+        p2A.position.set(0, -0.28, -0.24);
+        kneeJoint.add(p2A);
+
+        /* Сустав 3: Скакательный диск -> Двухзвенная воронёная вилка плюсны */
+        const hockJoint = new THREE.Group();
+        hockJoint.position.set(0, -L2, 0);
+        kneeJoint.add(hockJoint);
+
+        const hockDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.30, 0.56, 18), armorMat);
+        hockDrum.rotation.z = Math.PI / 2;
+        addOutline(hockDrum, 0.024);
+        hockJoint.add(hockDrum);
+
+        const midKnuckle = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.44, 14), gunmetalBlueMat);
+        midKnuckle.rotation.z = Math.PI / 2;
+        midKnuckle.position.set(0, -L3 * 0.52, 0.12);
+        hockJoint.add(midKnuckle);
+
+        [-0.13, 0.13].forEach(fx => {
+          const upperFork = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.082, L3 * 0.56, 10), gunmetalBlueMat);
+          upperFork.position.set(fx, -L3 * 0.26, 0.06);
+          upperFork.rotation.x = -0.22;
+          upperFork.castShadow = true;
+          hockJoint.add(upperFork);
+
+          const lowerFork = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.078, L3 * 0.52, 10), gunmetalBlueMat);
+          lowerFork.position.set(fx, -L3 * 0.76, 0.06);
+          lowerFork.rotation.x = 0.22;
+          lowerFork.castShadow = true;
+          hockJoint.add(lowerFork);
+        });
+
+        const p2B = new THREE.Object3D();
+        p2B.position.set(0, -0.28, -0.18);
+        hockJoint.add(p2B);
+
+        const ankleAnchor = new THREE.Object3D();
+        ankleAnchor.position.set(0, -L3, 0);
+        hockJoint.add(ankleAnchor);
+
+        /* Сборка трёхпалой ступни-лапы в скульптурной терракотовой глине */
+        const footGroup = new THREE.Group();
+        scene.add(footGroup);
+
+        const ankleBall = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 12), gunmetalBlueMat);
+        footGroup.add(ankleBall);
+
+        const ankleBoot = new THREE.Mesh(new THREE.LatheGeometry(bootPts, 14), canvasBootMat);
+        ankleBoot.scale.set(0.70, 0.70, 0.70);
+        ankleBoot.position.set(0, 0.22, 0);
+        footGroup.add(ankleBoot);
+
+        const footCore = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.20, 0.68), armorMat);
+        footCore.position.set(0, -0.14, 0.04);
+        footCore.castShadow = footCore.receiveShadow = true;
+        addOutline(footCore, 0.024);
+        footGroup.add(footCore);
+
+        const centralClay = createSculptedClayMesh(0.48, 1.05, 0.58, 1.15, side * 3.1);
+        centralClay.position.set(0, -0.21, 0.05);
+        footGroup.add(centralClay);
+
+        const frontToes = [];
+        [-0.21, 0.21].forEach((tx, tIdx) => {
+          const toePivot = new THREE.Group();
+          toePivot.position.set(tx, -0.16, 0.32);
+          footGroup.add(toePivot);
+
+          const toeArmor = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.14, 0.40), armorMat);
+          toeArmor.position.set(0, -0.02, 0.17);
+          toeArmor.castShadow = true;
+          addOutline(toeArmor, 0.026);
+          toePivot.add(toeArmor);
+
+          const toeClay = createSculptedClayMesh(0.23, 1.05, 0.62, 1.35, side * 5.2 + tIdx * 2.4);
+          toeClay.position.set(0, -0.08, 0.22);
+          toePivot.add(toeClay);
+
+          frontToes.push(toePivot);
+        });
+
+        const heelPivot = new THREE.Group();
+        heelPivot.position.set(0, -0.16, -0.28);
+        footGroup.add(heelPivot);
+
+        const heelArmor = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.36), armorMat);
+        heelArmor.position.set(0, -0.02, -0.15);
+        addOutline(heelArmor, 0.026);
+        heelPivot.add(heelArmor);
+
+        const heelClay = createSculptedClayMesh(0.26, 1.15, 0.58, 1.2, side * 7.4);
+        heelClay.position.set(0, -0.08, -0.18);
+        heelPivot.add(heelClay);
+
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.11, 10, 10),
+          new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true })
+        );
+        marker.visible = false;
+        scene.add(marker);
+        ikMarkers.push(marker);
+
+        const initWorld = new THREE.Vector3(side * 1.50, getGroundHeight(side * 1.50, 0) + SOLE_HEIGHT, 0);
+        footGroup.position.copy(initWorld);
+
+        legs.push({
+          side,
+          hipAnchor,
+          hipJoint,
+          kneeJoint,
+          hockJoint,
+          ankleAnchor,
+          footGroup,
+          hipBoot,
+          ankleBoot,
+          frontToes,
+          heelPivot,
+          marker,
+          pistons: [
+            { a: p1A, b: p1B, meshPair: createCylinderPair(scene) },
+            { a: p2A, b: p2B, meshPair: createCylinderPair(scene) }
+          ],
+          plantedWorld: initWorld.clone(),
+          stepStartWorld: initWorld.clone(),
+          stepEndWorld: initWorld.clone(),
+          currentAnkleWorld: initWorld.clone(),
+          wasSwing: false,
+          footPitch: 0,
+          footRoll: 0
+        });
+      }
+
+      buildReverseLeg(-1);
+      buildReverseLeg(1);
+
+      /* ==========================================
+         7. ДЕТАЛИЗИРОВАННАЯ ФИГУРА ДЕВУШКИ-МЕХАНИКА (1.75 М)
+         ========================================== */
+      const pilotGroup = new THREE.Group();
+      scene.add(pilotGroup);
+
+      const suitMat = new THREE.MeshStandardMaterial({ color: 0x9c8e6b, roughness: 0.85 });
+      const collarMat = new THREE.MeshStandardMaterial({ color: 0xb8ad90, roughness: 0.80 });
+      const strapMat = new THREE.MeshStandardMaterial({ color: 0x262320, roughness: 0.72 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xd9a78b, roughness: 0.65 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x472d1f, roughness: 0.82 });
+
+      [-0.085, 0.085].forEach(lx => {
+        const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.056, 0.34, 10), strapMat);
+        boot.position.set(lx, 0.17, 0);
+        boot.castShadow = true;
+        pilotGroup.add(boot);
+
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.22), strapMat);
+        foot.position.set(lx, 0.04, 0.04);
+        pilotGroup.add(foot);
+
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.066, 0.56, 10), suitMat);
+        leg.position.set(lx, 0.60, 0);
+        leg.castShadow = true;
+        pilotGroup.add(leg);
+
+        const kneePad = new THREE.Mesh(new THREE.SphereGeometry(0.068, 8, 8), collarMat);
+        kneePad.position.set(lx, 0.52, 0.05);
+        pilotGroup.add(kneePad);
+      });
+
+      const pHips = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.155, 0.22, 12), suitMat);
+      pHips.position.y = 0.94;
+      pilotGroup.add(pHips);
+
+      const waistBelt = new THREE.Mesh(new THREE.CylinderGeometry(0.152, 0.152, 0.05, 12), strapMat);
+      waistBelt.position.y = 1.03;
+      pilotGroup.add(waistBelt);
+
+      const pTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.138, 0.44, 12), suitMat);
+      pTorso.position.y = 1.24;
+      pTorso.castShadow = true;
+      pilotGroup.add(pTorso);
+
+      const jacketCollar = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.032, 8, 14), collarMat);
+      jacketCollar.rotation.x = Math.PI / 2 + 0.18;
+      jacketCollar.position.set(0, 1.44, 0.02);
+      pilotGroup.add(jacketCollar);
+
+      [-0.08, 0.08].forEach(sx => {
+        const shoulderStrap = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.44, 0.24), strapMat);
+        shoulderStrap.position.set(sx, 1.24, 0);
+        pilotGroup.add(shoulderStrap);
+      });
+
+      const rUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.26, 8), suitMat);
+      rUpperArm.position.set(-0.20, 1.32, 0);
+      rUpperArm.rotation.z = -0.45;
+      pilotGroup.add(rUpperArm);
+
+      const rForeArm = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.034, 0.24, 8), suitMat);
+      rForeArm.position.set(-0.21, 1.12, 0.04);
+      rForeArm.rotation.set(0.25, 0, 0.55);
+      pilotGroup.add(rForeArm);
+
+      const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.038, 0.48, 8), suitMat);
+      lArm.position.set(0.21, 1.20, 0.04);
+      lArm.rotation.set(-0.22, 0, 0.26);
+      pilotGroup.add(lArm);
+
+      const wrench = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.34, 0.018), chromeRodMat);
+      wrench.position.set(0.28, 0.94, 0.16);
+      wrench.rotation.set(0.35, 0, -0.25);
+      addOutline(wrench, 0.04);
+      pilotGroup.add(wrench);
+
+      const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 12), skinMat);
+      pHead.position.y = 1.59;
+      pHead.castShadow = true;
+      pilotGroup.add(pHead);
+
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.125, 12, 10), hairMat);
+      hair.scale.set(1.06, 0.95, 1.05);
+      hair.position.set(0, 1.57, -0.02);
+      pilotGroup.add(hair);
+
+      const pHelmet = new THREE.Mesh(new THREE.SphereGeometry(0.128, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), strapMat);
+      pHelmet.position.y = 1.61;
+      pilotGroup.add(pHelmet);
+
+      [-0.125, 0.125].forEach(ex => {
+        const earCup = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.03, 10), strapMat);
+        earCup.rotation.z = Math.PI / 2;
+        earCup.position.set(ex, 1.59, 0);
+        pilotGroup.add(earCup);
+      });
+
+      [-0.048, 0.048].forEach(gx => {
+        const goggleRim = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.01, 8, 14), chromeRodMat);
+        goggleRim.position.set(gx, 1.65, 0.115);
+        goggleRim.rotation.x = -0.25;
+        pilotGroup.add(goggleRim);
+      });
+
+      const toolBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.46, 0.15, 0.24),
+        new THREE.MeshStandardMaterial({ color: 0xb54024, roughness: 0.56 })
+      );
+      toolBox.position.set(-0.56, 0.075, 0.24);
+      toolBox.rotation.y = 0.22;
+      toolBox.castShadow = true;
+      addOutline(toolBox, 0.028);
+      pilotGroup.add(toolBox);
+
+      const toolBoxLid = new THREE.Mesh(
+        new THREE.BoxGeometry(0.46, 0.03, 0.24),
+        new THREE.MeshStandardMaterial({ color: 0x9c3219, roughness: 0.56 })
+      );
+      toolBoxLid.position.set(-0.59, 0.21, 0.12);
+      toolBoxLid.rotation.set(-0.95, 0.22, 0);
+      addOutline(toolBoxLid, 0.03);
+      pilotGroup.add(toolBoxLid);
+
+      const spareWrench = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.025, 0.04), chromeRodMat);
+      spareWrench.position.set(-0.54, 0.16, 0.24);
+      spareWrench.rotation.y = 0.45;
+      pilotGroup.add(spareWrench);
+
+      /* ==========================================
+         8. СИСТЕМА ЧАСТИЦ (ПЫЛЬ, ДЫМ, ГИЛЬЗЫ, ИСКРЫ И ТРАССЕРЫ)
+         ========================================== */
+      const particles = [];
+      const tracers = [];
+      const dustGeom = new THREE.SphereGeometry(0.14, 6, 6);
+      const shellGeom = new THREE.CylinderGeometry(0.018, 0.018, 0.11, 6);
+      const sparkGeom = new THREE.BoxGeometry(0.025, 0.025, 0.22);
+      const tracerGeom = new THREE.CylinderGeometry(0.022, 0.014, 0.85, 6);
+      tracerGeom.rotateX(Math.PI / 2);
+
+      const impactFlashLight = new THREE.PointLight(0xff9b38, 0, 7.5);
+      scene.add(impactFlashLight);
+      let impactFlashTimer = 0;
+
+      function spawnParticle(type, pos, vel) {
+        if (particles.length > 210) return;
+        let mesh;
+        if (type === 'shell') {
+          mesh = new THREE.Mesh(shellGeom, brassMat);
+        } else if (type === 'spark') {
+          const mat = new THREE.MeshBasicMaterial({
+            color: Math.random() > 0.35 ? 0xffd666 : 0xff6b24,
+            transparent: true,
+            opacity: 1.0
+          });
+          mesh = new THREE.Mesh(sparkGeom, mat);
+        } else {
+          const mat = new THREE.MeshBasicMaterial({
+            color: type === 'dust' ? 0x9c7b56 : 0x3b3f3c,
+            transparent: true,
+            opacity: type === 'dust' ? 0.45 : 0.36
+          });
+          mesh = new THREE.Mesh(dustGeom, mat);
+        }
+        mesh.position.copy(pos);
+        scene.add(mesh);
+        particles.push({
+          type,
+          mesh,
+          vel,
+          rotVel: new THREE.Vector3((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14, 0),
+          life: 0,
+          maxLife: type === 'spark' ? (0.32 + Math.random() * 0.28) : (type === 'shell' ? 0.95 : (type === 'dust' ? 0.85 : 1.35))
+        });
+      }
+
+      /* ==========================================
+         9. ТОЧНЫЙ АНАЛИТИЧЕСКИЙ 3-ЗВЕННЫЙ IK-СОЛВЕР
+         ========================================== */
+      const _tmpLocalTarget = new THREE.Vector3();
+
+      function solveReverseJointIK(leg, worldAnkleTarget) {
+        leg.hipAnchor.updateMatrixWorld(true);
+        _tmpLocalTarget.copy(worldAnkleTarget);
+        leg.hipAnchor.worldToLocal(_tmpLocalTarget);
+
+        const maxR = (L1 + L2 + L3) * 0.94;
+        const minR = 0.85;
+        const distRaw = _tmpLocalTarget.length();
+        if (distRaw > maxR) {
+          _tmpLocalTarget.multiplyScalar(maxR / distRaw);
+        } else if (distRaw < minR && distRaw > 0.0001) {
+          _tmpLocalTarget.multiplyScalar(minR / distRaw);
+        }
+
+        const rollX = Math.atan2(_tmpLocalTarget.x, Math.max(0.6, -_tmpLocalTarget.y));
+        leg.hipJoint.rotation.z = THREE.MathUtils.clamp(rollX, -0.22, 0.22);
+
+        const planarY = -Math.hypot(_tmpLocalTarget.x, _tmpLocalTarget.y);
+        const planarZ = _tmpLocalTarget.z;
+        const D = Math.hypot(planarY, planarZ);
+        const targetPitch = Math.atan2(planarZ, -planarY);
+
+        const kRatio = 0.92;
+        const chainDistSq = (kb) => {
+          const hb = kb * kRatio;
+          const y = L1 + L2 * Math.cos(kb) + L3 * Math.cos(kb - hb);
+          const z = L2 * Math.sin(kb) + L3 * Math.sin(kb - hb);
+          return y * y + z * z;
+        };
+
+        let lo = 0.05;
+        let hi = 2.45;
+        const targetDSq = D * D;
+        for (let iter = 0; iter < 18; iter++) {
+          const mid = 0.5 * (lo + hi);
+          if (chainDistSq(mid) > targetDSq) {
+            lo = mid;
+          } else {
+            hi = mid;
+          }
+        }
+        const kneeBend = 0.5 * (lo + hi);
+        const hockBend = kneeBend * kRatio;
+
+        const endY = -(L1 + L2 * Math.cos(kneeBend) + L3 * Math.cos(kneeBend - hockBend));
+        const endZ = -(L2 * Math.sin(kneeBend) + L3 * Math.sin(kneeBend - hockBend));
+        const naturalPitch = Math.atan2(endZ, -endY);
+
+        const hipRotX = -(targetPitch - naturalPitch);
+
+        leg.hipJoint.rotation.x = hipRotX;
+        leg.kneeJoint.rotation.x = kneeBend;
+        leg.hockJoint.rotation.x = -hockBend;
+        leg.hipJoint.updateMatrixWorld(true);
+
+        leg.ankleAnchor.getWorldPosition(leg.currentAnkleWorld);
+        leg.footGroup.position.copy(leg.currentAnkleWorld);
+      }
+
+      /* 7-точечный опрос рельефа под пятном контакта башмака */
+      function sampleFootSupport(wx, wz, yaw) {
+        const sinY = Math.sin(yaw);
+        const cosY = Math.cos(yaw);
+        const pts = [
+          [0, 0],
+          [-0.24, 0.56],
+          [0.24, 0.56],
+          [-0.28, 0.0],
+          [0.28, 0.0],
+          [-0.20, -0.52],
+          [0.20, -0.52]
+        ];
+        let maxReqAnkleY = -Infinity;
+        let hFront = 0;
+        let hBack = 0;
+        let hLeft = 0;
+        let hRight = 0;
+
+        for (let i = 0; i < pts.length; i++) {
+          const lx = pts[i][0];
+          const lz = pts[i][1];
+          const px = wx + lx * cosY + lz * sinY;
+          const pz = wz - lx * sinY + lz * cosY;
+          const gh = getGroundHeight(px, pz);
+          if (i === 1 || i === 2) hFront += gh * 0.5;
+          if (i === 5 || i === 6) hBack += gh * 0.5;
+          if (i === 1 || i === 3 || i === 5) hLeft += gh / 3;
+          if (i === 2 || i === 4 || i === 6) hRight += gh / 3;
+          if (gh + SOLE_HEIGHT > maxReqAnkleY) {
+            maxReqAnkleY = gh + SOLE_HEIGHT;
+          }
+        }
+        const pitch = THREE.MathUtils.clamp(Math.atan2(hBack - hFront, 1.08), -0.28, 0.28);
+        const roll = THREE.MathUtils.clamp(Math.atan2(hLeft - hRight, 0.52), -0.25, 0.25);
+        return { ankleY: maxReqAnkleY, pitch, roll };
+      }
+
+      /* ==========================================
+         10. КРИТИЧЕСКИ ДЕМПФИРОВАННЫЕ ПРУЖИНЫ
+         ========================================== */
+      class SmoothSpring {
+        constructor(val, omega) {
+          this.x = val;
+          this.v = 0;
+          this.omega = omega;
+        }
+        update(target, dt) {
+          const steps = 4;
+          const h = Math.min(dt, 0.05) / steps;
+          const w = this.omega;
+          for (let i = 0; i < steps; i++) {
+            const f = -w * w * (this.x - target) - 2 * w * this.v;
+            this.v += f * h;
+            this.x += this.v * h;
+          }
+          return this.x;
+        }
+      }
+
+      const springSwayX = new SmoothSpring(0, 6.2);
+      const springBounceY = new SmoothSpring(0, 8.5);
+      const springSurgeZ = new SmoothSpring(0, 6.5);
+      const springPelvisRoll = new SmoothSpring(0, 6.0);
+      const springPelvisPitch = new SmoothSpring(0, 6.5);
+      const springTurretYaw = new SmoothSpring(0, 5.2);
+      const springGunPitch = new SmoothSpring(0, 6.0);
+      const springAntennaX = new SmoothSpring(0, 7.5);
+      const springAntennaZ = new SmoothSpring(0, 7.5);
+
+      /* Генератор ступенчатого прицельного сканирования неба */
+      function computeSkyScanAim(elapsed, basePitch, yawRange, pitchRange, cycleDuration) {
+        const idx = Math.floor(elapsed / cycleDuration);
+        const localT = (elapsed % cycleDuration) / cycleDuration;
+
+        const hashA = Math.sin(idx * 12.9898 + 4.1414) * 43758.5453;
+        const hashB = Math.sin(idx * 78.233 + 1.732) * 28411.713;
+        const prevHashA = Math.sin((idx - 1) * 12.9898 + 4.1414) * 43758.5453;
+        const prevHashB = Math.sin((idx - 1) * 78.233 + 1.732) * 28411.713;
+
+        const rYaw = (hashA - Math.floor(hashA)) * 2 - 1;
+        const rPitch = (hashB - Math.floor(hashB)) * 2 - 1;
+        const prevRYaw = (prevHashA - Math.floor(prevHashA)) * 2 - 1;
+        const prevRPitch = (prevHashB - Math.floor(prevHashB)) * 2 - 1;
+
+        const sign = rYaw >= 0 ? 1 : -1;
+        const targetYaw = sign * (0.44 + Math.abs(rYaw) * (yawRange - 0.44));
+        const prevSign = prevRYaw >= 0 ? 1 : -1;
+        const prevYaw = prevSign * (0.44 + Math.abs(prevRYaw) * (yawRange - 0.44));
+
+        const targetPitch = basePitch + rPitch * pitchRange;
+        const prevPitch = basePitch + prevRPitch * pitchRange;
+
+        const slewT = THREE.MathUtils.clamp(localT / 0.24, 0, 1);
+        const slewEase = slewT * slewT * (3 - 2 * slewT);
+        const holdT = THREE.MathUtils.clamp((localT - 0.24) / 0.76, 0, 1);
+
+        const microLeadYaw = Math.sin(holdT * Math.PI) * 0.035 * sign;
+        const microElevPitch = Math.sin(holdT * Math.PI * 2.0) * 0.032 + holdT * 0.024 * (rPitch >= 0 ? 1 : -1);
+
+        return {
+          yaw: THREE.MathUtils.lerp(prevYaw, targetYaw, slewEase) + microLeadYaw,
+          pitch: THREE.MathUtils.lerp(prevPitch, targetPitch, slewEase) + microElevPitch,
+          isLocked: localT > 0.22
+        };
+      }
+
+      /* ==========================================
+         11. СОСТОЯНИЕ СИМУЛЯЦИИ, ПОПАДАНИЯ И UI
+         ========================================== */
+      let currentMode = 'march';
+      let manualTurretYaw = 0;
+      let gaitPhase = 0;
+      let gaitBlend = 1.0;
+      let currentOmega = 3.6;
+      let showIKDebug = false;
+      let lastDustTime = [0, 0];
+      let wasMoving = false;
+      let dieselRevBoost = 0.0;
+
+      let braceAmount = 0.0;
+      let braceDeployTimer = 0.0;
+      let unbracingActive = false;
+      let unbracePhase = 0.0;
+      let shutdownAmount = 0.0;
+      let dieselIdleFactor = 1.0;
+
+      let hitStunTimer = 0.0;
+      let hitGlitchTimer = 0.0;
+      let hitStatusLabel = '';
+      let hitLabelTimer = 0.0;
+      const _hitLocalPt = new THREE.Vector3();
+      const _hitLocalDir = new THREE.Vector3();
+
+      function applyArmorHit(worldHitPos, incomingDirWorld, power = 1.0, zoneLabel = 'БРОНЯ') {
+        mechRoot.updateMatrixWorld(true);
+        _hitLocalPt.copy(worldHitPos);
+        mechRoot.worldToLocal(_hitLocalPt);
+
+        const invMechQuat = mechRoot.quaternion.clone().invert();
+        _hitLocalDir.copy(incomingDirWorld).normalize().applyQuaternion(invMechQuat);
+
+        const isTurretHit = _hitLocalPt.y > 2.85;
+        const sideSign = Math.sign(_hitLocalPt.x) || (Math.random() > 0.5 ? 1 : -1);
+
+        springSwayX.v += _hitLocalDir.x * (2.6 * power);
+        springSurgeZ.v += _hitLocalDir.z * (2.9 * power);
+        springBounceY.v -= (1.55 + Math.abs(_hitLocalDir.y) * 1.1) * power;
+        springPelvisRoll.v += (-_hitLocalDir.x * 1.45 - sideSign * 0.45) * power;
+        springPelvisPitch.v += (_hitLocalDir.z * 1.35 + (isTurretHit ? 0.45 : -0.25)) * power;
+
+        if (isTurretHit) {
+          const torqueYaw = (_hitLocalPt.x * _hitLocalDir.z - _hitLocalPt.z * _hitLocalDir.x);
+          springTurretYaw.v += THREE.MathUtils.clamp(torqueYaw * 2.4, -3.4, 3.4) * power;
+          springGunPitch.v += (Math.random() > 0.4 ? -1.4 : 1.1) * power;
+        } else {
+          springPelvisRoll.v += sideSign * 1.35 * power;
+          springTurretYaw.v += -sideSign * 0.75 * power;
+        }
+
+        springAntennaX.v += _hitLocalDir.z * 3.8 * power;
+        springAntennaZ.v += -_hitLocalDir.x * 3.8 * power;
+
+        if (power >= 1.35) {
+          hitStunTimer = 0.72;
+          hitGlitchTimer = 1.15;
+          dieselRevBoost = 1.0;
+        } else {
+          hitGlitchTimer = Math.max(hitGlitchTimer, 0.35);
+        }
+
+        hitStatusLabel = power >= 1.35 ? `ПРОБИТИЕ / КОНТУЗИЯ (${zoneLabel})` : `РИКОШЕТ (${zoneLabel})`;
+        hitLabelTimer = 1.5;
+
+        impactFlashLight.position.copy(worldHitPos).addScaledVector(incomingDirWorld, -0.25);
+        impactFlashLight.intensity = 4.5 * power;
+        impactFlashTimer = 0.14;
+
+        const reflectDir = incomingDirWorld.clone().negate();
+        const sparkCount = Math.round(18 * power);
+        for (let s = 0; s < sparkCount; s++) {
+          const sv = new THREE.Vector3(
+            reflectDir.x * (2.5 + Math.random() * 4.5) + (Math.random() - 0.5) * 5.2,
+            1.4 + Math.random() * 4.8,
+            reflectDir.z * (2.5 + Math.random() * 4.5) + (Math.random() - 0.5) * 5.2
+          );
+          spawnParticle('spark', worldHitPos, sv);
+        }
+        for (let d = 0; d < 4; d++) {
+          spawnParticle(
+            'smoke',
+            worldHitPos,
+            new THREE.Vector3((Math.random() - 0.5) * 1.2, 0.6 + Math.random() * 0.8, (Math.random() - 0.5) * 1.2)
+          );
+        }
+      }
+
+      function launchIncomingTracer(targetWorldPos, power = 1.0, zoneLabel = 'БРОНЯ') {
+        const angle = (Math.random() - 0.5) * 1.8;
+        const dist = 14 + Math.random() * 4;
+        const startPos = new THREE.Vector3(
+          targetWorldPos.x + Math.sin(angle) * dist,
+          targetWorldPos.y + 1.2 + Math.random() * 2.8,
+          targetWorldPos.z + Math.cos(angle) * dist
+        );
+        const dir = new THREE.Vector3().subVectors(targetWorldPos, startPos).normalize();
+        const tracerMat = new THREE.MeshBasicMaterial({
+          color: power >= 1.35 ? 0xff4d29 : 0xffe066
+        });
+        const mesh = new THREE.Mesh(tracerGeom, tracerMat);
+        mesh.position.copy(startPos);
+        mesh.lookAt(targetWorldPos);
+        scene.add(mesh);
+
+        tracers.push({
+          mesh,
+          pos: startPos.clone(),
+          target: targetWorldPos.clone(),
+          dir,
+          speed: 58.0,
+          power,
+          zoneLabel
+        });
+      }
+
+      const raycaster = new THREE.Raycaster();
+      const pointerNDC = new THREE.Vector2();
+      let pointerDownPos = { x: 0, y: 0, time: 0 };
+
+      renderer.domElement.addEventListener('pointerdown', e => {
+        pointerDownPos.x = e.clientX;
+        pointerDownPos.y = e.clientY;
+        pointerDownPos.time = performance.now();
+      });
+
+      renderer.domElement.addEventListener('pointerup', e => {
+        const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        const dtClick = performance.now() - pointerDownPos.time;
+        if (moveDist > 8 || dtClick > 320) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(pointerNDC, camera);
+        const hitTargets = [pelvisGroup, ...legs.map(l => l.footGroup)];
+        const hits = raycaster.intersectObjects(hitTargets, true);
+        if (hits.length > 0) {
+          const hitPt = hits[0].point;
+          const zone = hitPt.y > (getGroundHeight(mechX, mechZ) + 2.85) ? 'БАШНЯ' : 'ХОДОВАЯ';
+          launchIncomingTracer(hitPt, 1.0, zone);
+        }
+      });
+
+      document.getElementById('btn-hit-turret').addEventListener('click', () => {
+        const wp = new THREE.Vector3(0.45, 0.72, 1.45);
+        turretPivot.localToWorld(wp);
+        launchIncomingTracer(wp, 1.05, 'СКУЛА БАШНИ');
+      });
+
+      document.getElementById('btn-hit-leg').addEventListener('click', () => {
+        const wp = new THREE.Vector3(0.32, -0.45, 0.35);
+        legs[1].hipJoint.localToWorld(wp);
+        launchIncomingTracer(wp, 1.0, 'ЩИТОК БЕДРА');
+      });
+
+      document.getElementById('btn-hit-heavy').addEventListener('click', () => {
+        const wp = new THREE.Vector3(-0.35, 0.65, 1.25);
+        turretPivot.localToWorld(wp);
+        launchIncomingTracer(wp, 1.65, 'ЛОБ БАШНИ');
+      });
+
+      const keys = {};
+      window.addEventListener('keydown', e => {
+        keys[e.code] = true;
+      });
+      window.addEventListener('keyup', e => {
+        keys[e.code] = false;
+      });
+
+      const joyZone = document.getElementById('joystick-zone');
+      const joyKnob = document.getElementById('joystick-knob');
+      let joyVec = { x: 0, y: 0 };
+      let joyTouchId = null;
+
+      joyZone.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const t = e.changedTouches[0];
+        joyTouchId = t.identifier;
+        updateJoystick(t.clientX, t.clientY);
+      }, { passive: false });
+
+      joyZone.addEventListener('touchmove', e => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === joyTouchId) {
+            updateJoystick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+          }
+        }
+      }, { passive: false });
+
+      function resetJoystick() {
+        joyTouchId = null;
+        joyVec = { x: 0, y: 0 };
+        joyKnob.style.transform = 'translate(0px, 0px)';
+      }
+      joyZone.addEventListener('touchend', resetJoystick);
+      joyZone.addEventListener('touchcancel', resetJoystick);
+
+      function updateJoystick(cx, cy) {
+        const rect = joyZone.getBoundingClientRect();
+        const rMax = rect.width * 0.36;
+        let dx = cx - (rect.left + rect.width / 2);
+        let dy = cy - (rect.top + rect.height / 2);
+        const dist = Math.hypot(dx, dy);
+        if (dist > rMax) {
+          dx = (dx / dist) * rMax;
+          dy = (dy / dist) * rMax;
+        }
+        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+        joyVec.x = dx / rMax;
+        joyVec.y = -dy / rMax;
+      }
+
+      let mobileTurnTurret = 0;
+      let mobileFiring = false;
+      const btnTLeft = document.getElementById('btn-turret-left');
+      const btnTRight = document.getElementById('btn-turret-right');
+      const btnMFire = document.getElementById('btn-mobile-fire');
+
+      btnTLeft.addEventListener('touchstart', e => {
+        e.preventDefault();
+        mobileTurnTurret = 1;
+      });
+      btnTLeft.addEventListener('touchend', () => {
+        mobileTurnTurret = 0;
+      });
+      btnTRight.addEventListener('touchstart', e => {
+        e.preventDefault();
+        mobileTurnTurret = -1;
+      });
+      btnTRight.addEventListener('touchend', () => {
+        mobileTurnTurret = 0;
+      });
+      btnMFire.addEventListener('touchstart', e => {
+        e.preventDefault();
+        mobileFiring = true;
+      });
+      btnMFire.addEventListener('touchend', () => {
+        mobileFiring = false;
+      });
+
+      const modeNames = {
+        march: 'СТРОЕВОЙ МАРШ',
+        prowl: 'КРАДУЩИЙСЯ ШАГ',
+        turn: 'РАЗВОРОТ НА МЕСТЕ',
+        brace: 'СТАБИЛИЗАЦИЯ ПВО (ОПОРА)',
+        shutdown: 'ОБСЛУЖИВАНИЕ / ЗАГЛУШЕН',
+        fire: 'ЗЕНИТНЫЙ ОГОНЬ',
+        idle: 'БОЕВАЯ СТОЙКА',
+        manual: 'РУЧНОЕ УПРАВЛЕНИЕ'
+      };
+
+      document.querySelectorAll('#mode-buttons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#mode-buttons button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const nextMode = btn.dataset.mode;
+          if (currentMode === 'brace' && nextMode !== 'brace' && braceAmount > 0.15) {
+            unbracingActive = true;
+            unbracePhase = 0.0;
+          }
+          if (nextMode === 'brace') {
+            unbracingActive = false;
+            braceDeployTimer = 0.0;
+          }
+          currentMode = nextMode;
+          const isManual = currentMode === 'manual';
+          joyZone.style.display = (isManual && !hudHidden) ? 'block' : 'none';
+          document.getElementById('mobile-manual-actions').classList.toggle('hidden', !isManual);
+        });
+      });
+
+      let camPresetOffset = new THREE.Vector3(isMobile ? 6.8 : 5.5, isMobile ? 3.5 : 2.95, isMobile ? 7.2 : 5.9);
+      let camTargetOffsetY = 2.30;
+      let camLerpTimer = 0;
+
+      document.querySelectorAll('#camera-presets button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#camera-presets button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const c = btn.dataset.cam;
+          if (c === 'turret') {
+            camPresetOffset.set(2.9, 3.6, 3.6);
+            camTargetOffsetY = 3.35;
+          } else if (c === 'foot') {
+            camPresetOffset.set(3.2, 1.35, 3.0);
+            camTargetOffsetY = 0.85;
+          } else if (c === 'rear') {
+            camPresetOffset.set(-4.6, 3.3, -5.2);
+            camTargetOffsetY = 2.4;
+          } else if (c === 'front') {
+            camPresetOffset.set(1.3, 3.2, 4.8);
+            camTargetOffsetY = 3.05;
+          } else {
+            camPresetOffset.set(isMobile ? 6.8 : 5.5, isMobile ? 3.5 : 2.95, isMobile ? 7.2 : 5.9);
+            camTargetOffsetY = 2.30;
+          }
+          camLerpTimer = 0.65;
+        });
+      });
+
+      document.querySelectorAll('#light-presets button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#light-presets button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyLightingPreset(btn.dataset.light);
+        });
+      });
+
+      document.getElementById('toggle-outline').addEventListener('change', e => {
+        outlineEnabled = e.target.checked;
+        updateOutlineVisibility();
+      });
+      document.getElementById('toggle-ik-debug').addEventListener('change', e => {
+        showIKDebug = e.target.checked;
+        ikMarkers.forEach(m => {
+          m.visible = showIKDebug;
+        });
+      });
+      document.getElementById('toggle-pilot').addEventListener('change', e => {
+        pilotGroup.visible = e.target.checked;
+      });
+      document.getElementById('toggle-wire').addEventListener('change', e => {
+        const w = e.target.checked;
+        allWireframeMaterials.forEach(m => {
+          m.wireframe = w;
+        });
+      });
+
+      let hudHidden = false;
+      document.getElementById('toggle-hud-btn').addEventListener('click', () => {
+        hudHidden = !hudHidden;
+        const hudRoot = document.getElementById('hud-root');
+        hudRoot.style.opacity = hudHidden ? '0' : '1';
+        hudRoot.style.pointerEvents = 'none';
+        hudRoot.querySelectorAll('.pointer-events-auto').forEach(el => {
+          el.style.pointerEvents = hudHidden ? 'none' : 'auto';
+        });
+        if (currentMode === 'manual') {
+          joyZone.style.display = hudHidden ? 'none' : 'block';
+        }
+        document.getElementById('hud-eye-label').textContent = hudHidden ? 'Показать UI' : 'Скрыть UI';
+      });
+
+      document.getElementById('mobile-opts-btn').addEventListener('click', () => {
+        const panel = document.getElementById('options-panel');
+        panel.classList.toggle('hidden');
+        panel.classList.toggle('flex');
+      });
+
+      /* ==========================================
+         12. ЕДИНЫЙ ШАГ СИМУЛЯЦИИ ФИЗИКИ И IK
+         ========================================== */
+      const clock = new THREE.Clock();
+      const telemetryEl = document.getElementById('telemetry-line');
+      const _tmpPt = new THREE.Vector3();
+      const _tmpNextPt = new THREE.Vector3();
+      const _tmpExhaustPos = new THREE.Vector3();
+      const _tmpShellPos = new THREE.Vector3();
+      let simTime = 0;
+      let lastSpeedKmh = 0;
+      let lastIsFiring = false;
+
+      function cubicBezier(p0, p1, p2, p3, t, out) {
+        const u = 1 - t;
+        const tt = t * t;
+        const uu = u * u;
+        const uuu = uu * u;
+        const ttt = tt * t;
+        out.copy(p0).multiplyScalar(uuu);
+        out.addScaledVector(p1, 3 * uu * t);
+        out.addScaledVector(p2, 3 * u * tt);
+        out.addScaledVector(p3, ttt);
+        return out;
+      }
+
+      function stepMechSimulation(dt, inPlaceBake = false) {
+        simTime += dt;
+        const elapsed = simTime;
+
+        if (currentMode === 'shutdown') {
+          shutdownAmount = Math.min(1.0, shutdownAmount + dt * 0.68);
+        } else {
+          shutdownAmount = Math.max(0.0, shutdownAmount - dt * 0.95);
+        }
+        const shutEase = shutdownAmount * shutdownAmount * (3 - 2 * shutdownAmount);
+        dieselIdleFactor = THREE.MathUtils.lerp(1.0, 0.0, THREE.MathUtils.clamp(shutdownAmount * 1.45, 0, 1));
+
+        if (hitStunTimer > 0) hitStunTimer = Math.max(0, hitStunTimer - dt);
+        if (hitGlitchTimer > 0) hitGlitchTimer = Math.max(0, hitGlitchTimer - dt);
+        if (hitLabelTimer > 0) {
+          hitLabelTimer = Math.max(0, hitLabelTimer - dt);
+          if (hitLabelTimer === 0) hitStatusLabel = '';
+        }
+
+        if (unbracingActive) {
+          unbracePhase += dt;
+          braceAmount = Math.max(0, 1.0 - unbracePhase / 0.85);
+          if (unbracePhase >= 0.90) {
+            unbracingActive = false;
+            braceAmount = 0.0;
+          }
+        } else if (currentMode === 'brace') {
+          braceDeployTimer += dt;
+          braceAmount = Math.min(1.0, braceDeployTimer / 0.75);
+        } else {
+          braceAmount = Math.max(0.0, braceAmount - dt * 1.4);
+        }
+
+        let targetSpeed = 0;
+        let targetTurnRate = 0;
+        let targetOmega = 3.6;
+        let stepLength = 1.38;
+        let stepClearance = 0.42;
+        let crouchOffset = -0.38 * braceAmount - 0.84 * shutEase;
+        let isFiring = false;
+        let scanAim = null;
+
+        if (unbracingActive || shutdownAmount > 0.12 || hitStunTimer > 0.05) {
+          targetSpeed = 0;
+          targetTurnRate = 0;
+        } else if (currentMode === 'brace') {
+          scanAim = computeSkyScanAim(elapsed, -0.50 * braceAmount, 0.62, 0.11, 1.10);
+          isFiring = braceDeployTimer > 0.78 && scanAim.isLocked;
+        } else if (currentMode === 'march') {
+          targetSpeed = 1.78;
+          targetOmega = 3.75;
+          stepLength = 1.48;
+          stepClearance = 0.44;
+        } else if (currentMode === 'prowl') {
+          targetSpeed = 1.05;
+          targetOmega = 2.55;
+          stepLength = 1.24;
+          stepClearance = 0.36;
+          crouchOffset -= 0.26;
+        } else if (currentMode === 'turn') {
+          targetTurnRate = 0.58;
+          targetOmega = 3.2;
+          stepLength = 0.35;
+          stepClearance = 0.34;
+        } else if (currentMode === 'fire') {
+          scanAim = computeSkyScanAim(elapsed, -0.36, 0.58, 0.10, 1.20);
+          isFiring = scanAim.isLocked;
+          crouchOffset -= 0.14;
+        } else if (currentMode === 'manual') {
+          const fwd = (keys['KeyW'] || keys['ArrowUp'] ? 1 : 0) - (keys['KeyS'] || keys['ArrowDown'] ? 1 : 0) + joyVec.y;
+          const trn = (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0) - (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0) - joyVec.x;
+          const tur = (keys['KeyQ'] ? 1 : 0) - (keys['KeyE'] ? 1 : 0) + mobileTurnTurret;
+          isFiring = !!(keys['Space'] || mobileFiring);
+
+          const clampedFwd = THREE.MathUtils.clamp(fwd, -1, 1);
+          const clampedTrn = THREE.MathUtils.clamp(trn, -1, 1);
+          targetSpeed = clampedFwd * 1.75;
+          targetTurnRate = clampedTrn * 0.72;
+          manualTurretYaw += tur * 1.35 * dt;
+
+          const activity = Math.max(Math.abs(clampedFwd), Math.abs(clampedTrn));
+          targetOmega = 2.4 + activity * 1.45;
+          stepLength = 1.35 * clampedFwd;
+        }
+
+        const isMoving = !unbracingActive && shutdownAmount <= 0.12 && hitStunTimer <= 0.05 && (Math.abs(targetSpeed) > 0.04 || Math.abs(targetTurnRate) > 0.04);
+        if (isMoving && !wasMoving) {
+          dieselRevBoost = 1.0;
+        }
+        wasMoving = isMoving;
+        dieselRevBoost = Math.max(0, dieselRevBoost - dt * 0.85);
+
+        const dieselFreq = 330 + dieselRevBoost * 95 + (isFiring ? 35 : 0);
+        const dieselVib = Math.sin(elapsed * dieselFreq) * (0.0016 + dieselRevBoost * 0.0028 + (isMoving ? 0.0012 : 0)) * dieselIdleFactor;
+        const dieselVibAlt = Math.cos(elapsed * (dieselFreq * 1.07)) * (0.0014 + dieselRevBoost * 0.0024 + (isMoving ? 0.0010 : 0)) * dieselIdleFactor;
+
+        gaitBlend = THREE.MathUtils.lerp(gaitBlend, isMoving ? 1.0 : 0.0, dt * 4.2);
+        currentOmega = THREE.MathUtils.lerp(currentOmega, targetOmega, dt * 4.0);
+        gaitPhase += currentOmega * dt * (0.25 + 0.75 * gaitBlend);
+
+        const prevMechX = mechX;
+        const prevMechZ = mechZ;
+        if (!inPlaceBake) {
+          mechYaw += targetTurnRate * dt;
+          mechX += Math.sin(mechYaw) * targetSpeed * dt;
+          mechZ += Math.cos(mechYaw) * targetSpeed * dt;
+        } else {
+          mechYaw = 0;
+          mechX = 0;
+          mechZ = 0;
+        }
+        const dMechX = mechX - prevMechX;
+        const dMechZ = mechZ - prevMechZ;
+
+        if (!inPlaceBake) {
+          syncTerrainChunks(mechX, mechZ);
+        }
+
+        const rawSwayX = Math.sin(gaitPhase) * 0.14 * gaitBlend;
+        const rawBounceY = -Math.abs(Math.sin(gaitPhase)) * 0.13 * gaitBlend + Math.sin(elapsed * 2.1) * 0.018 * (1 - gaitBlend) * dieselIdleFactor;
+        const rawSurgeZ = Math.cos(gaitPhase * 2) * 0.055 * gaitBlend - 0.34 * shutEase;
+        const rawRoll = -Math.sin(gaitPhase) * 0.045 * gaitBlend;
+        const rawPitch = (isMoving ? 0.045 * gaitBlend : 0) + (isFiring ? -0.055 : 0) - 0.04 * braceAmount - 0.14 * shutEase;
+
+        let targetTurretYaw = 0;
+        let targetGunPitch = 0;
+        if (currentMode === 'shutdown' || shutdownAmount > 0.05) {
+          targetTurretYaw = 0.0;
+          targetGunPitch = 0.34 * shutEase;
+        } else if (currentMode === 'brace') {
+          targetTurretYaw = scanAim ? scanAim.yaw * braceAmount : 0;
+          targetGunPitch = scanAim ? scanAim.pitch : -0.50 * braceAmount;
+        } else if (currentMode === 'fire') {
+          targetTurretYaw = scanAim ? scanAim.yaw : 0;
+          targetGunPitch = scanAim ? scanAim.pitch : -0.36;
+        } else if (currentMode === 'idle') {
+          const idleScan = computeSkyScanAim(elapsed, -0.08, 0.52, 0.07, 1.60);
+          targetTurretYaw = idleScan.yaw;
+          targetGunPitch = idleScan.pitch;
+        } else if (currentMode === 'manual') {
+          targetTurretYaw = manualTurretYaw;
+          targetGunPitch = isFiring ? -0.22 : -0.04;
+        } else {
+          targetTurretYaw = -Math.sin(gaitPhase) * 0.065 * gaitBlend;
+          targetGunPitch = -0.05 + Math.cos(gaitPhase * 2) * 0.025 * gaitBlend;
+        }
+
+        /* Командирский люк приоткрывается со сдвигом вбок и подъёмом при обслуживании */
+        const hatchOpenT = THREE.MathUtils.clamp((shutdownAmount - 0.45) / 0.55, 0, 1);
+        const hatchEase = hatchOpenT * hatchOpenT * (3 - 2 * hatchOpenT);
+        hatchLid.position.set(-0.24 * hatchEase, 0.15 + 0.09 * hatchEase, -0.06 * hatchEase);
+        hatchLid.rotation.set(-0.08 * hatchEase, 0.35 * hatchEase, 0.24 * hatchEase);
+
+        const swayX = springSwayX.update(rawSwayX, dt);
+        const bounceY = springBounceY.update(rawBounceY, dt);
+        const surgeZ = springSurgeZ.update(rawSurgeZ, dt);
+        const pRoll = springPelvisRoll.update(rawRoll, dt);
+        const pPitch = springPelvisPitch.update(rawPitch, dt);
+        const tYaw = springTurretYaw.update(targetTurretYaw, dt);
+        const gPitch = springGunPitch.update(targetGunPitch, dt);
+
+        const centerGroundH = inPlaceBake ? 0.0 : getGroundHeight(mechX, mechZ);
+        mechRoot.position.set(mechX, centerGroundH, mechZ);
+        mechRoot.rotation.set(0, mechYaw, 0);
+
+        pelvisGroup.position.set(swayX, 2.48 + crouchOffset + bounceY, surgeZ);
+        pelvisGroup.rotation.set(pPitch, 0, pRoll);
+        turretPivot.rotation.set(0, tYaw, 0);
+        mechRoot.updateMatrixWorld(true);
+
+        const sinY = Math.sin(mechYaw);
+        const cosY = Math.cos(mechYaw);
+        let lowestFootAnkleY = Infinity;
+
+        legs.forEach((leg, idx) => {
+          const phase = gaitPhase + idx * Math.PI;
+          const cycle = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          const isSwing = cycle < Math.PI && gaitBlend > 0.08 && !unbracingActive && currentMode !== 'brace';
+
+          const hipLocalX = leg.side * 1.32;
+          const hipWorldX = mechX + hipLocalX * cosY;
+          const hipWorldZ = mechZ - hipLocalX * sinY;
+
+          if (isSwing) {
+            const s = cycle / Math.PI;
+            const ease = s * s * (3 - 2 * s);
+            if (!leg.wasSwing) {
+              leg.stepStartWorld.copy(leg.plantedWorld);
+              leg.wasSwing = true;
+            }
+            const leadZ = stepLength * 0.52 * gaitBlend;
+            const targetWX = hipWorldX + sinY * leadZ;
+            const targetWZ = hipWorldZ + cosY * leadZ;
+            const support = inPlaceBake
+              ? { ankleY: SOLE_HEIGHT, pitch: 0, roll: 0 }
+              : sampleFootSupport(targetWX, targetWZ, mechYaw);
+            leg.stepEndWorld.set(targetWX, support.ankleY, targetWZ);
+
+            const wx = THREE.MathUtils.lerp(leg.stepStartWorld.x, leg.stepEndWorld.x, ease);
+            const wz = THREE.MathUtils.lerp(leg.stepStartWorld.z, leg.stepEndWorld.z, ease);
+            const baseH = THREE.MathUtils.lerp(leg.stepStartWorld.y, leg.stepEndWorld.y, ease);
+            const lift = Math.sin(s * Math.PI) * stepClearance * gaitBlend;
+
+            const midSupport = inPlaceBake
+              ? { ankleY: SOLE_HEIGHT, pitch: 0, roll: 0 }
+              : sampleFootSupport(wx, wz, mechYaw);
+            const wy = Math.max(baseH + lift, midSupport.ankleY + lift * 0.5);
+
+            leg.currentAnkleWorld.set(wx, wy, wz);
+            leg.footPitch = THREE.MathUtils.lerp(leg.footPitch, Math.sin(s * Math.PI * 2) * 0.24, dt * 12);
+            leg.footRoll = THREE.MathUtils.lerp(leg.footRoll, midSupport.roll * (1 - Math.sin(s * Math.PI)), dt * 10);
+          } else {
+            if (leg.wasSwing) {
+              leg.wasSwing = false;
+              leg.plantedWorld.copy(leg.stepEndWorld);
+
+              springBounceY.v -= 1.65 * gaitBlend;
+              springPelvisRoll.v += leg.side * 0.55 * gaitBlend;
+              springPelvisPitch.v += 0.32 * gaitBlend;
+
+              if (!inPlaceBake && !isStudioMode && elapsed - lastDustTime[idx] > 0.25 && gaitBlend > 0.2) {
+                lastDustTime[idx] = elapsed;
+                for (let d = 0; d < 6; d++) {
+                  const ang = (d / 6) * Math.PI * 2;
+                  spawnParticle(
+                    'dust',
+                    new THREE.Vector3(leg.plantedWorld.x + Math.cos(ang) * 0.25, leg.plantedWorld.y - SOLE_HEIGHT + 0.05, leg.plantedWorld.z + Math.sin(ang) * 0.25),
+                    new THREE.Vector3(Math.cos(ang) * 0.85, 0.45 + Math.random() * 0.4, Math.sin(ang) * 0.85)
+                  );
+                }
+              }
+            }
+
+            if (gaitBlend < 0.08 || currentMode === 'brace' || unbracingActive || shutdownAmount > 0.02) {
+              const legDelay = idx * 0.24;
+              const legBraceT = currentMode === 'brace'
+                ? THREE.MathUtils.clamp((braceDeployTimer - legDelay) / 0.36, 0, 1)
+                : (unbracingActive
+                  ? 1.0 - THREE.MathUtils.clamp((unbracePhase - legDelay) / 0.38, 0, 1)
+                  : braceAmount);
+
+              const spreadLat = leg.side * (0.42 * legBraceT + 0.12 * shutEase);
+              const baseForeAft = (idx === 1 ? 0.22 : -0.22);
+              const braceForeAft = (idx === 1 ? 0.48 : -0.52);
+              const shutForeAft = 0.28 * shutEase;
+              const targetForeAft = THREE.MathUtils.lerp(baseForeAft, braceForeAft, legBraceT) + shutForeAft;
+
+              const restWX = hipWorldX + spreadLat * cosY + sinY * targetForeAft;
+              const restWZ = hipWorldZ - spreadLat * sinY + cosY * targetForeAft;
+
+              const stepArc = Math.sin(legBraceT * Math.PI) * 0.24;
+              leg.plantedWorld.x = THREE.MathUtils.lerp(leg.plantedWorld.x, restWX, dt * 10);
+              leg.plantedWorld.z = THREE.MathUtils.lerp(leg.plantedWorld.z, restWZ, dt * 10);
+
+              const support = inPlaceBake
+                ? { ankleY: SOLE_HEIGHT, pitch: 0, roll: 0 }
+                : sampleFootSupport(leg.plantedWorld.x, leg.plantedWorld.z, mechYaw);
+              const heelSitPitch = -0.18 * shutEase;
+              leg.plantedWorld.y = support.ankleY + stepArc + 0.04 * shutEase;
+              leg.currentAnkleWorld.copy(leg.plantedWorld);
+              leg.footPitch = THREE.MathUtils.lerp(leg.footPitch, support.pitch + heelSitPitch, dt * 14);
+              leg.footRoll = THREE.MathUtils.lerp(leg.footRoll, support.roll - leg.side * 0.08 * legBraceT, dt * 14);
+            } else {
+              const support = inPlaceBake
+                ? { ankleY: SOLE_HEIGHT, pitch: 0, roll: 0 }
+                : sampleFootSupport(leg.plantedWorld.x, leg.plantedWorld.z, mechYaw);
+              leg.plantedWorld.y = support.ankleY;
+              leg.currentAnkleWorld.copy(leg.plantedWorld);
+              leg.footPitch = THREE.MathUtils.lerp(leg.footPitch, support.pitch, dt * 14);
+              leg.footRoll = THREE.MathUtils.lerp(leg.footRoll, support.roll, dt * 14);
+            }
+          }
+
+          if (leg.currentAnkleWorld.y < lowestFootAnkleY) {
+            lowestFootAnkleY = leg.currentAnkleWorld.y;
+          }
+        });
+
+        const targetPelvisWorldY = lowestFootAnkleY + 2.32 + crouchOffset + bounceY;
+        pelvisGroup.position.y = targetPelvisWorldY - centerGroundH;
+        mechRoot.updateMatrixWorld(true);
+
+        legs.forEach((leg, idx) => {
+          solveReverseJointIK(leg, leg.currentAnkleWorld);
+          leg.footGroup.rotation.set(leg.footPitch, mechYaw, leg.footRoll);
+          leg.marker.position.copy(leg.currentAnkleWorld);
+
+          const phase = gaitPhase + idx * Math.PI;
+          const cycle = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          const load = (cycle >= Math.PI || gaitBlend < 0.1) ? 1.0 : 0.0;
+          const clawDig = currentMode === 'brace'
+            ? THREE.MathUtils.clamp((braceDeployTimer - 0.55) / 0.25, 0, 1)
+            : 0.0;
+
+          leg.frontToes.forEach((toe, tIdx) => {
+            const splay = (tIdx === 0 ? -1 : 1) * (0.05 * load + 0.12 * clawDig + 0.04 * shutEase);
+            const digPitch = load > 0.5 ? (0.18 * clawDig + 0.16 * shutEase) : 0.14;
+            toe.rotation.y = THREE.MathUtils.lerp(toe.rotation.y, splay, dt * 12);
+            toe.rotation.x = THREE.MathUtils.lerp(toe.rotation.x, digPitch, dt * 12);
+          });
+          const heelDigPitch = load > 0.5 ? (-0.24 * clawDig + 0.18 * shutEase) : -0.16;
+          leg.heelPivot.rotation.x = THREE.MathUtils.lerp(leg.heelPivot.rotation.x, heelDigPitch, dt * 12);
+
+          leg.hipBoot.scale.y = 1.0 + leg.hipJoint.rotation.x * 0.18;
+          leg.ankleBoot.scale.y = 1.0 - leg.footPitch * 0.25;
+
+          const pA = new THREE.Vector3();
+          const pB = new THREE.Vector3();
+          const dir = new THREE.Vector3();
+          leg.pistons.forEach(p => {
+            p.a.getWorldPosition(pA);
+            p.b.getWorldPosition(pB);
+            const len = pA.distanceTo(pB);
+            dir.subVectors(pB, pA).normalize();
+
+            p.meshPair.barrel.position.copy(pA).addScaledVector(dir, len * 0.28);
+            p.meshPair.barrel.scale.set(1, len * 0.56, 1);
+            p.meshPair.barrel.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+
+            p.meshPair.rod.position.copy(pA).addScaledVector(dir, len * 0.65);
+            p.meshPair.rod.scale.set(1, len * 0.68, 1);
+            p.meshPair.rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+          });
+        });
+
+        gunBarrels.forEach(b => {
+          b.mesh.parent.rotation.x = gPitch;
+          if (isFiring) {
+            const fireFreqMult = currentMode === 'brace' ? 1.25 : 1.0;
+            const shotWave = Math.sin(elapsed * b.freq * fireFreqMult + b.phase);
+            if (b.prevShotWave <= 0.86 && shotWave > 0.86) {
+              const recoilDamp = currentMode === 'brace' ? 0.52 : 1.0;
+              springTurretYaw.v += -b.side * (0.42 + Math.random() * 0.18) * recoilDamp;
+              springPelvisPitch.v -= 0.24 * recoilDamp;
+              springSurgeZ.v -= 0.38 * recoilDamp;
+              springBounceY.v -= 0.22 * recoilDamp;
+            }
+            b.prevShotWave = shotWave;
+
+            const recoil = shotWave > 0 ? Math.pow(shotWave, 3) * 0.16 : 0;
+            b.mesh.position.z = b.baseZ - recoil;
+            const fMat = b.flashGrp.children[0].material;
+            fMat.opacity = shotWave > 0.82 ? 0.92 : 0;
+            b.flashGrp.rotation.z = elapsed * 31 + b.phase;
+
+            if (!inPlaceBake && shotWave > 0.96 && Math.random() < 0.35) {
+              b.mesh.getWorldPosition(_tmpShellPos);
+              spawnParticle(
+                'shell',
+                _tmpShellPos,
+                new THREE.Vector3((Math.random() - 0.5) * 2.2, 1.8 + Math.random() * 1.1, (Math.random() - 0.5) * 2.2)
+              );
+            }
+          } else {
+            b.prevShotWave = 0;
+            b.mesh.position.z = THREE.MathUtils.lerp(b.mesh.position.z, b.baseZ, dt * 15);
+            b.flashGrp.children[0].material.opacity = 0;
+          }
+        });
+
+        mtoBlock.position.y = mtoBaseY + dieselVib;
+        mtoGrille.position.y = mtoGrilleBaseY + dieselVib * 1.35;
+        exhaustPipes.forEach((ep, epIdx) => {
+          const sign = epIdx === 0 ? 1 : -1;
+          ep.mesh.position.x = ep.baseX + dieselVibAlt * 1.4 * sign;
+          ep.mesh.position.y = ep.baseY + dieselVib * 1.2;
+        });
+        grabRails.forEach((gr, grIdx) => {
+          const sign = grIdx === 0 ? 1 : -1;
+          gr.mesh.position.x = gr.baseX + dieselVibAlt * 1.2 * sign;
+          gr.mesh.position.y = gr.baseY + dieselVib;
+        });
+
+        dynamicAmmoBelts.forEach(belt => {
+          const vib = (isFiring ? Math.sin(elapsed * 32) * 0.025 : Math.sin(gaitPhase * 2) * 0.015 * gaitBlend) + dieselVib * 2.2;
+          const p1Dyn = belt.p1.clone().add(new THREE.Vector3(belt.side * vib, -Math.abs(vib) * 0.6, vib));
+          const p2Dyn = belt.p2.clone().add(new THREE.Vector3(belt.side * vib * 0.7, 0, -vib));
+          belt.links.forEach(lk => {
+            cubicBezier(belt.p0, p1Dyn, p2Dyn, belt.p3, lk.t, _tmpPt);
+            cubicBezier(belt.p0, p1Dyn, p2Dyn, belt.p3, Math.min(1, lk.t + 0.04), _tmpNextPt);
+            lk.mesh.position.copy(_tmpPt);
+            lk.mesh.lookAt(_tmpNextPt);
+          });
+        });
+
+        const antX = springAntennaX.update(-Math.cos(gaitPhase * 2) * 0.055 * gaitBlend - (isFiring ? 0.028 : 0), dt) + dieselVib * 1.6;
+        const antZ = springAntennaZ.update(Math.sin(gaitPhase) * 0.068 * gaitBlend + targetTurnRate * 0.085, dt) + dieselVibAlt * 1.6;
+        antennaSegments.forEach((seg, idx) => {
+          const factor = 1 + idx * 0.13;
+          seg.rotation.x = antX * factor;
+          seg.rotation.z = antZ * factor;
+        });
+
+        lastSpeedKmh = (Math.abs(targetSpeed) * gaitBlend * 3.6);
+        lastIsFiring = isFiring;
+        return { dMechX, dMechZ, centerGroundH, sinY, cosY, isMoving, isFiring };
+      }
+
+      /* ==========================================
+         13. ЗАПЕКАНИЕ АНИМАЦИЙ И ЭКСПОРТ В .GLB
+         ========================================== */
+      function exportMechToGLB() {
+        if (typeof THREE.GLTFExporter === 'undefined') {
+          const box = document.getElementById('error-box');
+          box.classList.remove('hidden');
+          box.textContent = 'GLTFExporter не загрузился с CDN.';
+          return;
+        }
+
+        const statusEl = document.getElementById('export-status');
+        const btnEl = document.getElementById('btn-export-glb');
+        statusEl.classList.remove('hidden');
+        statusEl.textContent = 'Запекание 8 клипов (30 FPS)...';
+        btnEl.disabled = true;
+
+        setTimeout(() => {
+          const savedState = {
+            mode: currentMode,
+            mechX,
+            mechZ,
+            mechYaw,
+            gaitPhase,
+            gaitBlend,
+            braceAmount,
+            braceDeployTimer,
+            unbracingActive,
+            unbracePhase,
+            shutdownAmount,
+            dieselIdleFactor
+          };
+
+          mechRoot.name = 'Object316_Root';
+          pelvisGroup.name = 'Pelvis_Root';
+          turretPivot.name = 'Turret_Pivot';
+          hatchLid.name = 'Commander_Hatch';
+          mtoBlock.name = 'MTO_Cover';
+          mtoGrille.name = 'MTO_Grille';
+
+          const trackedNodes = [
+            { obj: pelvisGroup, pos: true, rot: true, scale: false },
+            { obj: turretPivot, pos: false, rot: true, scale: false },
+            { obj: hatchLid, pos: true, rot: true, scale: false },
+            { obj: mtoBlock, pos: true, rot: false, scale: false },
+            { obj: mtoGrille, pos: true, rot: false, scale: false }
+          ];
+
+          exhaustPipes.forEach((ep, i) => {
+            ep.mesh.name = `Exhaust_Pipe_${i}`;
+            trackedNodes.push({ obj: ep.mesh, pos: true, rot: false, scale: false });
+          });
+
+          grabRails.forEach((gr, i) => {
+            gr.mesh.name = `Grab_Rail_${i}`;
+            trackedNodes.push({ obj: gr.mesh, pos: true, rot: false, scale: false });
+          });
+
+          gunBarrels.forEach((b, i) => {
+            b.mesh.parent.name = `Gun_Elev_${i}`;
+            b.mesh.name = `Gun_Barrel_${i}`;
+            trackedNodes.push({ obj: b.mesh.parent, pos: false, rot: true, scale: false });
+            trackedNodes.push({ obj: b.mesh, pos: true, rot: false, scale: false });
+          });
+
+          dynamicAmmoBelts.forEach((belt, bIdx) => {
+            belt.links.forEach((lk, lIdx) => {
+              lk.mesh.name = `AmmoBelt_${bIdx}_Link_${lIdx}`;
+              trackedNodes.push({ obj: lk.mesh, pos: true, rot: true, scale: false });
+            });
+          });
+
+          antennaSegments.forEach((seg, sIdx) => {
+            seg.name = `Antenna_Seg_${sIdx}`;
+            trackedNodes.push({ obj: seg, pos: false, rot: true, scale: false });
+          });
+
+          legs.forEach((leg, lIdx) => {
+            leg.hipJoint.name = `Leg_${lIdx}_Hip`;
+            leg.kneeJoint.name = `Leg_${lIdx}_Knee`;
+            leg.hockJoint.name = `Leg_${lIdx}_Hock`;
+            leg.footGroup.name = `Leg_${lIdx}_Foot`;
+            leg.heelPivot.name = `Leg_${lIdx}_HeelClaw`;
+            trackedNodes.push(
+              { obj: leg.hipJoint, pos: false, rot: true, scale: false },
+              { obj: leg.kneeJoint, pos: false, rot: true, scale: false },
+              { obj: leg.hockJoint, pos: false, rot: true, scale: false },
+              { obj: leg.footGroup, pos: true, rot: true, scale: false },
+              { obj: leg.heelPivot, pos: false, rot: true, scale: false }
+            );
+            leg.frontToes.forEach((toe, tIdx) => {
+              toe.name = `Leg_${lIdx}_Toe_${tIdx}`;
+              trackedNodes.push({ obj: toe, pos: false, rot: true, scale: false });
+            });
+            leg.pistons.forEach((p, pIdx) => {
+              p.meshPair.barrel.name = `Leg_${lIdx}_PistonBarrel_${pIdx}`;
+              p.meshPair.rod.name = `Leg_${lIdx}_PistonRod_${pIdx}`;
+              trackedNodes.push(
+                { obj: p.meshPair.barrel, pos: true, rot: true, scale: true },
+                { obj: p.meshPair.rod, pos: true, rot: true, scale: true }
+              );
+            });
+          });
+
+          /* Временно переносим ступни, гидроцилиндры и скрываем тушь-обводки для чистого экспорта */
+          outlineMeshes.forEach(o => {
+            o.visible = false;
+          });
+          ikMarkers.forEach(m => {
+            m.visible = false;
+          });
+
+          legs.forEach(leg => {
+            mechRoot.add(leg.footGroup);
+            leg.pistons.forEach(p => {
+              mechRoot.add(p.meshPair.barrel);
+              mechRoot.add(p.meshPair.rod);
+            });
+          });
+
+          const clipSpecs = [
+            { name: 'March', mode: 'march', duration: 1.68 },
+            { name: 'Prowl', mode: 'prowl', duration: 2.46 },
+            { name: 'Turn', mode: 'turn', duration: 1.96 },
+            { name: 'Brace_AA', mode: 'brace', duration: 2.20 },
+            { name: 'Shutdown', mode: 'shutdown', duration: 2.40 },
+            { name: 'Fire', mode: 'fire', duration: 2.40 },
+            { name: 'Hit_React', mode: 'hit', duration: 1.30 },
+            { name: 'Idle', mode: 'idle', duration: 3.20 }
+          ];
+
+          const fps = 30;
+          const dtBake = 1 / fps;
+          const bakedClips = [];
+
+          clipSpecs.forEach(spec => {
+            currentMode = spec.mode === 'hit' ? 'idle' : spec.mode;
+            mechX = 0;
+            mechZ = 0;
+            mechYaw = 0;
+            gaitPhase = 0;
+            gaitBlend = (spec.mode === 'march' || spec.mode === 'prowl' || spec.mode === 'turn') ? 1.0 : 0.0;
+            braceAmount = 0;
+            braceDeployTimer = 0;
+            unbracingActive = false;
+            unbracePhase = 0;
+            shutdownAmount = 0;
+            dieselIdleFactor = 1.0;
+            hitStunTimer = 0;
+            hitGlitchTimer = 0;
+
+            legs.forEach(leg => {
+              const initW = new THREE.Vector3(leg.side * 1.50, SOLE_HEIGHT, 0);
+              leg.plantedWorld.copy(initW);
+              leg.stepStartWorld.copy(initW);
+              leg.stepEndWorld.copy(initW);
+              leg.currentAnkleWorld.copy(initW);
+              leg.wasSwing = false;
+            });
+
+            if (spec.mode !== 'brace' && spec.mode !== 'shutdown' && spec.mode !== 'hit') {
+              for (let w = 0; w < 24; w++) {
+                stepMechSimulation(dtBake, true);
+              }
+            }
+
+            const times = [];
+            const buffers = trackedNodes.map(() => ({ pos: [], rot: [], scale: [] }));
+            const totalFrames = Math.round(spec.duration * fps);
+
+            for (let f = 0; f <= totalFrames; f++) {
+              if (spec.mode === 'hit' && f === 3) {
+                applyArmorHit(new THREE.Vector3(0.55, 3.25, 1.35), new THREE.Vector3(-0.65, -0.2, -0.75), 1.45, 'БАШНЯ');
+              }
+              stepMechSimulation(dtBake, true);
+              times.push(f * dtBake);
+
+              trackedNodes.forEach((tn, idx) => {
+                if (tn.pos) {
+                  buffers[idx].pos.push(tn.obj.position.x, tn.obj.position.y, tn.obj.position.z);
+                }
+                if (tn.rot) {
+                  buffers[idx].rot.push(tn.obj.quaternion.x, tn.obj.quaternion.y, tn.obj.quaternion.z, tn.obj.quaternion.w);
+                }
+                if (tn.scale) {
+                  buffers[idx].scale.push(tn.obj.scale.x, tn.obj.scale.y, tn.obj.scale.z);
+                }
+              });
+            }
+
+            const tracks = [];
+            trackedNodes.forEach((tn, idx) => {
+              if (tn.pos) {
+                tracks.push(new THREE.VectorKeyframeTrack(`${tn.obj.name}.position`, times, buffers[idx].pos));
+              }
+              if (tn.rot) {
+                tracks.push(new THREE.QuaternionKeyframeTrack(`${tn.obj.name}.quaternion`, times, buffers[idx].rot));
+              }
+              if (tn.scale) {
+                tracks.push(new THREE.VectorKeyframeTrack(`${tn.obj.name}.scale`, times, buffers[idx].scale));
+              }
+            });
+
+            bakedClips.push(new THREE.AnimationClip(spec.name, spec.duration, tracks));
+          });
+
+          statusEl.textContent = 'Сборка бинарного .GLB...';
+
+          const exporter = new THREE.GLTFExporter();
+          exporter.parse(
+            mechRoot,
+            function(result) {
+              const blob = new Blob([result], { type: 'model/gltf-binary' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = 'object_316_project1952.glb';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+
+              legs.forEach(leg => {
+                scene.add(leg.footGroup);
+                leg.pistons.forEach(p => {
+                  scene.add(p.meshPair.barrel);
+                  scene.add(p.meshPair.rod);
+                });
+              });
+
+              currentMode = savedState.mode;
+              mechX = savedState.mechX;
+              mechZ = savedState.mechZ;
+              mechYaw = savedState.mechYaw;
+              gaitPhase = savedState.gaitPhase;
+              gaitBlend = savedState.gaitBlend;
+              braceAmount = savedState.braceAmount;
+              braceDeployTimer = savedState.braceDeployTimer;
+              unbracingActive = savedState.unbracingActive;
+              unbracePhase = savedState.unbracePhase;
+              shutdownAmount = savedState.shutdownAmount;
+              dieselIdleFactor = savedState.dieselIdleFactor;
+
+              updateOutlineVisibility();
+              ikMarkers.forEach(m => {
+                m.visible = showIKDebug;
+              });
+
+              statusEl.textContent = 'Готово! Скачан object_316_project1952.glb';
+              btnEl.disabled = false;
+              setTimeout(() => {
+                statusEl.classList.add('hidden');
+              }, 4500);
+            },
+            { binary: true, animations: bakedClips }
+          );
+        }, 40);
+      }
+
+      document.getElementById('btn-export-glb').addEventListener('click', exportMechToGLB);
+
+      /* ==========================================
+         14. ГЛАВНЫЙ ЦИКЛ РЕНДЕРА
+         ========================================== */
+      function animate() {
+        requestAnimationFrame(animate);
+        const dt = Math.min(clock.getDelta(), 0.05);
+
+        const stepInfo = stepMechSimulation(dt, false);
+
+        for (let i = tracers.length - 1; i >= 0; i--) {
+          const tr = tracers[i];
+          const stepDist = tr.speed * dt;
+          const remDist = tr.pos.distanceTo(tr.target);
+          if (stepDist >= remDist) {
+            applyArmorHit(tr.target, tr.dir, tr.power, tr.zoneLabel);
+            scene.remove(tr.mesh);
+            tracers.splice(i, 1);
+          } else {
+            tr.pos.addScaledVector(tr.dir, stepDist);
+            tr.mesh.position.copy(tr.pos);
+          }
+        }
+
+        if (impactFlashTimer > 0) {
+          impactFlashTimer = Math.max(0, impactFlashTimer - dt);
+          impactFlashLight.intensity = (impactFlashTimer / 0.14) * 5.0;
+        }
+        if (hitGlitchTimer > 0) {
+          const flicker = Math.sin(simTime * 85) > 0 ? 0.08 : 1.85;
+          opticLensMat.emissiveIntensity = flicker;
+          redSensorGlintMat.emissiveIntensity = flicker * 1.4;
+        } else {
+          opticLensMat.emissiveIntensity = THREE.MathUtils.lerp(opticLensMat.emissiveIntensity, isStudioMode ? 0.45 : 0.65, dt * 8);
+          redSensorGlintMat.emissiveIntensity = THREE.MathUtils.lerp(redSensorGlintMat.emissiveIntensity, 1.35, dt * 8);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life += dt;
+          if (p.life >= p.maxLife) {
+            scene.remove(p.mesh);
+            particles.splice(i, 1);
+            continue;
+          }
+          const t = p.life / p.maxLife;
+          if (p.type === 'shell') {
+            p.vel.y -= 9.8 * dt;
+            p.mesh.position.addScaledVector(p.vel, dt);
+            p.mesh.rotation.x += p.rotVel.x * dt;
+            p.mesh.rotation.y += p.rotVel.y * dt;
+          } else if (p.type === 'spark') {
+            p.vel.y -= 13.5 * dt;
+            p.mesh.position.addScaledVector(p.vel, dt);
+            p.mesh.lookAt(p.mesh.position.clone().add(p.vel));
+            p.mesh.material.opacity = 1 - t;
+          } else {
+            p.mesh.position.addScaledVector(p.vel, dt);
+            const s = 1 + t * (p.type === 'dust' ? 2.4 : 1.9);
+            p.mesh.scale.set(s, s, s);
+            p.mesh.material.opacity = (1 - t) * (p.type === 'dust' ? 0.46 : 0.38);
+          }
+        }
+
+        const smokeChance = ((stepInfo.isMoving ? 0.45 : 0.18) + dieselRevBoost * 0.48 + (currentMode === 'brace' ? 0.25 : 0)) * dieselIdleFactor;
+        if (!isStudioMode && Math.random() < smokeChance) {
+          const tip = exhaustTips[Math.floor(Math.random() * exhaustTips.length)];
+          tip.getWorldPosition(_tmpExhaustPos);
+          const puffCount = dieselRevBoost > 0.35 ? 2 : 1;
+          for (let sp = 0; sp < puffCount; sp++) {
+            spawnParticle(
+              'smoke',
+              _tmpExhaustPos,
+              new THREE.Vector3(
+                -stepInfo.sinY * (0.6 + dieselRevBoost * 0.7) + (Math.random() - 0.5) * 0.35,
+                0.85 + dieselRevBoost * 0.65 + Math.random() * 0.4,
+                -stepInfo.cosY * (0.6 + dieselRevBoost * 0.7) + (Math.random() - 0.5) * 0.35
+              )
+            );
+          }
+        }
+
+        if (pilotGroup.visible) {
+          const px = mechX + 2.45 * stepInfo.cosY + 1.55 * stepInfo.sinY;
+          const pz = mechZ - 2.45 * stepInfo.sinY + 1.55 * stepInfo.cosY;
+          pilotGroup.position.set(px, getGroundHeight(px, pz), pz);
+          pilotGroup.rotation.y = mechYaw - 0.55;
+        }
+
+        controls.target.x += stepInfo.dMechX;
+        controls.target.z += stepInfo.dMechZ;
+        controls.target.y = THREE.MathUtils.lerp(controls.target.y, stepInfo.centerGroundH + camTargetOffsetY, dt * 4);
+        camera.position.x += stepInfo.dMechX;
+        camera.position.z += stepInfo.dMechZ;
+
+        if (camLerpTimer > 0) {
+          camLerpTimer -= dt;
+          const desiredCam = new THREE.Vector3(
+            mechX + camPresetOffset.x * stepInfo.cosY + camPresetOffset.z * stepInfo.sinY,
+            stepInfo.centerGroundH + camPresetOffset.y,
+            mechZ - camPresetOffset.x * stepInfo.sinY + camPresetOffset.z * stepInfo.cosY
+          );
+          camera.position.lerp(desiredCam, dt * 6);
+        }
+
+        dirLight.position.set(mechX + 10, stepInfo.centerGroundH + 16, mechZ + 11);
+        dirLight.target.position.set(mechX, stepInfo.centerGroundH + 1.5, mechZ);
+        spotSearchlight.position.set(mechX + 5, stepInfo.centerGroundH + 8, mechZ + 6);
+        spotSearchlight.target.position.set(mechX, stepInfo.centerGroundH + 2.0, mechZ);
+
+        controls.update();
+        renderer.render(scene, camera);
+
+        const kmh = lastSpeedKmh.toFixed(1);
+        const statusSuffix = hitStatusLabel
+          ? ` • ${hitStatusLabel}`
+          : (unbracingActive
+            ? ' • СБОР ОПОР В КОЛЕЮ...'
+            : (lastIsFiring ? ' • ОГОНЬ 37-ММ!' : ''));
+        telemetryEl.textContent = `РЕЖИМ: ${modeNames[currentMode]} • СКОРОСТЬ: ${kmh} КМ/Ч${statusSuffix}`;
+      }
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    });
+  </script>
+</body>
+</html>
