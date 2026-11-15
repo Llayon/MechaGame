@@ -118,6 +118,11 @@ export function SovietMech({
     });
     const freshSim = createMechState();
     simRef.current = freshSim;
+    const zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (let i = 0; i < rig.kickupMesh.count; i++) {
+      rig.kickupMesh.setMatrixAt(i, zeroMat);
+    }
+    rig.kickupMesh.instanceMatrix.needsUpdate = true;
 
     rig.root.position.set(MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z);
     rig.root.rotation.set(0, MECH_SPAWN.yaw, 0);
@@ -171,7 +176,13 @@ export function SovietMech({
     const fxParent = worldFxRef.current;
     const combat = combatRef.current;
 
-    if (!driveMode && isSoftwareGl && sim.settledFrames >= 2 && sim.particles.length === 0) {
+    if (
+      !driveMode &&
+      isSoftwareGl &&
+      sim.settledFrames >= 2 &&
+      sim.particles.length === 0 &&
+      sim.kickupPool.activeCount === 0
+    ) {
       return;
     }
 
@@ -330,6 +341,7 @@ export function SovietMech({
       control,
       motion,
       ik.footImpacts,
+      ik.footLiftOffs,
       shots,
       isSoftwareGl,
       shotDistances,

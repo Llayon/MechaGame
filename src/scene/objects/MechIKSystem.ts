@@ -27,6 +27,7 @@ export function stepMechIK(
     let lowestFootAnkleY = Infinity;
     let anyInWater = surfCenter.inWater;
   const footImpacts: MechFootImpact[] = [];
+  const footLiftOffs: MechFootImpact[] = [];
 
     rig.legs.forEach((leg, idx) => {
       const phase = sim.gaitPhase + idx * Math.PI;
@@ -43,6 +44,7 @@ export function stepMechIK(
         if (!leg.wasSwing) {
           leg.stepStartWorld.copy(leg.plantedWorld);
           leg.wasSwing = true;
+          footLiftOffs.push({ index: idx, position: leg.plantedWorld.clone() });
         }
         const leadZ = stepLength * 0.52 * sim.gaitBlend;
         const targetWX = hipWorldX + sinY * leadZ;
@@ -182,5 +184,5 @@ export function stepMechIK(
         }
       });
     });
-  return { inWater: anyInWater, footImpacts };
+  return { inWater: anyInWater, footImpacts, footLiftOffs };
 }

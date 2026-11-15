@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MECH_L1, MECH_L2, MECH_L3, MECH_SCALE, MECH_SOLE_HEIGHT, MECH_SPAWN, getWalkableSurfaceY } from '../../map/mechKinematics';
 import type { createMechMaterials } from './mechMaterials';
+import { KICKUP_POOL_SIZE } from './TerrainKickup';
 
 export type MechMaterials = ReturnType<typeof createMechMaterials>;
 export interface LegRig {
@@ -1176,6 +1177,37 @@ export function buildMechModel(mats: MechMaterials) {
     const tracerGeom = trackG(new THREE.CylinderGeometry(0.065, 0.036, 2.8, 6));
     tracerGeom.rotateX(Math.PI / 2);
 
+    // Low-poly 8-triangle gravel/pebble InstancedMesh pool (single draw call)
+    const pebbleGeom = trackG(new THREE.OctahedronGeometry(0.135, 0));
+    const pebbleMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.9,
+      metalness: 0.04,
+      flatShading: true,
+    });
+    disposableMats.push(pebbleMat);
+    const kickupMesh = new THREE.InstancedMesh(pebbleGeom, pebbleMat, KICKUP_POOL_SIZE);
+    kickupMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    kickupMesh.frustumCulled = false;
+    kickupMesh.castShadow = false;
+    kickupMesh.receiveShadow = true;
+
+    const stonePalette = [
+      new THREE.Color(0x9e8971),
+      new THREE.Color(0x857869),
+      new THREE.Color(0xb6956f),
+      new THREE.Color(0x6b645c),
+      new THREE.Color(0x937b5f),
+    ];
+    const zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (let i = 0; i < KICKUP_POOL_SIZE; i++) {
+      kickupMesh.setMatrixAt(i, zeroMat);
+      kickupMesh.setColorAt(i, stonePalette[i % stonePalette.length]);
+    }
+    kickupMesh.instanceMatrix.needsUpdate = true;
+    if (kickupMesh.instanceColor) kickupMesh.instanceColor.needsUpdate = true;
+    worldFeetGroup.add(kickupMesh);
+
     return {
       root,
       worldFeetGroup,
@@ -1195,7 +1227,9 @@ export function buildMechModel(mats: MechMaterials) {
       dustGeom,
       shellGeom,
       tracerGeom,
+      kickupMesh,
       dispose: () => {
+        kickupMesh.dispose();
         disposableGeoms.forEach((g) => g.dispose());
         disposableMats.forEach((m) => m.dispose());
       },

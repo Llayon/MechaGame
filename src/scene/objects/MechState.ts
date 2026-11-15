@@ -1,5 +1,6 @@
 import type * as THREE from 'three';
 import { MECH_SPAWN, SmoothSpring } from '../../map/mechKinematics';
+import { KICKUP_POOL_SIZE, createKickupPool } from './TerrainKickup';
 
 /** Input commands supplied by keyboard, touch, or future AI systems. */
 export interface MechDriveInput {
@@ -40,7 +41,10 @@ export function createMechState() {
     currentOmega: 5.4,
     dieselRevBoost: 0,
     wasMoving: false,
+    prevTargetSpeed: 0,
     lastStepParticleTime: [0, 0],
+    lastLiftKickupTime: [0, 0],
+    lastDriftKickupTime: 0,
     springSwayX: new SmoothSpring(0, 6.2),
     springBounceY: new SmoothSpring(0, 8.5),
     springSurgeZ: new SmoothSpring(0, 6.5),
@@ -51,6 +55,7 @@ export function createMechState() {
     springAntennaX: new SmoothSpring(0, 7.5),
     springAntennaZ: new SmoothSpring(0, 7.5),
     particles: [] as ParticleItem[],
+    kickupPool: createKickupPool(KICKUP_POOL_SIZE),
     settledFrames: 0,
   };
 }

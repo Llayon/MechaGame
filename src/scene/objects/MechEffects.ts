@@ -7,6 +7,12 @@ import type { MechFootImpact } from './MechIKSystem';
 import type { MechShot } from './WeaponSystem';
 import { WATER_LEVEL } from '../../map/terrainMath';
 import { MECH_SCALE, MECH_SOLE_HEIGHT } from '../../map/mechKinematics';
+import {
+  computePebbleTransform,
+  spawnKickupBurst,
+  stepKickupPool,
+  type PebbleTransform,
+} from './TerrainKickup';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -33,26 +39,126 @@ const _tmpP1Dyn = new THREE.Vector3();
 const _tmpP2Dyn = new THREE.Vector3();
 const _tmpExhaustPos = new THREE.Vector3();
 const _tmpLook = new THREE.Vector3();
+const _kickPos = new THREE.Vector3();
+const _kickEuler = new THREE.Euler();
+const _kickQuat = new THREE.Quaternion();
+const _kickScale = new THREE.Vector3();
+const _kickMat4 = new THREE.Matrix4();
+const _kickZeroMat4 = new THREE.Matrix4().makeScale(0, 0, 0);
+const _pebbleTf: PebbleTransform = {
+  x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, sx: 0, sy: 0, sz: 0,
+};
 
-/** Cosmetic-only vibration, ammo feeds, antennae, smoke and particle lifecycle. */
+/** Cosmetic-only vibration, ammo feeds, antennae, smoke, kickup debris and particle lifecycle. */
 export function stepMechEffects(
   rig: MechRig, sim: MechState, fxParent: THREE.Group | null,
   mats: MechMaterials, dt: number, elapsed: number,
   driveMode: boolean, control: MechControl, motion: MechMotion,
-  footImpacts: readonly MechFootImpact[], shots: readonly MechShot[],
+  footImpacts: readonly MechFootImpact[],
+  footLiftOffs: readonly MechFootImpact[],
+  shots: readonly MechShot[],
   isSoftwareGl: boolean,
   shotDistances?: readonly number[],
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
 
-  // Translate IK contact events into dust and water splashes.
+  // 1) Parabolic gravel kickup on foot lift-off (4-5 pebbles thrown backward)
+  const moveSign = control.fwd < -0.05 ? -1 : 1;
+  const speedScale = control.isDashing
+    ? 1.45
+    : control.isSprinting
+      ? 1.2
+      : control.isCrouched
+        ? 0.72
+        : 0.96;
+
+  for (const lift of footLiftOffs) {
+    if (
+      elapsed - sim.lastLiftKickupTime[lift.index] <= 0.2 ||
+      sim.gaitBlend <= 0.16
+    ) {
+      continue;
+    }
+    const groundY = lift.position.y - MECH_SOLE_HEIGHT * MECH_SCALE;
+    if (groundY < WATER_LEVEL - 0.05) continue;
+    sim.lastLiftKickupTime[lift.index] = elapsed;
+
+    spawnKickupBurst(sim.kickupPool, {
+      originX: lift.position.x - sinY * 0.22 * moveSign,
+      originY: groundY + 0.08,
+      originZ: lift.position.z - cosY * 0.22 * moveSign,
+      dirX: -sinY * moveSign + cosY * control.turn * 0.28,
+      dirZ: -cosY * moveSign - sinY * control.turn * 0.28,
+      groundY,
+      count: isSoftwareGl ? 4 : 5,
+      speedScale,
+      coneSpreadRad: 0.58,
+    });
+  }
+
+  // 2) Braking / hard-turn drift gravel spray from grounded feet
+  const isBrakingHard =
+    Math.abs(sim.prevTargetSpeed) > 1.85 && Math.abs(control.targetSpeed) < 0.45;
+  const isHardTurn =
+    Math.abs(control.turn) > 0.65 && sim.gaitBlend > 0.35 && Math.abs(control.fwd) > 0.25;
+  if (
+    driveMode &&
+    dt > 0 &&
+    (isBrakingHard || isHardTurn) &&
+    elapsed - sim.lastDriftKickupTime > 0.18
+  ) {
+    sim.lastDriftKickupTime = elapsed;
+    const skidSign = Math.sign(sim.prevTargetSpeed || control.fwd || 1);
+    for (const leg of rig.legs) {
+      if (leg.wasSwing) continue;
+      const groundY = leg.plantedWorld.y - MECH_SOLE_HEIGHT * MECH_SCALE;
+      if (groundY < WATER_LEVEL - 0.05) continue;
+      spawnKickupBurst(sim.kickupPool, {
+        originX: leg.plantedWorld.x,
+        originY: groundY + 0.08,
+        originZ: leg.plantedWorld.z,
+        dirX: isBrakingHard
+          ? sinY * skidSign * 0.85 + cosY * control.turn * 0.55
+          : -sinY * skidSign * 0.5 + cosY * control.turn * 0.85,
+        dirZ: isBrakingHard
+          ? cosY * skidSign * 0.85 - sinY * control.turn * 0.55
+          : -cosY * skidSign * 0.5 - sinY * control.turn * 0.85,
+        groundY,
+        count: isBrakingHard ? 4 : 3,
+        speedScale: isBrakingHard ? 1.15 : 1.05,
+        coneSpreadRad: 0.82,
+      });
+    }
+  }
+  sim.prevTargetSpeed = THREE.MathUtils.lerp(
+    sim.prevTargetSpeed,
+    control.targetSpeed,
+    Math.min(1, dt * 8),
+  );
+
+  // 3) Translate IK contact events into dust, water splashes, and sprint/dash impact gravel
   for (const impact of footImpacts) {
+    const groundY = impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE;
+    const footInWater = groundY < WATER_LEVEL + 0.08;
+    if (!footInWater && (control.isSprinting || control.isDashing) && sim.gaitBlend > 0.25) {
+      spawnKickupBurst(sim.kickupPool, {
+        originX: impact.position.x,
+        originY: groundY + 0.06,
+        originZ: impact.position.z,
+        dirX: -sinY * moveSign,
+        dirZ: -cosY * moveSign,
+        groundY,
+        count: 3,
+        speedScale: control.isDashing ? 1.25 : 0.92,
+        coneSpreadRad: 1.35,
+      });
+    }
+
     if (!fxParent ||
         elapsed - sim.lastStepParticleTime[impact.index] <= 0.22 ||
         sim.gaitBlend <= 0.2 || sim.particles.length >= 75) continue;
     sim.lastStepParticleTime[impact.index] = elapsed;
-    const footInWater = impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE < WATER_LEVEL + 0.08;
     const puffCount = isSoftwareGl ? 3 : 5;
     for (let d = 0; d < puffCount; d++) {
       const ang = (d / puffCount) * Math.PI * 2;
@@ -64,7 +170,7 @@ export function stepMechEffects(
       const pm = new THREE.Mesh(rig.dustGeom, pMat);
       pm.position.set(
         impact.position.x + Math.cos(ang) * 0.35,
-        Math.max(WATER_LEVEL + 0.08, impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE + 0.1),
+        Math.max(WATER_LEVEL + 0.08, groundY + 0.1),
         impact.position.z + Math.sin(ang) * 0.35,
       );
       fxParent.add(pm);
@@ -261,5 +367,25 @@ export function stepMechEffects(
         p.mesh.scale.setScalar(s);
         (p.mat as THREE.MeshBasicMaterial).opacity = (1 - t) * p.initialOpacity;
       }
+    }
+
+    // Step and upload parabolic InstancedMesh gravel kickup transforms
+    const prevActive = sim.kickupPool.activeCount;
+    const nowActive = stepKickupPool(sim.kickupPool, dt);
+    if (nowActive > 0 || prevActive > 0) {
+      const slots = sim.kickupPool.slots;
+      for (let i = 0; i < slots.length; i++) {
+        if (computePebbleTransform(slots[i], _pebbleTf)) {
+          _kickPos.set(_pebbleTf.x, _pebbleTf.y, _pebbleTf.z);
+          _kickEuler.set(_pebbleTf.rx, _pebbleTf.ry, _pebbleTf.rz);
+          _kickQuat.setFromEuler(_kickEuler);
+          _kickScale.set(_pebbleTf.sx, _pebbleTf.sy, _pebbleTf.sz);
+          _kickMat4.compose(_kickPos, _kickQuat, _kickScale);
+          rig.kickupMesh.setMatrixAt(i, _kickMat4);
+        } else {
+          rig.kickupMesh.setMatrixAt(i, _kickZeroMat4);
+        }
+      }
+      rig.kickupMesh.instanceMatrix.needsUpdate = true;
     }
 }
