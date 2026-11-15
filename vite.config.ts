@@ -6,6 +6,8 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    // Keep the original root URL for local/AI Studio builds; GitHub Pages is a project site.
+    base: process.env.GITHUB_PAGES === 'true' ? '/MechaGame/' : '/',
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
