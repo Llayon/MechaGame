@@ -25,6 +25,7 @@ function paintTrunkColors(
 ): void {
   const pos = geo.getAttribute('position');
   const colors = new Float32Array(pos.count * 3);
+  const needleTips = new Float32Array(pos.count);
   const c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const t = Math.max(0, Math.min(1, pos.getY(i) / 0.72));
@@ -32,8 +33,10 @@ function paintTrunkColors(
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
     colors[i * 3 + 2] = c.b;
+    needleTips[i] = 0;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('aNeedleTip', new THREE.BufferAttribute(needleTips, 1));
 }
 
 function softenNormalsToSphere(
@@ -72,8 +75,8 @@ function softenNormalsToSphere(
 
 /**
  * Builds a single merged, vertex-colored procedural conifer geometry (trunk + 5 jagged
- * organically deformed bough tiers) with blended non-indexed faceted + spherical normals,
- * ready for 1-draw-call InstancedMesh rendering without alpha-testing overhead.
+ * organically deformed bough tiers) with blended non-indexed faceted + spherical normals
+ * and an `aNeedleTip` attribute for sunlit foliage rim translucency in 1 Draw Call.
  */
 export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
@@ -86,13 +89,13 @@ export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
   rawTrunk.dispose();
   trunk.deleteAttribute('uv');
   trunk.computeVertexNormals();
-  paintTrunkColors(trunk, new THREE.Color('#3d281a'), new THREE.Color('#5a3d29'));
+  paintTrunkColors(trunk, new THREE.Color('#392416'), new THREE.Color('#5a3d29'));
   parts.push(trunk);
 
-  // 2. Five multi-frequency jagged conifer bough tiers
-  const darkInnerGreen = new THREE.Color('#1f3b27');
-  const midPineGreen = new THREE.Color('#355d3a');
-  const tipGreen = new THREE.Color('#5c8b4d');
+  // 2. Five multi-frequency jagged conifer bough tiers with deepened inner crevice AO
+  const darkInnerGreen = new THREE.Color('#162c1e');
+  const midPineGreen = new THREE.Color('#325b38');
+  const tipGreen = new THREE.Color('#649651');
   const sphereCenter = new THREE.Vector3(0, 1.06, 0);
 
   CONE_TIERS.forEach((tier, idx) => {
@@ -111,22 +114,22 @@ export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
           const angle = Math.atan2(z, x);
           const lobes = Math.max(3, Math.floor(tier.segs / 2));
           const wave =
-            Math.sin(angle * lobes + idx * 1.73) * 0.72 +
-            Math.cos(angle * (lobes + 2) - idx * 2.41) * 0.28;
-          const radiusScale = 1.0 + wave * 0.25;
+            Math.sin(angle * lobes + idx * 1.73) * 0.70 +
+            Math.cos(angle * (lobes + 2) - idx * 2.41) * 0.30;
+          const radiusScale = 1.0 + wave * 0.30;
           pos.setX(i, x * radiusScale);
           pos.setZ(i, z * radiusScale);
-          pos.setY(i, y - Math.max(0, wave) * (tier.h * 0.14));
+          pos.setY(i, y - Math.max(0, wave) * (tier.h * 0.19));
         } else {
           // Slightly vault bottom cap center upward so undersides never bulge below bough rims
-          pos.setY(i, y + tier.h * 0.08);
+          pos.setY(i, y + tier.h * 0.09);
         }
       }
     }
 
     // Subtle organic trunk/crown offset per tier
-    const offsetX = Math.sin(idx * 2.3 + 0.4) * 0.022;
-    const offsetZ = Math.cos(idx * 1.9 + 1.1) * 0.018;
+    const offsetX = Math.sin(idx * 2.3 + 0.4) * 0.025;
+    const offsetZ = Math.cos(idx * 1.9 + 1.1) * 0.021;
     rawCone.translate(offsetX, tier.y, offsetZ);
 
     const nonIndexed = rawCone.toNonIndexed();
@@ -137,6 +140,7 @@ export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
     const nPos = nonIndexed.getAttribute('position');
     const nNorm = nonIndexed.getAttribute('normal');
     const colors = new Float32Array(nPos.count * 3);
+    const needleTips = new Float32Array(nPos.count);
 
     for (let i = 0; i < nPos.count; i++) {
       const vx = nPos.getX(i);
@@ -146,25 +150,34 @@ export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
 
       const radialRatio = Math.min(1, Math.hypot(vx - offsetX, vz - offsetZ) / tier.r);
       const heightRatio = Math.max(0, Math.min(1, vy / PINE_TREE_TOTAL_HEIGHT));
-      const undersideShade = normY < -0.25 ? 0.62 : 1.0;
+      const undersideShade = normY < -0.25 ? 0.54 : 1.0;
 
+      // Stronger inner-trunk AO darkening so branch overlaps read with crisp depth
+      const innerCrevice = 0.76 + 0.24 * Math.min(1, radialRatio * 1.45);
       const brightFactor = Math.min(
         1,
-        (radialRatio * 0.56 + heightRatio * 0.58) * undersideShade,
+        (radialRatio * 0.60 + heightRatio * 0.54) * undersideShade * innerCrevice,
       );
 
-      if (brightFactor < 0.45) {
-        tmpColor.copy(darkInnerGreen).lerp(midPineGreen, brightFactor / 0.45);
+      if (brightFactor < 0.42) {
+        tmpColor.copy(darkInnerGreen).lerp(midPineGreen, brightFactor / 0.42);
       } else {
-        tmpColor.copy(midPineGreen).lerp(tipGreen, (brightFactor - 0.45) / 0.55);
+        tmpColor.copy(midPineGreen).lerp(tipGreen, (brightFactor - 0.42) / 0.58);
       }
 
       colors[i * 3] = tmpColor.r;
       colors[i * 3 + 1] = tmpColor.g;
       colors[i * 3 + 2] = tmpColor.b;
+
+      const tipExposure = Math.max(
+        0,
+        Math.min(1, radialRatio * 0.74 + heightRatio * 0.34),
+      );
+      needleTips[i] = tipExposure * (normY < -0.25 ? 0.30 : 1.0);
     }
 
     nonIndexed.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    nonIndexed.setAttribute('aNeedleTip', new THREE.BufferAttribute(needleTips, 1));
     softenNormalsToSphere(nonIndexed, sphereCenter, 0.66);
     parts.push(nonIndexed);
   });

@@ -1,24 +1,65 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LightingPreset, SectorId } from './map/sectors';
 import { METERS_PER_UNIT } from './map/terrainMath';
-import {
-  MECH_SPAWN,
-  MechTelemetrySnapshot,
-} from './map/mechKinematics';
+import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
+import { clearMechInput, syncMechInputFromKeys } from './scene/objects/MechController';
+import {
+  buildCombatTelemetry,
+  createCombatState,
+  resetCombatState,
+} from './game/combatSimulation';
+import { combatAudio } from './game/combatAudio';
+import {
+  type DeviceLayoutMode,
+  type InputControlPreference,
+  readBrowserDeviceLayout,
+} from './utils/touchControls';
+
+function hasAutostartParam(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('autostart') === '1';
+}
 
 export default function App() {
+  const autostart = useRef(hasAutostartParam()).current;
+
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
   const [transitionNonce, setTransitionNonce] = useState(0);
+  const [resetNonce, setResetNonce] = useState(0);
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
-  const [driveMode, setDriveMode] = useState(false);
+  const [driveMode, setDriveMode] = useState(autostart);
+  const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [missionOutcome, setMissionOutcome] = useState<'victory' | 'defeat' | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showUnits, setShowUnits] = useState(true);
   const [showMist, setShowMist] = useState(true);
   const [showWireframeGrid, setShowWireframeGrid] = useState(false);
   const [hudHidden, setHudHidden] = useState(false);
+  const [inputPref, setInputPref] = useState<InputControlPreference>('auto');
+  const [layoutMode, setLayoutMode] = useState<DeviceLayoutMode>(() =>
+    readBrowserDeviceLayout('auto'),
+  );
+
+  useEffect(() => {
+    const refresh = () => {
+      setLayoutMode(readBrowserDeviceLayout(inputPref));
+    };
+    refresh();
+    window.addEventListener('resize', refresh);
+    window.addEventListener('orientationchange', refresh);
+    const mq =
+      typeof window.matchMedia === 'function' ? window.matchMedia('(pointer: coarse)') : null;
+    mq?.addEventListener?.('change', refresh);
+    return () => {
+      window.removeEventListener('resize', refresh);
+      window.removeEventListener('orientationchange', refresh);
+      mq?.removeEventListener?.('change', refresh);
+    };
+  }, [inputPref]);
 
   const mechPoseRef = useRef<MechTelemetrySnapshot>({
     x: MECH_SPAWN.x,
@@ -39,41 +80,55 @@ export default function App() {
     forward: 0,
     turn: 0,
     turretTurn: 0,
+    turretAimDelta: 0,
     fire: false,
+    heavyFire: false,
+    repair: false,
+    dash: false,
+    centerTurret: false,
     sprint: false,
     crouch: false,
   });
 
+  const combatRef = useRef(createCombatState(autostart));
+  const combatTelemetryRef = useRef(
+    buildCombatTelemetry(
+      combatRef.current,
+      MECH_SPAWN.x,
+      MECH_SPAWN.y,
+      MECH_SPAWN.z,
+      MECH_SPAWN.yaw,
+    ),
+  );
+
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
   const syncDriveInputFromKeys = useCallback(() => {
-    const keys = pressedKeysRef.current;
-    const input = driveInputRef.current;
-    input.forward =
-      (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) -
-      (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
-    input.turn =
-      (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) -
-      (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0);
-    input.turretTurn =
-      (keys.has('KeyQ') ? 1 : 0) - (keys.has('KeyE') ? 1 : 0);
-    input.fire = keys.has('Space');
-    input.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    syncMechInputFromKeys(pressedKeysRef.current, driveInputRef.current);
   }, []);
 
   const clearDriveInput = useCallback(() => {
-    pressedKeysRef.current.clear();
-    driveInputRef.current.forward = 0;
-    driveInputRef.current.turn = 0;
-    driveInputRef.current.turretTurn = 0;
-    driveInputRef.current.fire = false;
-    driveInputRef.current.sprint = false;
+    clearMechInput(pressedKeysRef.current, driveInputRef.current);
   }, []);
+
+  // Mirror game shell state onto document.body.dataset.state
+  useEffect(() => {
+    if (!driveMode) {
+      document.body.dataset.state = 'title';
+    } else if (missionOutcome !== null) {
+      document.body.dataset.state = 'gameover';
+    } else if (paused) {
+      document.body.dataset.state = 'paused';
+    } else {
+      document.body.dataset.state = 'playing';
+    }
+  }, [driveMode, paused, missionOutcome]);
 
   const handleSelectSector = useCallback(
     (id: SectorId) => {
       clearDriveInput();
       setDriveMode(false);
+      setPaused(false);
       setActiveSector(id);
       setTransitionNonce((n) => n + 1);
     },
@@ -83,42 +138,105 @@ export default function App() {
   const handleResetOverview = useCallback(() => {
     clearDriveInput();
     setDriveMode(false);
+    setPaused(false);
     setActiveSector('overview');
     setTransitionNonce((n) => n + 1);
   }, [clearDriveInput]);
 
+  const handleEnterDriveMode = useCallback(() => {
+    combatAudio.unlock();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    if (combatRef.current.missionStatus === 'idle') {
+      combatRef.current.missionStatus = 'playing';
+    }
+    setPaused(false);
+    setDriveMode(true);
+  }, []);
+
   const handleToggleDriveMode = useCallback(() => {
+    combatAudio.unlock();
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
     setDriveMode((prev) => {
       if (prev) {
         clearDriveInput();
+        setPaused(false);
         setTransitionNonce((n) => n + 1);
+      } else {
+        if (combatRef.current.missionStatus === 'idle') {
+          combatRef.current.missionStatus = 'playing';
+        }
+        setPaused(false);
       }
       return !prev;
     });
   }, [clearDriveInput]);
 
-  const handleEnterDriveMode = useCallback(() => {
+  const handleTogglePause = useCallback(() => {
+    if (!driveMode || missionOutcome !== null) return;
+    clearDriveInput();
+    setPaused((prev) => {
+      const next = !prev;
+      combatRef.current.missionStatus = next ? 'paused' : 'playing';
+      return next;
+    });
+  }, [driveMode, missionOutcome, clearDriveInput]);
+
+  const handleRestartMission = useCallback(() => {
+    combatAudio.unlock();
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
+    clearDriveInput();
+    driveInputRef.current.crouch = false;
+    resetCombatState(combatRef.current, 'playing');
+    setMissionOutcome(null);
+    setPaused(false);
     setDriveMode(true);
+    setResetNonce((n) => n + 1);
+  }, [clearDriveInput]);
+
+  const handleToggleMute = useCallback(() => {
+    setMuted(combatAudio.toggleMuted());
   }, []);
+
+  const handleMissionEnded = useCallback(
+    (outcome: 'victory' | 'defeat') => {
+      clearDriveInput();
+      setMissionOutcome(outcome);
+      setPaused(false);
+    },
+    [clearDriveInput],
+  );
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
+      combatAudio.unlock();
 
       if (e.code === 'KeyH') {
         setHudHidden((prev) => !prev);
         return;
       }
-      if (e.code === 'KeyM') {
+      if (e.code === 'KeyU' && !e.repeat) {
+        handleToggleMute();
+        return;
+      }
+      if (e.code === 'KeyM' && !e.repeat) {
         handleToggleDriveMode();
+        return;
+      }
+      if (e.code === 'KeyP' && driveMode && !e.repeat) {
+        handleTogglePause();
+        return;
+      }
+      if (e.code === 'KeyR' && driveMode && !e.repeat) {
+        handleRestartMission();
         return;
       }
       if (e.code === 'Escape') {
@@ -126,7 +244,7 @@ export default function App() {
         return;
       }
 
-      if (driveMode) {
+      if (driveMode && !paused && missionOutcome === null) {
         if (
           e.code === 'Space' ||
           e.code === 'ArrowUp' ||
@@ -138,6 +256,22 @@ export default function App() {
         }
         if (e.code === 'KeyC' && !e.repeat) {
           driveInputRef.current.crouch = !driveInputRef.current.crouch;
+          return;
+        }
+        if (e.code === 'KeyF' && !e.repeat) {
+          driveInputRef.current.heavyFire = true;
+          return;
+        }
+        if (e.code === 'KeyV' && !e.repeat) {
+          driveInputRef.current.repair = true;
+          return;
+        }
+        if (e.code === 'KeyX' && !e.repeat) {
+          driveInputRef.current.dash = true;
+          return;
+        }
+        if (e.code === 'KeyT' && !e.repeat) {
+          driveInputRef.current.centerTurret = true;
           return;
         }
         pressedKeysRef.current.add(e.code);
@@ -164,30 +298,61 @@ export default function App() {
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [driveMode, handleResetOverview, handleToggleDriveMode, syncDriveInputFromKeys, clearDriveInput]);
+  }, [
+    driveMode,
+    paused,
+    missionOutcome,
+    handleResetOverview,
+    handleToggleDriveMode,
+    handleTogglePause,
+    handleRestartMission,
+    handleToggleMute,
+    syncDriveInputFromKeys,
+    clearDriveInput,
+  ]);
+
+  const handleCycleInputPref = useCallback(() => {
+    setInputPref((prev) => {
+      if (prev === 'auto') return layoutMode.useTouchControls ? 'desktop' : 'touch';
+      if (prev === 'touch') return 'desktop';
+      return 'auto';
+    });
+  }, [layoutMode.useTouchControls]);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#091016]">
+    <main className="relative h-dvh w-screen overflow-hidden bg-[#091016]">
       <MapScene
         activeSector={activeSector}
         transitionNonce={transitionNonce}
+        resetNonce={resetNonce}
         lightingPreset={lightingPreset}
         driveMode={driveMode}
+        useTouchControls={layoutMode.useTouchControls}
+        paused={paused}
         mechPoseRef={mechPoseRef}
         driveInputRef={driveInputRef}
+        combatRef={combatRef}
+        combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
         showUnits={showUnits}
         showMist={showMist}
         showWireframeGrid={showWireframeGrid}
         onSelectSector={handleSelectSector}
         onEnterDriveMode={handleEnterDriveMode}
+        onMissionEnded={handleMissionEnded}
       />
       <TacticalHUD
         activeSector={activeSector}
         lightingPreset={lightingPreset}
         driveMode={driveMode}
+        paused={paused}
+        muted={muted}
+        missionOutcome={missionOutcome}
+        layoutMode={layoutMode}
+        inputPref={inputPref}
         mechPoseRef={mechPoseRef}
         driveInputRef={driveInputRef}
+        combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
         showUnits={showUnits}
         showMist={showMist}
@@ -197,6 +362,10 @@ export default function App() {
         onResetOverview={handleResetOverview}
         onChangeLighting={setLightingPreset}
         onToggleDriveMode={handleToggleDriveMode}
+        onTogglePause={handleTogglePause}
+        onRestartMission={handleRestartMission}
+        onToggleMute={handleToggleMute}
+        onCycleInputPref={handleCycleInputPref}
         onToggleMarkers={() => setShowMarkers((v) => !v)}
         onToggleUnits={() => setShowUnits((v) => !v)}
         onToggleMist={() => setShowMist((v) => !v)}

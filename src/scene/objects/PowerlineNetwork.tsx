@@ -1,26 +1,13 @@
 import { useMemo } from 'react';
-import { SCALE_X, SCALE_Z, getTerrainHeight } from '../../map/terrainMath';
-
-const DEFAULT_POLE_COORDS: ReadonlyArray<readonly [number, number]> = [
-  [-10.2 * SCALE_X, -9.2 * SCALE_Z],
-  [-8.8 * SCALE_X, -9.9 * SCALE_Z],
-  [-7.4 * SCALE_X, -10.6 * SCALE_Z],
-  [-6.0 * SCALE_X, -11.0 * SCALE_Z],
-  [-4.6 * SCALE_X, -11.3 * SCALE_Z],
-  [-3.2 * SCALE_X, -11.3 * SCALE_Z],
-  [-1.8 * SCALE_X, -11.3 * SCALE_Z],
-  [-0.3 * SCALE_X, -11.1 * SCALE_Z],
-  [1.2 * SCALE_X, -10.9 * SCALE_Z],
-  [2.7 * SCALE_X, -10.65 * SCALE_Z],
-  [4.2 * SCALE_X, -10.4 * SCALE_Z],
-];
+import { getTerrainHeight } from '../../map/terrainMath';
+import { DEFAULT_POWERLINE_POLE_COORDS } from '../../map/worldStructures';
 
 export interface PowerlineNetworkProps {
   coords?: ReadonlyArray<readonly [number, number]>;
 }
 
 export function PowerlineNetwork({
-  coords = DEFAULT_POLE_COORDS,
+  coords = DEFAULT_POWERLINE_POLE_COORDS,
 }: PowerlineNetworkProps) {
   const poles = useMemo(
     () => coords.map(([x, z]) => ({ x, y: getTerrainHeight(x, z), z })),

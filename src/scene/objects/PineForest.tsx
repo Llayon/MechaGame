@@ -1,36 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import {
-  ALL_ROADS,
-  BRIDGE_SPECS,
-  MAP_HALF_D,
-  MAP_HALF_W,
-  QUARRY_CENTER_X,
-  QUARRY_CENTER_Z,
-  ROAD_HALF_WIDTH,
-  VIADUCT_ELBOW,
-  WALKABLE_RAMPS,
-  WATER_LEVEL,
-  distToPolyline,
-  distToSegment,
-  fbm2D,
-  getAirfieldPadMask,
-  getAnalyticalTerrainNormal,
-  getBridgeSegments,
-  getCitadelPlateauMask,
-  getCitadelTerraceMask,
-  getRiverInfo,
-  getTerrainHeight,
-  getTerrainSlope,
-} from '../../map/terrainMath';
+import { getAnalyticalTerrainNormal } from '../../map/terrainMath';
+import { generatePineForestData } from '../../map/worldStructures';
 import { createContactShadowTexture } from '../textures';
-import {
-  ANTI_MECH_BARRICADE_NODES,
-  BUNKER_COORDS,
-  FLANK_EXCLUSION_ZONES,
-  WRECK_COORDS,
-} from '../zones/FlankCoverZone';
 import {
   PINE_TREE_TOTAL_HEIGHT,
   createUnifiedPineTreeGeometry,
@@ -61,49 +34,6 @@ function samplePineTint(t: number, out: THREE.Color): THREE.Color {
   const idx = Math.floor(scaled);
   const frac = scaled - idx;
   return out.copy(PINE_TINT_PALETTE[idx]).lerp(PINE_TINT_PALETTE[idx + 1], frac);
-}
-
-function seededRand(seed: number): number {
-  const n = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
-  return n - Math.floor(n);
-}
-
-function isClearForFoliage(x: number, z: number, extraMargin = 0): boolean {
-  if (Math.abs(x) > MAP_HALF_W - 4.5 || Math.abs(z) > MAP_HALF_D - 4.5) return false;
-  if (getAirfieldPadMask(x, z) > 0.14) return false;
-  if (getCitadelPlateauMask(x, z) > 0.12) return false;
-  if (getCitadelTerraceMask(x, z) > 0.25) return false;
-  if (Math.hypot(x - QUARRY_CENTER_X, z - QUARRY_CENTER_Z) < 17.5 + extraMargin) return false;
-  if (Math.hypot(x - VIADUCT_ELBOW[0], z - VIADUCT_ELBOW[1]) < 15.2 + extraMargin) return false;
-
-  const dRoad = Math.min(...ALL_ROADS.map((road) => distToPolyline(x, z, road)));
-  if (dRoad < ROAD_HALF_WIDTH + 2.9 + extraMargin) return false;
-
-  const nearBridge = BRIDGE_SPECS.some((b) =>
-    getBridgeSegments(b).some(
-      ([s, e]) => distToSegment(x, z, s[0], s[1], e[0], e[1]) < b.width * 0.65 + 3.0 + extraMargin,
-    ),
-  );
-  if (nearBridge) return false;
-
-  const nearRamp = WALKABLE_RAMPS.some(
-    (r) => distToSegment(x, z, r[0], r[1], r[2], r[3]) < r[4] + 2.2 + extraMargin,
-  );
-  if (nearRamp) return false;
-
-  if (BUNKER_COORDS.some((b) => Math.hypot(x - b.x, z - b.z) < 6.6 + extraMargin)) return false;
-  if (WRECK_COORDS.some((w) => Math.hypot(x - w.x, z - w.z) < 5.0 + extraMargin)) return false;
-  if (
-    FLANK_EXCLUSION_ZONES.some(
-      (zZone) => Math.hypot(x - zZone.x, z - zZone.z) < zZone.r + extraMargin,
-    )
-  ) {
-    return false;
-  }
-  if (ANTI_MECH_BARRICADE_NODES.some((n) => Math.hypot(x - n.x, z - n.z) < 4.4 + extraMargin)) {
-    return false;
-  }
-  return true;
 }
 
 const WIND_VERTEX_SWAY = `
@@ -167,9 +97,36 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
       roughness: 0.87,
       metalness: 0.02,
     });
-    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v1';
+    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v2';
     tMat.onBeforeCompile = (shader) => {
       injectTreeWindSway(shader, windTimeUniform.current);
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          attribute float aNeedleTip;
+          varying float vNeedleTip;`,
+        )
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          vNeedleTip = aNeedleTip;`,
+        );
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          varying float vNeedleTip;`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+          float needleFresnel = pow( clamp( 1.0 - abs( dot( normalize( vViewPosition ), normal ) ), 0.0, 1.0 ), 2.2 );
+          float tipTranslucency = needleFresnel * clamp( vNeedleTip, 0.0, 1.0 );
+          reflectedLight.directDiffuse *= 1.0 + tipTranslucency * 0.58;
+          reflectedLight.indirectDiffuse += diffuseColor.rgb * tipTranslucency * 0.24;`,
+        );
     };
 
     const tDepthMat = new THREE.MeshDepthMaterial({
@@ -248,199 +205,7 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
     contactShadowMaterial,
   ]);
 
-  const { trees, shrubs, logs, rootRocks } = useMemo(() => {
-    const treeList: Array<{
-      x: number;
-      y: number;
-      z: number;
-      heightScale: number;
-      widthScale: number;
-      rotY: number;
-      tiltX: number;
-      tiltZ: number;
-      tint: number;
-    }> = [];
-    const shrubList: Array<{
-      x: number;
-      y: number;
-      z: number;
-      sx: number;
-      sy: number;
-      sz: number;
-      rotY: number;
-      tint: number;
-    }> = [];
-    const logList: Array<{
-      x: number;
-      y: number;
-      z: number;
-      len: number;
-      rad: number;
-      rotY: number;
-      tiltX: number;
-      tint: number;
-    }> = [];
-    const rootRockList: Array<{
-      x: number;
-      y: number;
-      z: number;
-      sx: number;
-      sy: number;
-      sz: number;
-      rotY: number;
-      tint: number;
-    }> = [];
-
-    // 1. Discover sheltered lowland & foothill grove centers (leaving open windy heights rocky & bare)
-    const groveCenters: Array<{ x: number; z: number; radius: number; density: number }> = [];
-    for (let i = 0; i < 1800 && groveCenters.length < 44; i++) {
-      const gx = (seededRand(i * 7 + 11) * 2 - 1) * (MAP_HALF_W - 10.0);
-      const gz = (seededRand(i * 7 + 13) * 2 - 1) * (MAP_HALF_D - 10.0);
-
-      const river = getRiverInfo(gx, gz);
-      const gy = getTerrainHeight(gx, gz);
-      const gSlope = getTerrainSlope(gx, gz);
-
-      // Groves thrive in sheltered lowlands, valley pockets, and hill foothills (1.3..8.4 units)
-      if (river.channelMask > 0.04 || river.islandMask > 0.2) continue;
-      if (gy < WATER_LEVEL + 1.3 || gy > 8.4) continue;
-      if (gSlope > 0.42) continue;
-      if (!isClearForFoliage(gx, gz, 2.0)) continue;
-
-      // Favor foothill transitions & sheltered hollows via noise + spacing between groves
-      const moisture = fbm2D(gx * 0.025 + 4.2, gz * 0.025 - 2.1, 2);
-      if (moisture < 0.42) continue;
-      if (groveCenters.some((c) => Math.hypot(gx - c.x, gz - c.z) < 21.0)) continue;
-
-      const radius = 10.5 + seededRand(i * 11 + 3) * 10.5;
-      const density = 32 + Math.floor(seededRand(i * 13 + 5) * 40);
-      groveCenters.push({ x: gx, z: gz, radius, density });
-    }
-
-    // 2. Populate dense conifer groves + understory shrubs, fallen deadwood, and root boulders
-    groveCenters.forEach((grove, gIdx) => {
-      for (let k = 0; k < grove.density && treeList.length < 2250; k++) {
-        const seedBase = gIdx * 1009 + k * 29;
-        // Radial Gaussian-like bunching: denser near grove core, feathering at edges
-        const u1 = Math.max(0.02, seededRand(seedBase + 1));
-        const r = Math.pow(u1, 0.72) * grove.radius;
-        const ang = seededRand(seedBase + 2) * Math.PI * 2;
-        const x = grove.x + Math.cos(ang) * r;
-        const z = grove.z + Math.sin(ang) * r;
-
-        const river = getRiverInfo(x, z);
-        const y = getTerrainHeight(x, z);
-        const slope = getTerrainSlope(x, z);
-
-        // Strictly avoid water, steep rock cliffs, and windy high ridges (> 9.2 units)
-        if (river.channelMask > 0.06 || river.islandMask > 0.22 || y < WATER_LEVEL + 1.0) continue;
-        if (y > 9.2 || slope > 0.48) continue;
-        if (!isClearForFoliage(x, z)) continue;
-
-        const coreFactor = 1.0 - Math.min(1.0, r / grove.radius);
-        const baseScale =
-          (0.76 + coreFactor * 0.34 + seededRand(seedBase + 3) * 0.48) * 1.42;
-        const rotY = seededRand(seedBase + 4) * Math.PI * 2;
-        const tint = seededRand(seedBase + 5);
-        const heightScale = baseScale * (0.80 + seededRand(seedBase + 24) * 0.42);
-        const widthScale = baseScale * (0.85 + seededRand(seedBase + 25) * 0.32);
-        const tiltX = (seededRand(seedBase + 26) - 0.5) * 0.09;
-        const tiltZ = (seededRand(seedBase + 27) - 0.5) * 0.09;
-
-        treeList.push({
-          x,
-          y,
-          z,
-          heightScale,
-          widthScale,
-          rotY,
-          tiltX,
-          tiltZ,
-          tint,
-        });
-
-        // Understory shrubs tucked around tree bases & grove perimeter
-        if (shrubList.length < 1150 && seededRand(seedBase + 6) < 0.56) {
-          const sAng = seededRand(seedBase + 7) * Math.PI * 2;
-          const sDist = 0.45 + seededRand(seedBase + 8) * 1.35;
-          const sxPos = x + Math.cos(sAng) * sDist;
-          const szPos = z + Math.sin(sAng) * sDist;
-          const syPos = getTerrainHeight(sxPos, szPos);
-          if (syPos > WATER_LEVEL + 0.8 && getTerrainSlope(sxPos, szPos) < 0.52) {
-            const sBase = 0.48 + seededRand(seedBase + 9) * 0.52;
-            shrubList.push({
-              x: sxPos,
-              y: syPos,
-              z: szPos,
-              sx: sBase * (1.1 + seededRand(seedBase + 10) * 0.5),
-              sy: sBase * (0.62 + seededRand(seedBase + 11) * 0.35),
-              sz: sBase * (1.1 + seededRand(seedBase + 12) * 0.5),
-              rotY: seededRand(seedBase + 13) * Math.PI * 2,
-              tint: seededRand(seedBase + 14),
-            });
-          }
-        }
-
-        // Large boulders nestled at tree roots (especially near foothill edges)
-        if (rootRockList.length < 300 && seededRand(seedBase + 15) < (y > 5.0 ? 0.2 : 0.11)) {
-          const rAng = seededRand(seedBase + 16) * Math.PI * 2;
-          const rDist = 0.55 + seededRand(seedBase + 17) * 1.1;
-          const rxPos = x + Math.cos(rAng) * rDist;
-          const rzPos = z + Math.sin(rAng) * rDist;
-          const ryPos = getTerrainHeight(rxPos, rzPos);
-          if (ryPos > WATER_LEVEL + 0.6 && isClearForFoliage(rxPos, rzPos)) {
-            const bScale = 0.62 + seededRand(seedBase + 18) * 0.85;
-            rootRockList.push({
-              x: rxPos,
-              y: ryPos,
-              z: rzPos,
-              sx: bScale * (1.0 + seededRand(seedBase + 19) * 0.55),
-              sy: bScale * (0.65 + seededRand(seedBase + 20) * 0.35),
-              sz: bScale * (0.95 + seededRand(seedBase + 21) * 0.5),
-              rotY: seededRand(seedBase + 22) * Math.PI * 2,
-              tint: seededRand(seedBase + 23),
-            });
-          }
-        }
-      }
-
-      // Fallen deadwood logs & moss-covered windfall inside each grove
-      const logCount = 3 + Math.floor(seededRand(gIdx * 97 + 1) * 4);
-      for (let l = 0; l < logCount && logList.length < 220; l++) {
-        const lSeed = gIdx * 733 + l * 41;
-        const lr = Math.pow(seededRand(lSeed + 1), 0.8) * grove.radius * 0.92;
-        const lang = seededRand(lSeed + 2) * Math.PI * 2;
-        const lx = grove.x + Math.cos(lang) * lr;
-        const lz = grove.z + Math.sin(lang) * lr;
-        const ly = getTerrainHeight(lx, lz);
-        if (ly < WATER_LEVEL + 1.0 || ly > 9.0 || getTerrainSlope(lx, lz) > 0.38) continue;
-        if (!isClearForFoliage(lx, lz)) continue;
-
-        const rotY = seededRand(lSeed + 3) * Math.PI * 2;
-        const hAhead = getTerrainHeight(lx + Math.cos(rotY) * 1.1, lz + Math.sin(rotY) * 1.1);
-        const hBehind = getTerrainHeight(lx - Math.cos(rotY) * 1.1, lz - Math.sin(rotY) * 1.1);
-        const tiltX = Math.atan2(hAhead - hBehind, 2.2);
-
-        logList.push({
-          x: lx,
-          y: ly,
-          z: lz,
-          len: 1.85 + seededRand(lSeed + 4) * 1.55,
-          rad: 0.13 + seededRand(lSeed + 5) * 0.08,
-          rotY,
-          tiltX,
-          tint: seededRand(lSeed + 6),
-        });
-      }
-    });
-
-    return {
-      trees: treeList,
-      shrubs: shrubList,
-      logs: logList,
-      rootRocks: rootRockList,
-    };
-  }, []);
+  const { trees, shrubs, logs, rootRocks } = useMemo(() => generatePineForestData(), []);
 
   useEffect(() => {
     const tMesh = treeRef.current;

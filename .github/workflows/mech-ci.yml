@@ -1,0 +1,16 @@
+name: MechaGame checks
+on:
+  push:
+    branches: [main, 'refactor/**']
+  pull_request:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run test
+      - run: bun run build

@@ -23,6 +23,7 @@ import {
   getWalkableSurfaceY,
   sampleMechFootSupport,
   solveReverseJointIKAngles,
+  worldSpeedToKmh,
 } from './mechKinematics';
 
 test('Mech spawns cleanly on Airfield concrete apron at calibrated ~13 m height scale', () => {
@@ -56,6 +57,24 @@ test('getWalkableSurfaceY tracks bridges, island deck, serpentine viaduct bastio
 
   const citadelSurf = getWalkableSurfaceY(CITADEL_CENTER_X, CITADEL_CENTER_Z);
   assert.ok(citadelSurf.y > 18.8);
+
+  // Passing underneath a bridge with low currentY must NOT snap Mech up onto overhead deck
+  const underBridgeSurf = getWalkableSurfaceY(bridgeMidX, bridgeMidZ, 0.0);
+  assert.equal(underBridgeSurf.onBridge, false);
+  assert.equal(underBridgeSurf.inWater, true);
+  assert.ok(underBridgeSurf.y < 0.0, `expected riverbed below water, got ${underBridgeSurf.y}`);
+
+  // Walking along the bridge deck keeps Mech on the bridge
+  const onDeckSurf = getWalkableSurfaceY(bridgeMidX, bridgeMidZ, BRIDGE_SPECS[1].deckY + 0.5);
+  assert.equal(onDeckSurf.onBridge, true);
+});
+
+test('worldSpeedToKmh converts world units/sec into accurate km/h', () => {
+  const walkKmh = worldSpeedToKmh(2.35);
+  const sprintKmh = worldSpeedToKmh(3.45);
+  assert.ok(Math.abs(walkKmh - 2.35 * METERS_PER_UNIT * 3.6) < 1e-6);
+  assert.ok(walkKmh > 28 && walkKmh < 36, `expected realistic heavy mech walk km/h, got ${walkKmh}`);
+  assert.ok(sprintKmh > 42 && sprintKmh < 52, `expected realistic heavy mech sprint km/h, got ${sprintKmh}`);
 });
 
 test('3-joint reverse-joint IK solver reaches foot targets accurately without NaNs', () => {

@@ -11,11 +11,13 @@ import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader } from './heightFog';
 import { MechDriveInput, SovietMech } from './objects/SovietMech';
+import { CombatActors } from './objects/CombatActors';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
 } from '../map/mechKinematics';
+import type { CombatSimulationState, CombatTelemetrySnapshot } from '../game/combatTypes';
 
 installHeightFogShader();
 
@@ -163,9 +165,14 @@ function syncShadowFrustum(
 interface CameraRigProps {
   activeSector: SectorId;
   transitionNonce: number;
+  resetNonce: number;
   lightingPreset: LightingPreset;
   driveMode: boolean;
+  useTouchControls?: boolean;
+  paused: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
+  driveInputRef: React.MutableRefObject<MechDriveInput>;
+  combatRef: React.MutableRefObject<CombatSimulationState>;
   isSoftwareGl: boolean;
   sunLightRef: React.RefObject<THREE.DirectionalLight | null>;
   sunPos: readonly [number, number, number];
@@ -175,9 +182,14 @@ interface CameraRigProps {
 function CameraRig({
   activeSector,
   transitionNonce,
+  resetNonce,
   lightingPreset,
   driveMode,
+  useTouchControls = false,
+  paused,
   mechPoseRef,
+  driveInputRef,
+  combatRef,
   isSoftwareGl,
   sunLightRef,
   sunPos,
@@ -212,24 +224,61 @@ function CameraRig({
   }, [sunPos, shadowMapSize, camera, sunLightRef, invalidate]);
 
   useEffect(() => {
-    if (!isSoftwareGl || !driveMode) return;
+    if (!isSoftwareGl || !driveMode || paused) return;
     let cancelled = false;
     let timerId = 0;
-    let rafId = 0;
-    const scheduleNext = () => {
+    let idleTicksRemaining = 2;
+
+    const scheduleStep = (delayMs: number) => {
+      window.clearTimeout(timerId);
       timerId = window.setTimeout(() => {
         if (cancelled) return;
         invalidate();
-        rafId = window.requestAnimationFrame(scheduleNext);
-      }, 450);
+        const d = driveInputRef.current;
+        const c = combatRef.current;
+        const active =
+          d.forward !== 0 ||
+          d.turn !== 0 ||
+          d.turretTurn !== 0 ||
+          d.fire ||
+          d.heavyFire ||
+          d.repair ||
+          d.dash ||
+          d.centerTurret ||
+          Math.abs(d.turretAimDelta ?? 0) > 0.001 ||
+          c.projectiles.length > 0 ||
+          c.heavyBeams.length > 0 ||
+          c.dashTimer > 0 ||
+          c.hitstopTimer > 0;
+        if (active) {
+          idleTicksRemaining = 1;
+          scheduleStep(220);
+        } else if (idleTicksRemaining > 0) {
+          idleTicksRemaining -= 1;
+          scheduleStep(280);
+        }
+      }, delayMs);
     };
-    scheduleNext();
+
+    const wake = () => {
+      if (cancelled) return;
+      idleTicksRemaining = 1;
+      scheduleStep(50);
+    };
+
+    window.addEventListener('keydown', wake);
+    window.addEventListener('keyup', wake);
+    window.addEventListener('pointerdown', wake);
+    window.addEventListener('pointerup', wake);
     return () => {
       cancelled = true;
       window.clearTimeout(timerId);
-      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('keydown', wake);
+      window.removeEventListener('keyup', wake);
+      window.removeEventListener('pointerdown', wake);
+      window.removeEventListener('pointerup', wake);
     };
-  }, [isSoftwareGl, driveMode, invalidate]);
+  }, [isSoftwareGl, driveMode, paused, invalidate, driveInputRef, combatRef]);
 
   // Handle entering/exiting Drive Mode vs Sector Overview fly-to
   useEffect(() => {
@@ -242,15 +291,19 @@ function CameraRig({
 
       const sinY = Math.sin(m.yaw);
       const cosY = Math.cos(m.yaw);
-      const chaseDist = 14.5;
-      const sideOffset = 2.4;
+      const chaseDist = 13.8;
+      const sideOffset = 2.45;
       const desiredX = m.x - sinY * chaseDist + cosY * sideOffset;
       const desiredZ = m.z - cosY * chaseDist - sinY * sideOffset;
       const groundAtCam = getWalkableSurfaceY(desiredX, desiredZ).y;
-      const desiredY = Math.max(m.y + 5.4, groundAtCam + 1.8);
+      const desiredY = Math.max(m.y + 5.7, groundAtCam + 1.8);
 
       _goalPos.set(desiredX, desiredY, desiredZ);
-      _goalTarget.set(m.x, m.y + 2.35, m.z);
+      _goalTarget.set(
+        m.x + sinY * 4.5 - cosY * 1.45,
+        m.y + 2.95,
+        m.z + cosY * 4.5 + sinY * 1.45,
+      );
 
       if (isSoftwareGl || !wasDrive) {
         if (isSoftwareGl) {
@@ -306,6 +359,7 @@ function CameraRig({
     driveMode,
     activeSector,
     transitionNonce,
+    resetNonce,
     camera,
     invalidate,
     isSoftwareGl,
@@ -327,10 +381,16 @@ function CameraRig({
       lastTrackedMechPos.current.set(m.x, m.y, m.z);
 
       if (transitioningRef.current) {
+        const sinY = Math.sin(m.yaw);
+        const cosY = Math.cos(m.yaw);
         _goalPos.x += dx;
         _goalPos.y += dy;
         _goalPos.z += dz;
-        _goalTarget.set(m.x, m.y + 2.35, m.z);
+        _goalTarget.set(
+          m.x + sinY * 4.5 - cosY * 1.45,
+          m.y + 2.95,
+          m.z + cosY * 4.5 + sinY * 1.45,
+        );
 
         const lambda = 6.5;
         camera.position.x = THREE.MathUtils.damp(camera.position.x, _goalPos.x, lambda, delta);
@@ -343,17 +403,40 @@ function CameraRig({
         if (camera.position.distanceTo(_goalPos) < 0.25) {
           transitioningRef.current = false;
         }
+      } else if (useTouchControls) {
+        // Mobile touch drive: auto-follow behind turret aim axis so touch-drag aiming stays centered
+        const lookYaw = m.yaw + m.turretYaw;
+        const sinL = Math.sin(lookYaw);
+        const cosL = Math.cos(lookYaw);
+        const chaseDist = 14.2;
+        const sideOffset = 1.25;
+        const desiredX = m.x - sinL * chaseDist + cosL * sideOffset;
+        const desiredZ = m.z - cosL * chaseDist - sinL * sideOffset;
+        const desiredY = m.y + 5.7;
+        const targetX = m.x + sinL * 5.2 - cosL * 0.45;
+        const targetZ = m.z + cosL * 5.2 + sinL * 0.45;
+        const followLambda = isSoftwareGl ? 18.0 : 6.0;
+        camera.position.x = THREE.MathUtils.damp(camera.position.x, desiredX, followLambda, delta);
+        camera.position.y = THREE.MathUtils.damp(camera.position.y, desiredY, followLambda, delta);
+        camera.position.z = THREE.MathUtils.damp(camera.position.z, desiredZ, followLambda, delta);
+        controls.target.x = THREE.MathUtils.damp(controls.target.x, targetX, followLambda, delta);
+        controls.target.y = THREE.MathUtils.damp(controls.target.y, m.y + 2.9, 8.0, delta);
+        controls.target.z = THREE.MathUtils.damp(controls.target.z, targetZ, followLambda, delta);
       } else {
         camera.position.x += dx;
         camera.position.y += dy;
         camera.position.z += dz;
         controls.target.x += dx;
-        controls.target.y = THREE.MathUtils.damp(controls.target.y, m.y + 2.35, 8.0, delta);
+        controls.target.y = THREE.MathUtils.damp(controls.target.y, m.y + 2.95, 8.0, delta);
         controls.target.z += dz;
       }
 
       // Prevent chase camera from clipping underneath terrain or river water
-      const camGround = getWalkableSurfaceY(camera.position.x, camera.position.z).y;
+      const camGround = getWalkableSurfaceY(
+        camera.position.x,
+        camera.position.z,
+        m.onBridge ? undefined : m.y + 1.5,
+      ).y;
       const minCamY = Math.max(1.2, camGround + 1.35);
       if (camera.position.y < minCamY) {
         camera.position.y = THREE.MathUtils.damp(camera.position.y, minCamY, 12.0, delta);
@@ -362,6 +445,15 @@ function CameraRig({
       programmaticUpdateRef.current = true;
       controls.update();
       programmaticUpdateRef.current = false;
+
+      // Apply decaying quadratic trauma camera shake during heavy impacts/explosions
+      const shake = combatRef.current.trauma * combatRef.current.trauma;
+      if (shake > 0.002 && !isSoftwareGl) {
+        const t = combatRef.current.elapsedSec * 42;
+        camera.position.x += Math.sin(t * 1.1) * shake * 0.38;
+        camera.position.y += Math.cos(t * 1.37) * shake * 0.28;
+      }
+
       syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
       return;
     }
@@ -399,6 +491,7 @@ function CameraRig({
     <OrbitControls
       ref={controlsRef}
       makeDefault
+      enabled={!driveMode || !useTouchControls}
       enableDamping={!isSoftwareGl}
       dampingFactor={0.07}
       minDistance={driveMode ? 6.5 : 18}
@@ -428,31 +521,43 @@ function CameraRig({
 export interface MapSceneProps {
   activeSector: SectorId;
   transitionNonce: number;
+  resetNonce: number;
   lightingPreset: LightingPreset;
   driveMode: boolean;
+  useTouchControls?: boolean;
+  paused: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   driveInputRef: React.MutableRefObject<MechDriveInput>;
+  combatRef: React.MutableRefObject<CombatSimulationState>;
+  combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   showMarkers: boolean;
   showUnits: boolean;
   showMist: boolean;
   showWireframeGrid: boolean;
   onSelectSector: (id: SectorId) => void;
   onEnterDriveMode: () => void;
+  onMissionEnded: (outcome: 'victory' | 'defeat') => void;
 }
 
 export function MapScene({
   activeSector,
   transitionNonce,
+  resetNonce,
   lightingPreset,
   driveMode,
+  useTouchControls = false,
+  paused,
   mechPoseRef,
   driveInputRef,
+  combatRef,
+  combatTelemetryRef,
   showMarkers,
   showUnits,
   showMist,
   showWireframeGrid,
   onSelectSector,
   onEnterDriveMode,
+  onMissionEnded,
 }: MapSceneProps) {
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
@@ -537,9 +642,14 @@ export function MapScene({
         <CameraRig
           activeSector={activeSector}
           transitionNonce={transitionNonce}
+          resetNonce={resetNonce}
           lightingPreset={lightingPreset}
           driveMode={driveMode}
+          useTouchControls={useTouchControls}
+          paused={paused}
           mechPoseRef={mechPoseRef}
+          driveInputRef={driveInputRef}
+          combatRef={combatRef}
           isSoftwareGl={isSoftwareGl}
           sunLightRef={sunLightRef}
           sunPos={lightCfg.keyPos}
@@ -561,17 +671,30 @@ export function MapScene({
 
         <SovietMech
           driveMode={driveMode}
+          paused={paused}
+          resetNonce={resetNonce}
           lightingPreset={lightingPreset}
           isSoftwareGl={isSoftwareGl}
           mechPoseRef={mechPoseRef}
           driveInputRef={driveInputRef}
+          combatRef={combatRef}
+          combatTelemetryRef={combatTelemetryRef}
           onSelectMech={onEnterDriveMode}
+          onMissionEnded={onMissionEnded}
+        />
+
+        <CombatActors
+          combatRef={combatRef}
+          driveMode={driveMode}
+          isSoftwareGl={isSoftwareGl}
         />
 
         <FoliageAndUnits
           showUnits={showUnits}
           showMist={showMist}
           isSoftwareGl={isSoftwareGl}
+          driveMode={driveMode}
+          mechPoseRef={mechPoseRef}
         />
 
         <VolumetricSunShafts

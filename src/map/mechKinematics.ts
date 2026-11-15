@@ -11,6 +11,7 @@ import {
   ISLAND_DECK_RADIUS,
   MAP_HALF_D,
   MAP_HALF_W,
+  METERS_PER_UNIT,
   WATER_LEVEL,
   clamp,
   getBridgeDeckYAt,
@@ -18,6 +19,11 @@ import {
   getTerrainSlope,
   lerp,
 } from './terrainMath';
+import { MECH_COLLISION_RADIUS, resolveWorldObstacles } from './worldColliders';
+
+export function worldSpeedToKmh(unitsPerSec: number): number {
+  return unitsPerSec * METERS_PER_UNIT * 3.6;
+}
 
 // Calibrated so raw Mech height (~4.44) * 0.80 = 3.55 world units (~13.3 m tall, matching 8-14 m arena scale)
 export const MECH_SCALE = 0.8;
@@ -53,8 +59,14 @@ const CITADEL_BASE_Y = getTerrainHeight(CITADEL_CENTER_X, CITADEL_CENTER_Z);
 /**
  * Exact walkable surface elevation at world (x, z) across terrain, concrete pads,
  * riverbeds/ramps, and all 4 bridges (including the 2-flight serpentine viaduct).
+ * When currentY is provided, elevated bridge decks above step-up reach are skipped
+ * so units passing underneath bridges do not snap upward onto overhead spans.
  */
-export function getWalkableSurfaceY(x: number, z: number): {
+export function getWalkableSurfaceY(
+  x: number,
+  z: number,
+  currentY?: number,
+): {
   y: number;
   onBridge: boolean;
   inWater: boolean;
@@ -66,8 +78,11 @@ export function getWalkableSurfaceY(x: number, z: number): {
   for (let i = 0; i < BRIDGE_SPECS.length; i++) {
     const deckY = getBridgeDeckYAt(BRIDGE_SPECS[i], x, z);
     if (deckY !== null && deckY > y - 0.35) {
-      y = Math.max(y, deckY);
-      onBridge = true;
+      const withinStepReach = currentY === undefined || currentY >= deckY - 1.35;
+      if (withinStepReach) {
+        y = Math.max(y, deckY);
+        onBridge = true;
+      }
     }
   }
 
@@ -125,6 +140,7 @@ export function sampleMechFootSupport(
   wz: number,
   yaw: number,
   scale = MECH_SCALE,
+  referenceY?: number,
 ): FootSupportSample {
   const sinY = Math.sin(yaw);
   const cosY = Math.cos(yaw);
@@ -143,7 +159,7 @@ export function sampleMechFootSupport(
     const lz = FOOT_SAMPLE_OFFSETS[i][1] * scale;
     const px = wx + lx * cosY + lz * sinY;
     const pz = wz - lx * sinY + lz * cosY;
-    const surf = getWalkableSurfaceY(px, pz);
+    const surf = getWalkableSurfaceY(px, pz, referenceY);
     const gh = surf.y;
     if (surf.inWater) anyInWater = true;
     if (surf.onBridge) anyOnBridge = true;
@@ -277,29 +293,39 @@ export class SmoothSpring {
 }
 
 /**
- * Keeps the Mech inside Sector 7 playable perimeter and resists climbing near-vertical
- * mountain cliff walls unless crossing a bridge/viaduct.
+ * Keeps the Mech inside Sector 7 playable perimeter, resolves sliding collisions against
+ * structures/cover/trees/rocks, and resists climbing near-vertical cliffs unless on a bridge.
  */
 export function clampMechPosition(
   nextX: number,
   nextZ: number,
   prevX: number,
   prevZ: number,
+  currentY?: number,
 ): { x: number; z: number } {
   const boundX = MAP_HALF_W - 10;
   const boundZ = MAP_HALF_D - 10;
-  const cx = clamp(nextX, -boundX, boundX);
-  const cz = clamp(nextZ, -boundZ, boundZ);
+  const prevSurf = getWalkableSurfaceY(prevX, prevZ, currentY);
+  const refY = currentY ?? prevSurf.y;
 
-  const surf = getWalkableSurfaceY(cx, cz);
+  let cx = clamp(nextX, -boundX, boundX);
+  let cz = clamp(nextZ, -boundZ, boundZ);
+
+  const obs = resolveWorldObstacles(cx, cz, refY, MECH_COLLISION_RADIUS);
+  cx = clamp(obs.x, -boundX, boundX);
+  cz = clamp(obs.z, -boundZ, boundZ);
+
+  const surf = getWalkableSurfaceY(cx, cz, refY);
   if (!surf.onBridge) {
     const slope = getTerrainSlope(cx, cz);
-    const prevSurf = getWalkableSurfaceY(prevX, prevZ);
     // Allow downhill escape from steep ground, block climbing sheer >47 deg rock cliffs
     if (slope > 1.08 && surf.y > prevSurf.y + 0.05) {
+      const slidX = lerp(prevX, cx, 0.12);
+      const slidZ = lerp(prevZ, cz, 0.12);
+      const reObs = resolveWorldObstacles(slidX, slidZ, refY, MECH_COLLISION_RADIUS);
       return {
-        x: lerp(prevX, cx, 0.12),
-        z: lerp(prevZ, cz, 0.12),
+        x: clamp(reObs.x, -boundX, boundX),
+        z: clamp(reObs.z, -boundZ, boundZ),
       };
     }
   }

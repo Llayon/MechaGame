@@ -7,10 +7,25 @@ import {
   ROCKY_WATER_RAMPS,
   getTerrainHeight,
 } from '../../map/terrainMath';
+import {
+  ANTI_MECH_BARRICADE_NODES,
+  BUNKER_COORDS,
+  FLANK_EXCLUSION_ZONES,
+  HQ_FOREFIELD_CONVOYS,
+  HQ_FOREFIELD_ROCK_RIDGES,
+  HQ_FOREFIELD_SCREENS,
+  LEFT_FUEL_DEPOT_POS,
+  LEFT_OUTPOST_POS,
+  RIVER_BEND_LEDGES,
+  RIVER_BEND_PIER_POS,
+  SOUTH_FLANK_POWERLINE,
+  WEST_FLANK_POWERLINE,
+  WRECK_COORDS,
+} from '../../map/worldStructures';
 import { BunkerPillbox } from '../objects/BunkerPillbox';
 import { VehicleWreck } from '../objects/VehicleWreck';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
-import { AntiMechBarricadeLine, BarricadeNode } from '../objects/AntiMechBarricadeLine';
+import { AntiMechBarricadeLine } from '../objects/AntiMechBarricadeLine';
 import { ForwardOutpostRuins } from '../objects/ForwardOutpostRuins';
 import { FuelDepotCluster } from '../objects/FuelDepotCluster';
 import { RiverBendPier } from '../objects/RiverBendPier';
@@ -18,123 +33,19 @@ import { RockyFlankLedge } from '../objects/RockyFlankLedge';
 import { DestroyedConvoy } from '../objects/DestroyedConvoy';
 import { BlastScreen } from '../objects/BlastScreen';
 
-export const LEFT_OUTPOST_POS: readonly [number, number] = [-154, -26];
-export const LEFT_FUEL_DEPOT_POS: readonly [number, number] = [-162, 4];
-export const RIVER_BEND_PIER_POS: readonly [number, number] = [101, 108];
-export const RIVER_BEND_LEDGES: ReadonlyArray<{
-  pos: readonly [number, number];
-  rotY: number;
-  scale: number;
-}> = [
-  { pos: [120, 80], rotY: -0.45, scale: 1.25 },
-  { pos: [50, 118], rotY: 0.65, scale: 1.2 },
-];
-
-export const HQ_FOREFIELD_CONVOYS: ReadonlyArray<{
-  pos: readonly [number, number];
-  rotY: number;
-  scale: number;
-}> = [
-  { pos: [-74, 86], rotY: -0.52, scale: 1.05 },
-  { pos: [-46, 66], rotY: 0.35, scale: 1.0 },
-];
-
-export const HQ_FOREFIELD_ROCK_RIDGES: ReadonlyArray<{
-  pos: readonly [number, number];
-  rotY: number;
-  scale: number;
-}> = [
-  { pos: [-106, 52], rotY: 0.65, scale: 1.25 },
-  { pos: [-62, 64], rotY: -0.22, scale: 1.25 },
-  { pos: [-28, 70], rotY: -0.35, scale: 1.2 },
-];
-
-export const HQ_FOREFIELD_SCREENS: ReadonlyArray<{
-  pos: readonly [number, number];
-  rotY: number;
-  width: number;
-  height: number;
-}> = [
-  { pos: [-92, 82], rotY: 0.55, width: 11.0, height: 3.1 },
-  { pos: [-52, 72], rotY: 0.35, width: 10.0, height: 2.95 },
-];
-
-export const ANTI_MECH_BARRICADE_NODES: ReadonlyArray<BarricadeNode> = [
-  // Front plateau arc shielding Fuel Depot & Bunker from South/HQ approach
-  { x: -178, z: 22, rotY: 0.25, kind: 'dragon-tooth', scale: 1.15 },
-  { x: -172, z: 24.5, rotY: 0.18, kind: 'hedgehog', scale: 1.15 },
-  { x: -165.5, z: 26, rotY: 0.1, kind: 'jersey-block', scale: 1.1 },
-  { x: -158.5, z: 26.2, rotY: 0.04, kind: 'dragon-tooth', scale: 1.2 },
-  { x: -152, z: 25.5, rotY: -0.05, kind: 'hedgehog', scale: 1.15 },
-  { x: -145, z: 24.2, rotY: -0.14, kind: 'jersey-block', scale: 1.1 },
-  { x: -137.5, z: 24.5, rotY: -0.22, kind: 'dragon-tooth', scale: 1.15 },
-  // East plateau ridge arc facing the West Road & Bridge A approach
-  { x: -141, z: -2, rotY: 1.38, kind: 'hedgehog', scale: 1.12 },
-  { x: -139.5, z: -9.5, rotY: 1.45, kind: 'jersey-block', scale: 1.1 },
-  { x: -137.5, z: -17.5, rotY: 1.48, kind: 'dragon-tooth', scale: 1.2 },
-  { x: -135.5, z: -25.5, rotY: 1.52, kind: 'hedgehog', scale: 1.15 },
-  { x: -134, z: -33.5, rotY: 1.58, kind: 'jersey-block', scale: 1.08 },
-  // HQ Forefield south-east chevron shielding open meadow between HQ and South Channel
-  { x: -89, z: 91, rotY: 0.48, kind: 'dragon-tooth', scale: 1.18 },
-  { x: -83.5, z: 94, rotY: 0.42, kind: 'jersey-block', scale: 1.15 },
-  { x: -78, z: 96, rotY: 0.32, kind: 'hedgehog', scale: 1.18 },
-  // Riverbank forward barricade arc facing Central Island fire
-  { x: -57, z: 55.5, rotY: 0.15, kind: 'jersey-block', scale: 1.15 },
-  { x: -50, z: 56.8, rotY: 0.08, kind: 'hedgehog', scale: 1.15 },
-  { x: -43, z: 58, rotY: -0.05, kind: 'dragon-tooth', scale: 1.18 },
-];
-
-export const FLANK_EXCLUSION_ZONES: ReadonlyArray<{ x: number; z: number; r: number }> = [
-  { x: LEFT_OUTPOST_POS[0], z: LEFT_OUTPOST_POS[1], r: 14.5 },
-  { x: LEFT_FUEL_DEPOT_POS[0], z: LEFT_FUEL_DEPOT_POS[1], r: 13.5 },
-  { x: RIVER_BEND_PIER_POS[0], z: RIVER_BEND_PIER_POS[1], r: 22.0 },
-  { x: 120, z: 80, r: 9.5 },
-  { x: 50, z: 118, r: 9.5 },
-  { x: -74, z: 86, r: 11.5 },
-  { x: -46, z: 66, r: 11.0 },
-  { x: -106, z: 52, r: 9.5 },
-  { x: -62, z: 64, r: 9.5 },
-  { x: -28, z: 70, r: 9.5 },
-  { x: -92, z: 82, r: 8.5 },
-  { x: -52, z: 72, r: 8.5 },
-];
-
-export const BUNKER_COORDS: ReadonlyArray<{ x: number; z: number; rotY: number }> = [
-  { x: -136, z: 15, rotY: 1.2 },
-  { x: -118, z: -55, rotY: 0.9 },
-  { x: -28, z: -104, rotY: 0.15 },
-  { x: 34, z: -116, rotY: -0.35 },
-  { x: -38, z: 112, rotY: 2.9 },
-  { x: 32, z: 102, rotY: -2.5 },
-  { x: 134, z: 62, rotY: -1.65 },
-  { x: -64, z: 96, rotY: 0.42 },
-];
-
-export const WRECK_COORDS: ReadonlyArray<{ x: number; z: number; rotY: number; scale: number }> = [
-  { x: -142, z: 32, rotY: 0.8, scale: 1.25 },
-  { x: -122, z: -88, rotY: 2.1, scale: 1.3 },
-  { x: -22, z: -94, rotY: -0.6, scale: 1.2 },
-  { x: 10, z: -105, rotY: 1.35, scale: 1.35 },
-  { x: -50, z: 114, rotY: -1.9, scale: 1.25 },
-  { x: 12, z: 108, rotY: 0.45, scale: 1.3 },
-  { x: 142, z: 34, rotY: 2.5, scale: 1.25 },
-  { x: 136, z: 96, rotY: -0.75, scale: 1.3 },
-];
-
-const WEST_FLANK_POWERLINE: ReadonlyArray<readonly [number, number]> = [
-  [-138, 22],
-  [-132, -4],
-  [-126, -32],
-  [-120, -60],
-  [-112, -88],
-];
-
-const SOUTH_FLANK_POWERLINE: ReadonlyArray<readonly [number, number]> = [
-  [-58, 108],
-  [-32, 112],
-  [-4, 114],
-  [24, 112],
-];
+export {
+  ANTI_MECH_BARRICADE_NODES,
+  BUNKER_COORDS,
+  FLANK_EXCLUSION_ZONES,
+  HQ_FOREFIELD_CONVOYS,
+  HQ_FOREFIELD_ROCK_RIDGES,
+  HQ_FOREFIELD_SCREENS,
+  LEFT_FUEL_DEPOT_POS,
+  LEFT_OUTPOST_POS,
+  RIVER_BEND_LEDGES,
+  RIVER_BEND_PIER_POS,
+  WRECK_COORDS,
+};
 
 /**
  * Places tactical flank cover landmarks (concrete pillboxes/ДОТы, vehicle/mech
