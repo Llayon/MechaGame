@@ -29,7 +29,7 @@ jobs:
               cat /tmp/mecha-chrome-stderr.log
               exit 1
             }
-          grep 'WebGL-FADES-PASS' /tmp/mecha-webgl.html || {
+          grep -F '<pre id="result">WebGL-FADES-PASS - 7 GLSL fades, 21 pixel assertions</pre>' /tmp/mecha-webgl.html || {
             cat /tmp/mecha-webgl.html
             cat /tmp/mecha-chrome-stderr.log
             exit 1
