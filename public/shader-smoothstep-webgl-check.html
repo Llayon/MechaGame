@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MechaGame smoothstep WebGL fade smoke</title></head>
+<body><pre id="result">WebGL-FADES-RUNNING</pre>
+<script>
+(function () {
+  var out = document.getElementById('result');
+  var canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  var gl = canvas.getContext('webgl', {preserveDrawingBuffer: true, antialias: false});
+  if (!gl) { out.textContent = 'WebGL-FADES-FAIL context unavailable'; return; }
+
+  var vertex = [
+    'attribute vec2 p;',
+    'void main() { gl_Position = vec4(p, 0.0, 1.0); }'
+  ].join('\n');
+  var fragment = [
+    'precision highp float;',
+    'uniform float x;',
+    'uniform int mode;',
+    'void main() {',
+    '  float f;',
+    '  if (mode == 0) f = (1.0 - smoothstep(0.04, 0.28, x));', // waterfall bottom splash
+    '  else if (mode == 1) f = (1.0 - smoothstep(0.73, 1.0, x));', // waterfall side
+    '  else if (mode == 2) f = (1.0 - smoothstep(0.87, 1.0, x));', // waterfall crest
+    '  else if (mode == 3) f = (1.0 - smoothstep(0.22, 1.0, x));', // smoke plume
+    '  else if (mode == 4) f = (1.0 - smoothstep(0.72, 1.0, x));', // sun shafts
+    '  else if (mode == 5) f = (1.0 - smoothstep(0.94, 1.0, x));', // searchlight
+    '  else f = (1.0 - smoothstep(12.0, 42.0, x));', // quarry rocks
+    '  gl_FragColor = vec4(f, f, f, 1.0);',
+    '}'
+  ].join('\n');
+
+  function shader(type, code) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, code);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      throw Error('GLSL shader compilation failed: ' + gl.getShaderInfoLog(s));
+    }
+    return s;
+  }
+
+  try {
+    var program = gl.createProgram();
+    gl.attachShader(program, shader(gl.VERTEX_SHADER, vertex));
+    gl.attachShader(program, shader(gl.FRAGMENT_SHADER, fragment));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw Error('WebGL program link failed: ' + gl.getProgramInfoLog(program));
+    }
+    gl.useProgram(program);
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    var pos = gl.getAttribLocation(program, 'p');
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+    var modeLoc = gl.getUniformLocation(program, 'mode');
+    var xLoc = gl.getUniformLocation(program, 'x');
+    var rgba = new Uint8Array(4);
+    var ranges = [[0.04, 0.28], [0.73, 1], [0.87, 1], [0.22, 1], [0.72, 1], [0.94, 1], [12, 42]];
+    var assertions = 0;
+    for (var i = 0; i < ranges.length; i++) {
+      var a = ranges[i][0];
+      var b = ranges[i][1];
+      gl.uniform1i(modeLoc, i);
+      var values = [[a - 0.01, 255], [(a + b) / 2, 128], [b + 0.01, 0]];
+      for (var j = 0; j < values.length; j++) {
+        gl.uniform1f(xLoc, values[j][0]);
+        gl.viewport(0, 0, 1, 1);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+        if (Math.abs(rgba[0] - values[j][1]) > 3) {
+          throw Error('fade ' + i + ' output ' + rgba[0] + ' != ' + values[j][1]);
+        }
+        assertions++;
+      }
+    }
+    out.textContent = 'WebGL-FADES-PASS - 7 GLSL fades, ' + assertions + ' pixel assertions';
+  } catch (error) {
+    out.textContent = 'WebGL-FADES-FAIL ' + String(error);
+  }
+}());
+</script></body></html>

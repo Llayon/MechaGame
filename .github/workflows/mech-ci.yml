@@ -14,3 +14,23 @@ jobs:
       - run: bun run lint
       - run: bun run test
       - run: bun run build
+      - name: Compile and sample smoothstep fades in Chrome WebGL
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then
+            echo "Chrome is required for WebGL smoke testing" >&2
+            exit 1
+          fi
+          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
+            --enable-unsafe-swiftshader --use-angle=swiftshader-webgl \
+            --disable-background-networking --no-first-run --virtual-time-budget=1500 \
+            --dump-dom "file://$PWD/public/shader-smoothstep-webgl-check.html" \
+            > /tmp/mecha-webgl.html 2>/tmp/mecha-chrome-stderr.log || {
+              cat /tmp/mecha-chrome-stderr.log
+              exit 1
+            }
+          grep 'WebGL-FADES-PASS' /tmp/mecha-webgl.html || {
+            cat /tmp/mecha-webgl.html
+            cat /tmp/mecha-chrome-stderr.log
+            exit 1
+          }
