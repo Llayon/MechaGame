@@ -20,11 +20,13 @@ import { createTerrainSurfaceMaterial } from './terrainShader';
 export interface TerrainSurfaceProps {
   terrainBump: THREE.Texture;
   showWireframeGrid: boolean;
+  puddleTimeUniform: { value: number };
 }
 
 export function TerrainSurface({
   terrainBump,
   showWireframeGrid,
+  puddleTimeUniform,
 }: TerrainSurfaceProps) {
   const terrainGeometry = useMemo(() => {
     const segX = 300;
@@ -111,8 +113,8 @@ export function TerrainSurface({
   }, []);
 
   const terrainMaterial = useMemo(
-    () => createTerrainSurfaceMaterial(terrainBump, 0.28),
-    [terrainBump],
+    () => createTerrainSurfaceMaterial(terrainBump, 0.28, puddleTimeUniform),
+    [terrainBump, puddleTimeUniform],
   );
 
   const wireframeGeometry = useMemo(() => {

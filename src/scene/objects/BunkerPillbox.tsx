@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
+
 export interface BunkerPillboxProps {
   position: [number, number, number];
   rotationY?: number;
@@ -13,18 +16,19 @@ export function BunkerPillbox({
   rotationY = 0,
   scale = 1,
 }: BunkerPillboxProps) {
+  const concreteMain = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.08 }), []);
+  const concreteFoot = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.84, metalness: 0.06 }), []);
+
   return (
     <group position={position} rotation={[0, rotationY, 0]} scale={scale}>
       {/* Concrete foundation apron */}
-      <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.25, 0]} material={concreteFoot} castShadow receiveShadow>
         <cylinderGeometry args={[3.2, 3.6, 0.6, 6]} />
-        <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.05} />
       </mesh>
 
       {/* Lower armored hexagonal casemate body */}
-      <mesh position={[0, 1.15, 0]} castShadow receiveShadow>
+      <mesh position={[0, 1.15, 0]} material={concreteMain} castShadow receiveShadow>
         <cylinderGeometry args={[2.55, 2.95, 1.3, 6]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Dark recessed firing embrasure band */}
@@ -34,9 +38,8 @@ export function BunkerPillbox({
       </mesh>
 
       {/* Heavy overhanging concrete blast roof slab */}
-      <mesh position={[0, 2.28, 0]} castShadow receiveShadow>
+      <mesh position={[0, 2.28, 0]} material={concreteMain} castShadow receiveShadow>
         <cylinderGeometry args={[2.7, 2.95, 0.48, 6]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Armored cupola & short comms antenna */}
@@ -55,11 +58,11 @@ export function BunkerPillbox({
           key={side}
           position={[side * 3.1, 0.8, 0.95]}
           rotation={[0, side * -0.45, 0]}
+          material={concreteMain}
           castShadow
           receiveShadow
         >
           <boxGeometry args={[1.9, 1.45, 0.72]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
         </mesh>
       ))}
     </group>

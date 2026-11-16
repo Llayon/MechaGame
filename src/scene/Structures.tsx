@@ -6,15 +6,20 @@ import { AirfieldZone } from './zones/AirfieldZone';
 import { RefineryIslandZone } from './zones/RefineryIslandZone';
 import { CitadelZone } from './zones/CitadelZone';
 import { QuarryAndPassZone } from './zones/QuarryAndPassZone';
+import { HorizonLandmarks } from './objects/HorizonLandmarks';
+import { WindTurbines } from './objects/WindTurbines';
+import { HorizonWarSystem } from './objects/HorizonWarSystem';
 
 interface StructuresProps {
   lightingPreset: LightingPreset;
+  driveMode: boolean;
   isSoftwareGl: boolean;
   onSelectSector: (id: SectorId) => void;
 }
 
 export function Structures({
   lightingPreset,
+  driveMode,
   isSoftwareGl,
   onSelectSector,
 }: StructuresProps) {
@@ -52,6 +57,13 @@ export function Structures({
         lightingPreset={lightingPreset}
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
+      />
+      <HorizonLandmarks />
+      <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />
+      <HorizonWarSystem
+        lightingPreset={lightingPreset}
+        driveMode={driveMode}
+        isSoftwareGl={isSoftwareGl}
       />
     </group>
   );

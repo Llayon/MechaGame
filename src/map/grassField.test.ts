@@ -19,11 +19,14 @@ import {
   GRASS_MIN_Y,
   bakeTerrainGrassMap,
   computeGrassSuitabilityMask,
+  createFernBushGeometry,
   createGrassClumpGeometry,
   decodeTerrainHeight16,
   encodeTerrainHeight16,
+  generateGrassBushAccentsData,
   wrapGrassOffset,
 } from './grassField';
+import { getRoadNormalizedDistance } from './terrainMath';
 import { MECH_SPAWN } from './mechKinematics';
 
 test('16-bit terrain height encode/decode preserves sub-millimeter precision', () => {
@@ -77,6 +80,9 @@ test('computeGrassSuitabilityMask excludes water, concrete pads, roads, and stee
   const [rx, rz] = ROAD_MAIN_WEST[1];
   assert.equal(checkSuitability(rx, rz), 0);
 
+  // Steep slopes (ny < 0.75) must be masked out cleanly
+  assert.equal(checkSuitability(-75, 85) > 0 ? computeGrassSuitabilityMask(-75, 85, 6.0, 0.70) : 0, 0);
+
   // Out-of-bounds must have 0 grass
   assert.equal(checkSuitability(MAP_HALF_W + 5, 0), 0);
   assert.equal(checkSuitability(0, -MAP_HALF_D - 5), 0);
@@ -112,27 +118,60 @@ test('bakeTerrainGrassMap produces valid 4-channel texture buffer with non-trivi
   assert.ok(waterOrConcreteZeroCells > 200, 'Expected excluded water/pad/border cells');
 });
 
-test('createGrassClumpGeometry constructs grounded 5-blade tuft geometry without NaNs', () => {
+test('createGrassClumpGeometry constructs 7-element wildflower tussock with Vertex Colors and aBudMask', () => {
   const geo = createGrassClumpGeometry(100, 32, 0.30, 0.044);
   assert.equal(geo.instanceCount, 100);
 
   const pos = geo.getAttribute('position');
   const uv = geo.getAttribute('uv');
+  const color = geo.getAttribute('color');
+  const budMask = geo.getAttribute('aBudMask');
   const offset = geo.getAttribute('aOffset');
 
-  assert.equal(pos.count, 25); // 5 blades * 5 verts
-  assert.equal(uv.count, 25);
+  // 4 grass blades (7 verts each) + 1 fern leaf (5 verts) + 2 tall stalks (7 verts each) = 47 verts
+  assert.equal(pos.count, 47);
+  assert.equal(uv.count, 47);
+  assert.equal(color.count, 47);
+  assert.equal(budMask.count, 47);
   assert.equal(offset.count, 100);
 
   let hasGroundBase = false;
-  let hasTip = false;
+  let hasTallStalkTip = false;
+  let budCount = 0;
   for (let i = 0; i < pos.count; i++) {
     const y = pos.getY(i);
     const v = uv.getY(i);
+    const bud = budMask.getX(i);
     assert.ok(Number.isFinite(pos.getX(i)) && Number.isFinite(y) && Number.isFinite(pos.getZ(i)));
+    assert.ok(Number.isFinite(color.getX(i)) && Number.isFinite(color.getY(i)) && Number.isFinite(color.getZ(i)));
     if (y === 0 && v === 0) hasGroundBase = true;
-    if (y > 0.2 && v === 1) hasTip = true;
+    if (y > 0.30 * 1.4 && v === 1) hasTallStalkTip = true;
+    if (bud > 0.8) budCount++;
   }
-  assert.ok(hasGroundBase && hasTip);
+  assert.ok(hasGroundBase, 'Expected grounded vertices at y=0, v=0');
+  assert.ok(hasTallStalkTip, 'Expected tall seed/flower stalks reaching > 1.4x base height');
+  assert.ok(budCount >= 4, `Expected widened bud tip vertices with high aBudMask, got ${budCount}`);
   geo.dispose();
+});
+
+test('generateGrassBushAccentsData places Layer 2 bushes cleanly outside water/roads and createFernBushGeometry is valid', () => {
+  const bushes = generateGrassBushAccentsData(184);
+  assert.ok(bushes.length >= 100 && bushes.length <= 184, `Expected 100..184 bushes, got ${bushes.length}`);
+
+  for (const b of bushes) {
+    assert.ok(Math.abs(b.x) < MAP_HALF_W && Math.abs(b.z) < MAP_HALF_D);
+    assert.ok(b.y > WATER_LEVEL + 0.6, `Bush y=${b.y} too close to water`);
+    assert.ok(getRoadNormalizedDistance(b.x, b.z) >= 1.03, 'Bush must stay off road surface');
+    assert.ok(Number.isFinite(b.rotY) && Number.isFinite(b.scale) && b.scale > 0.5);
+  }
+
+  const fernGeo = createFernBushGeometry();
+  const pos = fernGeo.getAttribute('position');
+  const color = fernGeo.getAttribute('color');
+  assert.equal(pos.count, 49); // 7 fronds * 7 verts
+  assert.equal(color.count, 49);
+  for (let i = 0; i < pos.count; i++) {
+    assert.ok(Number.isFinite(pos.getX(i)) && Number.isFinite(pos.getY(i)) && Number.isFinite(pos.getZ(i)));
+  }
+  fernGeo.dispose();
 });

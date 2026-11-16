@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import * as THREE from 'three';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
 
 export interface IndustrialHallProps {
   position: [number, number, number];
@@ -28,24 +30,31 @@ export function IndustrialHall({
   const ventH = height * 0.12;
   const colXs = [-length * 0.35, 0, length * 0.35];
 
+  const plinthMat = useMemo(
+    () => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.84, metalness: 0.06 }),
+    [],
+  );
+  const wallMat = useMemo(
+    () =>
+      getOvergrownConcreteMaterial(wallColor, 'wall', {
+        roughness: 0.82,
+        metalness: 0.14,
+        bumpMap: corrugatedMap,
+        bumpScale: 0.03,
+      }),
+    [wallColor, corrugatedMap],
+  );
+
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       {/* Concrete foundation plinth */}
-      <mesh position={[0, 0.14, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.14, 0]} material={plinthMat} castShadow receiveShadow>
         <boxGeometry args={[width + 0.6, 0.28, length + 0.6]} />
-        <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.06} />
       </mesh>
 
       {/* Main corrugated concrete & clad factory hall */}
-      <mesh position={[0, bodyH * 0.5 + 0.22, 0]} castShadow receiveShadow>
+      <mesh position={[0, bodyH * 0.5 + 0.22, 0]} material={wallMat} castShadow receiveShadow>
         <boxGeometry args={[width, bodyH, length]} />
-        <meshStandardMaterial
-          color={wallColor}
-          roughness={0.8}
-          metalness={0.14}
-          bumpMap={corrugatedMap}
-          bumpScale={0.03}
-        />
       </mesh>
 
       {/* Pitched/stepped steel roof deck & upper clerestory ridge vent */}

@@ -5,8 +5,17 @@ import type { MechControl } from './MechController';
 import type { MechMotion } from './MechMovementSystem';
 import type { MechFootImpact } from './MechIKSystem';
 import type { MechShot } from './WeaponSystem';
-import { WATER_LEVEL } from '../../map/terrainMath';
-import { MECH_SCALE, MECH_SOLE_HEIGHT } from '../../map/mechKinematics';
+import {
+  WATER_LEVEL,
+  getAnalyticalTerrainNormal,
+  getRoadNormalizedDistance,
+} from '../../map/terrainMath';
+import { evaluatePuddleAt } from '../../map/puddles';
+import {
+  MECH_SCALE,
+  MECH_SOLE_HEIGHT,
+  shouldEmitTerrainKickup,
+} from '../../map/mechKinematics';
 import {
   computePebbleTransform,
   spawnKickupBurst,
@@ -63,7 +72,7 @@ export function stepMechEffects(
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
 
-  // 1) Parabolic gravel kickup on foot lift-off (4-5 pebbles thrown backward)
+  // 1) Parabolic gravel kickup on foot lift-off (4-5 pebbles thrown backward on loose terrain only)
   const moveSign = control.fwd < -0.05 ? -1 : 1;
   const speedScale = control.isDashing
     ? 1.45
@@ -81,7 +90,7 @@ export function stepMechEffects(
       continue;
     }
     const groundY = lift.position.y - MECH_SOLE_HEIGHT * MECH_SCALE;
-    if (groundY < WATER_LEVEL - 0.05) continue;
+    if (!shouldEmitTerrainKickup(lift.position.x, lift.position.z, groundY, sim.y)) continue;
     sim.lastLiftKickupTime[lift.index] = elapsed;
 
     spawnKickupBurst(sim.kickupPool, {
@@ -97,7 +106,7 @@ export function stepMechEffects(
     });
   }
 
-  // 2) Braking / hard-turn drift gravel spray from grounded feet
+  // 2) Braking / hard-turn drift gravel spray from grounded feet (loose terrain only)
   const isBrakingHard =
     Math.abs(sim.prevTargetSpeed) > 1.85 && Math.abs(control.targetSpeed) < 0.45;
   const isHardTurn =
@@ -113,7 +122,9 @@ export function stepMechEffects(
     for (const leg of rig.legs) {
       if (leg.wasSwing) continue;
       const groundY = leg.plantedWorld.y - MECH_SOLE_HEIGHT * MECH_SCALE;
-      if (groundY < WATER_LEVEL - 0.05) continue;
+      if (!shouldEmitTerrainKickup(leg.plantedWorld.x, leg.plantedWorld.z, groundY, sim.y)) {
+        continue;
+      }
       spawnKickupBurst(sim.kickupPool, {
         originX: leg.plantedWorld.x,
         originY: groundY + 0.08,
@@ -137,11 +148,30 @@ export function stepMechEffects(
     Math.min(1, dt * 8),
   );
 
-  // 3) Translate IK contact events into dust, water splashes, and sprint/dash impact gravel
+  // 3) Translate IK contact events into dust, river/puddle water splashes, and sprint/dash impact gravel
   for (const impact of footImpacts) {
     const groundY = impact.position.y - MECH_SOLE_HEIGHT * MECH_SCALE;
-    const footInWater = groundY < WATER_LEVEL + 0.08;
-    if (!footInWater && (control.isSprinting || control.isDashing) && sim.gaitBlend > 0.25) {
+    const isLooseTerrain = shouldEmitTerrainKickup(
+      impact.position.x,
+      impact.position.z,
+      groundY,
+      sim.y,
+    );
+    let footInPuddle = false;
+    if (isLooseTerrain && groundY > 1.25 && groundY < 14.5) {
+      const normal = getAnalyticalTerrainNormal(impact.position.x, impact.position.z, 1.95, true);
+      const onRoad = getRoadNormalizedDistance(impact.position.x, impact.position.z) < 1.0;
+      footInPuddle =
+        evaluatePuddleAt(impact.position.x, groundY, impact.position.z, normal.ny, {
+          isRoad: onRoad,
+        }).waterFactor > 0.35;
+    }
+    const footInWater = groundY < WATER_LEVEL + 0.08 || footInPuddle;
+    if (
+      (control.isSprinting || control.isDashing) &&
+      sim.gaitBlend > 0.25 &&
+      isLooseTerrain
+    ) {
       spawnKickupBurst(sim.kickupPool, {
         originX: impact.position.x,
         originY: groundY + 0.06,

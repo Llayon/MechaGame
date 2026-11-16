@@ -1,16 +1,19 @@
 import * as THREE from 'three';
+import { GLSL_PUDDLE_HELPERS } from '../../map/puddles';
 
 /**
  * Creates a PBR MeshStandardMaterial patched via onBeforeCompile with pixel-level
- * slope, elevation, and river-proximity procedural texturing:
+ * slope, elevation, river-proximity procedural texturing, and lowland PBR rain puddles:
  * - Gentle slopes: organic moss, alpine grass, and dark peat tufts (high matte roughness)
  * - Steep slopes (> 30 deg): bare stratified slate rock with geological strata & fissures
  * - 5-8 m riverbank strip: wet river pebbles & dark wet sand with moisture sheen
+ * - Flat lowland clearings & quarry basins: damp mud rims & reflective rain puddles
  * - Concrete plateaus, tactical roads, quarry ochre & shoal ramps stay cleanly preserved
  */
 export function createTerrainSurfaceMaterial(
   terrainBump: THREE.Texture,
   bumpScale = 0.28,
+  puddleTimeUniform: { value: number } = { value: 1.4 },
 ): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: false,
@@ -21,9 +24,10 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v3';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v5';
 
   mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uPuddleTime = puddleTimeUniform;
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
@@ -33,7 +37,8 @@ attribute vec4 aSurfaceHint;
 varying vec3 vTerrWorldPos;
 varying vec3 vTerrWorldNormal;
 varying vec4 vTerrZone;
-varying vec4 vTerrHint;`,
+varying vec4 vTerrHint;
+varying vec3 vPuddleUp;`,
       )
       .replace(
         '#include <worldpos_vertex>',
@@ -42,20 +47,31 @@ vec4 terrWp = modelMatrix * vec4( transformed, 1.0 );
 vTerrWorldPos = terrWp.xyz;
 vTerrWorldNormal = normalize( mat3( modelMatrix ) * objectNormal );
 vTerrZone = aZoneMask;
-vTerrHint = aSurfaceHint;`,
+vTerrHint = aSurfaceHint;
+vPuddleUp = normalize( mat3( viewMatrix ) * vec3( 0.0, 1.0, 0.0 ) );`,
       );
 
     shader.fragmentShader = shader.fragmentShader
       .replace(
         '#include <common>',
         `#include <common>
+uniform float uPuddleTime;
 varying vec3 vTerrWorldPos;
 varying vec3 vTerrWorldNormal;
 varying vec4 vTerrZone;
 varying vec4 vTerrHint;
+varying vec3 vPuddleUp;
+${GLSL_PUDDLE_HELPERS}
 
 vec3 terrSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
+}
+
+// Height-based texture blending: lower crevices fill first while rock/pebble peaks resist
+float terrHeightBlend( float hA, float hB, float weight, float contrast ) {
+  float w = clamp( weight, 0.0, 1.0 );
+  float activeMask = w * ( 1.0 - w ) * 4.0;
+  return clamp( w + ( hB - hA ) * contrast * activeMask, 0.0, 1.0 );
 }
 
 float terrHash( vec2 p ) {
@@ -131,6 +147,11 @@ float terrMacro = terrFbm3( vTerrWorldPos.xz * 0.065 + vec2( 3.1, -2.4 ) );
 float terrMid = terrFbm2( vTerrWorldPos.xz * 0.26 + vec2( -5.2, 7.8 ) );
 float terrFine = terrNoise( vTerrWorldPos.xz * 1.25 + vec2( 1.7, 4.3 ) );
 float terrMicro = terrNoise( vTerrWorldPos.xz * 3.4 - vec2( 8.1, 2.9 ) );
+float terrDetailFade = 1.0 - smoothstep( 14.0, 42.0, length( vViewPosition ) );
+float terrDetailGrit = 0.5;
+if ( terrDetailFade > 0.001 ) {
+  terrDetailGrit = puddleNoise( vTerrWorldPos.xz * 7.5 );
+}
 
 // Continuous interpolated fields (zero binary vertex color jumps across triangles)
 float terrIslandMask = clamp( vTerrZone.x, 0.0, 1.0 );
@@ -227,8 +248,11 @@ rockCol = mix( rockCol, mix( rockCol, quarryTone, 0.62 ), terrQuarry );
 rockCol *= mix( 1.0, 0.76, terrCitDark * 0.82 );
 naturalGrassCol *= mix( 1.0, 0.80, terrCitDark * 0.65 );
 
-// Blend gentle moss/grass with > 26-32 deg rock per pixel
-vec3 terrCol = mix( naturalGrassCol, rockCol, terrRockWeight );
+// Height-based blend: grass/soil settles into rock fissures while rock ledges stay sharp
+float terrGrassHeight = terrFine * 0.55 + ( 1.0 - peatMask ) * 0.45;
+float terrRockHeight = strataLedge * 0.65 + ( 1.0 - rockFissure ) * 0.35;
+float terrRockBlend = terrHeightBlend( terrGrassHeight, terrRockHeight, terrRockWeight, 0.75 );
+vec3 terrCol = mix( naturalGrassCol, rockCol, terrRockBlend );
 
 // Per-pixel sandy-gravel shoal ramp tinting
 vec3 colSandDry = terrSrgb2Lin( vec3( 0.639, 0.576, 0.478 ) );
@@ -240,7 +264,7 @@ vec3 shoalMid = mix( colShoalSub, colSandWet, smoothstep( -0.55, 0.35, vTerrWorl
 vec3 shoalLow = mix( colShallowBed, colShoalSub, 0.58 + terrMid * 0.32 );
 vec3 shoalTone = mix( shoalLow, shoalMid, smoothstep( -0.60, -0.45, vTerrWorldPos.y ) );
 shoalTone = mix( shoalTone, shoalHigh, smoothstep( 0.28, 0.45, vTerrWorldPos.y ) );
-terrCol = mix( terrCol, shoalTone * ( 0.92 + terrFine * 0.16 ), terrShoalRamp * ( 1.0 - terrRockWeight * 0.6 ) );
+terrCol = mix( terrCol, shoalTone * ( 0.92 + terrFine * 0.16 ), terrShoalRamp * ( 1.0 - terrRockBlend * 0.6 ) );
 
 // 3. 5-8 m riverbank strip: wet pebbles & dark damp sand (with underwater riverbed continuity)
 float approxHorizDistM = ( max( 0.0, vTerrWorldPos.y ) / clamp( terrSlopeTan, 0.22, 0.56 ) ) * 3.75;
@@ -263,14 +287,16 @@ vec3 colPebbleWarm = terrSrgb2Lin( vec3( 0.435, 0.390, 0.330 ) );
 vec3 colDampGravel = terrSrgb2Lin( vec3( 0.365, 0.330, 0.285 ) );
 
 vec3 pebbleTint = mix( colPebbleCool, colPebbleWarm, pebCoarse.y );
-vec3 shoreMat = mix( colDarkSand, pebbleTint, pebSpec * 0.84 );
+float pebSandBlend = terrHeightBlend( 0.28, pebDome, pebSpec * 0.84, 0.65 );
+vec3 shoreMat = mix( colDarkSand, pebbleTint, pebSandBlend );
 shoreMat = mix( shoreMat, colDampGravel, smoothstep( 4.4, 7.8, distFromWaterM ) * 0.48 );
 float waterMoisture = ( 1.0 - smoothstep( 0.6, 5.8, distFromWaterM ) ) * smoothstep( -0.9, 0.05, vTerrWorldPos.y );
 shoreMat = mix( shoreMat, colWetSand * ( 0.78 + pebSpec * 0.65 ), waterMoisture * 0.56 );
 
-// Apply riverbank wet pebble & dark sand strip, and keep deep riverbed coherent
+// Apply riverbank wet pebble & dark sand strip via height-based pebble emergence
 float effectiveShore = clamp( max( shoreBand, underWaterMask * 0.55 ), 0.0, 1.0 );
-terrCol = mix( terrCol, shoreMat, effectiveShore );
+float shoreHeightBlend = terrHeightBlend( mix( terrGrassHeight, terrRockHeight, terrRockBlend ), pebDome * 0.84 + 0.14, effectiveShore, 0.55 );
+terrCol = mix( terrCol, shoreMat, shoreHeightBlend );
 vec3 colDeepRiverbed = terrSrgb2Lin( vec3( 0.102, 0.161, 0.204 ) );
 float deepBedFade = ( 1.0 - smoothstep( -2.2, -0.35, vTerrWorldPos.y ) ) * underWaterMask;
 terrCol = mix( terrCol, mix( colDeepRiverbed, shoreMat, 0.28 ), deepBedFade );
@@ -283,27 +309,56 @@ vec3 roadCol = mix( colRoadDirt, colRockDark, terrMid * 0.22 ) * ( 0.94 + terrFi
 vec3 manmadeCol = mix( roadCol, concreteCol, clamp( terrConcrete / max( 0.001, terrManmade ), 0.0, 1.0 ) );
 diffuseColor.rgb = mix( terrCol, manmadeCol, terrManmade );
 
+// 5. Lowland PBR rain puddles (reuses terrMacro/terrMid with early-out for zero mountain cost)
+float terrPuddleWetSoil = 0.0;
+float terrPuddleWater = 0.0;
+if ( vTerrWorldPos.y > 1.4 && vTerrWorldPos.y < 14.5 && terrNY > 0.968 && terrConcrete < 0.95 && effectiveShore < 0.95 ) {
+  float pAltGate = smoothstep( 1.4, 2.1, vTerrWorldPos.y ) * ( 1.0 - smoothstep( 11.5, 14.5, vTerrWorldPos.y ) );
+  float pFlatGate = smoothstep( 0.972, 0.996, terrNY );
+  float pMask = ( 1.0 - terrConcrete ) * ( 1.0 - effectiveShore );
+  float pField = terrMacro * 0.65 + terrMid * 0.35;
+  float pWetness = max( 0.0, ( pField - 0.61 ) * 2.5 ) * pAltGate * pFlatGate * pMask;
+  terrPuddleWetSoil = smoothstep( 0.0, 0.16, pWetness );
+  terrPuddleWater = smoothstep( 0.16, 0.195, pWetness );
+  diffuseColor.rgb *= mix( 1.0, 0.42, terrPuddleWetSoil );
+  diffuseColor.rgb *= mix( 1.0, 0.68, terrPuddleWater );
+}
+
+// 6. Close-range ground detail map (< 42m from camera) fading cleanly to avoid distant moire
+if ( terrDetailFade > 0.001 ) {
+  diffuseColor.rgb *= mix( 1.0, 0.90 + terrDetailGrit * 0.20, terrDetailFade * ( 1.0 - terrPuddleWater ) );
+}
+
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
-float terrGrassWeight = ( 1.0 - terrRockWeight ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );
+float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );
 float terrMicroHeight =
-  strataLedge * terrRockWeight * 0.58 +
+  strataLedge * terrRockBlend * 0.58 +
   pebDome * effectiveShore * 0.98 +
-  ( terrMicro - 0.5 ) * terrGrassWeight * 0.35;
+  ( terrMicro - 0.5 ) * terrGrassWeight * 0.35 +
+  ( terrDetailGrit - 0.5 ) * terrDetailFade * ( 1.0 - terrPuddleWater ) * 0.24;
 float terrMicroStrength =
-  mix( 0.12, 0.30, clamp( max( terrRockWeight * 0.85, effectiveShore ), 0.0, 1.0 ) ) *
-  ( 1.0 - terrManmade * 0.7 ) *
+  mix( 0.12, 0.30, clamp( max( terrRockBlend * 0.85, effectiveShore ), 0.0, 1.0 ) ) *
+  ( 1.0 - terrManmade * 0.55 ) *
+  ( 1.0 - terrPuddleWater ) *
   clamp( 1.0 - length( vViewPosition ) / 480.0, 0.18, 1.0 );`,
       )
       .replace(
         '#include <roughnessmap_fragment>',
         `#include <roughnessmap_fragment>
 float terrTargetRough = 0.93;
-terrTargetRough = mix( terrTargetRough, 0.84, terrRockWeight );
-terrTargetRough = mix( terrTargetRough, 0.86, terrQuarry * ( 1.0 - terrRockWeight ) );
+terrTargetRough = mix( terrTargetRough, 0.84, terrRockBlend );
+terrTargetRough = mix( terrTargetRough, 0.86, terrQuarry * ( 1.0 - terrRockBlend ) );
 terrTargetRough = mix( terrTargetRough, 0.78, effectiveShore );
 terrTargetRough = mix( terrTargetRough, 0.34, terrWetness );
 terrTargetRough = mix( terrTargetRough, 0.82, terrManmade );
-roughnessFactor = clamp( terrTargetRough, 0.28, 0.98 );`,
+terrTargetRough = mix( terrTargetRough, 0.62, terrPuddleWetSoil );
+terrTargetRough = mix( terrTargetRough, 0.045, terrPuddleWater );
+roughnessFactor = clamp( terrTargetRough, 0.04, 0.98 );`,
+      )
+      .replace(
+        '#include <metalnessmap_fragment>',
+        `#include <metalnessmap_fragment>
+metalnessFactor = mix( metalnessFactor, 0.10, terrPuddleWater );`,
       )
       .replace(
         '#include <normal_fragment_maps>',
@@ -311,7 +366,14 @@ roughnessFactor = clamp( terrTargetRough, 0.28, 0.98 );`,
 #ifdef USE_BUMPMAP
   vec2 terrDxy = vec2( dFdx( terrMicroHeight ), dFdy( terrMicroHeight ) ) * terrMicroStrength;
   normal = perturbNormalArb( - vViewPosition, normal, terrDxy, faceDirection );
-#endif`,
+#endif
+if ( terrPuddleWater > 0.001 ) {
+  vec2 rUv = vTerrWorldPos.xz * 2.5 + vec2( uPuddleTime * 0.55, uPuddleTime * 0.35 );
+  float ripA = ( puddleNoise( rUv ) - 0.5 ) * 0.04;
+  float ripB = ( puddleNoise( rUv + vec2( 3.7, -2.1 ) ) - 0.5 ) * 0.04;
+  vec3 flatWaterViewN = normalize( vPuddleUp + vec3( ripA, 0.0, ripB ) );
+  normal = normalize( mix( normal, flatWaterViewN, terrPuddleWater ) );
+}`,
       );
   };
 

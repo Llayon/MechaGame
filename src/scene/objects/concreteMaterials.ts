@@ -1,0 +1,167 @@
+import * as THREE from 'three';
+import { WATER_LEVEL } from '../../map/terrainMath';
+
+export type ConcreteMossPreset = 'bridge' | 'wall' | 'ruin';
+
+interface PresetSettings {
+  wallMoss: number;
+  roofMoss: number;
+  grimeStrength: number;
+}
+
+const PRESET_CONFIG: Record<ConcreteMossPreset, PresetSettings> = {
+  // Bridges & viaducts: keep top deck crisp, strong waterline algae & clear pier moss
+  bridge: { wallMoss: 0.72, roofMoss: 0.14, grimeStrength: 0.32 },
+  // Fortress walls, bunkers, blast screens, industrial concrete: creeping lower moss + rain stains
+  wall: { wallMoss: 0.72, roofMoss: 0.28, grimeStrength: 0.36 },
+  // Shattered outpost ruins: heavy creeping moss & patchy roof turf
+  ruin: { wallMoss: 0.92, roofMoss: 0.62, grimeStrength: 0.44 },
+};
+
+const materialCache = new Map<string, THREE.MeshStandardMaterial>();
+
+/**
+ * Returns a cached PBR MeshStandardMaterial patched with 0-triangle procedural
+ * waterline algae, climbing concrete moss, damp foundation grime, and weathered patina.
+ * Preserves fog, shadows, PBR sunset speculars, and optional corrugated bumpMap.
+ */
+export function getOvergrownConcreteMaterial(
+  colorHex: string,
+  preset: ConcreteMossPreset = 'wall',
+  options?: {
+    roughness?: number;
+    metalness?: number;
+    bumpMap?: THREE.Texture | null;
+    bumpScale?: number;
+  },
+): THREE.MeshStandardMaterial {
+  const roughness = options?.roughness ?? 0.84;
+  const metalness = options?.metalness ?? 0.08;
+  const bumpMap = options?.bumpMap ?? null;
+  const bumpScale = options?.bumpScale ?? 0.03;
+  const key = `${colorHex}|${preset}|${roughness}|${metalness}|${bumpMap ? bumpMap.uuid : 'nobump'}|${bumpScale}`;
+
+  const existing = materialCache.get(key);
+  if (existing) return existing;
+
+  const cfg = PRESET_CONFIG[preset];
+  const matParams: THREE.MeshStandardMaterialParameters = {
+    color: colorHex,
+    roughness,
+    metalness,
+    fog: true,
+  };
+  if (bumpMap) {
+    matParams.bumpMap = bumpMap;
+    matParams.bumpScale = bumpScale;
+  }
+  const mat = new THREE.MeshStandardMaterial(matParams);
+
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v1-${preset}`;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uWallMoss = { value: cfg.wallMoss };
+    shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
+    shader.uniforms.uGrimeStrength = { value: cfg.grimeStrength };
+    shader.uniforms.uWaterLevel = { value: WATER_LEVEL };
+
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+varying vec3 vConcWorldPos;
+varying vec3 vConcWorldNormal;
+varying vec3 vConcLocalPos;`,
+      )
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+vConcLocalPos = transformed;
+#ifdef USE_INSTANCING
+  vec4 cWp = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
+  vConcWorldNormal = normalize( mat3( modelMatrix ) * mat3( instanceMatrix ) * objectNormal );
+#else
+  vec4 cWp = modelMatrix * vec4( transformed, 1.0 );
+  vConcWorldNormal = normalize( mat3( modelMatrix ) * objectNormal );
+#endif
+vConcWorldPos = cWp.xyz;`,
+      );
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+uniform float uWallMoss;
+uniform float uRoofMoss;
+uniform float uGrimeStrength;
+uniform float uWaterLevel;
+varying vec3 vConcWorldPos;
+varying vec3 vConcWorldNormal;
+varying vec3 vConcLocalPos;
+
+vec3 concSrgb2Lin( vec3 c ) {
+  return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
+}
+
+float concHash( vec2 p ) {
+  return fract( sin( dot( p, vec2( 127.1, 311.7 ) ) ) * 43758.5453123 );
+}
+
+float concNoise( vec2 p ) {
+  vec2 i = floor( p );
+  vec2 f = fract( p );
+  f = f * f * ( 3.0 - 2.0 * f );
+  return mix(
+    mix( concHash( i ), concHash( i + vec2( 1.0, 0.0 ) ), f.x ),
+    mix( concHash( i + vec2( 0.0, 1.0 ) ), concHash( i + vec2( 1.0, 1.0 ) ), f.x ),
+    f.y
+  );
+}`,
+      )
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+// Organic multi-scale world-space noise for concrete mottling, dampness & creeping moss
+float cMacro = concNoise( vConcWorldPos.xz * 0.16 + vec2( vConcWorldPos.y * 0.12, -3.1 ) );
+float cMed = concNoise( vec2( vConcWorldPos.x * 0.42 + vConcWorldPos.z * 0.39, vConcWorldPos.y * 0.24 ) );
+float cFine = concNoise( vConcWorldPos.xz * 1.15 - vec2( vConcWorldPos.y * 0.72, 1.4 ) );
+float cOrganic = cMacro * 0.50 + cMed * 0.34 + cFine * 0.16;
+
+// Subtle concrete weathering & rainwater vertical streaks (eliminates sterile uniform gray)
+float rainStreak = concNoise( vec2( ( vConcWorldPos.x + vConcWorldPos.z ) * 0.85, vConcWorldPos.y * 0.09 ) );
+float patinaMul = mix( 1.0 - uGrimeStrength * 0.32, 1.0 + uGrimeStrength * 0.12, cOrganic * 0.65 + rainStreak * 0.35 );
+diffuseColor.rgb *= patinaMul;
+
+vec3 cDampCol = concSrgb2Lin( vec3( 0.185, 0.180, 0.160 ) );
+vec3 cMossDark = concSrgb2Lin( vec3( 0.165, 0.245, 0.145 ) );
+vec3 cMossBright = concSrgb2Lin( vec3( 0.265, 0.355, 0.195 ) );
+vec3 cTurfCol = concSrgb2Lin( vec3( 0.235, 0.315, 0.185 ) );
+
+// 1. River waterline wetness & algae collar on submerged piers, abutments & island quays
+float aboveWater = vConcWorldPos.y - uWaterLevel;
+float wetZone = 1.0 - smoothstep( -0.3, 1.45 + ( cMed - 0.5 ) * 0.7, aboveWater );
+diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * 0.56, wetZone * 0.78 );
+float algaeBand = smoothstep( -0.65, 0.05, aboveWater ) * ( 1.0 - smoothstep( 0.25, 1.15 + ( cOrganic - 0.5 ) * 0.65, aboveWater ) );
+float algaeMask = smoothstep( 0.36, 0.66, algaeBand * ( 0.6 + cFine * 0.7 ) );
+diffuseColor.rgb = mix( diffuseColor.rgb, cMossDark * 0.85, algaeMask * 0.82 );
+
+// 2. Vertical wall dampness & creeping moss tongues rising from lower plinths/seams
+float wallFactor = 1.0 - smoothstep( 0.45, 0.78, abs( vConcWorldNormal.y ) );
+float localBottom = 1.0 - smoothstep( -1.1, 0.45 + ( cMed - 0.5 ) * 0.85, vConcLocalPos.y );
+diffuseColor.rgb = mix( diffuseColor.rgb, cDampCol, localBottom * wallFactor * uGrimeStrength * 0.85 );
+
+float climbReach = smoothstep( 0.42, 0.78, cMacro * 0.6 + rainStreak * 0.4 );
+float wallMossRaw = max( localBottom * 0.85, climbReach * 0.48 ) * wallFactor;
+float wallMoss = smoothstep( 0.34, 0.64, wallMossRaw * ( 0.55 + cOrganic * 0.9 ) ) * uWallMoss;
+vec3 mossBlend = mix( cMossDark, cMossBright, cFine );
+diffuseColor.rgb = mix( diffuseColor.rgb, mossBlend, wallMoss );
+
+// 3. Upward horizontal ledges/ruin roofs: weathered moss & patchy turf
+float topFactor = smoothstep( 0.70, 0.92, vConcWorldNormal.y );
+float roofMask = smoothstep( 0.44, 0.72, cOrganic ) * topFactor * uRoofMoss;
+diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.6 ), roofMask );`,
+      );
+  };
+
+  materialCache.set(key, mat);
+  return mat;
+}

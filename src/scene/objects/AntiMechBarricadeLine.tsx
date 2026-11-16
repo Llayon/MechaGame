@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getTerrainHeight } from '../../map/terrainMath';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
 
 export interface BarricadeNode {
   x: number;
@@ -27,6 +28,9 @@ export function AntiMechBarricadeLine({ nodes }: AntiMechBarricadeLineProps) {
       })),
     [nodes],
   );
+  const concMain = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.08 }), []);
+  const concMid = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.84, metalness: 0.06 }), []);
+  const concDark = useMemo(() => getOvergrownConcreteMaterial('#868D93', 'wall', { roughness: 0.86, metalness: 0.05 }), []);
 
   return (
     <group>
@@ -40,14 +44,12 @@ export function AntiMechBarricadeLine({ nodes }: AntiMechBarricadeLineProps) {
           {item.kind === 'dragon-tooth' && (
             <>
               {/* Heavy recessed concrete footing */}
-              <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0.22, 0]} material={concDark} castShadow receiveShadow>
                 <boxGeometry args={[2.1, 0.52, 1.9]} />
-                <meshStandardMaterial color="#868D93" roughness={0.84} metalness={0.05} />
               </mesh>
               {/* Tapered tetrahedral-style armored concrete pyramid block */}
-              <mesh position={[0, 0.92, 0]} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0.92, 0]} rotation={[0, Math.PI / 4, 0]} material={concMain} castShadow receiveShadow>
                 <cylinderGeometry args={[0.52, 1.12, 1.15, 4]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
               </mesh>
               {/* Steel impact cap & terracotta ochre warning collar */}
               <mesh position={[0, 1.38, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
@@ -64,9 +66,8 @@ export function AntiMechBarricadeLine({ nodes }: AntiMechBarricadeLineProps) {
           {item.kind === 'hedgehog' && (
             <>
               {/* Anchored concrete pad */}
-              <mesh position={[0, 0.16, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0.16, 0]} material={concMid} castShadow receiveShadow>
                 <cylinderGeometry args={[1.35, 1.5, 0.36, 6]} />
-                <meshStandardMaterial color="#8E959B" roughness={0.82} metalness={0.06} />
               </mesh>
               {/* 3 crossed heavy steel I-beam caltrops */}
               {[0, (Math.PI * 2) / 3, (Math.PI * 4) / 3].map((yaw, bIdx) => (
@@ -88,14 +89,12 @@ export function AntiMechBarricadeLine({ nodes }: AntiMechBarricadeLineProps) {
           {item.kind === 'jersey-block' && (
             <>
               {/* Wide concrete base */}
-              <mesh position={[0, 0.28, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0.28, 0]} material={concMid} castShadow receiveShadow>
                 <boxGeometry args={[3.6, 0.62, 1.55]} />
-                <meshStandardMaterial color="#8E959B" roughness={0.82} metalness={0.05} />
               </mesh>
               {/* Sloped concrete shield body */}
-              <mesh position={[0, 0.92, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0.92, 0]} material={concMain} castShadow receiveShadow>
                 <boxGeometry args={[3.35, 0.88, 0.96]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
               </mesh>
               {/* Steel corner armor ribs & warning band */}
               {[-1.4, 0, 1.4].map((rx, rIdx) => (

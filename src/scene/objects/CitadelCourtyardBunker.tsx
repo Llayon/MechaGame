@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
+
 export interface CitadelCourtyardBunkerProps {
   position: readonly [number, number, number];
   rotationY?: number;
@@ -13,6 +16,10 @@ export function CitadelCourtyardBunker({
   rotationY = 0,
   scale = 1,
 }: CitadelCourtyardBunkerProps) {
+  const concreteMain = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.08 }), []);
+  const concreteApron = useMemo(() => getOvergrownConcreteMaterial('#868D93', 'wall', { roughness: 0.85, metalness: 0.05 }), []);
+  const concreteTrim = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.82, metalness: 0.06 }), []);
+
   return (
     <group
       position={[position[0], position[1], position[2]]}
@@ -20,15 +27,13 @@ export function CitadelCourtyardBunker({
       scale={scale}
     >
       {/* Heavy concrete slab apron */}
-      <mesh position={[0, 0.16, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.16, 0]} material={concreteApron} castShadow receiveShadow>
         <boxGeometry args={[7.4, 0.32, 5.2]} />
-        <meshStandardMaterial color="#868D93" roughness={0.84} metalness={0.05} />
       </mesh>
 
       {/* Lower sloped armored concrete casemate */}
-      <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.72, 0]} material={concreteMain} castShadow receiveShadow>
         <boxGeometry args={[6.2, 0.85, 4.0]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Recessed dark ballistic firing embrasure band */}
@@ -38,9 +43,8 @@ export function CitadelCourtyardBunker({
       </mesh>
 
       {/* Heavy overhanging reinforced blast roof (~1.7 units = ~6.4 m peak) */}
-      <mesh position={[0, 1.52, 0]} castShadow receiveShadow>
+      <mesh position={[0, 1.52, 0]} material={concreteMain} castShadow receiveShadow>
         <boxGeometry args={[6.6, 0.36, 4.4]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Roof armored ventilation cupola & terracotta warning trim */}
@@ -63,11 +67,11 @@ export function CitadelCourtyardBunker({
           key={side}
           position={[side * 3.55, 0.68, 1.1]}
           rotation={[0, side * -0.42, 0]}
+          material={concreteTrim}
           castShadow
           receiveShadow
         >
           <boxGeometry args={[1.65, 1.15, 0.72]} />
-          <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.06} />
         </mesh>
       ))}
     </group>

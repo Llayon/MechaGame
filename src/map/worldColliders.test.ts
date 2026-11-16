@@ -22,7 +22,7 @@ import { BUNKER_COORDS, generatePineForestData } from './worldStructures';
 
 test('worldColliders builds comprehensive static obstacle index and keeps MECH_SPAWN clear', () => {
   const count = getWorldColliderCount();
-  assert.ok(count > 2000, `expected >2000 world colliders including forest/rocks, got ${count}`);
+  assert.ok(count > 250, `expected >250 static world colliders including structures/rocks, got ${count}`);
 
   const spawnCheck = resolveWorldObstacles(MECH_SPAWN.x, MECH_SPAWN.z, MECH_SPAWN.y);
   assert.equal(spawnCheck.collided, false);
@@ -102,7 +102,7 @@ test('Bridge height bands isolate under-bridge pier collisions from on-deck carg
   assert.notEqual(onDeckCenter.hitTag, 'bridge-pier');
 });
 
-test('Bunkers, Central Derrick Tower, and pine trunks block penetration', () => {
+test('Bunkers, Central Derrick Tower, and forest root boulders block penetration while pines are crushable', () => {
   const bunker = BUNKER_COORDS[0];
   const bY = getTerrainHeight(bunker.x, bunker.z);
   assert.equal(resolveWorldObstacles(bunker.x + 1.0, bunker.z, bY).collided, true);
@@ -110,6 +110,10 @@ test('Bunkers, Central Derrick Tower, and pine trunks block penetration', () => 
   const derrickY = getTerrainHeight(ISLAND_CENTER_X, ISLAND_CENTER_Z) + 0.7;
   assert.equal(resolveWorldObstacles(ISLAND_CENTER_X + 1.0, ISLAND_CENTER_Z, derrickY).collided, true);
 
-  const tree = generatePineForestData().trees[0];
-  assert.equal(resolveWorldObstacles(tree.x + 0.1, tree.z, tree.y).collided, true);
+  const forest = generatePineForestData();
+  const rootRock = forest.rootRocks.find((rr) => Math.max(rr.sx, rr.sz) * 0.72 >= 0.45)!;
+  assert.equal(resolveWorldObstacles(rootRock.x + 0.1, rootRock.z, rootRock.y).collided, true);
+
+  const tree = forest.trees[0];
+  assert.notEqual(resolveWorldObstacles(tree.x + 0.1, tree.z, tree.y).hitTag, 'tree');
 });

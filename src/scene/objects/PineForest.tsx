@@ -1,16 +1,53 @@
+import type * as React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { getAnalyticalTerrainNormal } from '../../map/terrainMath';
+import { getAnalyticalTerrainNormal, getTerrainHeight } from '../../map/terrainMath';
 import { generatePineForestData } from '../../map/worldStructures';
+import type { MechTelemetrySnapshot } from '../../map/mechKinematics';
+import type { CombatSimulationState } from '../../game/combatTypes';
+import { combatAudio } from '../../game/combatAudio';
 import { createContactShadowTexture } from '../textures';
 import {
   PINE_TREE_TOTAL_HEIGHT,
   createUnifiedPineTreeGeometry,
 } from './pineGeometry';
+import {
+  checkFallingTreeCollisions,
+  createFallingTreesState,
+  resetFallingTrees,
+  stepFallingTrees,
+  type FallingTreeItem,
+  type TreeFallStartEvent,
+  type TreeGroundImpactEvent,
+} from './fallingTrees';
 
 export interface PineForestProps {
   isSoftwareGl?: boolean;
+  driveMode?: boolean;
+  mechPoseRef?: React.MutableRefObject<MechTelemetrySnapshot>;
+  combatRef?: React.MutableRefObject<CombatSimulationState>;
+}
+
+const MAX_WOOD_CHIPS = 56;
+const MECH_TREE_KNOCK_RADIUS = 2.15;
+
+interface WoodChipParticle {
+  active: boolean;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  rx: number;
+  ry: number;
+  life: number;
+  maxLife: number;
+  scale: number;
+  r: number;
+  g: number;
+  b: number;
 }
 
 const _dummy = new THREE.Object3D();
@@ -18,6 +55,11 @@ const _upVec = new THREE.Vector3(0, 1, 0);
 const _normalVec = new THREE.Vector3();
 const _slopeQuat = new THREE.Quaternion();
 const _yawQuat = new THREE.Quaternion();
+const _baseEuler = new THREE.Euler();
+const _baseQuat = new THREE.Quaternion();
+const _fallAxis = new THREE.Vector3();
+const _fallQuat = new THREE.Quaternion();
+const _chipColor = new THREE.Color();
 
 // Bright tint modulators multiplied onto baked vertexColors so bark stays brown
 // while pine groves exhibit varied cool spruce, boreal, and warm sunlit olive hues.
@@ -38,7 +80,7 @@ function samplePineTint(t: number, out: THREE.Color): THREE.Color {
 
 const WIND_VERTEX_SWAY = `
   float hNorm = clamp( transformed.y / ${PINE_TREE_TOTAL_HEIGHT.toFixed(2)}, 0.0, 1.0 );
-  float bend = hNorm * hNorm;
+  float bend = hNorm * hNorm * aTreeSway;
   #ifdef USE_INSTANCING
     vec3 instRoot = ( modelMatrix * instanceMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
   #else
@@ -59,7 +101,8 @@ function injectTreeWindSway(
     .replace(
       '#include <common>',
       `#include <common>
-      uniform float uWindTime;`,
+      uniform float uWindTime;
+      attribute float aTreeSway;`,
     )
     .replace(
       '#include <begin_vertex>',
@@ -68,28 +111,71 @@ function injectTreeWindSway(
     );
 }
 
-export function PineForest({ isSoftwareGl = false }: PineForestProps) {
+export function PineForest({
+  isSoftwareGl = false,
+  driveMode = false,
+  mechPoseRef,
+  combatRef,
+}: PineForestProps) {
   const treeRef = useRef<THREE.InstancedMesh>(null);
   const contactShadowRef = useRef<THREE.InstancedMesh>(null);
   const shrubRef = useRef<THREE.InstancedMesh>(null);
   const logRef = useRef<THREE.InstancedMesh>(null);
   const rootRockRef = useRef<THREE.InstancedMesh>(null);
+  const chipMeshRef = useRef<THREE.InstancedMesh>(null);
 
   const windTimeUniform = useRef({ value: 0.85 });
+  const prevElapsedRef = useRef(0);
+
+  const { trees, shrubs, logs, rootRocks } = useMemo(() => generatePineForestData(), []);
+  const fallingStateRef = useRef(createFallingTreesState(trees));
+  const hitEventsRef = useRef<TreeFallStartEvent[]>([]);
+  const dirtyItemsRef = useRef<FallingTreeItem[]>([]);
+  const impactEventsRef = useRef<TreeGroundImpactEvent[]>([]);
+  const chipCursorRef = useRef(0);
+  const chipsRef = useRef<WoodChipParticle[]>(
+    Array.from({ length: MAX_WOOD_CHIPS }, () => ({
+      active: false,
+      x: 0,
+      y: 0,
+      z: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      rx: 0,
+      ry: 0,
+      life: 0,
+      maxLife: 0.5,
+      scale: 1,
+      r: 0.3,
+      g: 0.2,
+      b: 0.12,
+    })),
+  );
 
   const {
     treeGeo,
+    swayAttr,
     contactGeo,
+    chipGeo,
     contactShadowTex,
     treeMaterial,
     treeDepthMaterial,
     shrubMaterial,
     contactShadowMaterial,
+    chipMaterial,
   } = useMemo(() => {
     const uGeo = createUnifiedPineTreeGeometry();
+    const swayArray = new Float32Array(trees.length);
+    swayArray.fill(1.0);
+    const swayAttribute = new THREE.InstancedBufferAttribute(swayArray, 1);
+    swayAttribute.setUsage(THREE.DynamicDrawUsage);
+    uGeo.setAttribute('aTreeSway', swayAttribute);
+
     const csGeo = new THREE.PlaneGeometry(1, 1);
     csGeo.rotateX(-Math.PI / 2);
 
+    const cGeo = new THREE.BoxGeometry(0.18, 0.08, 0.08);
     const csTex = createContactShadowTexture();
 
     const tMat = new THREE.MeshStandardMaterial({
@@ -97,7 +183,7 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
       roughness: 0.87,
       metalness: 0.02,
     });
-    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v2';
+    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v3';
     tMat.onBeforeCompile = (shader) => {
       injectTreeWindSway(shader, windTimeUniform.current);
       shader.vertexShader = shader.vertexShader
@@ -132,7 +218,7 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
     const tDepthMat = new THREE.MeshDepthMaterial({
       depthPacking: THREE.RGBADepthPacking,
     });
-    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v1';
+    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v2';
     tDepthMat.onBeforeCompile = (shader) => {
       injectTreeWindSway(shader, windTimeUniform.current);
     };
@@ -174,38 +260,90 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
       polygonOffsetUnits: -2,
     });
 
+    const cMat = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      roughness: 0.9,
+      metalness: 0.02,
+    });
+
     return {
       treeGeo: uGeo,
+      swayAttr: swayAttribute,
       contactGeo: csGeo,
+      chipGeo: cGeo,
       contactShadowTex: csTex,
       treeMaterial: tMat,
       treeDepthMaterial: tDepthMat,
       shrubMaterial: sMat,
       contactShadowMaterial: csMat,
+      chipMaterial: cMat,
     };
-  }, []);
+  }, [trees.length]);
 
   useEffect(() => {
     return () => {
       treeGeo.dispose();
       contactGeo.dispose();
+      chipGeo.dispose();
       contactShadowTex.dispose();
       treeMaterial.dispose();
       treeDepthMaterial.dispose();
       shrubMaterial.dispose();
       contactShadowMaterial.dispose();
+      chipMaterial.dispose();
     };
   }, [
     treeGeo,
     contactGeo,
+    chipGeo,
     contactShadowTex,
     treeMaterial,
     treeDepthMaterial,
     shrubMaterial,
     contactShadowMaterial,
+    chipMaterial,
   ]);
 
-  const { trees, shrubs, logs, rootRocks } = useMemo(() => generatePineForestData(), []);
+  const spawnWoodChips = (
+    x: number,
+    y: number,
+    z: number,
+    dirX: number,
+    dirZ: number,
+    count: number,
+    isGroundPuff: boolean,
+  ) => {
+    const chips = chipsRef.current;
+    for (let i = 0; i < count; i++) {
+      const idx = chipCursorRef.current;
+      chipCursorRef.current = (chipCursorRef.current + 1) % MAX_WOOD_CHIPS;
+      const c = chips[idx];
+      const ang = Math.random() * Math.PI * 2;
+      const spd = (isGroundPuff ? 2.6 : 3.8) * (0.45 + Math.random() * 0.85);
+      c.active = true;
+      c.x = x + (Math.random() - 0.5) * (isGroundPuff ? 1.1 : 0.45);
+      c.y = y + Math.random() * 0.45;
+      c.z = z + (Math.random() - 0.5) * (isGroundPuff ? 1.1 : 0.45);
+      c.vx = Math.cos(ang) * spd + dirX * (isGroundPuff ? 1.1 : 2.2);
+      c.vy = (isGroundPuff ? 2.0 : 3.2) + Math.random() * 2.8;
+      c.vz = Math.sin(ang) * spd + dirZ * (isGroundPuff ? 1.1 : 2.2);
+      c.rx = Math.random() * 6;
+      c.ry = Math.random() * 6;
+      c.life = 0;
+      c.maxLife = 0.45 + Math.random() * 0.35;
+      c.scale = (isGroundPuff ? 0.9 : 1.1) * (0.65 + Math.random() * 0.7);
+      // Mix of bark splinters and pine needles
+      if (Math.random() < (isGroundPuff ? 0.72 : 0.48)) {
+        c.r = 0.22;
+        c.g = 0.40;
+        c.b = 0.22;
+      } else {
+        c.r = 0.34;
+        c.g = 0.22;
+        c.b = 0.13;
+      }
+    }
+  };
 
   useEffect(() => {
     const tMesh = treeRef.current;
@@ -292,8 +430,157 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
   }, [trees, shrubs, logs, rootRocks, treeDepthMaterial]);
 
   useFrame((_, delta) => {
-    if (isSoftwareGl) return;
-    windTimeUniform.current.value += Math.min(delta, 0.05);
+    const dt = Math.min(delta, 0.05);
+    if (!isSoftwareGl) {
+      windTimeUniform.current.value += dt;
+    }
+
+    const tMesh = treeRef.current;
+    const csMesh = contactShadowRef.current;
+    const fState = fallingStateRef.current;
+    const combat = combatRef?.current;
+
+    // Restore knocked-down trees cleanly when mission is restarted
+    if (combat) {
+      if (combat.elapsedSec < prevElapsedRef.current - 0.1) {
+        const restored = resetFallingTrees(fState);
+        if (restored.length > 0 && tMesh && csMesh) {
+          for (let k = 0; k < restored.length; k++) {
+            const idx = restored[k];
+            const t = trees[idx];
+            _dummy.position.set(t.x, t.y, t.z);
+            _dummy.rotation.set(t.tiltX, t.rotY, t.tiltZ);
+            _dummy.scale.set(t.widthScale, t.heightScale, t.widthScale);
+            _dummy.updateMatrix();
+            tMesh.setMatrixAt(idx, _dummy.matrix);
+            swayAttr.setX(idx, 1.0);
+
+            const n = getAnalyticalTerrainNormal(t.x, t.z, 1.6, false);
+            _normalVec.set(n.nx, n.ny, n.nz).normalize();
+            _slopeQuat.setFromUnitVectors(_upVec, _normalVec);
+            _yawQuat.setFromAxisAngle(_upVec, t.rotY);
+            _dummy.position.set(t.x, t.y + 0.055, t.z);
+            _dummy.quaternion.copy(_slopeQuat).multiply(_yawQuat);
+            const shadowDiam = t.widthScale * 1.44;
+            _dummy.scale.set(shadowDiam, 1, shadowDiam);
+            _dummy.updateMatrix();
+            csMesh.setMatrixAt(idx, _dummy.matrix);
+          }
+          tMesh.instanceMatrix.needsUpdate = true;
+          csMesh.instanceMatrix.needsUpdate = true;
+          swayAttr.needsUpdate = true;
+        }
+      }
+      prevElapsedRef.current = combat.elapsedSec;
+    }
+
+    // Check O(1) spatial grid for trees touched by the walking/dashing Mech
+    if (driveMode && mechPoseRef && (!combat || combat.missionStatus === 'playing')) {
+      const pose = mechPoseRef.current;
+      const hits = checkFallingTreeCollisions(
+        fState,
+        pose.x,
+        pose.y,
+        pose.z,
+        MECH_TREE_KNOCK_RADIUS,
+        getTerrainHeight,
+        hitEventsRef.current,
+      );
+
+      if (hits.length > 0) {
+        combatAudio.playTreeSnap();
+        if (combat) {
+          combat.trauma = Math.min(1, combat.trauma + 0.08 * Math.min(2, hits.length));
+        }
+        for (let i = 0; i < hits.length; i++) {
+          const ev = hits[i];
+          swayAttr.setX(ev.index, 0.0);
+          spawnWoodChips(ev.x, ev.y + 0.8, ev.z, ev.dirX, ev.dirZ, isSoftwareGl ? 4 : 7, false);
+        }
+        swayAttr.needsUpdate = true;
+      }
+    }
+
+    // Step only active falling trees (0..4 instances/frame)
+    const { dirty, impacts } = stepFallingTrees(
+      fState,
+      dt,
+      dirtyItemsRef.current,
+      impactEventsRef.current,
+    );
+
+    if (impacts.length > 0) {
+      combatAudio.playTreeThud();
+      if (combat) {
+        combat.trauma = Math.min(1, combat.trauma + 0.05);
+      }
+      for (let i = 0; i < impacts.length; i++) {
+        const imp = impacts[i];
+        spawnWoodChips(imp.x, imp.y, imp.z, imp.dirX, imp.dirZ, isSoftwareGl ? 4 : 8, true);
+      }
+    }
+
+    if (dirty.length > 0 && tMesh && csMesh) {
+      for (let i = 0; i < dirty.length; i++) {
+        const item = dirty[i];
+        const t = trees[item.index];
+        _baseQuat.setFromEuler(_baseEuler.set(t.tiltX, t.rotY, t.tiltZ));
+        _fallAxis.set(item.axisX, 0, item.axisZ).normalize();
+        _fallQuat.setFromAxisAngle(_fallAxis, item.currentAngle);
+
+        _dummy.position.set(t.x, t.y, t.z);
+        _dummy.quaternion.copy(_fallQuat).multiply(_baseQuat);
+        _dummy.scale.set(t.widthScale, t.heightScale, t.widthScale);
+        _dummy.updateMatrix();
+        tMesh.setMatrixAt(item.index, _dummy.matrix);
+
+        // Shrink contact shadow subtly as canopy leaves stump upright center
+        const n = getAnalyticalTerrainNormal(t.x, t.z, 1.6, false);
+        _normalVec.set(n.nx, n.ny, n.nz).normalize();
+        _slopeQuat.setFromUnitVectors(_upVec, _normalVec);
+        _yawQuat.setFromAxisAngle(_upVec, t.rotY);
+        _dummy.position.set(t.x, t.y + 0.055, t.z);
+        _dummy.quaternion.copy(_slopeQuat).multiply(_yawQuat);
+        const shadowDiam = t.widthScale * 1.44 * (1 - Math.min(1, item.progress) * 0.42);
+        _dummy.scale.set(shadowDiam, 1, shadowDiam);
+        _dummy.updateMatrix();
+        csMesh.setMatrixAt(item.index, _dummy.matrix);
+      }
+      tMesh.instanceMatrix.needsUpdate = true;
+      csMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // Step splinter & pine needle particle pool
+    const chipInst = chipMeshRef.current;
+    if (chipInst) {
+      let count = 0;
+      const chips = chipsRef.current;
+      for (let i = 0; i < chips.length; i++) {
+        const c = chips[i];
+        if (!c.active) continue;
+        c.life += dt;
+        if (c.life >= c.maxLife) {
+          c.active = false;
+          continue;
+        }
+        c.vy -= 13.5 * dt;
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.z += c.vz * dt;
+        const fade = 1 - c.life / c.maxLife;
+        _dummy.position.set(c.x, c.y, c.z);
+        _dummy.rotation.set(c.rx + c.life * 8, c.ry + c.life * 6, c.life * 5);
+        _dummy.scale.setScalar(c.scale * fade);
+        _dummy.updateMatrix();
+        chipInst.setMatrixAt(count, _dummy.matrix);
+        _chipColor.setRGB(c.r, c.g, c.b);
+        chipInst.setColorAt(count, _chipColor);
+        count++;
+      }
+      chipInst.count = count;
+      chipInst.instanceMatrix.needsUpdate = true;
+      if (chipInst.instanceColor) chipInst.instanceColor.needsUpdate = true;
+    }
   });
 
   return (
@@ -334,6 +621,11 @@ export function PineForest({ isSoftwareGl = false }: PineForestProps) {
         <dodecahedronGeometry args={[1, 0]} />
         <meshStandardMaterial roughness={0.88} metalness={0.04} />
       </instancedMesh>
+      <instancedMesh
+        ref={chipMeshRef}
+        args={[chipGeo, chipMaterial, MAX_WOOD_CHIPS]}
+        frustumCulled={false}
+      />
     </group>
   );
 }

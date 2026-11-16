@@ -9,6 +9,7 @@ import { SectorId } from '../../map/sectors';
 import { Helicopter } from '../objects/Helicopter';
 import { ArmoredVehicle } from '../objects/ArmoredVehicle';
 import { QuonsetHangar } from '../objects/QuonsetHangar';
+import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
 
 export interface AirfieldZoneProps {
   helipadTex: THREE.Texture;
@@ -25,6 +26,10 @@ export function AirfieldZone({
 }: AirfieldZoneProps) {
   const airY = useMemo(
     () => getTerrainHeight(AIRFIELD_CENTER_X, AIRFIELD_CENTER_Z),
+    [],
+  );
+  const airConcrete = useMemo(
+    () => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.06 }),
     [],
   );
 
@@ -96,13 +101,11 @@ export function AirfieldZone({
       ))}
 
       {/* Low concrete perimeter berms on rear flanks (NE road gate stays wide open) */}
-      <mesh position={[-30.6, 1.35, 11.5]} castShadow receiveShadow>
+      <mesh position={[-30.6, 1.35, 11.5]} material={airConcrete} castShadow receiveShadow>
         <boxGeometry args={[1.2, 2.7, 22.2]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
       </mesh>
-      <mesh position={[0, 1.35, 22.6]} castShadow receiveShadow>
+      <mesh position={[0, 1.35, 22.6]} material={airConcrete} castShadow receiveShadow>
         <boxGeometry args={[62.4, 2.7, 1.2]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
       </mesh>
 
       {/* Transport Helicopters kept small (1.4x) on massive pads for Mech scale contrast */}
@@ -197,9 +200,8 @@ export function AirfieldZone({
 
       {/* Concrete barracks & terracotta supply crates */}
       {[-22.0, -15.5, -9.0].map((cx, i) => (
-        <mesh key={i} position={[cx, 1.9, 26.5]} castShadow receiveShadow>
+        <mesh key={i} position={[cx, 1.9, 26.5]} material={airConcrete} castShadow receiveShadow>
           <boxGeometry args={[5.0, 3.2, 7.2]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
         </mesh>
       ))}
       {[

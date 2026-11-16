@@ -13,6 +13,7 @@ import { createTerrainSurfaceMaterial } from './terrainShader';
 
 export interface OuterMountainRingProps {
   terrainBump: THREE.Texture;
+  puddleTimeUniform: { value: number };
 }
 
 const OUTER_EXTENT = 540;
@@ -25,7 +26,10 @@ const SEG_Z = 248;
  * 400x332 playable perimeter so the terrain transitions naturally into distant
  * mountain peaks and NW/SE river gorges without sharp rectangular slab edges.
  */
-export function OuterMountainRing({ terrainBump }: OuterMountainRingProps) {
+export function OuterMountainRing({
+  terrainBump,
+  puddleTimeUniform,
+}: OuterMountainRingProps) {
   const ringGeometry = useMemo(() => {
     const positions: number[] = [];
     const normals: number[] = [];
@@ -127,8 +131,8 @@ export function OuterMountainRing({ terrainBump }: OuterMountainRingProps) {
   }, []);
 
   const mountainMaterial = useMemo(
-    () => createTerrainSurfaceMaterial(terrainBump, 0.55),
-    [terrainBump],
+    () => createTerrainSurfaceMaterial(terrainBump, 0.55, puddleTimeUniform),
+    [terrainBump, puddleTimeUniform],
   );
 
   useEffect(() => {

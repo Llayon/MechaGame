@@ -660,12 +660,8 @@ function buildWorldColliders(): WorldCollider[] {
     list.push(makeBox(bx, bz, 8.2, 2.8, rotY, 'rock'));
   }
 
-  // 7. Conifer Forest tree trunks & root boulders
+  // 7. Conifer Forest root boulders (pine trunks themselves are crushable via FallingTreesSystem)
   const forest = generatePineForestData();
-  for (const t of forest.trees) {
-    const trunkR = Math.max(0.32, 0.34 * t.widthScale);
-    list.push(makeCircle(t.x, t.z, trunkR, 'tree'));
-  }
   for (const rr of forest.rootRocks) {
     const r = Math.max(rr.sx, rr.sz) * 0.72;
     if (r >= 0.45) {
@@ -673,11 +669,12 @@ function buildWorldColliders(): WorldCollider[] {
     }
   }
 
-  // 8. Scattered cliff/shoreline/ridge boulders
+  // 8. Scattered cliff/shoreline/ridge boulders (skip small satellite rubble so Mech walks over debris)
   const outcrops = generateRockOutcropsData();
   for (const r of outcrops) {
+    if (r.tier === 'rubble') continue;
     const rad = Math.max(r.sx, r.sz) * 0.78;
-    if (rad >= 0.45) {
+    if (rad >= 0.78) {
       list.push(makeCircle(r.x, r.z, rad, 'rock'));
     }
   }

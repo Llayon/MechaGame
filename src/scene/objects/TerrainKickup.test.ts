@@ -1,6 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  MECH_SPAWN,
+  getWalkableSurfaceY,
+  shouldEmitTerrainKickup,
+} from '../../map/mechKinematics';
+import {
+  BRIDGE_SPECS,
+  CITADEL_CENTER_X,
+  CITADEL_CENTER_Z,
+  ISLAND_CENTER_X,
+  ISLAND_CENTER_Z,
+  ROAD_MAIN_WEST,
+  WATER_LEVEL,
+  getTerrainHeight,
+} from '../../map/terrainMath';
+import {
   KICKUP_POOL_SIZE,
   computePebbleTransform,
   createKickupPool,
@@ -105,4 +120,39 @@ test('ring buffer wraps safely when bursts exceed capacity and resetKickupPool c
   resetKickupPool(pool);
   assert.equal(pool.activeCount, 0);
   assert.equal(stepKickupPool(pool, 0.01), 0);
+});
+
+test('shouldEmitTerrainKickup suppresses gravel on concrete slabs, bridges, and water while allowing soil/road/meadow', () => {
+  // Airfield concrete Helipad spawn -> no gravel kickup
+  const spawnSurf = getWalkableSurfaceY(MECH_SPAWN.x, MECH_SPAWN.z, MECH_SPAWN.y);
+  assert.equal(spawnSurf.onConcrete, true);
+  assert.equal(shouldEmitTerrainKickup(MECH_SPAWN.x, MECH_SPAWN.z, spawnSurf.y, MECH_SPAWN.y), false);
+
+  // Island concrete deck -> no gravel kickup
+  const islandSurf = getWalkableSurfaceY(ISLAND_CENTER_X, ISLAND_CENTER_Z);
+  assert.equal(islandSurf.onConcrete, true);
+  assert.equal(shouldEmitTerrainKickup(ISLAND_CENTER_X, ISLAND_CENTER_Z, islandSurf.y), false);
+
+  // Citadel concrete courtyard -> no gravel kickup
+  const citSurf = getWalkableSurfaceY(CITADEL_CENTER_X, CITADEL_CENTER_Z);
+  assert.equal(citSurf.onConcrete, true);
+  assert.equal(shouldEmitTerrainKickup(CITADEL_CENTER_X, CITADEL_CENTER_Z, citSurf.y), false);
+
+  // Bridge deck midpoint -> no gravel kickup when mech is on deck
+  const b0 = BRIDGE_SPECS[0];
+  const bx = (b0.start[0] + b0.end[0]) * 0.5;
+  const bz = (b0.start[1] + b0.end[1]) * 0.5;
+  const bridgeSurf = getWalkableSurfaceY(bx, bz, Math.max(b0.startY, b0.endY) + 1.0);
+  assert.equal(bridgeSurf.onBridge, true);
+  assert.equal(shouldEmitTerrainKickup(bx, bz, bridgeSurf.y, bridgeSurf.y), false);
+
+  // Submerged water -> no dry gravel kickup
+  assert.equal(shouldEmitTerrainKickup(-45, -18, WATER_LEVEL - 0.5), false);
+
+  // Natural dirt road & grassy hillside off the Helipad -> gravel kickup active
+  const [rx, rz] = ROAD_MAIN_WEST[2];
+  const roadY = getTerrainHeight(rx, rz);
+  assert.equal(shouldEmitTerrainKickup(rx, rz, roadY, roadY), true);
+  const meadowY = getTerrainHeight(-80, 90);
+  assert.equal(shouldEmitTerrainKickup(-80, 90, meadowY, meadowY), true);
 });

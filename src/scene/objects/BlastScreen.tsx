@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
+
 export interface BlastScreenProps {
   position: [number, number, number];
   rotationY?: number;
@@ -21,18 +24,19 @@ export function BlastScreen({
     return ((i / (buttressCount - 1)) - 0.5) * (width * 0.82);
   });
 
+  const concreteMain = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.06 }), []);
+  const concreteFoot = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.84, metalness: 0.06 }), []);
+
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       {/* Reinforced concrete base footing */}
-      <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+      <mesh position={[0, 0.25, 0]} material={concreteFoot} castShadow receiveShadow>
         <boxGeometry args={[width + 0.8, 0.5, 1.9]} />
-        <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.06} />
       </mesh>
 
       {/* Main sloped concrete ballistic shield wall */}
-      <mesh position={[0, height * 0.5 + 0.2, 0]} rotation={[0.07, 0, 0]} castShadow receiveShadow>
+      <mesh position={[0, height * 0.5 + 0.2, 0]} rotation={[0.07, 0, 0]} material={concreteMain} castShadow receiveShadow>
         <boxGeometry args={[width, height, 0.95]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
       </mesh>
 
       {/* Steel top parapet cap & terracotta/amber visor strip */}
@@ -52,9 +56,8 @@ export function BlastScreen({
             <boxGeometry args={[0.45, height * 0.96, 0.72]} />
             <meshStandardMaterial color="#49525C" roughness={0.55} metalness={0.58} />
           </mesh>
-          <mesh position={[0, 0.25, -0.42]} castShadow receiveShadow>
+          <mesh position={[0, 0.25, -0.42]} material={concreteMain} castShadow receiveShadow>
             <boxGeometry args={[0.72, 0.5, 0.9]} />
-            <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
           </mesh>
         </group>
       ))}

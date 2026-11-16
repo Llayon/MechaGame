@@ -70,9 +70,11 @@ export function getWalkableSurfaceY(
   y: number;
   onBridge: boolean;
   inWater: boolean;
+  onConcrete: boolean;
 } {
   let y = getTerrainHeight(x, z);
   let onBridge = false;
+  let onConcrete = false;
 
   // 1. Check all 4 bridges / elevated viaduct first
   for (let i = 0; i < BRIDGE_SPECS.length; i++) {
@@ -82,6 +84,7 @@ export function getWalkableSurfaceY(
       if (withinStepReach) {
         y = Math.max(y, deckY);
         onBridge = true;
+        onConcrete = true;
       }
     }
   }
@@ -95,22 +98,48 @@ export function getWalkableSurfaceY(
   const alz = adx * sinA + adz * cosA;
   if (Math.abs(alx) <= 30.0 && Math.abs(alz) <= 22.0) {
     y = Math.max(y, AIRFIELD_PAD_Y + 0.35);
+    onConcrete = true;
+  } else if (Math.abs(alx) <= 30.35 && Math.abs(alz) <= 22.35) {
+    onConcrete = true;
   }
 
   // 3. Central Industrial Island concrete deck (radius 30.5, top at islandY + 0.70)
-  if (Math.hypot(x - ISLAND_CENTER_X, z - ISLAND_CENTER_Z) <= ISLAND_DECK_RADIUS) {
+  const islandDist = Math.hypot(x - ISLAND_CENTER_X, z - ISLAND_CENTER_Z);
+  if (islandDist <= ISLAND_DECK_RADIUS) {
     y = Math.max(y, ISLAND_BASE_Y + 0.7);
+    onConcrete = true;
+  } else if (islandDist <= ISLAND_DECK_RADIUS + 0.35) {
+    onConcrete = true;
   }
 
   // 4. Citadel concrete courtyard slab (elliptical octagon, top at citY + 0.55)
   const cdx = (x - CITADEL_CENTER_X) / (CITADEL_WALL_RX + 0.5);
   const cdz = (z - CITADEL_CENTER_Z) / (CITADEL_WALL_RZ + 0.5);
-  if (Math.hypot(cdx, cdz) <= 1.0) {
+  const citadelDist = Math.hypot(cdx, cdz);
+  if (citadelDist <= 1.0) {
     y = Math.max(y, CITADEL_BASE_Y + 0.55);
+    onConcrete = true;
+  } else if (citadelDist <= 1.02) {
+    onConcrete = true;
   }
 
   const inWater = !onBridge && y < WATER_LEVEL - 0.05;
-  return { y, onBridge, inWater };
+  return { y, onBridge, inWater, onConcrete };
+}
+
+/**
+ * Returns true only when loose soil/gravel/grass/rock kickup should fly from under a Mech foot
+ * (never on smooth poured concrete slabs, bridge decks, or deep water channels).
+ */
+export function shouldEmitTerrainKickup(
+  x: number,
+  z: number,
+  groundY: number,
+  referenceY?: number,
+): boolean {
+  if (groundY < WATER_LEVEL + 0.05) return false;
+  const surf = getWalkableSurfaceY(x, z, referenceY);
+  return !surf.onConcrete && !surf.onBridge && !surf.inWater;
 }
 
 export interface FootSupportSample {
@@ -346,4 +375,8 @@ export interface MechTelemetrySnapshot {
   isCrouched: boolean;
   inWater: boolean;
   onBridge: boolean;
+  footLX?: number;
+  footLZ?: number;
+  footRX?: number;
+  footRZ?: number;
 }

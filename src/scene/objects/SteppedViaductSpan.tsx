@@ -10,6 +10,7 @@ import {
   lerp,
 } from '../../map/terrainMath';
 import type { LightingPreset } from '../../map/sectors';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
 import { BlastScreen } from './BlastScreen';
 import { BridgeArchPylon } from './BridgeArchPylon';
 import { CargoContainer } from './CargoContainer';
@@ -82,6 +83,8 @@ export function SteppedViaductSpan({
   lightingPreset = 'dusk',
   isSoftwareGl = false,
 }: SteppedViaductSpanProps) {
+  const viaductConc = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'bridge', { roughness: 0.82, metalness: 0.08 }), []);
+  const viaductConcDark = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'bridge', { roughness: 0.84, metalness: 0.06 }), []);
   const flights = useMemo(() => {
     const dx1 = VIADUCT_ELBOW[0] - spec.start[0];
     const dz1 = VIADUCT_ELBOW[1] - spec.start[1];
@@ -183,9 +186,8 @@ export function SteppedViaductSpan({
           >
             {/* Pitched Structural Span */}
             <group rotation={[fl.pitch, 0, 0]}>
-              <mesh position={[0, 0, 0]} castShadow receiveShadow>
+              <mesh position={[0, 0, 0]} material={viaductConc} castShadow receiveShadow>
                 <boxGeometry args={[spec.width, 1.0, fl.slopeLen + 1.4]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
               </mesh>
               <mesh position={[0, 0.51, 0]} receiveShadow>
                 <boxGeometry args={[spec.width * 0.84, 0.04, fl.slopeLen + 1.5]} />
@@ -201,9 +203,8 @@ export function SteppedViaductSpan({
               {/* Guardrails, Under-deck Warren Trusses & #00E5FF Navigation Strips */}
               {[-1, 1].map((side) => (
                 <group key={`fl-side-${side}`}>
-                  <mesh position={[side * (spec.width * 0.5 - 0.22), 0.95, 0]} castShadow>
+                  <mesh position={[side * (spec.width * 0.5 - 0.22), 0.95, 0]} material={viaductConc} castShadow>
                     <boxGeometry args={[0.45, 1.0, fl.slopeLen + 0.3]} />
-                    <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.12} />
                   </mesh>
                   <mesh position={[side * (spec.width * 0.43), 0.56, 0]}>
                     <boxGeometry args={[0.16, 0.06, fl.slopeLen + 0.5]} />
@@ -320,36 +321,35 @@ export function SteppedViaductSpan({
                       <group key={side}>
                         <mesh
                           position={[side * (spec.width * 0.5 + 0.65), tunnelClearH * 0.5, 0]}
+                          material={viaductConc}
                           castShadow
                           receiveShadow
                         >
                           <boxGeometry args={[1.3, tunnelClearH, tunnelLen]} />
-                          <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
                         </mesh>
                         {[-5.6, 0, 5.6].map((rz, rIdx) => (
                           <mesh
                             key={rIdx}
                             position={[side * (spec.width * 0.5 + 1.3), tunnelClearH * 0.45, rz]}
+                            material={viaductConcDark}
                             castShadow
                             receiveShadow
                           >
                             <boxGeometry args={[0.7, tunnelClearH * 0.9, 1.2]} />
-                            <meshStandardMaterial color="#8E959B" roughness={0.8} />
                           </mesh>
                         ))}
                       </group>
                     ))}
-                    <mesh position={[0, tunnelClearH + 0.57, 0]} castShadow receiveShadow>
+                    <mesh position={[0, tunnelClearH + 0.57, 0]} material={viaductConc} castShadow receiveShadow>
                       <boxGeometry args={[spec.width + 2.6, 1.15, tunnelLen + 0.5]} />
-                      <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
                     </mesh>
                     <mesh
                       position={[0, tunnelClearH + 0.72, -tunnelLen * 0.5 + 0.6]}
+                      material={viaductConcDark}
                       castShadow
                       receiveShadow
                     >
                       <boxGeometry args={[spec.width + 3.4, 1.45, 1.2]} />
-                      <meshStandardMaterial color="#8E959B" roughness={0.8} />
                     </mesh>
                     <mesh position={[0, tunnelClearH + 0.12, -tunnelLen * 0.5 + 0.02]}>
                       <boxGeometry args={[spec.width * 0.88, 0.14, 0.1]} />
@@ -368,19 +368,16 @@ export function SteppedViaductSpan({
 
             {/* Vertical Canyon Trestle Pier under Flight Midpoint */}
             <group position={[0, 0, 0]}>
-              <mesh position={[0, fl.pierTopOffset - 0.25, 0]} castShadow receiveShadow>
+              <mesh position={[0, fl.pierTopOffset - 0.25, 0]} material={viaductConc} castShadow receiveShadow>
                 <boxGeometry args={[spec.width * 0.98, 1.1, 1.9]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
               </mesh>
               {[-spec.width * 0.28, spec.width * 0.28].map((lx, cIdx) => (
-                <mesh key={cIdx} position={[lx, pierCenterY, 0]} castShadow receiveShadow>
+                <mesh key={cIdx} position={[lx, pierCenterY, 0]} material={viaductConc} castShadow receiveShadow>
                   <boxGeometry args={[1.4, pierH, 1.6]} />
-                  <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
                 </mesh>
               ))}
-              <mesh position={[0, pierCenterY - pierH * 0.5 + 2.1, 0]} castShadow receiveShadow>
+              <mesh position={[0, pierCenterY - pierH * 0.5 + 2.1, 0]} material={viaductConcDark} castShadow receiveShadow>
                 <boxGeometry args={[spec.width * 0.92, 4.2, 2.3]} />
-                <meshStandardMaterial color="#8E959B" roughness={0.8} />
               </mesh>
             </group>
           </group>
@@ -390,13 +387,11 @@ export function SteppedViaductSpan({
       {/* CENTRAL CONCRETE BASTION-CROSSWAY (Бастион-перемычка на повороте серпантина) */}
       <group position={[VIADUCT_ELBOW[0], 0, VIADUCT_ELBOW[1]]} rotation={[0, flights.hubYaw, 0]}>
         {/* Main Armored Octagonal-Chamfered Bastion Deck (top at VIADUCT_ELBOW_Y + 0.50) */}
-        <mesh position={[0, VIADUCT_ELBOW_Y - 0.1, 0]} castShadow receiveShadow>
+        <mesh position={[0, VIADUCT_ELBOW_Y - 0.1, 0]} material={viaductConc} castShadow receiveShadow>
           <boxGeometry args={[hubWidth, 1.2, hubLength]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
         </mesh>
-        <mesh position={[0, VIADUCT_ELBOW_Y - 0.12, 0]} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow>
+        <mesh position={[0, VIADUCT_ELBOW_Y - 0.12, 0]} rotation={[0, Math.PI / 4, 0]} material={viaductConcDark} castShadow receiveShadow>
           <boxGeometry args={[hubWidth * 0.92, 1.14, hubLength * 0.92]} />
-          <meshStandardMaterial color="#8E959B" roughness={0.82} metalness={0.06} />
         </mesh>
         <mesh position={[0, VIADUCT_ELBOW_Y + 0.51, 0]} receiveShadow>
           <boxGeometry args={[hubWidth - 2.4, 0.04, hubLength - 2.4]} />
@@ -411,13 +406,11 @@ export function SteppedViaductSpan({
           [6.4, 6.4],
         ].map(([px, pz], idx) => (
           <group key={`hub-pier-${idx}`} position={[px, 0, pz]}>
-            <mesh position={[0, hubPierCenterY, 0]} castShadow receiveShadow>
+            <mesh position={[0, hubPierCenterY, 0]} material={viaductConcDark} castShadow receiveShadow>
               <boxGeometry args={[2.1, hubPierHeight, 2.1]} />
-              <meshStandardMaterial color="#8E959B" roughness={0.82} metalness={0.08} />
             </mesh>
-            <mesh position={[0, hubFootingBottomY + 1.8, 0]} castShadow receiveShadow>
+            <mesh position={[0, hubFootingBottomY + 1.8, 0]} material={viaductConc} castShadow receiveShadow>
               <boxGeometry args={[3.2, 3.6, 3.2]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
             </mesh>
           </group>
         ))}
@@ -431,13 +424,11 @@ export function SteppedViaductSpan({
         {/* Flanking Concrete Bastion Walls (+X & -X sides) with Heat-Venting Louver Bays */}
         {[-1, 1].map((side) => (
           <group key={`hub-wall-${side}`} position={[side * (hubWidth * 0.5 - 1.15), VIADUCT_ELBOW_Y + 0.5, 0]}>
-            <mesh position={[0, bastionH * 0.5, 0]} castShadow receiveShadow>
+            <mesh position={[0, bastionH * 0.5, 0]} material={viaductConc} castShadow receiveShadow>
               <boxGeometry args={[2.3, bastionH, hubLength * 0.88]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
             </mesh>
-            <mesh position={[-side * 0.12, bastionH + 0.28, 0]} castShadow>
+            <mesh position={[-side * 0.12, bastionH + 0.28, 0]} material={viaductConcDark} castShadow>
               <boxGeometry args={[2.65, 0.56, hubLength * 0.92]} />
-              <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.1} />
             </mesh>
             <mesh position={[0, bastionH + 0.62, 0]} castShadow>
               <boxGeometry args={[2.1, 0.18, hubLength * 0.88]} />
@@ -481,9 +472,8 @@ export function SteppedViaductSpan({
 
         {/* Forward Corner Citadel-Shielding Bastion Spur (blocks Citadel LoS onto Flight 1) */}
         <group position={[5.6, VIADUCT_ELBOW_Y + 0.5, 9.3]}>
-          <mesh position={[0, bastionH * 0.52, 0]} castShadow receiveShadow>
+          <mesh position={[0, bastionH * 0.52, 0]} material={viaductConc} castShadow receiveShadow>
             <boxGeometry args={[9.2, bastionH * 1.04, 2.1]} />
-            <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
           </mesh>
           <mesh position={[0, bastionH * 1.04 + 0.28, 0]} castShadow>
             <boxGeometry args={[9.6, 0.56, 2.4]} />
@@ -536,13 +526,11 @@ export function SteppedViaductSpan({
       {/* DEEP ANCHORED CONCRETE ABUTMENTS AT ISLAND & CITADEL WEST GATE */}
       {abutments.map((ab, idx) => (
         <group key={`v-ab-${idx}`} position={[ab.x, 0, ab.z]} rotation={[0, ab.yaw, 0]}>
-          <mesh position={[0, ab.centerY, 0]} castShadow receiveShadow>
+          <mesh position={[0, ab.centerY, 0]} material={viaductConc} castShadow receiveShadow>
             <boxGeometry args={[spec.width + 1.6, ab.height, 3.2]} />
-            <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
           </mesh>
-          <mesh position={[0, ab.deckY + 0.16, ab.sign * 1.35]} receiveShadow>
+          <mesh position={[0, ab.deckY + 0.16, ab.sign * 1.35]} material={viaductConcDark} receiveShadow>
             <boxGeometry args={[spec.width * 0.9, 0.6, 2.2]} />
-            <meshStandardMaterial color="#8E959B" roughness={0.8} />
           </mesh>
           {[-1, 1].map((side) => (
             <mesh
@@ -553,11 +541,11 @@ export function SteppedViaductSpan({
                 ab.sign * 1.35,
               ]}
               rotation={[0, side * ab.sign * -0.22, 0]}
+              material={viaductConc}
               castShadow
               receiveShadow
             >
               <boxGeometry args={[0.75, 4.2, 3.6]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
             </mesh>
           ))}
         </group>

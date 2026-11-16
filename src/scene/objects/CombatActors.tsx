@@ -3,6 +3,14 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { ENEMY_CONFIGS } from '../../game/combatSimulation';
 import type { CombatSimulationState, EnemyUnitState } from '../../game/combatTypes';
+import {
+  MAX_CRATER_DECALS,
+  createCraterDecalMaterial,
+  createCraterPool,
+  resetCraterPool,
+  spawnCraterDecal,
+  type CraterPoolState,
+} from './craterPool';
 
 const MAX_PROJECTILE_INSTANCES = 40;
 const MAX_SPARK_PARTICLES = 96;
@@ -45,6 +53,7 @@ const _vFrom = new THREE.Vector3();
 const _vTo = new THREE.Vector3();
 const _vDir = new THREE.Vector3();
 const _qRot = new THREE.Quaternion();
+const _qYaw = new THREE.Quaternion();
 const _upAxis = new THREE.Vector3(0, 1, 0);
 
 export interface CombatActorsProps {
@@ -66,6 +75,7 @@ export function CombatActors({
   const heavyBeamMeshRef = useRef<THREE.InstancedMesh>(null);
   const barrelBodyMeshRef = useRef<THREE.InstancedMesh>(null);
   const barrelBandMeshRef = useRef<THREE.InstancedMesh>(null);
+  const craterMeshRef = useRef<THREE.InstancedMesh>(null);
   const lockRingRef = useRef<THREE.Mesh>(null);
 
   const visualNodesRef = useRef<Map<string, EnemyVisualNode>>(new Map());
@@ -88,6 +98,9 @@ export function CombatActors({
     })),
   );
   const sparkCursorRef = useRef(0);
+  const craterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
+  const craterDirtyRef = useRef(true);
+  const prevElapsedRef = useRef(0);
 
   const sharedGeoms = useMemo(() => {
     const shadowDisc = new THREE.CircleGeometry(1, 20);
@@ -127,6 +140,8 @@ export function CombatActors({
     const heavyBeamGeom = new THREE.CylinderGeometry(0.16, 0.22, 1.0, 8);
     const barrelBodyGeom = new THREE.CylinderGeometry(0.62, 0.68, 1.8, 10);
     const barrelBandGeom = new THREE.CylinderGeometry(0.69, 0.69, 0.24, 10);
+    const craterGeom = new THREE.PlaneGeometry(2, 2);
+    craterGeom.rotateX(-Math.PI / 2);
 
     return {
       shadowDisc,
@@ -156,6 +171,7 @@ export function CombatActors({
       heavyBeamGeom,
       barrelBodyGeom,
       barrelBandGeom,
+      craterGeom,
     };
   }, []);
 
@@ -223,6 +239,7 @@ export function CombatActors({
       color: '#f59e0b',
       toneMapped: false,
     });
+    const craterMat = createCraterDecalMaterial();
     return {
       darkSteel,
       concrete,
@@ -236,6 +253,7 @@ export function CombatActors({
       heavyBeam,
       barrelBody,
       barrelBand,
+      craterMat,
     };
   }, []);
 
@@ -520,16 +538,28 @@ export function CombatActors({
       }
     }
 
-    // Consume pending impact events into pooled sparks
+    if (combat.elapsedSec < prevElapsedRef.current - 0.1) {
+      resetCraterPool(craterPoolRef.current);
+      craterDirtyRef.current = true;
+    }
+    prevElapsedRef.current = combat.elapsedSec;
+
+    // Consume pending impact events into pooled sparks & ground crater decals
     while (combat.pendingImpacts.length > 0) {
       const ev = combat.pendingImpacts.shift()!;
       if (ev.kind === 'explosion') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 10 : 22, 8.5, 1.35, 1.0, 0.52, 0.14, 0.55);
         spawnBurst(ev.x, ev.y + 0.3, ev.z, isSoftwareGl ? 6 : 12, 4.5, 1.85, 0.25, 0.25, 0.25, 0.75);
+        if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 2.4, 1.0, ev.x * 0.7 + ev.z * 0.3)) {
+          craterDirtyRef.current = true;
+        }
       } else if (ev.kind === 'barrel-explosion') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 14 : 28, 11.2, 1.75, 1.0, 0.44, 0.1, 0.65);
         spawnBurst(ev.x, ev.y + 0.5, ev.z, isSoftwareGl ? 8 : 16, 6.2, 2.15, 0.98, 0.78, 0.22, 0.52);
         spawnBurst(ev.x, ev.y + 0.9, ev.z, isSoftwareGl ? 6 : 10, 3.8, 2.2, 0.22, 0.22, 0.24, 0.85);
+        if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 3.3, 1.15, ev.x * 1.1 + ev.z * 0.5)) {
+          craterDirtyRef.current = true;
+        }
       } else if (ev.kind === 'dash') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 6.8, 0.9, 0.35, 0.88, 1.0, 0.34);
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.2, 0.75, 1.0, 0.62, 0.18, 0.28);
@@ -541,6 +571,9 @@ export function CombatActors({
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 3 : 6, 5.2, 0.65, 1.0, 0.85, 0.35, 0.28);
       } else if (ev.kind === 'cover-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 2 : 5, 4.0, 0.55, 0.85, 0.78, 0.64, 0.25);
+        if (ev.heavy && spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.85, 0.92, ev.x * 0.4 + ev.z * 0.9)) {
+          craterDirtyRef.current = true;
+        }
       } else if (ev.kind === 'player-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.5, 0.75, 1.0, 0.32, 0.16, 0.32);
       }
@@ -794,6 +827,29 @@ export function CombatActors({
       bBodyInst.instanceMatrix.needsUpdate = true;
       bBandInst.instanceMatrix.needsUpdate = true;
     }
+
+    // Update persistent ground blast crater decals (InstancedMesh, only when dirty)
+    const craterInst = craterMeshRef.current;
+    if (craterInst && craterDirtyRef.current) {
+      let count = 0;
+      const decals = craterPoolRef.current.decals;
+      for (let i = 0; i < decals.length; i++) {
+        const d = decals[i];
+        if (!d.active) continue;
+        _dummy.position.set(d.x, d.y, d.z);
+        _vDir.set(d.nx, d.ny, d.nz).normalize();
+        _qRot.setFromUnitVectors(_upAxis, _vDir);
+        _qYaw.setFromAxisAngle(_upAxis, d.yaw);
+        _dummy.quaternion.copy(_qRot).multiply(_qYaw);
+        _dummy.scale.set(d.radius, 1, d.radius);
+        _dummy.updateMatrix();
+        craterInst.setMatrixAt(count, _dummy.matrix);
+        count++;
+      }
+      craterInst.count = count;
+      craterInst.instanceMatrix.needsUpdate = true;
+      craterDirtyRef.current = false;
+    }
   });
 
   return (
@@ -839,6 +895,12 @@ export function CombatActors({
         ref={barrelBandMeshRef}
         args={[sharedGeoms.barrelBandGeom, sharedMats.barrelBand, MAX_BARRELS]}
         frustumCulled={false}
+      />
+      <instancedMesh
+        ref={craterMeshRef}
+        args={[sharedGeoms.craterGeom, sharedMats.craterMat, MAX_CRATER_DECALS]}
+        frustumCulled={false}
+        receiveShadow
       />
     </group>
   );

@@ -663,6 +663,7 @@ export function MapScene({
 
         <Structures
           lightingPreset={lightingPreset}
+          driveMode={driveMode}
           isSoftwareGl={isSoftwareGl}
           onSelectSector={(id) => {
             if (!driveMode) onSelectSector(id);
@@ -694,7 +695,10 @@ export function MapScene({
           showMist={showMist}
           isSoftwareGl={isSoftwareGl}
           driveMode={driveMode}
+          lightingPreset={lightingPreset}
+          sunPos={lightCfg.keyPos}
           mechPoseRef={mechPoseRef}
+          combatRef={combatRef}
         />
 
         <VolumetricSunShafts

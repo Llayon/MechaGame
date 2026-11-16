@@ -13,6 +13,7 @@ import { DerrickTower } from '../objects/DerrickTower';
 import { StorageTank } from '../objects/StorageTank';
 import { BlastScreen } from '../objects/BlastScreen';
 import { GantryCrane } from '../objects/GantryCrane';
+import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
 
 export interface RefineryIslandZoneProps {
   corrugatedTex: THREE.Texture;
@@ -27,6 +28,10 @@ export function RefineryIslandZone({
     () => getTerrainHeight(ISLAND_CENTER_X, ISLAND_CENTER_Z),
     [],
   );
+  const islandConcrete = useMemo(
+    () => getOvergrownConcreteMaterial('#9BA1A6', 'bridge', { roughness: 0.82, metalness: 0.08 }),
+    [],
+  );
 
   return (
     <group
@@ -37,9 +42,8 @@ export function RefineryIslandZone({
       }}
     >
       {/* Expanded 230 m diameter concrete industrial deck slab (top at +0.70 above islandY) */}
-      <mesh position={[0, 0.25, 0]} receiveShadow castShadow>
+      <mesh position={[0, 0.25, 0]} material={islandConcrete} receiveShadow castShadow>
         <cylinderGeometry args={[ISLAND_DECK_RADIUS, ISLAND_DECK_RADIUS + 1.5, 0.9, 32]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Central Landmark Derrick Tower */}

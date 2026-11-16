@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { getTerrainHeight } from '../../map/terrainMath';
 import { CargoContainer } from './CargoContainer';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
 
 export interface ForwardOutpostRuinsProps {
   position: readonly [number, number];
@@ -18,33 +19,32 @@ export function ForwardOutpostRuins({
 }: ForwardOutpostRuinsProps) {
   const [px, pz] = position;
   const baseY = useMemo(() => getTerrainHeight(px, pz), [px, pz]);
+  const ruinMain = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'ruin', { roughness: 0.85, metalness: 0.06 }), []);
+  const ruinDark = useMemo(() => getOvergrownConcreteMaterial('#868D93', 'ruin', { roughness: 0.88, metalness: 0.05 }), []);
+  const ruinMid = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'ruin', { roughness: 0.85, metalness: 0.06 }), []);
 
   return (
     <group position={[px, baseY, pz]} rotation={[0, rotationY, 0]}>
       {/* Stepped concrete bastion foundation sunk cleanly into plateau slope */}
-      <mesh position={[0, -0.45, 0]} castShadow receiveShadow>
+      <mesh position={[0, -0.45, 0]} material={ruinDark} castShadow receiveShadow>
         <boxGeometry args={[18.5, 1.35, 15.0]} />
-        <meshStandardMaterial color="#868D93" roughness={0.84} metalness={0.05} />
       </mesh>
-      <mesh position={[0, 0.28, 0]} receiveShadow>
+      <mesh position={[0, 0.28, 0]} material={ruinMain} receiveShadow>
         <boxGeometry args={[16.8, 0.3, 13.4]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
       </mesh>
 
       {/* Damaged Command Casemate / Pillbox Core */}
       <group position={[-3.2, 0.4, -2.1]} rotation={[0, 0.25, 0]}>
-        <mesh position={[0, 1.1, 0]} castShadow receiveShadow>
+        <mesh position={[0, 1.1, 0]} material={ruinMain} castShadow receiveShadow>
           <boxGeometry args={[6.2, 2.2, 5.4]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
         </mesh>
         {/* Recessed firing slit & scorched upper breach */}
         <mesh position={[0, 1.68, 2.58]}>
           <boxGeometry args={[4.4, 0.34, 0.36]} />
           <meshStandardMaterial color="#1d2224" roughness={0.7} metalness={0.35} />
         </mesh>
-        <mesh position={[1.1, 2.28, 0.35]} rotation={[0.08, 0.1, -0.14]} castShadow receiveShadow>
+        <mesh position={[1.1, 2.28, 0.35]} rotation={[0.08, 0.1, -0.14]} material={ruinMid} castShadow receiveShadow>
           <boxGeometry args={[6.6, 0.48, 5.7]} />
-          <meshStandardMaterial color="#8E959B" roughness={0.82} metalness={0.08} />
         </mesh>
         {/* Exposed dark rebar steel beams protruding from shattered roof corner */}
         {[
@@ -65,24 +65,20 @@ export function ForwardOutpostRuins({
       </group>
 
       {/* Breached Forward Concrete Perimeter Wall & Collapsed Slab Ramp */}
-      <mesh position={[-5.4, 1.55, 5.2]} rotation={[0, -0.18, 0]} castShadow receiveShadow>
+      <mesh position={[-5.4, 1.55, 5.2]} rotation={[0, -0.18, 0]} material={ruinMain} castShadow receiveShadow>
         <boxGeometry args={[6.2, 2.6, 1.05]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
-      <mesh position={[4.8, 1.4, 4.9]} rotation={[0.05, 0.24, -0.11]} castShadow receiveShadow>
+      <mesh position={[4.8, 1.4, 4.9]} rotation={[0.05, 0.24, -0.11]} material={ruinMain} castShadow receiveShadow>
         <boxGeometry args={[5.8, 2.4, 1.05]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
       {/* Collapsed concrete roof/wall slab leaning at walkable angle in the breach */}
-      <mesh position={[0.2, 0.92, 5.1]} rotation={[0.38, 0.12, 0.16]} castShadow receiveShadow>
+      <mesh position={[0.2, 0.92, 5.1]} rotation={[0.38, 0.12, 0.16]} material={ruinDark} castShadow receiveShadow>
         <boxGeometry args={[4.8, 0.55, 3.6]} />
-        <meshStandardMaterial color="#868D93" roughness={0.85} metalness={0.06} />
       </mesh>
 
       {/* East Flank Broken Blast Shield */}
-      <mesh position={[6.8, 1.35, -1.6]} rotation={[0, Math.PI / 2 - 0.18, 0.08]} castShadow receiveShadow>
+      <mesh position={[6.8, 1.35, -1.6]} rotation={[0, Math.PI / 2 - 0.18, 0.08]} material={ruinMain} castShadow receiveShadow>
         <boxGeometry args={[7.2, 2.4, 0.95]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
       </mesh>
 
       {/* Toppled / Bent Lattice Comms Mast with Dim Emergency Beacon */}

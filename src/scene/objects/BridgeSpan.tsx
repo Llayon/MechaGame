@@ -8,6 +8,7 @@ import {
   lerp,
 } from '../../map/terrainMath';
 import type { LightingPreset } from '../../map/sectors';
+import { getOvergrownConcreteMaterial } from './concreteMaterials';
 import { BlastScreen } from './BlastScreen';
 import { BridgeArchPylon } from './BridgeArchPylon';
 import { CargoContainer } from './CargoContainer';
@@ -51,6 +52,8 @@ export function BridgeSpan({
 
   const isTruss = spec.style === 'truss';
   const isCenterBridge = spec.id === 'bridge-center';
+  const bridgeConc = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'bridge', { roughness: 0.82, metalness: 0.08 }), []);
+  const bridgeConcDark = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'bridge', { roughness: 0.84, metalness: 0.06 }), []);
 
   const piers = useMemo(() => {
     const fractions = [0.28, 0.72];
@@ -135,9 +138,8 @@ export function BridgeSpan({
       {/* PITCHED SPAN ASSEMBLY (deck, rails, girders, trusses, open tunnel gallery) */}
       <group rotation={[pitch, 0, 0]}>
         {/* Main structural concrete deck (1.0 unit thick -> top at +0.50) */}
-        <mesh position={[0, 0, 0]} castShadow receiveShadow>
+        <mesh position={[0, 0, 0]} material={bridgeConc} castShadow receiveShadow>
           <boxGeometry args={[spec.width, 1.0, spanLen + 1.2]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
         </mesh>
 
         {/* Top walkable / drivable paved deck strip (top at +0.53) */}
@@ -216,9 +218,8 @@ export function BridgeSpan({
           const xUnder = side * (spec.width * 0.34);
           return (
             <group key={side}>
-              <mesh position={[xEdge, 0.95, 0]} castShadow>
+              <mesh position={[xEdge, 0.95, 0]} material={bridgeConc} castShadow>
                 <boxGeometry args={[0.45, 1.0, spanLen]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.12} />
               </mesh>
               <mesh position={[xUnder, -0.82, 0]} castShadow>
                 <boxGeometry args={[0.55, 0.85, spanLen * 0.94]} />
@@ -363,25 +364,23 @@ export function BridgeSpan({
       {/* VERTICAL PIERS & TRESTLE BENTS (always upright in world Y) */}
       {piers.map((p, idx) => (
         <group key={idx} position={[0, 0, p.horizOffset]}>
-          <mesh position={[0, p.pierTopOffset - 0.25, 0]} castShadow receiveShadow>
+          <mesh position={[0, p.pierTopOffset - 0.25, 0]} material={bridgeConc} castShadow receiveShadow>
             <boxGeometry args={[spec.width * 0.98, 1.1, 1.9]} />
-            <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
           </mesh>
 
           <group>
             {[-spec.width * 0.28, spec.width * 0.28].map((lx, cIdx) => (
-              <mesh key={cIdx} position={[lx, p.pierCenterY, 0]} castShadow receiveShadow>
+              <mesh key={cIdx} position={[lx, p.pierCenterY, 0]} material={bridgeConc} castShadow receiveShadow>
                 <boxGeometry args={[1.4, p.pierH, 1.6]} />
-                <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
               </mesh>
             ))}
             <mesh
               position={[0, p.pierCenterY - p.pierH * 0.5 + 2.1, 0]}
+              material={bridgeConcDark}
               castShadow
               receiveShadow
             >
               <boxGeometry args={[spec.width * 0.92, 4.2, 2.3]} />
-              <meshStandardMaterial color="#8E959B" roughness={0.8} />
             </mesh>
           </group>
         </group>
@@ -390,13 +389,11 @@ export function BridgeSpan({
       {/* DEEP ANCHORED CONCRETE ABUTMENTS & WING WALLS AT BOTH ENDS */}
       {abutments.map((ab, idx) => (
         <group key={idx} position={[0, 0, ab.localZ]}>
-          <mesh position={[0, ab.centerY, 0]} castShadow receiveShadow>
+          <mesh position={[0, ab.centerY, 0]} material={bridgeConc} castShadow receiveShadow>
             <boxGeometry args={[spec.width + 1.6, ab.height, 3.2]} />
-            <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.06} />
           </mesh>
-          <mesh position={[0, ab.deckSurfaceY + 0.16, ab.sign * 1.35]} receiveShadow>
+          <mesh position={[0, ab.deckSurfaceY + 0.16, ab.sign * 1.35]} material={bridgeConcDark} receiveShadow>
             <boxGeometry args={[spec.width * 0.9, 0.6, 2.2]} />
-            <meshStandardMaterial color="#8E959B" roughness={0.8} />
           </mesh>
           {[-1, 1].map((side) => (
             <mesh
@@ -407,11 +404,11 @@ export function BridgeSpan({
                 ab.sign * 1.35,
               ]}
               rotation={[0, side * ab.sign * -0.22, 0]}
+              material={bridgeConc}
               castShadow
               receiveShadow
             >
               <boxGeometry args={[0.75, 4.2, 3.6]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
             </mesh>
           ))}
         </group>

@@ -17,6 +17,7 @@ import { BlastScreen } from '../objects/BlastScreen';
 import { CitadelCourtyardBunker } from '../objects/CitadelCourtyardBunker';
 import { CitadelEnergyGenerator } from '../objects/CitadelEnergyGenerator';
 import { VolumetricSearchlight } from '../objects/VolumetricSearchlight';
+import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
 
 export interface CitadelZoneProps {
   corrugatedTex: THREE.Texture;
@@ -36,6 +37,8 @@ export function CitadelZone({
     [],
   );
   const floodlightsOn = lightingPreset === 'night' || lightingPreset === 'dusk';
+  const citConc = useMemo(() => getOvergrownConcreteMaterial('#9BA1A6', 'wall', { roughness: 0.82, metalness: 0.08 }), []);
+  const citConcDark = useMemo(() => getOvergrownConcreteMaterial('#8E959B', 'wall', { roughness: 0.84, metalness: 0.1 }), []);
 
   const { citadelWalls, bastions } = useMemo(() => {
     const segs: Array<{
@@ -77,10 +80,10 @@ export function CitadelZone({
       <mesh
         position={[0, 0.25, 0]}
         scale={[1, 1, CITADEL_WALL_RZ / CITADEL_WALL_RX]}
+        material={citConc}
         receiveShadow
       >
         <cylinderGeometry args={[CITADEL_WALL_RX + 0.5, CITADEL_WALL_RX + 1.5, 0.6, 8]} />
-        <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.05} />
       </mesh>
 
       {/* Octagonal Fortress Perimeter Walls (11.25 m = 3.0 units: covers Mech torso, exposes turret) */}
@@ -88,18 +91,15 @@ export function CitadelZone({
         w.isGate ? (
           <group key={i} position={[w.x, 0.52, w.z]} rotation={[0, w.rotY, 0]}>
             {/* Gatehouse flanking bastions */}
-            <mesh position={[0, 3.1, -w.len * 0.38]} castShadow receiveShadow>
+            <mesh position={[0, 3.1, -w.len * 0.38]} material={citConc} castShadow receiveShadow>
               <boxGeometry args={[2.6, 6.2, w.len * 0.24]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
             </mesh>
-            <mesh position={[0, 3.1, w.len * 0.38]} castShadow receiveShadow>
+            <mesh position={[0, 3.1, w.len * 0.38]} material={citConc} castShadow receiveShadow>
               <boxGeometry args={[2.6, 6.2, w.len * 0.24]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
             </mesh>
             {/* Tall Mech-scale gate lintel (clear height >= 5.8 units = ~22 m) */}
-            <mesh position={[0, 6.5, 0]} castShadow>
+            <mesh position={[0, 6.5, 0]} material={citConcDark} castShadow>
               <boxGeometry args={[2.9, 1.4, w.len * 0.66]} />
-              <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.14} />
             </mesh>
             <mesh position={[0, 5.86, 0]}>
               <boxGeometry args={[3.0, 0.14, w.len * 0.52]} />
@@ -115,20 +115,19 @@ export function CitadelZone({
         ) : (
           <group key={i} position={[w.x, 0.52, w.z]} rotation={[0, w.rotY, 0]}>
             {/* Main hull-down ballistic curtain wall (3.0 units = 11.25 m) */}
-            <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+            <mesh position={[0, 1.5, 0]} material={citConc} castShadow receiveShadow>
               <boxGeometry args={[2.2, 3.0, w.len + 1.0]} />
-              <meshStandardMaterial color="#9BA1A6" roughness={0.8} />
             </mesh>
             {/* Armored crenellation merlons (~12.0 m peak) for upper-torso firing ports */}
             {[-0.32, 0, 0.32].map((frac, mIdx) => (
               <mesh
                 key={mIdx}
                 position={[0, 3.12, frac * w.len]}
+                material={citConcDark}
                 castShadow
                 receiveShadow
               >
                 <boxGeometry args={[2.45, 0.28, w.len * 0.2]} />
-                <meshStandardMaterial color="#8E959B" roughness={0.8} metalness={0.1} />
               </mesh>
             ))}
           </group>
@@ -161,9 +160,8 @@ export function CitadelZone({
 
       {/* Central Armored Command Keep dividing the spacious inner combat courtyard */}
       <group position={[0, 0.52, -1.0]}>
-        <mesh position={[0, 1.45, 0]} castShadow receiveShadow>
+        <mesh position={[0, 1.45, 0]} material={citConc} castShadow receiveShadow>
           <cylinderGeometry args={[7.2, 8.2, 2.9, 8]} />
-          <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.08} />
         </mesh>
         <mesh position={[0, 3.25, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[4.4, 5.2, 1.0, 8]} />

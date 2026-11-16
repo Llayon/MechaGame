@@ -446,7 +446,10 @@ export interface RockOutcropInstance {
   sx: number;
   sy: number;
   sz: number;
+  rotX: number;
   rotY: number;
+  rotZ: number;
+  tier: 'hero' | 'medium' | 'rubble';
 }
 
 let cachedRockOutcropsData: RockOutcropInstance[] | null = null;
@@ -454,55 +457,127 @@ let cachedRockOutcropsData: RockOutcropInstance[] | null = null;
 export function generateRockOutcropsData(): RockOutcropInstance[] {
   if (cachedRockOutcropsData) return cachedRockOutcropsData;
 
+  const maxRocks = 860;
   const list: RockOutcropInstance[] = [];
-  for (let i = 0; i < 3600 && list.length < 820; i++) {
+
+  const pushCluster = (
+    cx: number,
+    cz: number,
+    seedBase: number,
+    isMajorSlope: boolean,
+    satelliteTarget: number,
+  ) => {
+    if (list.length >= maxRocks) return;
+    const cy = getTerrainHeight(cx, cz);
+    if (cy < WATER_LEVEL - 0.15) return;
+    if (!isClearForRock(cx, cz)) return;
+
+    // 1) Hero boulder (wide slab, classic block, or dramatic tall spire)
+    const shapeRoll = seededRand(seedBase + 1);
+    const heroBase = isMajorSlope
+      ? 1.38 + seededRand(seedBase + 2) * 1.15
+      : 1.05 + seededRand(seedBase + 2) * 0.75;
+    let hx = heroBase * (0.95 + seededRand(seedBase + 3) * 0.52);
+    let hy = heroBase * (0.68 + seededRand(seedBase + 4) * 0.45);
+    let hz = heroBase * (0.92 + seededRand(seedBase + 5) * 0.52);
+    if (shapeRoll > 0.84) {
+      // Dramatic granite spire
+      hy = heroBase * (1.28 + seededRand(seedBase + 6) * 0.55);
+      hx *= 0.84;
+      hz *= 0.82;
+    } else if (shapeRoll < 0.22) {
+      // Wide flat shelf slab
+      hx *= 1.32;
+      hz *= 1.24;
+      hy *= 0.56;
+    }
+
+    list.push({
+      x: cx,
+      y: cy,
+      z: cz,
+      sx: hx,
+      sy: hy,
+      sz: hz,
+      rotX: (seededRand(seedBase + 7) - 0.5) * 0.42,
+      rotY: seededRand(seedBase + 8) * Math.PI * 2,
+      rotZ: (seededRand(seedBase + 9) - 0.5) * 0.42,
+      tier: 'hero',
+    });
+
+    // 2) Companion medium boulders (first 1-2 satellites) + small rubble stones around base
+    for (let k = 0; k < satelliteTarget && list.length < maxRocks; k++) {
+      const kSeed = seedBase + (k + 1) * 37;
+      const isMedium = k < 2;
+      const ang = (k / Math.max(1, satelliteTarget)) * Math.PI * 2 + seededRand(kSeed + 1) * 0.9;
+      const radiusMin = isMedium ? 1.55 + heroBase * 0.55 : 1.15 + heroBase * 0.45;
+      const radiusSpan = isMedium ? 2.1 : 3.2;
+      const dist = radiusMin + seededRand(kSeed + 2) * radiusSpan;
+      const x = cx + Math.cos(ang) * dist;
+      const z = cz + Math.sin(ang) * dist;
+      if (!isClearForRock(x, z)) continue;
+
+      const y = getTerrainHeight(x, z);
+      if (y < WATER_LEVEL - 0.1) continue;
+
+      const sBase = isMedium
+        ? 0.68 + seededRand(kSeed + 3) * 0.44
+        : 0.34 + seededRand(kSeed + 3) * 0.30;
+
+      list.push({
+        x,
+        y,
+        z,
+        sx: sBase * (0.9 + seededRand(kSeed + 4) * 0.55),
+        sy: sBase * (0.54 + seededRand(kSeed + 5) * 0.42),
+        sz: sBase * (0.9 + seededRand(kSeed + 6) * 0.55),
+        rotX: (seededRand(kSeed + 7) - 0.5) * 0.68,
+        rotY: seededRand(kSeed + 8) * Math.PI * 2,
+        rotZ: (seededRand(kSeed + 9) - 0.5) * 0.68,
+        tier: isMedium ? 'medium' : 'rubble',
+      });
+    }
+  };
+
+  // Phase A: Anchor clusters right outside bunkers, wrecks, and perimeter transition borders ("visual glue")
+  const structureAnchors: Array<{ x: number; z: number; minR: number; maxR: number }> = [
+    ...BUNKER_COORDS.map((b) => ({ x: b.x, z: b.z, minR: 8.2, maxR: 11.4 })),
+    ...WRECK_COORDS.map((w) => ({ x: w.x, z: w.z, minR: 6.2, maxR: 9.2 })),
+  ];
+  for (let a = 0; a < structureAnchors.length && list.length < maxRocks; a++) {
+    const anch = structureAnchors[a];
+    for (let j = 0; j < 2 && list.length < maxRocks; j++) {
+      const seed = 7000 + a * 113 + j * 43;
+      const ang = seededRand(seed) * Math.PI * 2;
+      const dist = anch.minR + seededRand(seed + 1) * (anch.maxR - anch.minR);
+      pushCluster(anch.x + Math.cos(ang) * dist, anch.z + Math.sin(ang) * dist, seed + 10, false, 4);
+    }
+  }
+
+  // Phase B: Natural ridge, slope foot, shoreline, and Quarry rock clusters
+  for (let i = 0; i < 3600 && list.length < maxRocks; i++) {
     const cx = (seededRand(i * 5 + 101) * 2 - 1) * (MAP_HALF_W - 6.0);
     const cz = (seededRand(i * 5 + 102) * 2 - 1) * (MAP_HALF_D - 6.0);
     const cy = getTerrainHeight(cx, cz);
     const slope = getTerrainSlope(cx, cz);
     const river = getRiverInfo(cx, cz);
 
-    const isWindsweptHeight = cy > 7.8;
-    const isSteepRidge = slope > 0.38;
+    const isWindsweptHeight = cy > 7.6;
+    const isSteepRidge = slope > 0.34;
     const nearShore = river.channelMask > 0.02 && river.channelMask < 0.28;
     const nearQuarry = Math.hypot(cx - QUARRY_CENTER_X, cz - QUARRY_CENTER_Z) < 34;
 
     if (!isWindsweptHeight && !isSteepRidge && !nearShore && !nearQuarry) continue;
-    if (cy < WATER_LEVEL - 0.25) continue;
-    if (!isClearForRock(cx, cz)) continue;
 
     const clusterNoise = fbm2D(cx * 0.036 - 1.8, cz * 0.036 + 3.4, 2);
     if (clusterNoise < 0.38 && !nearShore) continue;
 
-    const clusterSize =
-      isWindsweptHeight || isSteepRidge
-        ? 3 + Math.floor(seededRand(i + 901) * 4)
-        : 2 + Math.floor(seededRand(i + 902) * 2);
+    const isMajor = isWindsweptHeight || isSteepRidge;
+    const satCount = isMajor
+      ? 4 + Math.floor(seededRand(i + 901) * 3)
+      : 3 + Math.floor(seededRand(i + 902) * 2);
 
-    for (let k = 0; k < clusterSize && list.length < 820; k++) {
-      const ang = seededRand(i * 17 + k * 7 + 301) * Math.PI * 2;
-      const dist = k === 0 ? 0 : 1.3 + seededRand(i * 19 + k * 11 + 302) * 3.9;
-      const x = cx + Math.cos(ang) * dist;
-      const z = cz + Math.sin(ang) * dist;
-      if (k > 0 && !isClearForRock(x, z)) continue;
-      const y = getTerrainHeight(x, z);
-      if (y < WATER_LEVEL - 0.1) continue;
-
-      const isHeroBoulder = k === 0 && (isWindsweptHeight || isSteepRidge);
-      const baseScale = isHeroBoulder
-        ? 1.25 + seededRand(i * 5 + k + 103) * 1.45
-        : 0.55 + seededRand(i * 5 + k + 103) * 0.95;
-
-      list.push({
-        x,
-        y,
-        z,
-        sx: baseScale * (0.85 + seededRand(i + k + 201) * 0.6),
-        sy: baseScale * (0.58 + seededRand(i + k + 202) * 0.48),
-        sz: baseScale * (0.85 + seededRand(i + k + 203) * 0.6),
-        rotY: seededRand(i + k + 204) * Math.PI * 2,
-      });
-    }
+    pushCluster(cx, cz, i * 19 + 300, isMajor, satCount);
   }
 
   cachedRockOutcropsData = list;

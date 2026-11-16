@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { createTerrainBumpTexture } from './textures';
 import { BlueprintTabletop } from './terrain/BlueprintTabletop';
 import { TerrainSurface } from './terrain/TerrainSurface';
@@ -17,18 +17,28 @@ export function TerrainSlab({ showWireframeGrid, isSoftwareGl }: TerrainSlabProp
   const { gl } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const terrainBump = useMemo(() => createTerrainBumpTexture(maxAniso), [maxAniso]);
+  const puddleTimeUniform = useMemo(() => ({ value: 1.4 }), []);
 
   useEffect(() => {
     return () => terrainBump.dispose();
   }, [terrainBump]);
 
+  useFrame((_, delta) => {
+    if (isSoftwareGl) return;
+    puddleTimeUniform.value += Math.min(delta, 0.05);
+  });
+
   return (
     <group>
       <BlueprintTabletop />
-      <TerrainSurface terrainBump={terrainBump} showWireframeGrid={showWireframeGrid} />
-      <OuterMountainRing terrainBump={terrainBump} />
+      <TerrainSurface
+        terrainBump={terrainBump}
+        showWireframeGrid={showWireframeGrid}
+        puddleTimeUniform={puddleTimeUniform}
+      />
+      <OuterMountainRing terrainBump={terrainBump} puddleTimeUniform={puddleTimeUniform} />
       <CutawaySkirt terrainBump={terrainBump} />
-      <RoadNetwork />
+      <RoadNetwork puddleTimeUniform={puddleTimeUniform} />
       <RiverWater isSoftwareGl={isSoftwareGl} />
     </group>
   );

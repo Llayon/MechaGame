@@ -360,6 +360,12 @@ export function SovietMech({
     mechPoseRef.current.isCrouched = control.isCrouched;
     mechPoseRef.current.inWater = ik.inWater;
     mechPoseRef.current.onBridge = motion.surfCenter.onBridge;
+    if (rig.legs.length >= 2) {
+      mechPoseRef.current.footLX = rig.legs[0].currentAnkleWorld.x;
+      mechPoseRef.current.footLZ = rig.legs[0].currentAnkleWorld.z;
+      mechPoseRef.current.footRX = rig.legs[1].currentAnkleWorld.x;
+      mechPoseRef.current.footRZ = rig.legs[1].currentAnkleWorld.z;
+    }
 
     if (driveMode) {
       combatTelemetryRef.current = buildCombatTelemetry(
