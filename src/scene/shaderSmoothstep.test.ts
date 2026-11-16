@@ -5,7 +5,8 @@ import { join } from 'node:path';
 
 /**
  * GLSL's smoothstep(edge0, edge1, x) has undefined results for edge0 >= edge1.
- * Guard every literal-edge call in our shader sources (including template strings).
+ * Guard literal-edge calls in scene shaders (including template strings).
+ * Do not scan src/map, which uses its own valid descending JS interpolation helper.
  */
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((item) => {
@@ -15,10 +16,10 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-test('all literal GLSL smoothstep edges in src are strictly ascending', () => {
+test('all literal GLSL smoothstep edges in scene shaders are strictly ascending', () => {
   const invalid: string[] = [];
   let examined = 0;
-  for (const path of sourceFiles('src')) {
+  for (const path of sourceFiles('src/scene')) {
     const content = readFileSync(path, 'utf8');
     // Match numeric literal pairs; dynamic expressions require separate shader reviews.
     const rx = /\bsmoothstep\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,/g;
