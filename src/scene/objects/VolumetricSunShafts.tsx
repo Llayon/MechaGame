@@ -113,7 +113,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     float edgeSoft = pow(clamp(ndotv, 0.0, 1.0), 2.55);
 
     // 2. Feather softly at both ridge entry (vUv.y=1) and canyon floor (vUv.y=0)
-    float upperFade = smoothstep(1.0, 0.72, vUv.y);
+    float upperFade = (1.0 - smoothstep(0.72, 1.0, vUv.y));
     float lowerFade = smoothstep(0.0, 0.34, vUv.y);
 
     // 3. Soften smoothly when driving the Mech directly through a sunbeam

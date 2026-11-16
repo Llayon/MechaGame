@@ -55,7 +55,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     float edgeSoft = pow(clamp(ndotv, 0.0, 1.0), 2.35);
 
     // vUv.y = 1.0 at projector lens -> 0.0 at beam tip
-    float nearLens = smoothstep(1.0, 0.94, vUv.y);
+    float nearLens = (1.0 - smoothstep(0.94, 1.0, vUv.y));
     float distFade = pow(clamp(vUv.y, 0.0, 1.0), 1.65) * smoothstep(0.0, 0.24, vUv.y);
 
     // Subtle drifting mist/dust filaments inside the light shaft

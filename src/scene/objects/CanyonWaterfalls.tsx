@@ -207,7 +207,7 @@ float topCrest = smoothstep( 0.82, 0.96, vWfUv.y + crestBreakup ) * 0.56;
 
 // Turbulent boiling spray cloud near river impact (softened at extreme bottom so splash ring dominates)
 float splashPulse = wfNoise( vec2( vWfUv.x * 13.5 * widthScale + vWfSeed, uWfTime * 2.7 + vWfUv.y * 4.0 ) );
-float bottomSplash = smoothstep( 0.28, 0.04, vWfUv.y ) * clamp( 0.48 + splashPulse * 0.58, 0.0, 1.0 );
+float bottomSplash = (1.0 - smoothstep( 0.04, 0.28, vWfUv.y )) * clamp( 0.48 + splashPulse * 0.58, 0.0, 1.0 );
 
 float totalFoam = clamp( foamStreaks * 0.84 + topCrest + bottomSplash, 0.0, 1.0 );
 
@@ -220,8 +220,8 @@ diffuseColor.rgb = mix( waterBase, uWfFoamColor, totalFoam );
 
 // Wide organic spray feathering on side edges, jagged crest entry, and water plunge entry
 float sideNoise = ( stream2 - 0.5 ) * 0.14;
-float sideFade = smoothstep( 0.0, 0.27, vWfUv.x + sideNoise ) * smoothstep( 1.0, 0.73, vWfUv.x - sideNoise );
-float topFade = smoothstep( 1.0, 0.87, vWfUv.y + crestBreakup * 0.8 );
+float sideFade = smoothstep( 0.0, 0.27, vWfUv.x + sideNoise ) * (1.0 - smoothstep( 0.73, 1.0, vWfUv.x - sideNoise ));
+float topFade = (1.0 - smoothstep( 0.87, 1.0, vWfUv.y + crestBreakup * 0.8 ));
 float bottomFade = smoothstep( 0.0, 0.11, vWfUv.y + ( splashPulse - 0.5 ) * 0.05 );
 diffuseColor.a = clamp( ( 0.62 + totalFoam * 0.34 ) * sideFade * topFade * bottomFade, 0.0, 0.92 );
 if ( diffuseColor.a < 0.015 ) discard;`,

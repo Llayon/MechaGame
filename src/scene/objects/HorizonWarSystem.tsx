@@ -148,7 +148,7 @@ const SMOKE_FRAGMENT_SHADER = /* glsl */ `
 
     // Feather base into mountain ridge and disperse high into sky
     float baseFade = smoothstep( 0.0, 0.12, vUv.y );
-    float topFade = smoothstep( 1.0, 0.22, vUv.y );
+    float topFade = (1.0 - smoothstep( 0.22, 1.0, vUv.y ));
 
     float alpha = soot * sideSoft * baseFade * topFade * uOpacity;
     if ( alpha < 0.015 ) discard;
