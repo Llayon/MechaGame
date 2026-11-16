@@ -84,7 +84,7 @@ vec3 seamMoss = rockSrgb2Lin( vec3( 0.215, 0.305, 0.205 ) );
 vec3 seamSoil = rockSrgb2Lin( vec3( 0.235, 0.215, 0.175 ) );
 vec3 seamQuarry = rockSrgb2Lin( vec3( 0.365, 0.280, 0.210 ) );
 
-float quarryBias = smoothstep( 42.0, 12.0, length( vRockWorldPos.xz - vec2( 116.0, 42.0 ) ) );
+float quarryBias = (1.0 - smoothstep( 12.0, 42.0, length( vRockWorldPos.xz - vec2( 116.0, 42.0 ) ) ));
 vec3 groundSeamCol = mix( seamMoss, seamSoil, smoothstep( 0.38, 0.72, rNoise ) );
 groundSeamCol = mix( groundSeamCol, seamQuarry, quarryBias * 0.75 );
 

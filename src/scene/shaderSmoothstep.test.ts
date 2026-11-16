@@ -45,7 +45,7 @@ function smoothstep(a: number, b: number, x: number): number {
 test('ordered descending fades retain original intended end and midpoint values', () => {
   for (const [lower, upper] of [
     [0.04, 0.28], [0.73, 1.0], [0.87, 1.0],
-    [0.22, 1.0], [0.72, 1.0], [0.94, 1.0],
+    [0.22, 1.0], [0.72, 1.0], [0.94, 1.0], [12.0, 42.0],
   ]) {
     const fade = (x: number) => 1 - smoothstep(lower, upper, x);
     assert.equal(fade(lower - 0.01), 1);
