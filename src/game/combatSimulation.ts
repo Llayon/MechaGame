@@ -640,13 +640,14 @@ export function processPlayerShots(
   playerY: number,
   playerZ: number,
   turretWorldYaw: number,
+  manualAim = false,
 ): ShotResolution[] {
   const resolutions: ShotResolution[] = [];
   if (state.missionStatus !== 'playing' || shots.length === 0) return resolutions;
   if (state.weaponOverheated) return resolutions;
 
   state.hasPlayerEngaged = true;
-  const aimAssist = findAimAssistTarget(state, playerX, playerY, playerZ, turretWorldYaw, 0.22);
+  const aimAssist = manualAim ? null : findAimAssistTarget(state, playerX, playerY, playerZ, turretWorldYaw, 0.22);
 
   for (let s = 0; s < shots.length; s++) {
     if (state.weaponOverheated) break;
@@ -671,7 +672,7 @@ export function processPlayerShots(
       dy,
       dz,
     );
-    if (!directBarrelAim && aimAssist.enemy && aimAssist.horizAngleError <= 0.105) {
+    if (!directBarrelAim && aimAssist?.enemy && aimAssist.horizAngleError <= 0.105) {
       const cfg = ENEMY_CONFIGS[aimAssist.enemy.archetype];
       const tx = aimAssist.enemy.x - shot.muzzleX;
       const ty = aimAssist.enemy.y + cfg.hitCenterYOffset - shot.muzzleY;
@@ -871,6 +872,7 @@ export function triggerHeavyCannonShot(
   playerY: number,
   playerZ: number,
   turretWorldYaw: number,
+  manualAim = false,
 ): ShotResolution | null {
   if (state.missionStatus !== 'playing' || state.playerHp <= 0) return null;
   if (state.heavyCooldownTimer > 0) return null;
@@ -879,13 +881,13 @@ export function triggerHeavyCannonShot(
   state.hasPlayerEngaged = true;
   state.shotsFired += 1;
 
-  const aimAssist = findAimAssistTarget(state, playerX, playerY, playerZ, turretWorldYaw, 0.24);
+  const aimAssist = manualAim ? null : findAimAssistTarget(state, playerX, playerY, playerZ, turretWorldYaw, 0.24);
   let dx = dirX;
   let dy = dirY;
   let dz = dirZ;
 
   const directBarrelAim = rayHitsHazardBarrel(state, muzzleX, muzzleY, muzzleZ, dx, dy, dz);
-  if (!directBarrelAim && aimAssist.enemy && aimAssist.horizAngleError <= 0.14) {
+  if (!directBarrelAim && aimAssist?.enemy && aimAssist.horizAngleError <= 0.14) {
     const cfg = ENEMY_CONFIGS[aimAssist.enemy.archetype];
     const tx = aimAssist.enemy.x - muzzleX;
     const ty = aimAssist.enemy.y + cfg.hitCenterYOffset - muzzleY;

@@ -9,6 +9,7 @@ export function stepMechMovement(
   rig: MechRig, sim: MechState, control: MechControl,
   driveMode: boolean, dt: number, elapsed: number,
   desiredGunPitch?: number,
+  manualAiming = false,
 ) {
   const { fwd, turTurn, isFiring, isMoving, targetSpeed, targetTurnRate,
     targetOmega, crouchOffset } = control;
@@ -41,7 +42,7 @@ export function stepMechMovement(
     sim.z = clampedPos.z;
 
     if (driveMode) {
-      sim.turretYaw += turTurn * 1.65 * dt;
+      if (!manualAiming) sim.turretYaw += turTurn * 1.65 * dt;
     } else {
       // Gentle perimeter scan while parked on standby
       sim.turretYaw = Math.sin(elapsed * 0.42) * 0.32;

@@ -20,7 +20,6 @@ import { stepWeaponSystem } from './WeaponSystem';
 import { stepMechEffects } from './MechEffects';
 import {
   buildCombatTelemetry,
-  findAimAssistTarget,
   processPlayerShots,
   stepCombatSimulation,
   triggerEmergencyRepair,
@@ -29,12 +28,20 @@ import {
 } from '../../game/combatSimulation';
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
+import { castCombatRay } from '../../map/worldRaycaster';
+import { PLAYER_MAX_RANGE } from '../../game/combatSimulation';
+import { resetCombatAim, updateCombatAim, approachTurretWorldYaw } from '../../game/combatAim';
+import type { CombatAimState } from '../../game/combatAim';
 
 const _heavyMuzzleL = new THREE.Vector3();
 const _heavyMuzzleR = new THREE.Vector3();
 const _heavyOrigin = new THREE.Vector3();
 const _heavyDir = new THREE.Vector3();
 const _heavyQuat = new THREE.Quaternion();
+const _aimMuzzle = new THREE.Vector3();
+const _aimDir = new THREE.Vector3();
+const _aimQuat = new THREE.Quaternion();
+const _aimImpact = new THREE.Vector3();
 
 export type { MechDriveInput } from './MechState';
 export interface SovietMechProps {
@@ -45,6 +52,7 @@ export interface SovietMechProps {
   isSoftwareGl: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   driveInputRef: React.MutableRefObject<MechDriveInput>;
+  aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
   combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   onSelectMech?: () => void;
@@ -60,12 +68,13 @@ export function SovietMech({
   isSoftwareGl,
   mechPoseRef,
   driveInputRef,
+  aimRef,
   combatRef,
   combatTelemetryRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
-  const { gl, invalidate } = useThree();
+  const { gl, camera, invalidate } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const containerRef = useRef<THREE.Group>(null);
   const worldFxRef = useRef<THREE.Group>(null);
@@ -93,6 +102,7 @@ export function SovietMech({
   const simRef = useRef(createMechState());
   const prevResetNonceRef = useRef(resetNonce);
   const wasLocomotingRef = useRef(false);
+  const reticleTickRef = useRef(0);
 
   // Dispose geometries & leftover particles on unmount
   useEffect(() => {
@@ -188,6 +198,12 @@ export function SovietMech({
     }
   }, [paused]);
 
+  // Battle view starts aligned to chassis; reset after replay or new drive session.
+  useEffect(() => {
+    if (driveMode) resetCombatAim(aimRef.current, mechPoseRef.current.yaw);
+    else { aimRef.current.precise = false; aimRef.current.reticleVisible = false; }
+  }, [driveMode, resetNonce, aimRef, mechPoseRef]);
+
   // Reset initial pose cleanly on mount
   useEffect(() => {
     const sim = simRef.current;
@@ -226,16 +242,22 @@ export function SovietMech({
       }
       if (driveInputRef.current.centerTurret) {
         driveInputRef.current.centerTurret = false;
-        sim.turretYaw = 0;
+        aimRef.current.yaw = sim.yaw;
+        aimRef.current.elevation = -0.025;
       }
-      if (driveInputRef.current.turretAimDelta) {
-        sim.turretYaw += driveInputRef.current.turretAimDelta;
-        driveInputRef.current.turretAimDelta = 0;
-      }
+      updateCombatAim(aimRef.current,
+        driveInputRef.current.turretAimDelta ?? 0,
+        driveInputRef.current.gunAimDelta ?? 0);
+      driveInputRef.current.turretAimDelta = 0;
+      driveInputRef.current.gunAimDelta = 0;
+      aimRef.current.precise = !!driveInputRef.current.precisionAim;
     } else {
       driveInputRef.current.dash = false;
       driveInputRef.current.centerTurret = false;
       driveInputRef.current.turretAimDelta = 0;
+      driveInputRef.current.gunAimDelta = 0;
+      aimRef.current.precise = false;
+      aimRef.current.reticleVisible = false;
     }
 
     const control = resolveMechControl(driveInputRef.current, canControl, combat.dashTimer > 0);
@@ -259,22 +281,19 @@ export function SovietMech({
     }
 
     const dt = combatStep.simDt;
-    if (dt > 0) {
-      sim.simTime += dt;
-    }
+    if (dt > 0) sim.simTime += dt;
     const elapsed = sim.simTime;
 
-    const turretWorldYaw = sim.yaw + sim.turretYaw;
-    const aimAssist = canControl
-      ? findAimAssistTarget(combat, sim.x, sim.y, sim.z, turretWorldYaw)
-      : null;
-    const desiredPitch = aimAssist?.enemy
-      ? aimAssist.gunPitch
-      : activeFire
-        ? 0.012
-        : undefined;
+    if (canControl) {
+      // Q/E are secondary camera-yaw input; turret speed stays physically limited.
+      aimRef.current.yaw += control.turTurn * 1.65 * dt;
+      sim.turretYaw = approachTurretWorldYaw(
+        sim.turretYaw, sim.yaw + control.targetTurnRate * dt, aimRef.current.yaw, dt);
+    }
 
-    const motion = stepMechMovement(rig, sim, control, canControl, dt, elapsed, desiredPitch);
+    const motion = stepMechMovement(rig, sim, control, canControl, dt, elapsed,
+      canControl ? -aimRef.current.elevation : undefined, canControl);
+    const turretWorldYaw = sim.yaw + motion.tYaw;
     const ik = stepMechIK(rig, sim, dt, control, motion);
     // Event-driven foley: no artificial footsteps generated from a wall-clock timer.
     // Actual IK contacts trigger the weight of the mech; liftoffs trigger hydraulics.
@@ -291,6 +310,24 @@ export function SovietMech({
       Math.min(1, Math.abs(control.targetSpeed) / 3.45),
     );
     const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch);
+    // HUD marker follows actual muzzle orientation, not a static screen center.
+    if (canControl && rig.gunBarrels.length > 0 && (++reticleTickRef.current % 2 === 0)) {
+      const muzzle = rig.gunBarrels[0].muzzleAnchor;
+      muzzle.getWorldPosition(_aimMuzzle);
+      muzzle.getWorldQuaternion(_aimQuat);
+      _aimDir.set(0, 0, 1).applyQuaternion(_aimQuat).normalize();
+      const hit = castCombatRay(_aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
+        _aimDir.x, _aimDir.y, _aimDir.z, PLAYER_MAX_RANGE);
+      _aimImpact.copy(_aimMuzzle).addScaledVector(_aimDir, hit?.distance ?? PLAYER_MAX_RANGE);
+      camera.updateMatrixWorld();
+      const projected = _aimImpact.project(camera);
+      if (Number.isFinite(projected.x) && Number.isFinite(projected.y) &&
+          projected.z >= -1 && projected.z <= 1) {
+        aimRef.current.reticleX = projected.x;
+        aimRef.current.reticleY = projected.y;
+        aimRef.current.reticleVisible = true;
+      } else aimRef.current.reticleVisible = false;
+    }
 
     // Consume edge-triggered Heavy Cannon (KeyF) and Emergency Repair (KeyV)
     if (canControl) {
@@ -319,6 +356,7 @@ export function SovietMech({
             sim.y,
             sim.z,
             turretWorldYaw,
+            true, // do not magnetize heavy cannon shot toward enemies
           );
           if (heavyRes) {
             combatAudio.playHeavyCannonShot();
@@ -355,6 +393,7 @@ export function SovietMech({
         sim.y,
         sim.z,
         turretWorldYaw,
+        true, // physical 37-mm aim, no hidden enemy convergence
       );
       shotDistances = resolutions.map((r) => r.distance);
     }
