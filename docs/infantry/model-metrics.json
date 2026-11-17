@@ -1,0 +1,70 @@
+{
+  "source": "tripo_convert_299d1949-842a-4082-b69e-3a43beb1f36e.glb",
+  "sha256": "8fd7de705b2c34f888cf4c726b4cca4813c89ef7d23a471b3f47f8f5b4805667",
+  "meshes": 1,
+  "armatures": 0,
+  "animations": 0,
+  "mesh_details": [
+    {
+      "name": "tripo_node_299d1949-842a-4082-b69e-3a43beb1f36e",
+      "vertices": 1452,
+      "triangles": 1247,
+      "uv_layers": 1,
+      "materials": 1,
+      "textures": [
+        {
+          "name": "tripo_image_299d1949-842a-4082-b69e-3a43beb1f36e_0_0",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "sRGB"
+        },
+        {
+          "name": "bb707bcf-848f-4357-a67b-19b5152bc9a9_metallic-bb707bcf-848f-4357-a67b-19b5152bc9a9_roughness",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "Non-Color"
+        },
+        {
+          "name": "tripo_image_299d1949-842a-4082-b69e-3a43beb1f36e_0_3",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "Non-Color"
+        }
+      ],
+      "dimensions_blender_xyz": [
+        0.5895282030105591,
+        0.44804343581199646,
+        0.9975979328155518
+      ],
+      "bounds_min": [
+        -0.30030620098114014,
+        -0.23094971477985382,
+        0.0
+      ],
+      "bounds_max": [
+        0.28922200202941895,
+        0.21709372103214264,
+        0.9975979328155518
+      ],
+      "components": 157,
+      "boundary_edges": 1343,
+      "nonmanifold_edges": 1343,
+      "loose_vertices": 0,
+      "smooth_faces": 1244
+    }
+  ],
+  "normalization": {
+    "source_forward": "+X",
+    "target_gltf_forward": "+Z",
+    "target_blender_forward": "-Y",
+    "target_game_height": 0.48,
+    "meters_per_unit": 3.75,
+    "physical_height_m": 1.8
+  }
+}
