@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>MechaGame recorded audio decode smoke</title></head>
+<body><pre id="result">MECHA-AUDIO-DECODE-RUNNING</pre>
+<script>
+(async function () {
+  const names = [
+    'diesel_idle', 'mech_step_1', 'mech_step_2', 'mech_step_3',
+    'hydraulic_a', 'hydraulic_b', 'autocannon_1', 'autocannon_2',
+    'autocannon_3', 'heavy_cannon', 'armor_hit_1', 'armor_hit_2',
+    'foot_metal', 'recoil', 'explosion_debris'
+  ];
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    for (const format of ['ogg', 'mp3']) {
+      for (const name of names) {
+        const url = './assets/audio/industrial-v1/' + name + '.' + format;
+        const res = await fetch(url);
+        if (!res.ok) throw Error(url + ': HTTP ' + res.status);
+        const buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+        if (!(buffer.duration > 0.02) || buffer.numberOfChannels < 1) {
+          throw Error(url + ': invalid decoded samples');
+        }
+      }
+    }
+    document.getElementById('result').textContent =
+      'MECHA-AUDIO-DECODE-PASS: 15 OGG and 15 MP3';
+  } catch (e) {
+    document.getElementById('result').textContent = 'MECHA-AUDIO-DECODE-FAIL: ' + e;
+  } finally {
+    await ctx.close().catch(() => {});
+  }
+})().catch(e => {
+  document.getElementById('result').textContent = 'MECHA-AUDIO-DECODE-FAIL: ' + e;
+});
+</script></body></html>

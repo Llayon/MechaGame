@@ -34,3 +34,25 @@ jobs:
             cat /tmp/mecha-chrome-stderr.log
             exit 1
           }
+
+      - name: Browser-decode recorded OGG and MP3 audio in real Chrome
+        run: |
+          bun run preview --host 127.0.0.1 --port 4173 > /tmp/mecha-audio-preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/audio-decode-smoke.html > /dev/null; then break; fi
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then echo "Chrome required" >&2; exit 1; fi
+          timeout 45s "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
+            --disable-background-networking --no-first-run --virtual-time-budget=12000 \
+            --dump-dom http://127.0.0.1:4173/audio-decode-smoke.html \
+            > /tmp/mecha-audio-smoke.html 2>/tmp/mecha-audio-chrome.log || {
+              cat /tmp/mecha-audio-chrome.log
+              exit 1
+            }
+          grep -F '<pre id="result">MECHA-AUDIO-DECODE-PASS: 15 OGG and 15 MP3</pre>' /tmp/mecha-audio-smoke.html || {
+            cat /tmp/mecha-audio-smoke.html | tail -c 5000
+            cat /tmp/mecha-audio-chrome.log | tail -c 3000
+            exit 1
+          }
