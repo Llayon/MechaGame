@@ -55,7 +55,23 @@ def encode(src, output, start, duration, lo=11000, hi=35):
     subprocess.run(args, check=True)
     data = (OUT / output).read_bytes()
     if len(data) < 900: raise RuntimeError(f"Bad audio output {output}: {len(data)} bytes")
-    return {"file": output, "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+    # Safari/iOS before 18.4 cannot reliably decode Ogg Vorbis.
+    # Encode MP3 directly from the source with identical trimming and EQ.
+    mp3_path = (OUT / output).with_suffix(".mp3")
+    mp3_args = list(args)
+    codec_idx = mp3_args.index("-c:a")
+    mp3_args[codec_idx + 1] = "libmp3lame"
+    quality_idx = mp3_args.index("-q:a")
+    mp3_args[quality_idx:quality_idx + 2] = ["-b:a", "96k"]
+    mp3_args[-1] = str(mp3_path)
+    subprocess.run(mp3_args, check=True)
+    mp3_data = mp3_path.read_bytes()
+    if len(mp3_data) < 900: raise RuntimeError("Bad MP3 output " + str(mp3_path))
+    return {
+        "file": output, "size": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+        "mp3File": mp3_path.name, "mp3Size": len(mp3_data),
+        "mp3Sha256": hashlib.sha256(mp3_data).hexdigest(),
+    }
 
 def main():
     manifest = []
@@ -96,7 +112,7 @@ def main():
                         "mirror": "https://github.com/GeorgeQLe/assets-sfx-combat",
                         "outputs": outputs})
     (OUT / "SOURCES.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    print("IMPORTED", len(list(OUT.glob("*.ogg"))), "OGG files",
+    print("IMPORTED", len(list(OUT.glob("*.ogg"))), "OGG and", len(list(OUT.glob("*.mp3"))), "MP3 files",
           sum(p.stat().st_size for p in OUT.glob("*.ogg")), "bytes", flush=True)
 
 if __name__ == "__main__":
