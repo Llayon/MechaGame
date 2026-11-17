@@ -109,9 +109,14 @@ export function computeJoystickAxes(
 
 /**
  * Converts horizontal touch-drag pixels on the aim zone into bounded turret yaw delta (rad).
- * Swiping right (+deltaPxX) aims right (negative turret yaw in Three.js Y-up).
+ * Swiping right (+deltaPxX) turns the view heading to the right (+yaw).
  */
 export function computeTouchAimDelta(deltaPxX: number, sensitivity = 0.0065): number {
-  const raw = -deltaPxX * sensitivity;
+  const raw = deltaPxX * sensitivity;
   return Math.max(-0.35, Math.min(0.35, raw));
+}
+
+/** Swipe up (negative screen Y) lifts the turret view and elevation. */
+export function computeTouchAimPitchDelta(deltaY: number, sensitivity = 0.005): number {
+  return Math.max(-0.25, Math.min(0.25, -deltaY * sensitivity));
 }

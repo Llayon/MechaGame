@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Crosshair, Flame, ShieldPlus, Wind, Zap } from 'lucide-react';
 import type { CombatTelemetrySnapshot } from '../game/combatTypes';
 import type { MechDriveInput } from '../scene/objects/MechState';
-import { computeJoystickAxes, computeTouchAimDelta } from '../utils/touchControls';
+import { computeJoystickAxes, computeTouchAimDelta, computeTouchAimPitchDelta } from '../utils/touchControls';
 
 interface MobileControlsProps {
   driveInputRef: React.MutableRefObject<MechDriveInput>;
@@ -28,6 +28,7 @@ export function MobileControls({
   const firePointerRef = useRef<number | null>(null);
   const aimPointerRef = useRef<number | null>(null);
   const lastAimXRef = useRef(0);
+  const lastAimYRef = useRef(0);
 
   const joyRadius = isLandscapeMobile ? 38 : 44;
 
@@ -66,6 +67,7 @@ export function MobileControls({
           if (aimPointerRef.current !== null) return;
           aimPointerRef.current = e.pointerId;
           lastAimXRef.current = e.clientX;
+          lastAimYRef.current = e.clientY;
           try {
             e.currentTarget.setPointerCapture(e.pointerId);
           } catch {
@@ -75,10 +77,16 @@ export function MobileControls({
         onPointerMove={(e) => {
           if (aimPointerRef.current !== e.pointerId) return;
           const deltaX = e.clientX - lastAimXRef.current;
+          const deltaY = e.clientY - lastAimYRef.current;
           lastAimXRef.current = e.clientX;
+          lastAimYRef.current = e.clientY;
           if (Math.abs(deltaX) > 0.25) {
             driveInputRef.current.turretAimDelta =
               (driveInputRef.current.turretAimDelta ?? 0) + computeTouchAimDelta(deltaX);
+          }
+          if (Math.abs(deltaY) > 0.25) {
+            driveInputRef.current.gunAimDelta =
+              (driveInputRef.current.gunAimDelta ?? 0) + computeTouchAimPitchDelta(deltaY);
           }
         }}
         onPointerUp={(e) => {

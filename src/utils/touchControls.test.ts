@@ -4,6 +4,7 @@ import {
   computeDeviceLayoutMode,
   computeJoystickAxes,
   computeTouchAimDelta,
+  computeTouchAimPitchDelta,
 } from './touchControls';
 
 test('computeDeviceLayoutMode distinguishes desktop keyboard from mobile portrait, landscape, and touch devices', () => {
@@ -56,9 +57,13 @@ test('computeJoystickAxes applies deadzone, clamps to radius, maps directions, a
   assert.equal(pushLeft.sprint, false);
 });
 
-test('computeTouchAimDelta maps rightward swipe to negative yaw and clamps spikes', () => {
-  assert.ok(computeTouchAimDelta(20) < 0);
-  assert.ok(computeTouchAimDelta(-20) > 0);
-  assert.equal(computeTouchAimDelta(500), -0.35);
-  assert.equal(computeTouchAimDelta(-500), 0.35);
+test('touch swipe aims along same camera yaw and elevation as mouse', () => {
+  assert.ok(computeTouchAimDelta(20) > 0);
+  assert.ok(computeTouchAimDelta(-20) < 0);
+  assert.equal(computeTouchAimDelta(500), 0.35);
+  assert.equal(computeTouchAimDelta(-500), -0.35);
+  assert.ok(computeTouchAimPitchDelta(-20) > 0);
+  assert.ok(computeTouchAimPitchDelta(20) < 0);
+  assert.equal(computeTouchAimPitchDelta(-500), 0.25);
+  assert.equal(computeTouchAimPitchDelta(500), -0.25);
 });
