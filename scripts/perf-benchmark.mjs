@@ -37,6 +37,7 @@ async function waitFor(fn, timeoutMs, message) {
 function createCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
   const pending = new Map();
+  const browserEvents = [];
   let nextId = 0;
   const ready = new Promise((resolve, reject) => {
     ws.addEventListener('open', resolve, { once: true });
@@ -44,6 +45,11 @@ function createCdp(wsUrl) {
   });
   ws.addEventListener('message', event => {
     const msg = JSON.parse(event.data);
+    if (msg.method === 'Runtime.exceptionThrown' ||
+        (msg.method === 'Runtime.consoleAPICalled' && msg.params?.type === 'error')) {
+      browserEvents.push(msg);
+      console.error('Browser event:', JSON.stringify(msg).slice(0, 1400));
+    }
     const entry = pending.get(msg.id);
     if (!entry) return;
     pending.delete(msg.id);
@@ -72,7 +78,7 @@ function createCdp(wsUrl) {
       (result.exceptionDetails.text || JSON.stringify(result.exceptionDetails)));
     return result.result?.value;
   }
-  return { ready, send, evaluate, close: () => ws.close() };
+  return { ready, send, evaluate, browserEvents, close: () => ws.close() };
 }
 
 async function measure(scenario) {
@@ -102,6 +108,9 @@ async function measure(scenario) {
     await cdp.ready;
     await cdp.send('Page.enable');
     await cdp.send('Runtime.enable');
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: 'window.__perfPageErrors = []; window.addEventListener("error", e => window.__perfPageErrors.push(String(e.message))); window.addEventListener("unhandledrejection", e => window.__perfPageErrors.push(String(e.reason)));',
+    });
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: scenario.width, height: scenario.height,
       deviceScaleFactor: scenario.dpr, mobile: scenario.mobile,
@@ -123,6 +132,9 @@ async function measure(scenario) {
       return ok;
     }, 35000, 'Game/Canvas/profiler not ready');
     await wait(2500); // Warm up shader compilation and scene mounting.
+    console.log('Warmup:', JSON.stringify(await cdp.evaluate(
+      '({ visibility: document.visibilityState, state: document.body.dataset.state, profile: window.__mechaPerf?.getLive(), errors: window.__perfPageErrors })'
+    )).slice(0, 2400));
     await cdp.evaluate('window.__mechaPerf.startCapture(' + DURATION_MS + ')');
     const report = await waitFor(async () => {
       const data = await cdp.evaluate('window.__mechaPerf.getReport()');
@@ -130,6 +142,12 @@ async function measure(scenario) {
     }, DURATION_MS + 18000, 'Performance capture did not finish');
 
     if (report.rendererStats.sampleCount < 3) {
+      const diagnostics = await cdp.evaluate(
+        '({ visibility: document.visibilityState, state: document.body.dataset.state, url: location.href, canvas: document.querySelector("canvas")?.outerHTML.slice(0,600), profiler: window.__mechaPerf?.getLive(), errors: window.__perfPageErrors })'
+      );
+      writeFileSync(join(DEST, scenario.id + '-debug.json'),
+        JSON.stringify({ diagnostics, browserEvents: cdp.browserEvents, report }, null, 2));
+      console.error('Missing frames, diagnostics: ' + JSON.stringify(diagnostics).slice(0, 4000));
       throw Error('Only ' + report.rendererStats.sampleCount + ' actual frames were measured');
     }
     if (report.environment.scenario !== 'combat') {
