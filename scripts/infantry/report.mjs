@@ -48,7 +48,7 @@ index.json switches (includes React commit, CDP and 150 ms polling).
 
 Continuous 20→100→200→20 transition capture: ${round(ts.fps)} FPS;
 p50/p95/p99 ${round(ts.p50Ms)}/${round(ts.p95Ms)}/${round(ts.p99Ms)} ms;
-worst ${round(ts.worstMs)} ms, frames over 33 ms ${ts.slowOver33Ms}.
+worst ${round(ts.worstMs)} ms, frames over 33.33 ms ${ts.slowOver33Ms}.
 This capture keeps frame history across changes instead of resetting away spikes.
 
 ## Software WebGL — correctness/regression only

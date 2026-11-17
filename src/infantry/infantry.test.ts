@@ -117,6 +117,10 @@ test('batch wrappers share vertex buffers/material and own their generation; dis
   const hidden = createGpuInfantry(data, DEFAULT_LAB, makeInstances(DEFAULT_LAB).map(s => ({ ...s, alive: false })));
   assert.equal(hidden.meshes.length, 0); assert.equal(hidden.instances.length, 0);
   hidden.dispose();
+  const rotated = createGpuInfantry(data, { ...DEFAULT_LAB, count: 1, travel: true },
+    [{ ...makeInstances({ ...DEFAULT_LAB, count: 1, animation: 'run' })[0], heading: Math.PI / 2 }]);
+  assert.ok(rotated.meshes[0].boundingBox!.max.x > rotated.instances[0].movementSpeed * 60);
+  rotated.dispose();
   assert.equal(first.meshes.length, 10);
   assert.equal(new Set(first.meshes.map(m => m.material)).size, 1);
   assert.equal(new Set(first.meshes.map(m => m.geometry.getAttribute('position'))).size, 1);

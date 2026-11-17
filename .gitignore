@@ -4,6 +4,8 @@ dist/
 coverage/
 .DS_Store
 *.log
+!docs/infantry/browser/game-regression.log
+!docs/infantry/browser/game-baseline-regression.log
 .env*
 !.env.example
 .tools/

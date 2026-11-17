@@ -170,8 +170,13 @@ export function createGpuInfantry(data: InfantryData, settings: LabSettings, sup
     // Rest-pose bounds are insufficient. Include every clip and root-travel range.
     const bounds = new THREE.Box3();
     group.forEach(state => {
-      bounds.expandByPoint(new THREE.Vector3(state.position[0] - .75, -.1, state.position[2] - .75));
-      bounds.expandByPoint(new THREE.Vector3(state.position[0] + .75, .6, state.position[2] + (settings.travel ? 40 : .75)));
+      const travel = settings.travel ? Math.max(0, state.movementSpeed) * 60 : 0;
+      for (const distance of [0, travel]) {
+        const x = state.position[0] + Math.sin(state.heading) * distance;
+        const z = state.position[2] + Math.cos(state.heading) * distance;
+        bounds.expandByPoint(new THREE.Vector3(x - .75, -.1, z - .75));
+        bounds.expandByPoint(new THREE.Vector3(x + .75, .6, z + .75));
+      }
     });
     batch.boundingBox = bounds; batch.boundingSphere = bounds.getBoundingSphere(new THREE.Sphere());
     meshes.push(batch); root.add(batch);
