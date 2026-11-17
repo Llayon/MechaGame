@@ -1,0 +1,4386 @@
+{
+  "bones": [
+    "pelvis",
+    "spine",
+    "head",
+    "weapon",
+    "upperarm_L",
+    "forearm_L",
+    "upperarm_R",
+    "forearm_R",
+    "thigh_L",
+    "shin_L",
+    "foot_L",
+    "thigh_R",
+    "shin_R",
+    "foot_R"
+  ],
+  "weights": [
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "pelvis": 0.1678910353416133,
+      "thigh_R": 0.8321089646583867
+    },
+    {
+      "pelvis": 0.5660412254094224,
+      "thigh_R": 0.43395877459057763
+    },
+    {
+      "pelvis": 0.5660412254094224,
+      "thigh_R": 0.43395877459057763
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "foot_R": 1.0
+    },
+    {
+      "pelvis": 0.19158111328204358,
+      "thigh_R": 0.8084188867179565
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "forearm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "pelvis": 0.36839090666524105,
+      "thigh_L": 0.6316090933347589
+    },
+    {
+      "pelvis": 0.36839090666524105,
+      "thigh_L": 0.6316090933347589
+    },
+    {
+      "pelvis": 0.36839090666524105,
+      "thigh_L": 0.6316090933347589
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "forearm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "foot_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "thigh_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_R": 1.0
+    },
+    {
+      "shin_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "thigh_L": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "upperarm_R": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "spine": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "upperarm_L": 1.0
+    },
+    {
+      "pelvis": 0.9922206698638667,
+      "thigh_L": 0.0077793301361333
+    },
+    {
+      "pelvis": 0.9922206698638667,
+      "thigh_L": 0.0077793301361333
+    },
+    {
+      "pelvis": 0.9922206698638667,
+      "thigh_L": 0.0077793301361333
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "weapon": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "pelvis": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    },
+    {
+      "head": 1.0
+    }
+  ]
+}
