@@ -70,6 +70,13 @@ try{
   await waitFor(async()=>await evalBrowser(
     'Boolean(window.__mechaAimDebug && document.body.dataset.state==="playing" && document.querySelector("canvas") && document.querySelector("[data-testid=combat-reticle]"))'),
     45000,'Combat scene, canvas or reticle did not mount');
+  const sceneBaseline = await waitFor(async()=>await evalBrowser(
+    '(()=>{const s=window.__mechaSceneAudit?.();return s?.total?.visibleMeshes>30 && s?.groups?.structures && s?.groups?.mech ? s : null;})()'
+  ),12000,'Per-system scene complexity inventory did not mount');
+  console.log('SCENE INVENTORY baseline',
+    JSON.stringify({ meshes:sceneBaseline.total.visibleMeshes,
+      triangles:sceneBaseline.total.estimatedTriangles,
+      sections:Object.keys(sceneBaseline.groups) }));
   const point=await evalBrowser('(function(){const r=document.querySelector("[data-testid=map-canvas-container] canvas").getBoundingClientRect();return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)};})()');
   const origin=await aim();
   console.log('INITIAL',JSON.stringify(origin));
@@ -155,6 +162,15 @@ try{
   await waitFor(async()=>await evalBrowser(
     '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="low" && c.dataset.shadows==="off" && Number(c.dataset.renderDpr)<=0.7 && c.dataset.shadowMapSize==="0";})()'
   ),15000,'Low preset did not change actual R3F scene DPR/shadow configuration');
+  const sceneLow = await evalBrowser('window.__mechaSceneAudit?.()');
+  if (!sceneLow || sceneLow.total.estimatedTriangles >= sceneBaseline.total.estimatedTriangles) {
+    throw Error('Low quality did not reduce visible scene geometry: '+
+      JSON.stringify({baseline:sceneBaseline.total.estimatedTriangles,
+        low:sceneLow?.total.estimatedTriangles}));
+  }
+  console.log('SCENE INVENTORY low',
+    JSON.stringify({ meshes:sceneLow.total.visibleMeshes,
+      triangles:sceneLow.total.estimatedTriangles }));
   await evalBrowser('document.querySelector("[data-testid=graphics-preset-balanced]").click()');
   await waitFor(async()=>await evalBrowser(
     '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="balanced" && c.dataset.shadows==="on" && Number(c.dataset.shadowMapSize)>0;})()'
