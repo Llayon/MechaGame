@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -10,8 +11,10 @@ export interface RadarTowerProps {
 export function RadarTower({ position, isSoftwareGl }: RadarTowerProps) {
   const radarRef = useRef<THREE.Group>(null);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
-    if (isSoftwareGl) return;
+    if (paused || isSoftwareGl) return;
     if (radarRef.current) {
       radarRef.current.rotation.y += delta * 0.65;
     }
