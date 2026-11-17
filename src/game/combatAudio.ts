@@ -1,5 +1,8 @@
+import { IndustrialSampleBank } from './industrialAudio';
+
 class CombatAudioEngine {
   private ctx: AudioContext | null = null;
+  private readonly samples = new IndustrialSampleBank();
   private muted = false;
   private paused = false;
   private lastShotSoundAt = 0;
@@ -14,10 +17,12 @@ class CombatAudioEngine {
 
   setMuted(muted: boolean): void {
     this.muted = muted;
+    this.samples.setMuted(muted);
   }
 
   toggleMuted(): boolean {
     this.muted = !this.muted;
+    this.samples.setMuted(this.muted);
     return this.muted;
   }
 
@@ -58,6 +63,7 @@ class CombatAudioEngine {
         return null;
       }
     }
+    this.samples.attach(this.ctx);
     if (this.ctx.state === 'suspended') {
       void this.ctx.resume().catch(() => {});
     }
@@ -68,12 +74,43 @@ class CombatAudioEngine {
     this.ensureContext();
   }
 
+  /** Continuous engine volume/pitch is driven by active mech load. */
+  syncEngine(active: boolean, load: number): void {
+    if (!this.ctx || this.paused || this.muted) {
+      if (!active) this.samples.stopEngine();
+      return;
+    }
+    this.samples.syncEngine(active, load);
+  }
+
+  stopEngine(): void { this.samples.stopEngine(); }
+
+  playMechFootstep(inWater: boolean): void {
+    if (!this.ensureContext()) return;
+    if (this.samples.playVariant(['mech_step_1', 'mech_step_2', 'mech_step_3'], {
+      gain: inWater ? 0.24 : 0.34, rate: 0.91 + Math.random() * 0.14,
+    }) && !inWater) this.samples.play('foot_metal', { gain: 0.12, rate: 0.94 });
+  }
+
+  playHydraulic(): void {
+    if (!this.ensureContext()) return;
+    this.samples.playVariant(['hydraulic_a', 'hydraulic_b'], {
+      gain: 0.095, rate: 0.88 + Math.random() * 0.18,
+    });
+  }
+
   playAutocannonShot(): void {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
     if (now - this.lastShotSoundAt < 0.055) return;
     this.lastShotSoundAt = now;
+    if (this.samples.playVariant(['autocannon_1','autocannon_2','autocannon_3'], {
+      gain: 0.34, rate: 0.96 + Math.random() * 0.08,
+    })) {
+      this.samples.play('recoil', { gain: 0.13, delay: 0.035, rate: 0.92 });
+      return;
+    }
 
     const jitter = 0.92 + Math.random() * 0.16;
     const osc = ctx.createOscillator();
@@ -95,6 +132,10 @@ class CombatAudioEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    if (this.samples.play('heavy_cannon', { gain: 0.64, rate: 0.97 })) {
+      this.samples.play('recoil', { gain: 0.27, delay: 0.075, rate: 0.85 });
+      return;
+    }
 
     const osc = ctx.createOscillator();
     const sub = ctx.createOscillator();
@@ -125,6 +166,9 @@ class CombatAudioEngine {
     const now = ctx.currentTime;
     if (!heavy && now - this.lastHitSoundAt < 0.045) return;
     this.lastHitSoundAt = now;
+    if (this.samples.playVariant(['armor_hit_1', 'armor_hit_2'], {
+      gain: heavy ? 0.42 : 0.24, rate: 0.94 + Math.random() * 0.1,
+    })) return;
 
     const jitter = 0.94 + Math.random() * 0.12;
     const osc = ctx.createOscillator();
@@ -146,6 +190,10 @@ class CombatAudioEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    if (this.samples.play('explosion_debris', { gain: 0.46, rate: 0.89 })) {
+      this.samples.play('heavy_cannon', { gain: 0.23, lowpass: 650, rate: 0.83 });
+      return;
+    }
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -251,6 +299,10 @@ class CombatAudioEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    if (this.samples.play('explosion_debris', { gain: 0.5, rate: 0.92 })) {
+      this.samples.play('heavy_cannon', { gain: 0.3, lowpass: 1100, rate: 0.83 });
+      return;
+    }
 
     const osc = ctx.createOscillator();
     const sub = ctx.createOscillator();
@@ -299,6 +351,7 @@ class CombatAudioEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    if (this.samples.playVariant(['armor_hit_1','armor_hit_2'], { gain: 0.29, rate: 0.88 })) return;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -419,6 +472,10 @@ class CombatAudioEngine {
     const now = ctx.currentTime;
     if (!orbital && now - this.lastDistantBoomAt < 2.6) return;
     this.lastDistantBoomAt = now;
+    if (this.samples.play('heavy_cannon', {
+      gain: orbital ? 0.06 : 0.035, lowpass: orbital ? 330 : 215,
+      rate: orbital ? 0.75 : 0.82,
+    })) return;
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
