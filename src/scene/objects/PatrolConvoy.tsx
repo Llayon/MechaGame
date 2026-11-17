@@ -25,7 +25,7 @@ export function PatrolConvoy({ visible, isSoftwareGl }: PatrolConvoyProps) {
   const unit2Ref = useRef<THREE.Group>(null);
 
   const centerPatrolCurve = useMemo(() => {
-    const bridge = BRIDGE_SPECS[1];
+    const bridge = BRIDGE_SPECS.find((b) => b.id === 'bridge-center')!;
     const pts = [
       [-109, 86],
       [-92, 60],
@@ -46,25 +46,17 @@ export function PatrolConvoy({ visible, isSoftwareGl }: PatrolConvoyProps) {
   }, []);
 
   const eastPatrolCurve = useMemo(() => {
-    const bridge = BRIDGE_SPECS[2];
+    // Dry East Quarry highway patrol between collapsed crossing overlook and Citadel South approach
     const pts = [
-      [-56, 86],
-      [-12, 94],
-      [24, 78],
-      [bridge.start[0], bridge.start[1]],
-      [(bridge.start[0] + bridge.end[0]) * 0.5, (bridge.start[1] + bridge.end[1]) * 0.5],
-      [bridge.end[0], bridge.end[1]],
-      [QUARRY_CENTER_X - 4.0, QUARRY_CENTER_Z],
-      [bridge.end[0], bridge.end[1]],
-      [(bridge.start[0] + bridge.end[0]) * 0.5, (bridge.start[1] + bridge.end[1]) * 0.5],
-      [bridge.start[0], bridge.start[1]],
-      [24, 78],
-      [-12, 94],
-    ].map(([x, z]) => {
-      const bridgeY = getBridgeDeckYAt(bridge, x, z);
-      const y = bridgeY !== null ? bridgeY : getTerrainHeight(x, z) + 0.16;
-      return new THREE.Vector3(x, y, z);
-    });
+      [88, 39],
+      [102, 33.25],
+      [134, 14],
+      [162, -14],
+      [148, -38],
+      [162, -14],
+      [134, 14],
+      [102, 33.25],
+    ].map(([x, z]) => new THREE.Vector3(x, getTerrainHeight(x, z) + 0.16, z));
     return new THREE.CatmullRomCurve3(pts, true);
   }, []);
 
@@ -100,9 +92,9 @@ export function PatrolConvoy({ visible, isSoftwareGl }: PatrolConvoyProps) {
       <group
         ref={unit1Ref}
         position={[
-          (BRIDGE_SPECS[1].start[0] + BRIDGE_SPECS[1].end[0]) * 0.5,
-          BRIDGE_SPECS[1].deckY + 0.52,
-          (BRIDGE_SPECS[1].start[1] + BRIDGE_SPECS[1].end[1]) * 0.5,
+          -52.75,
+          getTerrainHeight(-52.75, 19.25) + 5.8,
+          19.25,
         ]}
         scale={1.35}
       >
@@ -120,14 +112,10 @@ export function PatrolConvoy({ visible, isSoftwareGl }: PatrolConvoyProps) {
         </mesh>
       </group>
 
-      {/* East Bridge Supply Truck (1.35x small scale vs 31.5 m bridge) */}
+      {/* East Quarry Highway Supply Truck */}
       <group
         ref={unit2Ref}
-        position={[
-          (BRIDGE_SPECS[2].start[0] + BRIDGE_SPECS[2].end[0]) * 0.5,
-          BRIDGE_SPECS[2].deckY + 0.52,
-          (BRIDGE_SPECS[2].start[1] + BRIDGE_SPECS[2].end[1]) * 0.5,
-        ]}
+        position={[102, getTerrainHeight(102, 33.25) + 0.16, 33.25]}
         scale={1.35}
       >
         <mesh position={[0, 0.2, 0]} castShadow>

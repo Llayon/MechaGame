@@ -38,6 +38,7 @@ export function createMechState() {
     x: MECH_SPAWN.x,
     z: MECH_SPAWN.z,
     y: MECH_SPAWN.y,
+    inWater: false,
     yaw: MECH_SPAWN.yaw,
     turretYaw: 0,
     gaitPhase: 0,

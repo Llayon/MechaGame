@@ -259,7 +259,7 @@ export function SovietMech({
       aimRef.current.reticleVisible = false;
     }
 
-    const control = resolveMechControl(driveInputRef.current, canControl, combat.dashTimer > 0);
+    const control = resolveMechControl(driveInputRef.current, canControl, combat.dashTimer > 0, sim.inWater);
     const locomoting = canControl && control.isMoving;
     if (!locomoting && wasLocomotingRef.current) {
       // Cut active sample tails on the first stationary frame, without killing gunfire.
@@ -270,7 +270,7 @@ export function SovietMech({
 
     // Step combat sim first so hitstop freezes movement/physics cleanly while visual timers tick
     const combatStep = canControl
-      ? stepCombatSimulation(combat, sim.x, sim.y, sim.z, activeFire, rawDt)
+      ? stepCombatSimulation(combat, sim.x, sim.y, sim.z, activeFire, rawDt, sim.inWater)
       : { simDt: driveMode ? 0 : rawDt, justEnded: null };
 
     if (combatStep.justEnded) {
@@ -467,6 +467,7 @@ export function SovietMech({
         sim.y,
         sim.z,
         sim.yaw + sim.turretYaw,
+        ik.inWater,
       );
     }
   });

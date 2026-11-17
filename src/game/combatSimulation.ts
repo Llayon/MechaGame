@@ -43,6 +43,7 @@ export const RESERVE_DEPLOY_THRESHOLD = 5;
 export const DASH_DURATION = 0.36;
 export const DASH_COOLDOWN = 4.5;
 export const DASH_DAMAGE_MULT = 0.45;
+export const WATER_COOLING_MULT = 2.0;
 
 export const BARREL_HP = 36;
 export const BARREL_HIT_RADIUS = 1.15;
@@ -1257,6 +1258,7 @@ export function stepCombatSimulation(
   playerZ: number,
   isFiring: boolean,
   rawDt: number,
+  inWater = false,
 ): { simDt: number; justEnded: 'victory' | 'defeat' | null } {
   const dt = Math.min(rawDt, 0.05);
   let justEnded: 'victory' | 'defeat' | null = null;
@@ -1312,8 +1314,9 @@ export function stepCombatSimulation(
   state.dashTimer = Math.max(0, state.dashTimer - simDt);
   state.dashCooldownTimer = Math.max(0, state.dashCooldownTimer - simDt);
 
-  // Weapon cooling when not firing or recovering from overheat
-  const coolRate = state.weaponOverheated ? 0.34 : isFiring ? 0.04 : 0.42;
+  // Weapon cooling when not firing or recovering from overheat (2x faster in water)
+  const baseCoolRate = state.weaponOverheated ? 0.34 : isFiring ? 0.04 : 0.42;
+  const coolRate = baseCoolRate * (inWater ? WATER_COOLING_MULT : 1.0);
   state.weaponHeat = Math.max(0, state.weaponHeat - coolRate * simDt);
   if (state.weaponOverheated && state.weaponHeat <= 0.35) {
     state.weaponOverheated = false;
@@ -1667,6 +1670,7 @@ export function buildCombatTelemetry(
   playerY: number,
   playerZ: number,
   turretWorldYaw: number,
+  inWater = false,
 ): CombatTelemetrySnapshot {
   const targetsTotal = state.enemies.length;
   let targetsDestroyed = 0;
@@ -1715,6 +1719,7 @@ export function buildCombatTelemetry(
     playerMaxHp: state.playerMaxHp,
     weaponHeat: state.weaponHeat,
     weaponOverheated: state.weaponOverheated,
+    inWaterCooling: inWater,
     heavyCooldown: state.heavyCooldownTimer,
     heavyMaxCooldown: HEAVY_CANNON_COOLDOWN,
     repairCharges: state.repairCharges,

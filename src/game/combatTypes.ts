@@ -162,6 +162,7 @@ export interface CombatTelemetrySnapshot {
   playerMaxHp: number;
   weaponHeat: number;
   weaponOverheated: boolean;
+  inWaterCooling: boolean;
   heavyCooldown: number;
   heavyMaxCooldown: number;
   repairCharges: number;

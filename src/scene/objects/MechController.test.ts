@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  WATER_SPEED_MULT,
   clearMechInput,
   normalizeKeyboardCode,
   resolveMechControl,
@@ -78,5 +79,16 @@ test('normalizeKeyboardCode preserves physical codes and maps Cyrillic/fallback 
   assert.equal(normalizeKeyboardCode('', 'ф'), 'KeyA');
   assert.equal(normalizeKeyboardCode('Unidentified', ' '), 'Space');
   assert.equal(normalizeKeyboardCode('', 'ArrowUp'), 'ArrowUp');
+});
+
+test('water wading applies 0.82x drag to walk/sprint/crouch while Jet-Dash keeps full 6.2 u/s speed', () => {
+  const walkWater = resolveMechControl({ ...neutral, forward: 1 }, true, false, true);
+  assert.ok(Math.abs(walkWater.targetSpeed - 2.35 * WATER_SPEED_MULT) < 1e-6);
+
+  const sprintWater = resolveMechControl({ ...neutral, forward: 1, sprint: true }, true, false, true);
+  assert.ok(Math.abs(sprintWater.targetSpeed - 3.45 * WATER_SPEED_MULT) < 1e-6);
+
+  const dashWater = resolveMechControl({ ...neutral, forward: 1 }, true, true, true);
+  assert.equal(dashWater.targetSpeed, 6.2);
 });
 

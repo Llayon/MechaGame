@@ -21,8 +21,8 @@ import {
   getWaterObstructionDistance,
 } from './waterDepth';
 
-test('getWaterObstructionDistance detects every river bridge pier and moored barge accurately', () => {
-  for (const id of ['bridge-a', 'bridge-center', 'bridge-east'] as const) {
+test('getWaterObstructionDistance detects every river bridge pier, flooded ruin, and moored barge accurately', () => {
+  for (const id of ['bridge-a', 'bridge-center'] as const) {
     const spec = BRIDGE_SPECS.find((b) => b.id === id);
     assert.ok(spec, `Missing bridge spec ${id}`);
     const dx = spec.end[0] - spec.start[0];
@@ -50,6 +50,10 @@ test('getWaterObstructionDistance detects every river bridge pier and moored bar
       }
     }
   }
+
+  // Flooded eastern river ruins (collapsed pier at [57.5, 58.0], barge at [66.0, 26.0])
+  assert.ok(getWaterObstructionDistance(57.5, 58.0) < -1.0, 'Collapsed pier should register inside water SDF');
+  assert.ok(getWaterObstructionDistance(66.0, 26.0) < -1.0, 'Grounded barge should register inside water SDF');
 
   // Moored SE river barge center (~[86.1, 101.8] in world)
   const pierRotY = -0.32;

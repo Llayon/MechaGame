@@ -298,17 +298,6 @@ export const BRIDGE_SPECS: ReadonlyArray<BridgeSpec> = [
     style: 'girder',
   },
   {
-    id: 'bridge-east',
-    label: 'East Quarry Bridge',
-    start: [32.0, 72.4],
-    end: [79.5, 42.0],
-    startY: 1.78 * SCALE_Y,
-    endY: 2.25 * SCALE_Y,
-    deckY: 2.015 * SCALE_Y,
-    width: 8.4, // 31.5 m
-    style: 'girder',
-  },
-  {
     id: 'viaduct-citadel',
     label: 'Elevated Island-to-Citadel Ramp & Tunnel',
     start: [25.0, -3.5],
@@ -791,20 +780,23 @@ export function getTerrainHeight(x: number, z: number): number {
     h = lerp(h, baseRoadY, roadSmooth * 0.78);
   }
 
-  // Smoothly grade dry riverbank approach pads to meet 32 m road bridge decks flush
+  // Smoothly grade dry riverbank approach pads to meet road bridges and collapsed East Crossing abutments flush
   if (river.channelMask < 0.35) {
     const dryFactor = 1 - smoothstep(0.08, 0.35, river.channelMask);
-    for (let i = 0; i < 3; i++) {
-      const b = BRIDGE_SPECS[i];
-      const ds = Math.hypot(x - b.start[0], z - b.start[1]);
-      if (ds < 14.0) {
-        const w = (1 - smoothstep(4.2, 14.0, ds)) * dryFactor;
-        h = lerp(h, b.startY + 0.36, w);
-      }
-      const de = Math.hypot(x - b.end[0], z - b.end[1]);
-      if (de < 14.0) {
-        const w = (1 - smoothstep(4.2, 14.0, de)) * dryFactor;
-        h = lerp(h, b.endY + 0.36, w);
+    const approachPads: Array<readonly [number, number, number]> = [];
+    for (const b of BRIDGE_SPECS) {
+      if (b.style === 'viaduct') continue;
+      approachPads.push([b.start[0], b.start[1], b.startY]);
+      approachPads.push([b.end[0], b.end[1], b.endY]);
+    }
+    // Preserve level road thresholds for collapsed East Crossing shore abutments
+    approachPads.push([32.0, 72.4, 1.78 * SCALE_Y]);
+    approachPads.push([79.5, 42.0, 2.25 * SCALE_Y]);
+    for (const [px, pz, py] of approachPads) {
+      const dist = Math.hypot(x - px, z - pz);
+      if (dist < 14.0) {
+        const w = (1 - smoothstep(4.2, 14.0, dist)) * dryFactor;
+        h = lerp(h, py + 0.36, w);
       }
     }
   }
@@ -851,7 +843,7 @@ export function getTerrainHeight(x: number, z: number): number {
   }
 
   // Carve a walkable cliffside trench for Flight 2 (VIADUCT_ELBOW -> Citadel West Gate) & Bastion Hub
-  const v = BRIDGE_SPECS[3];
+  const v = BRIDGE_SPECS.find((b) => b.style === 'viaduct')!;
   const dBastion = Math.hypot(x - VIADUCT_ELBOW[0], z - VIADUCT_ELBOW[1]);
   if (dBastion < 16.5) {
     const hubFloorY = VIADUCT_ELBOW_Y - 0.52;

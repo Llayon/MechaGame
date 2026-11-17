@@ -13,6 +13,7 @@ import {
   getRiverInfo,
   lerp,
 } from './terrainMath';
+import { getFloodedRuinWaterObstacles } from './floodedRuins';
 
 export const WATER_SPAN_W = MAP_WIDTH + 160; // 560 units
 export const WATER_SPAN_D = MAP_DEPTH + 160; // 492 units
@@ -149,6 +150,8 @@ function buildWaterObstacles(): WaterObstacle[] {
     hx: 2.7,
     hz: 8.25,
   });
+
+  obstacles.push(...getFloodedRuinWaterObstacles());
 
   return obstacles;
 }

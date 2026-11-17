@@ -47,8 +47,8 @@ export function RoadNetwork({ puddleTimeUniform }: RoadNetworkProps) {
 
         // Check if point lies strictly inside any road bridge span (between abutments)
         let onBridgeSpan = false;
-        for (let bIdx = 0; bIdx < 3; bIdx++) {
-          const b = BRIDGE_SPECS[bIdx];
+        for (const b of BRIDGE_SPECS) {
+          if (b.style === 'viaduct') continue;
           const dx = b.end[0] - b.start[0];
           const dz = b.end[1] - b.start[1];
           const lenSq = dx * dx + dz * dz;

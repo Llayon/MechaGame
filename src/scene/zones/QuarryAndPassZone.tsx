@@ -10,6 +10,7 @@ import {
 import { LightingPreset, SectorId } from '../../map/sectors';
 import { BridgeSpan } from '../objects/BridgeSpan';
 import { Excavator } from '../objects/Excavator';
+import { FloodedRuins } from '../objects/FloodedRuins';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
 
 export interface QuarryAndPassZoneProps {
@@ -51,6 +52,9 @@ export function QuarryAndPassZone({
           isSoftwareGl={isSoftwareGl}
         />
       ))}
+
+      {/* Flooded Eastern River Ruins & Collapsed Bridge Abutments */}
+      <FloodedRuins lightingPreset={lightingPreset} />
 
       {/* Northern Canyon Pass (Point B Excavator kept small 1.35x + Powerline Poles) */}
       <group

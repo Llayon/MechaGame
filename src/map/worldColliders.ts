@@ -41,6 +41,7 @@ import {
   generateRockOutcropsData,
 } from './worldStructures';
 import { getTitanWreckColliders } from './titanWrecks';
+import { getFloodedRuinColliders } from './floodedRuins';
 
 // Effective XZ bounding radius for Soviet Object 316 at MECH_SCALE = 0.8 (~4.3 m)
 export const MECH_COLLISION_RADIUS = 1.15;
@@ -684,6 +685,11 @@ function buildWorldColliders(): WorldCollider[] {
   // 9. Colossal buried Titan wrecks (bulwarks, reactor shields, & splayed flank legs)
   for (const tc of getTitanWreckColliders()) {
     list.push(tc);
+  }
+
+  // 10. Eastern river channel flooded industrial ruins & collapsed abutment barricades
+  for (const fc of getFloodedRuinColliders()) {
+    list.push(fc);
   }
 
   return list;

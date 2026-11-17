@@ -16,6 +16,7 @@ import {
   lerp,
 } from './terrainMath';
 import type { LightingPreset } from './sectors';
+import { EAST_CROSSING_ABUTMENT_STUBS } from './floodedRuins';
 
 /** 0 = >>> chevrons, 1 = DANGER triangle, 2 = tactical radar, 3 = hazard stripes */
 export type HoloIconType = 0 | 1 | 2 | 3;
@@ -258,6 +259,26 @@ function buildZoneTacticalSigns(): HologramSignSpec[] {
     colorHex: HOLO_COLOR_AMBER,
     zone: 'quarry',
   });
+
+  // 6. Collapsed East Crossing Abutments: warning stripes facing oncoming road traffic
+  for (const stub of EAST_CROSSING_ABUTMENT_STUBS) {
+    const fwdX = Math.sin(stub.yaw);
+    const fwdZ = Math.cos(stub.yaw);
+    const sx = stub.x + fwdX * 1.4;
+    const sz = stub.z + fwdZ * 1.4;
+    signs.push({
+      id: `holo-${stub.id}-hazard`,
+      x: sx,
+      y: Math.max(stub.deckY + 3.2, getSpanClearGroundY(sx, sz, stub.yaw, 2.4) + 2.8),
+      z: sz,
+      yaw: stub.yaw + Math.PI,
+      width: 5.4,
+      height: 1.6,
+      iconType: 3,
+      colorHex: HOLO_COLOR_DANGER,
+      zone: 'quarry',
+    });
+  }
 
   return signs;
 }

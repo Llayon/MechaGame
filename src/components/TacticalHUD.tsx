@@ -332,7 +332,13 @@ export function TacticalHUD({
       />
       <line x1="68" y1="45" x2="88" y2="38" stroke="#c89e52" strokeWidth="2.5" />
       <line x1="78" y1="74" x2="100" y2="70" stroke="#c89e52" strokeWidth="2.5" />
-      <line x1="146" y1="88" x2="170" y2="80" stroke="#c89e52" strokeWidth="2.5" />
+      {/* Collapsed East Crossing abutment stubs + flooded channel ruin markers */}
+      <line x1="135" y1="87.5" x2="140.5" y2="85.5" stroke="#c89e52" strokeWidth="2.4" />
+      <line x1="155" y1="80" x2="161" y2="78" stroke="#c89e52" strokeWidth="2.4" />
+      <rect x="142.5" y="81.5" width="3.2" height="3.2" rx="0.5" fill="#708999" opacity="0.9" />
+      <rect x="148.5" y="79" width="3.5" height="2.6" rx="0.5" fill="#708999" opacity="0.9" />
+      <rect x="146.5" y="73" width="2.8" height="2.8" rx="0.5" fill="#708999" opacity="0.85" />
+      <rect x="151.5" y="84" width="3.2" height="4.0" rx="0.5" fill="#708999" opacity="0.85" />
 
       {MINIMAP_NODES.map((node) => {
         const isSel = !driveMode && activeSector === node.id;
@@ -637,8 +643,16 @@ export function TacticalHUD({
 
                 {/* 37-mm Heat Bar */}
                 <div className="mt-1">
-                  <div className="flex items-center justify-between text-[9px] font-mono-tabular">
+                  <div className="flex items-center justify-between gap-1 text-[9px] font-mono-tabular">
                     <span className="text-slate-400">37-мм</span>
+                    {(mechHud.inWater || combatHud.inWaterCooling) && (
+                      <span
+                        data-testid="water-cooling-status"
+                        className="font-semibold text-[#06B6D4]"
+                      >
+                        ОХЛАЖДЕНИЕ · 2×
+                      </span>
+                    )}
                     <span
                       className={`font-semibold ${
                         combatHud.weaponOverheated ? 'text-red-400' : 'text-amber-200'
@@ -732,17 +746,27 @@ export function TacticalHUD({
 
                 {/* 37-mm Autocannon Thermal Bar */}
                 <div className="mt-1.5">
-                  <div className="flex items-center justify-between text-[10px] font-mono-tabular">
+                  <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono-tabular">
                     <span className="uppercase tracking-wider text-slate-400">
                       Нагрев 37-мм
                     </span>
-                    <span
-                      className={`font-semibold ${
-                        combatHud.weaponOverheated ? 'text-red-400' : 'text-amber-200'
-                      }`}
-                    >
-                      {combatHud.weaponOverheated ? 'ПЕРЕГРЕВ' : `${heatPct}%`}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {(mechHud.inWater || combatHud.inWaterCooling) && (
+                        <span
+                          data-testid="water-cooling-status"
+                          className="font-semibold text-[#06B6D4]"
+                        >
+                          ОХЛАЖДЕНИЕ · 2×
+                        </span>
+                      )}
+                      <span
+                        className={`font-semibold ${
+                          combatHud.weaponOverheated ? 'text-red-400' : 'text-amber-200'
+                        }`}
+                      >
+                        {combatHud.weaponOverheated ? 'ПЕРЕГРЕВ' : `${heatPct}%`}
+                      </span>
+                    </div>
                   </div>
                   <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-sm bg-slate-900">
                     <div

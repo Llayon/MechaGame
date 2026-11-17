@@ -25,6 +25,7 @@ import {
   REPAIR_COOLDOWN,
   REPAIR_HEAL_AMOUNT,
   REPAIR_INITIAL_CHARGES,
+  WATER_COOLING_MULT,
   buildCombatTelemetry,
   computeGunPitchToTarget,
   computeMissionRank,
@@ -452,5 +453,43 @@ test('computeMissionRank grades victory runs S/A/B/C and defeats as C', () => {
   const cState = createCombatState(true);
   cState.missionStatus = 'defeat';
   assert.equal(computeMissionRank(cState), 'C');
+});
+
+test('water immersion doubles weapon cooling rate (2x) and reports inWaterCooling telemetry', () => {
+  assert.equal(WATER_COOLING_MULT, 2.0);
+  const dryState = createCombatState(true);
+  const wetState = createCombatState(true);
+  dryState.weaponHeat = 0.85;
+  wetState.weaponHeat = 0.85;
+
+  const dt = 0.05;
+  for (let i = 0; i < 10; i++) {
+    stepCombatSimulation(dryState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, false, dt, false);
+    stepCombatSimulation(wetState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, false, dt, true);
+  }
+
+  const dryCooled = 0.85 - dryState.weaponHeat;
+  const wetCooled = 0.85 - wetState.weaponHeat;
+  assert.ok(
+    Math.abs(wetCooled - dryCooled * 2.0) < 1e-6,
+    `Expected 2x cooling in water: dry=${dryCooled.toFixed(4)}, wet=${wetCooled.toFixed(4)}`,
+  );
+
+  // Overheat recovery also clears 2x faster in water
+  dryState.weaponHeat = 0.6;
+  dryState.weaponOverheated = true;
+  wetState.weaponHeat = 0.6;
+  wetState.weaponOverheated = true;
+  for (let i = 0; i < 10; i++) {
+    stepCombatSimulation(dryState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, false, dt, false);
+    stepCombatSimulation(wetState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, false, dt, true);
+  }
+  assert.equal(wetState.weaponOverheated, false, 'Water should clear overheat within 0.5 s from 0.60 heat');
+  assert.equal(dryState.weaponOverheated, true, 'Dry air cools 2x slower so overheat persists at 0.5 s');
+
+  const wetHud = buildCombatTelemetry(wetState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, 0, true);
+  const dryHud = buildCombatTelemetry(dryState, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, 0, false);
+  assert.equal(wetHud.inWaterCooling, true);
+  assert.equal(dryHud.inWaterCooling, false);
 });
 

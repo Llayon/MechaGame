@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import type { MechDriveInput } from './MechState';
 
+export const WATER_SPEED_MULT = 0.82;
+
 /** Deterministic, DOM-free normalization of a single frame's commands. */
 export function resolveMechControl(
   input: Readonly<MechDriveInput>,
   driveMode: boolean,
   isDashing = false,
+  inWater = false,
 ) {
   const rawFwd = driveMode ? THREE.MathUtils.clamp(input.forward, -1, 1) : 0;
   const fwd = isDashing ? (Math.abs(rawFwd) > 0.1 ? Math.sign(rawFwd) : 1) : rawFwd;
@@ -17,7 +20,10 @@ export function resolveMechControl(
 
   // Calibrated heavy Mech speeds (world units/sec):
   // 1.35 (~18.2 km/h crouch), 2.35 (~31.7 km/h walk), 3.45 (~46.6 km/h sprint), 6.2 (~83.7 km/h dash)
-  const maxSpeed = isDashing ? 6.2 : isCrouched ? 1.35 : isSprinting ? 3.45 : 2.35;
+  // Wading in river water applies a light 18% drag on walking/sprinting while preserving Jet-Dash boost.
+  const waterSpeedScale = inWater && !isDashing ? WATER_SPEED_MULT : 1.0;
+  const baseMaxSpeed = isDashing ? 6.2 : isCrouched ? 1.35 : isSprinting ? 3.45 : 2.35;
+  const maxSpeed = baseMaxSpeed * waterSpeedScale;
   const targetSpeed = fwd * maxSpeed;
   const targetTurnRate = turn * (isDashing ? 0.6 : isSprinting ? 1.35 : 1.18);
 
@@ -35,6 +41,8 @@ export function resolveMechControl(
     isCrouched,
     isSprinting,
     isDashing,
+    inWater,
+    waterSpeedScale,
     isFiring,
     maxSpeed,
     targetSpeed,

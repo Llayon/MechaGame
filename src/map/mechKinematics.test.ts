@@ -119,7 +119,7 @@ test('sampleMechFootSupport returns bounded ankle pitch/roll across pads and bri
   assert.ok(Math.abs(flatSupport.roll) < 0.05);
   assert.equal(flatSupport.inWater, false);
 
-  const viaduct = BRIDGE_SPECS[3];
+  const viaduct = BRIDGE_SPECS.find((b) => b.style === 'viaduct')!;
   const vx = (viaduct.start[0] + VIADUCT_ELBOW[0]) * 0.5;
   const vz = (viaduct.start[1] + VIADUCT_ELBOW[1]) * 0.5;
   const rampSupport = sampleMechFootSupport(vx, vz, Math.atan2(VIADUCT_ELBOW[0] - viaduct.start[0], VIADUCT_ELBOW[1] - viaduct.start[1]));

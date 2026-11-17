@@ -50,6 +50,7 @@ export function stepMechMovement(
 
     const surfCenter = getWalkableSurfaceY(sim.x, sim.z, sim.y);
     sim.y = surfCenter.y;
+    sim.inWater = surfCenter.inWater;
 
     const rawSwayX = Math.sin(sim.gaitPhase) * 0.14 * sim.gaitBlend;
     const rawBounceY =
