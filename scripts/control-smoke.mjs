@@ -73,6 +73,13 @@ try{
   const point=await evalBrowser('(function(){const r=document.querySelector("[data-testid=map-canvas-container] canvas").getBoundingClientRect();return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)};})()');
   const origin=await aim();
   console.log('INITIAL',JSON.stringify(origin));
+  const getReticles = '(()=>{const primary=document.querySelector("[data-testid=combat-reticle]");const secondary=document.querySelector("[data-testid=muzzle-direction-indicator]");if(!primary||!secondary)return null;const b=primary.getBoundingClientRect();return {centerX:b.left+b.width/2,centerY:b.top+b.height/2,viewportX:innerWidth/2,viewportY:innerHeight/2,primaryInlineLeft:primary.style.left,primaryInlineTop:primary.style.top,secondaryPresent:!!secondary,secondaryRole:secondary.getAttribute("data-testid")};})()';
+  const initialMarkers=await evalBrowser(getReticles);
+  if(!initialMarkers || !initialMarkers.secondaryPresent ||
+      Math.abs(initialMarkers.centerX-initialMarkers.viewportX)>2 ||
+      Math.abs(initialMarkers.centerY-initialMarkers.viewportY)>2) {
+    throw Error('Primary crosshair is not fixed at screen center, or secondary cue missing: '+JSON.stringify(initialMarkers));
+  }
   await send('Input.dispatchMouseEvent',
     {type:'mouseMoved',x:point.x,y:point.y,button:'none'});
   await send('Input.dispatchMouseEvent',
@@ -86,6 +93,13 @@ try{
     return a&&(a.aimYaw<origin.aimYaw-0.005||a.pendingYaw< -0.005)
       &&(a.elevation>origin.elevation+0.005||a.pendingElevation>0.005);
   },20000,'Mouse-right must rotate view right (negative world yaw) and mouse-up lift aim');
+  const movedMarkers=await evalBrowser(getReticles);
+  if(!movedMarkers ||
+      Math.abs(movedMarkers.centerX-initialMarkers.centerX)>1 ||
+      Math.abs(movedMarkers.centerY-initialMarkers.centerY)>1 ||
+      movedMarkers.primaryInlineLeft!=='' || movedMarkers.primaryInlineTop!=='') {
+    throw Error('Main crosshair moved with camera or physical barrel: '+JSON.stringify(movedMarkers));
+  }
   await send('Input.dispatchMouseEvent',
     {type:'mouseReleased',x:point.x+160,y:point.y-100,button:'left',clickCount:1});
   await waitFor(async()=>!(await aim())?.pointerFire,5000,'LMB fire stuck after release');
@@ -132,7 +146,7 @@ try{
     const a=await aim();
     return a&&a.aimYaw<before.aimYaw-0.01&&a.elevation>before.elevation+0.01;
   },25000,'Touch swipe-right must rotate right (negative yaw); swipe-up lifts aim');
-  console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB+RMB+Escape, pause:unlock, touch:swipeXY');
+  console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB+RMB+Escape, pause:unlock, touch:swipeXY, crosshair:fixed, muzzle:separate');
   console.log('FINAL',JSON.stringify(await aim()));
 }catch(e){
   console.error('GAMEPLAY-AIM-FAIL',String(e));
