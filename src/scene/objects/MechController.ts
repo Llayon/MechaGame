@@ -67,6 +67,8 @@ export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
   input.turn = 0;
   input.turretTurn = 0;
   input.turretAimDelta = 0;
+  input.gunAimDelta = 0;
+  input.precisionAim = false;
   input.fire = false;
   input.heavyFire = false;
   input.repair = false;

@@ -8,6 +8,8 @@ export interface MechDriveInput {
   turn: number;
   turretTurn: number;
   turretAimDelta?: number;
+  gunAimDelta?: number;
+  precisionAim?: boolean;
   fire: boolean;
   heavyFire?: boolean;
   repair?: boolean;

@@ -7,6 +7,8 @@ import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
 import { PerformancePanel } from './perf/PerformancePanel';
 import { clearMechInput, syncMechInputFromKeys } from './scene/objects/MechController';
+import { DesktopCombatInput } from './components/DesktopCombatInput';
+import { createCombatAimState } from './game/combatAim';
 import {
   buildCombatTelemetry,
   createCombatState,
@@ -82,6 +84,8 @@ export default function App() {
     turn: 0,
     turretTurn: 0,
     turretAimDelta: 0,
+    gunAimDelta: 0,
+    precisionAim: false,
     fire: false,
     heavyFire: false,
     repair: false,
@@ -91,6 +95,7 @@ export default function App() {
     crouch: false,
   });
 
+  const aimRef = useRef(createCombatAimState(MECH_SPAWN.yaw));
   const combatRef = useRef(createCombatState(autostart));
   const combatTelemetryRef = useRef(
     buildCombatTelemetry(
@@ -248,7 +253,12 @@ export default function App() {
         return;
       }
       if (e.code === 'Escape') {
-        handleResetOverview();
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+          clearDriveInput();
+        } else {
+          handleResetOverview();
+        }
         return;
       }
 
@@ -339,6 +349,7 @@ export default function App() {
         paused={paused}
         mechPoseRef={mechPoseRef}
         driveInputRef={driveInputRef}
+        aimRef={aimRef}
         combatRef={combatRef}
         combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
@@ -360,6 +371,7 @@ export default function App() {
         inputPref={inputPref}
         mechPoseRef={mechPoseRef}
         driveInputRef={driveInputRef}
+        aimRef={aimRef}
         combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
         showUnits={showUnits}
@@ -379,6 +391,13 @@ export default function App() {
         onToggleMist={() => setShowMist((v) => !v)}
         onToggleGrid={() => setShowWireframeGrid((v) => !v)}
         onToggleHud={() => setHudHidden((v) => !v)}
+      />
+      <DesktopCombatInput
+        driveMode={driveMode}
+        paused={paused}
+        gameOver={missionOutcome !== null}
+        useTouchControls={layoutMode.useTouchControls}
+        driveInputRef={driveInputRef}
       />
       <PerformancePanel />
     </main>
