@@ -5,7 +5,8 @@
  */
 export const INDUSTRIAL_SAMPLES = [
   'diesel_idle',
-  'mech_step_1', 'mech_step_2', 'mech_step_3',
+  'mech_step_002', // exact pgi CC0 step requested by user; primary contact sound
+  'mech_step_1', 'mech_step_2', 'mech_step_3', // fallback only
   'hydraulic_a', 'hydraulic_b',
   'autocannon_1', 'autocannon_2', 'autocannon_3',
   'heavy_cannon',
@@ -14,6 +15,9 @@ export const INDUSTRIAL_SAMPLES = [
 ] as const;
 
 export type IndustrialSample = (typeof INDUSTRIAL_SAMPLES)[number];
+
+/** Main foot-contact recording; legacy 3-step set is only used while it loads. */
+export const MECH_PRIMARY_FOOTSTEP: IndustrialSample = 'mech_step_002';
 
 export interface SamplePlayOptions {
   gain?: number;

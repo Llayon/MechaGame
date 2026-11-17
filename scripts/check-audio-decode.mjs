@@ -80,7 +80,7 @@ try {
     if (result.includes('FAIL')) throw Error(result);
     return result.includes('MECHA-AUDIO-DECODE-PASS') ? result : null;
   }, 40000, 'Recorded audio codec decode did not finish');
-  if (status !== 'MECHA-AUDIO-DECODE-PASS: 15 OGG and 15 MP3') throw Error(status);
+  if (status !== 'MECHA-AUDIO-DECODE-PASS: 16 OGG and 16 MP3') throw Error(status);
   console.log(status);
 } finally {
   ws?.close();

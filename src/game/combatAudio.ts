@@ -1,4 +1,4 @@
-import { IndustrialSampleBank } from './industrialAudio';
+import { IndustrialSampleBank, MECH_PRIMARY_FOOTSTEP } from './industrialAudio';
 
 class CombatAudioEngine {
   private ctx: AudioContext | null = null;
@@ -87,9 +87,21 @@ class CombatAudioEngine {
 
   playMechFootstep(inWater: boolean): void {
     if (!this.ensureContext()) return;
+    // pgi's single mech_step_002 is the complete primary foot contact.
+    // Do not layer Kenney metal over it: the sample already contains the strike.
+    if (this.samples.play(MECH_PRIMARY_FOOTSTEP, {
+      gain: inWater ? 0.22 : 0.35,
+      rate: 0.96 + Math.random() * 0.08,
+      lowpass: inWater ? 2300 : 7200,
+    })) return;
+
+    // Non-blocking legacy fallback until this file is decoded / if unavailable.
     if (this.samples.playVariant(['mech_step_1', 'mech_step_2', 'mech_step_3'], {
-      gain: inWater ? 0.24 : 0.34, rate: 0.91 + Math.random() * 0.14,
-    }) && !inWater) this.samples.play('foot_metal', { gain: 0.12, rate: 0.94 });
+      gain: inWater ? 0.24 : 0.34,
+      rate: 0.91 + Math.random() * 0.14,
+    }) && !inWater) {
+      this.samples.play('foot_metal', { gain: 0.12, rate: 0.94 });
+    }
   }
 
   playHydraulic(): void {

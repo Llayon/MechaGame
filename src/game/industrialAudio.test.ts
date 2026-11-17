@@ -1,14 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { INDUSTRIAL_SAMPLES, engineMix, soundAssetUrl } from './industrialAudio';
+import { INDUSTRIAL_SAMPLES, MECH_PRIMARY_FOOTSTEP, engineMix, soundAssetUrl } from './industrialAudio';
 
-test('15 bundled CC0 sounds have actual non-empty Ogg bitstreams', () => {
-  assert.equal(INDUSTRIAL_SAMPLES.length, 15);
+test('16 bundled CC0 sounds include the requested pgi step as real OGG and MP3', () => {
+  assert.equal(INDUSTRIAL_SAMPLES.length, 16);
+  assert.equal(MECH_PRIMARY_FOOTSTEP, 'mech_step_002');
   const source = JSON.parse(readFileSync('public/assets/audio/industrial-v1/SOURCES.json', 'utf8')) as
     Array<{ license: string; outputs: unknown[] }>;
-  assert.equal(source.length, 6);
+  assert.equal(source.length, 7);
   assert.ok(source.every(x => x.license === 'CC0'));
+  const pgi = source.find(x => (x as { soundId?: number }).soundId === 213041) as
+    ({ sourcePage: string; pixabayPage: string; license: string } | undefined);
+  assert.ok(pgi, 'Exact pgi recording must be documented in SOURCES.json');
+  assert.equal(pgi.sourcePage, 'https://freesound.org/people/pgi/sounds/213041/');
+  assert.equal(pgi.pixabayPage, 'https://pixabay.com/sound-effects/film-special-effects-mech-step-002-87150/');
   for (const name of INDUSTRIAL_SAMPLES) {
     const bytes = readFileSync('public/assets/audio/industrial-v1/' + name + '.ogg');
     assert.ok(bytes.byteLength >= 900, name + ' must contain actual audio samples');
@@ -27,6 +33,8 @@ test('audio asset paths work at GitHub Pages subpath and root', () => {
     '/MechaGame/assets/audio/industrial-v1/foot_metal.ogg');
   assert.equal(soundAssetUrl('diesel_idle', '/MechaGame/', 'mp3'),
     '/MechaGame/assets/audio/industrial-v1/diesel_idle.mp3');
+  assert.equal(soundAssetUrl(MECH_PRIMARY_FOOTSTEP, '/MechaGame/', 'mp3'),
+    '/MechaGame/assets/audio/industrial-v1/mech_step_002.mp3');
 });
 
 test('diesel engine load mapping is bounded and rises smoothly', () => {
