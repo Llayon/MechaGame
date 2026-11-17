@@ -1,18 +1,23 @@
 import { useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { frameProfiler } from './frameMetrics';
+import type { GraphicsSettings } from '../game/graphicsSettings';
 
 interface Props {
   paused: boolean;
   driveMode: boolean;
   lightingPreset: string;
+  graphics: GraphicsSettings;
+  renderDpr: number;
+  shadowMapSize: number;
   isSoftwareGl: boolean;
   benchmarkContinuousFrames: boolean;
 }
 
 /** Invisible profiling adapter: measurements only, with no scene or gameplay mutations. */
 export function ScenePerformanceProbe({
-  paused, driveMode, lightingPreset, isSoftwareGl, benchmarkContinuousFrames,
+  paused, driveMode, lightingPreset, graphics, renderDpr, shadowMapSize,
+  isSoftwareGl, benchmarkContinuousFrames,
 }: Props) {
   const { gl } = useThree();
 
@@ -29,8 +34,15 @@ export function ScenePerformanceProbe({
       benchmarkContinuousFrames,
       scenario: driveMode ? 'combat' : 'overview',
       lighting: lightingPreset,
+      graphicsPreset: graphics.preset,
+      renderDpr,
+      shadowMapSize,
+      vegetation: graphics.vegetation,
+      particles: graphics.particles,
+      atmosphere: graphics.atmosphere,
     });
-  }, [gl, driveMode, lightingPreset, isSoftwareGl, benchmarkContinuousFrames]);
+  }, [gl, driveMode, lightingPreset, graphics, renderDpr, shadowMapSize,
+    isSoftwareGl, benchmarkContinuousFrames]);
 
   useFrame(() => {
     if (paused) {

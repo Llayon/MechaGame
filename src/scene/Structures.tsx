@@ -13,6 +13,7 @@ import { HorizonWarSystem } from './objects/HorizonWarSystem';
 interface StructuresProps {
   lightingPreset: LightingPreset;
   driveMode: boolean;
+  distantWar: boolean;
   isSoftwareGl: boolean;
   onSelectSector: (id: SectorId) => void;
 }
@@ -20,6 +21,7 @@ interface StructuresProps {
 export function Structures({
   lightingPreset,
   driveMode,
+  distantWar,
   isSoftwareGl,
   onSelectSector,
 }: StructuresProps) {
@@ -60,11 +62,11 @@ export function Structures({
       />
       <HorizonLandmarks />
       <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />
-      <HorizonWarSystem
+      {distantWar && <HorizonWarSystem
         lightingPreset={lightingPreset}
         driveMode={driveMode}
         isSoftwareGl={isSoftwareGl}
-      />
+      />}
     </group>
   );
 }

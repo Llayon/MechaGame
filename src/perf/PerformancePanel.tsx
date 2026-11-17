@@ -112,7 +112,8 @@ export function PerformancePanel() {
       </div>
       <p className="mt-1 text-[10px] text-slate-400">
         {view.environment.scenario === 'combat' ? 'Бой' : 'Обзор'} · {view.environment.lighting} ·
-        {view.environment.softwareMode ? ' Software WebGL' : ' WebGL'} · rAF-интервалы
+        {view.environment.softwareMode ? ' Software WebGL' : ' WebGL'} ·
+        {view.environment.graphicsPreset ?? 'неизвестно'} · DPR {view.environment.renderDpr ?? '—'} · rAF-интервалы
       </p>
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded bg-slate-800/80 p-2">

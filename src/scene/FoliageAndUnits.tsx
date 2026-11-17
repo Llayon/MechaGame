@@ -12,10 +12,13 @@ import { FlankCoverZone } from './zones/FlankCoverZone';
 import type { LightingPreset } from '../map/sectors';
 import type { MechTelemetrySnapshot } from '../map/mechKinematics';
 import type { CombatSimulationState } from '../game/combatTypes';
+import type { VegetationQuality, AtmosphereQuality } from '../game/graphicsSettings';
 
 interface FoliageAndUnitsProps {
   showUnits: boolean;
   showMist: boolean;
+  vegetation: VegetationQuality;
+  atmosphere: AtmosphereQuality;
   isSoftwareGl: boolean;
   driveMode: boolean;
   lightingPreset: LightingPreset;
@@ -27,6 +30,8 @@ interface FoliageAndUnitsProps {
 export function FoliageAndUnits({
   showUnits,
   showMist,
+  vegetation,
+  atmosphere,
   isSoftwareGl,
   driveMode,
   lightingPreset,
@@ -34,33 +39,38 @@ export function FoliageAndUnits({
   mechPoseRef,
   combatRef,
 }: FoliageAndUnitsProps) {
+  const simplified = isSoftwareGl || vegetation !== 'full';
+  const showDecorativeFoliage = vegetation !== 'minimal';
+  const mistVisible = showMist && atmosphere !== 'off';
+  // PineForest is always present: its trees participate in gameplay.
+  // Only decorative grass, small bushes and vines are optional.
   return (
     <group>
       <PineForest
-        isSoftwareGl={isSoftwareGl}
+        isSoftwareGl={simplified}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
         combatRef={combatRef}
       />
-      <GrassBushAccents isSoftwareGl={isSoftwareGl} />
-      <GrassField
+      {showDecorativeFoliage && <GrassBushAccents isSoftwareGl={simplified} />}
+      {showDecorativeFoliage && <GrassField
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
         lightingPreset={lightingPreset}
         sunPos={sunPos}
-        isSoftwareGl={isSoftwareGl}
-      />
+        isSoftwareGl={simplified}
+      />}
       <RockOutcrops />
-      <HangingVines isSoftwareGl={isSoftwareGl} />
+      {showDecorativeFoliage && <HangingVines isSoftwareGl={simplified} />}
       <FlankCoverZone />
       <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />
-      <AtmosphereMist visible={showMist} isSoftwareGl={isSoftwareGl} />
+      <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />
       <CanyonWaterfalls
         lightingPreset={lightingPreset}
-        showMist={showMist}
+        showMist={mistVisible}
         isSoftwareGl={isSoftwareGl}
       />
-      <SkyBirds lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />
+      {showDecorativeFoliage && <SkyBirds lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
     </group>
   );
 }

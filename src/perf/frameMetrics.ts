@@ -35,6 +35,12 @@ export interface ProfilerEnvironment {
   benchmarkContinuousFrames: boolean;
   scenario: 'combat' | 'overview';
   lighting: string;
+  graphicsPreset?: string;
+  renderDpr?: number;
+  shadowMapSize?: number;
+  vegetation?: string;
+  particles?: string;
+  atmosphere?: string;
 }
 
 export interface DeviceMetadata {
