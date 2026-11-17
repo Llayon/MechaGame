@@ -83,9 +83,9 @@ try{
     {type:'mouseMoved',x:point.x+160,y:point.y-100,button:'left'});
   await waitFor(async()=>{
     const a=await aim();
-    return a&&(a.aimYaw>origin.aimYaw+0.005||a.pendingYaw>0.005)
+    return a&&(a.aimYaw<origin.aimYaw-0.005||a.pendingYaw< -0.005)
       &&(a.elevation>origin.elevation+0.005||a.pendingElevation>0.005);
-  },20000,'Mouse did not change camera yaw and elevation');
+  },20000,'Mouse-right must rotate view right (negative world yaw) and mouse-up lift aim');
   await send('Input.dispatchMouseEvent',
     {type:'mouseReleased',x:point.x+160,y:point.y-100,button:'left',clickCount:1});
   await waitFor(async()=>!(await aim())?.pointerFire,5000,'LMB fire stuck after release');
@@ -130,8 +130,8 @@ try{
   await evalBrowser('(function(){const z=document.querySelector("[data-testid=mobile-aim-zone]");const mk=(t,x,y)=>new PointerEvent(t,{bubbles:true,pointerType:"touch",pointerId:7,isPrimary:true,clientX:x,clientY:y});z.dispatchEvent(mk("pointerdown",325,380));z.dispatchEvent(mk("pointermove",365,330));z.dispatchEvent(mk("pointerup",365,330));})()');
   await waitFor(async()=>{
     const a=await aim();
-    return a&&a.aimYaw>before.aimYaw+0.01&&a.elevation>before.elevation+0.01;
-  },25000,'Mobile XY swipe failed to change physical camera aim');
+    return a&&a.aimYaw<before.aimYaw-0.01&&a.elevation>before.elevation+0.01;
+  },25000,'Touch swipe-right must rotate right (negative yaw); swipe-up lifts aim');
   console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB+RMB+Escape, pause:unlock, touch:swipeXY');
   console.log('FINAL',JSON.stringify(await aim()));
 }catch(e){

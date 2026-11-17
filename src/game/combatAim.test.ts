@@ -4,6 +4,7 @@ import {
   createCombatAimState, resetCombatAim, updateCombatAim, shortestAngleDelta,
   approachTurretWorldYaw, aimDirection, projectedReticlePercent, AIM_ELEVATION_MAX,
   AIM_ELEVATION_MIN, MOUSE_YAW_SENSITIVITY, MOUSE_ELEVATION_SENSITIVITY,
+  mouseMovementToAimDelta,
 } from './combatAim';
 
 test('mouse horizontal and vertical movement changes view with clamped elevation', () => {
@@ -18,6 +19,23 @@ test('mouse horizontal and vertical movement changes view with clamped elevation
   assert.equal(aim.elevation, AIM_ELEVATION_MIN);
   updateCombatAim(aim, Number.NaN, Infinity);
   assert.ok(Number.isFinite(aim.yaw) && Number.isFinite(aim.elevation));
+});
+
+test('mouse LEFT turns view left and mouse RIGHT turns view right in +Z scene', () => {
+  // With a Three camera looking toward +Z, screen-right is world -X.
+  const right = mouseMovementToAimDelta(120, 0);
+  const left = mouseMovementToAimDelta(-120, 0);
+  assert.ok(right.yaw < 0);
+  assert.ok(left.yaw > 0);
+  assert.equal(right.yaw, -120 * MOUSE_YAW_SENSITIVITY);
+  assert.equal(left.yaw, 120 * MOUSE_YAW_SENSITIVITY);
+  assert.ok(aimDirection(right.yaw, 0)[0] < 0);
+  assert.ok(aimDirection(left.yaw, 0)[0] > 0);
+
+  // Vertical axis is already correct; mouse UP raises the camera.
+  assert.ok(mouseMovementToAimDelta(0, -70).elevation > 0);
+  assert.ok(mouseMovementToAimDelta(0, 70).elevation < 0);
+  assert.deepEqual(mouseMovementToAimDelta(Number.NaN, Infinity), { yaw: 0, elevation: 0 });
 });
 
 test('mechanical turret tracks shortest path across pi boundary without jumping', () => {

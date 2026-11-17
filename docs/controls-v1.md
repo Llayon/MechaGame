@@ -4,9 +4,16 @@ The map has free OrbitControls only in overview. During combat, a dedicated
 over-the-shoulder camera follows the intended world aiming direction, maintains
 ground clearance and checks static cover between the chassis and camera.
 
+Default combat view: 10.0 world units distance, 4.8 height above the mech,
+1.6 right shoulder offset, 45° FOV. Precision aim: 7.8 distance,
+4.0 height, 1.15 shoulder, 29° FOV. This replaces the original
+13.1/5.8/2.15/FOV48 distant tactical combat camera; map view is unchanged.
+
 ## Desktop
 - WASD: forward/back and hull rotation.
-- Mouse X/Y: desired heading and elevation, turret smoothly traverses to match.
+- Mouse X/Y: screen-right movement turns the view right; screen-left turns left,
+  mouse-up looks up. Because +Z is forward here, mouse-right maps to negative
+  world yaw. Turret smoothly traverses toward the same new direction.
 - First click on the *game canvas*: capture mouse Pointer Lock. (Required user gesture.)
 - Left mouse button: fire 37-mm autocannons; right mouse button: hold precision aim / zoom.
 - F: fire 105-mm heavy cannon. Space remains an alternate 37-mm trigger.
@@ -16,7 +23,8 @@ ground clearance and checks static cover between the chassis and camera.
 
 ## Mobile
 - Left joystick moves and turns chassis.
-- Swipe on the right aim zone to control yaw **and elevation**.
+- Swipe on the right aim zone to control yaw **and elevation** with the
+  same screen-relative directions as the desktop mouse.
 - Fire / heavy / dash / repair controls remain on the right.
 - Hold **ПРИЦЕЛ** for precision zoom.
 

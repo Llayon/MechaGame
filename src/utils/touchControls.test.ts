@@ -58,10 +58,10 @@ test('computeJoystickAxes applies deadzone, clamps to radius, maps directions, a
 });
 
 test('touch swipe aims along same camera yaw and elevation as mouse', () => {
-  assert.ok(computeTouchAimDelta(20) > 0);
-  assert.ok(computeTouchAimDelta(-20) < 0);
-  assert.equal(computeTouchAimDelta(500), 0.35);
-  assert.equal(computeTouchAimDelta(-500), -0.35);
+  assert.ok(computeTouchAimDelta(20) < 0);
+  assert.ok(computeTouchAimDelta(-20) > 0);
+  assert.equal(computeTouchAimDelta(500), -0.35);
+  assert.equal(computeTouchAimDelta(-500), 0.35);
   assert.ok(computeTouchAimPitchDelta(-20) > 0);
   assert.ok(computeTouchAimPitchDelta(20) < 0);
   assert.equal(computeTouchAimPitchDelta(-500), 0.25);
