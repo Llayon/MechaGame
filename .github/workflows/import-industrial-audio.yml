@@ -1,0 +1,31 @@
+name: Import CC0 industrial audio
+on:
+  push:
+    branches: ['feat/industrial-mech-audio']
+    paths:
+      - scripts/import-industrial-audio.py
+      - .github/workflows/import-industrial-audio.yml
+permissions:
+  contents: write
+jobs:
+  import:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Check audio encoder
+        run: ffmpeg -version | head -n 1
+      - name: Download CC0 and transcode
+        run: python3 scripts/import-industrial-audio.py
+      - name: Commit sourced binary assets to feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/audio/industrial-v1
+          git diff --cached --stat
+          git diff --cached --quiet && exit 0
+          git commit -m "assets(audio): add optimized CC0 industrial sound samples"
+          git push origin "HEAD:$GITHUB_REF_NAME"
