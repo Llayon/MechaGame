@@ -146,6 +146,39 @@ try{
     const a=await aim();
     return a&&a.aimYaw<before.aimYaw-0.01&&a.elevation>before.elevation+0.01;
   },25000,'Touch swipe-right must rotate right (negative yaw); swipe-up lifts aim');
+  // Verify GRAPHICS controls on the mounted, running game; never just a static menu.
+  await evalBrowser('document.querySelector("[data-testid=graphics-open]").click()');
+  await waitFor(async()=>await evalBrowser(
+    'Boolean(document.querySelector("[data-testid=graphics-settings-dialog]")) && document.body.dataset.state==="paused" && !document.pointerLockElement'
+  ),12000,'Opening graphics menu did not pause combat and release mouse');
+  await evalBrowser('document.querySelector("[data-testid=graphics-preset-low]").click()');
+  await waitFor(async()=>await evalBrowser(
+    '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="low" && c.dataset.shadows==="off" && Number(c.dataset.renderDpr)<=0.7 && c.dataset.shadowMapSize==="0";})()'
+  ),15000,'Low preset did not change actual R3F scene DPR/shadow configuration');
+  await evalBrowser('document.querySelector("[data-testid=graphics-preset-balanced]").click()');
+  await waitFor(async()=>await evalBrowser(
+    '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="balanced" && c.dataset.shadows==="on" && Number(c.dataset.shadowMapSize)>0;})()'
+  ),15000,'Balanced preset did not re-enable render shadows');
+  await evalBrowser('document.querySelector("[data-testid=graphics-apply]").click()');
+  await waitFor(async()=>await evalBrowser(
+    'document.body.dataset.state==="playing" && !document.querySelector("[data-testid=graphics-settings-dialog]")'
+  ),12000,'Graphics close did not resume previously running combat');
+  const graphicsStored=await evalBrowser('JSON.parse(localStorage.getItem("mech-graphics-v1")).settings.preset');
+  if(graphicsStored!=='balanced')throw Error('Graphics preset not persisted: '+graphicsStored);
+
+  // Opening from a user-paused session must NOT accidentally resume gameplay.
+  await evalBrowser('window.dispatchEvent(new KeyboardEvent("keydown",{code:"KeyP",key:"p",bubbles:true}))');
+  await waitFor(async()=>await evalBrowser('document.body.dataset.state==="paused"'),
+    12000,'Could not enter user-paused state');
+  await evalBrowser('window.dispatchEvent(new KeyboardEvent("keydown",{code:"KeyG",key:"g",bubbles:true}))');
+  await waitFor(async()=>await evalBrowser(
+    'Boolean(document.querySelector("[data-testid=graphics-settings-dialog]"))'
+  ),12000,'G did not open graphics menu from pause');
+  await evalBrowser('window.dispatchEvent(new KeyboardEvent("keydown",{code:"Escape",key:"Escape",bubbles:true}))');
+  await waitFor(async()=>await evalBrowser(
+    'document.body.dataset.state==="paused" && !document.querySelector("[data-testid=graphics-settings-dialog]")'
+  ),12000,'Escape must close settings without resuming user-paused combat');
+  console.log('GRAPHICS-SETTINGS-PASS live:R3F-preset-DPR-shadows, pause:restore, storage:save, G/Escape');
   console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB+RMB+Escape, pause:unlock, touch:swipeXY, crosshair:fixed, muzzle:separate');
   console.log('FINAL',JSON.stringify(await aim()));
 }catch(e){
