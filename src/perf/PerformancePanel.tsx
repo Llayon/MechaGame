@@ -84,6 +84,13 @@ export function PerformancePanel() {
     refresh();
   };
 
+  const saveSceneInventory = () => {
+    const inventory = window.__mechaSceneAudit?.();
+    if (!inventory) return;
+    download('mech-scene-inventory-' + inventory.createdAt.replace(/[:.]/g, '-') + '.json',
+      'application/json', JSON.stringify(inventory, null, 2));
+  };
+
   const save = (csv: boolean) => {
     const data = frameProfiler.getReport();
     if (!data) return;
@@ -148,9 +155,14 @@ export function PerformancePanel() {
           className="rounded border border-slate-500 px-2.5 py-2 text-xs disabled:opacity-35">JSON</button>
         <button onClick={() => save(true)} disabled={!report}
           className="rounded border border-slate-500 px-2.5 py-2 text-xs disabled:opacity-35">CSV</button>
+        <button data-testid="perf-scene-inventory" onClick={saveSceneInventory}
+          className="rounded border border-sky-500/70 px-2.5 py-2 text-xs text-sky-200 hover:bg-sky-500/10">
+          Структура сцены · JSON
+        </button>
       </div>
       <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-        Замеряйте при движении. FPS основан на интервале кадров, а не на GPU timer.
+        Замеряйте при движении. Структура сцены — это учёт мешей по категориям, не реальные GPU draw calls.
+        FPS основан на интервале кадров, а не на GPU timer.
         На телефоне откройте ссылку с параметрами ?autostart=1&amp;profile=1.
       </p>
     </aside>

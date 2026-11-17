@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { frameProfiler } from './frameMetrics';
 import type { GraphicsSettings } from '../game/graphicsSettings';
+import { analyzeSceneComplexity } from './sceneComplexity';
 
 interface Props {
   paused: boolean;
@@ -19,7 +20,14 @@ export function ScenePerformanceProbe({
   paused, driveMode, lightingPreset, graphics, renderDpr, shadowMapSize,
   isSoftwareGl, benchmarkContinuousFrames,
 }: Props) {
-  const { gl } = useThree();
+  const { gl, scene } = useThree();
+
+  useEffect(() => {
+    // Explicit request only: traversing thousands of meshes on every frame
+    // would itself distort the performance measurements.
+    window.__mechaSceneAudit = () => analyzeSceneComplexity(scene);
+    return () => { delete window.__mechaSceneAudit; };
+  }, [scene]);
 
   useEffect(() => {
     const context = gl.getContext();

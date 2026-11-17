@@ -684,21 +684,23 @@ export function MapScene({
           shadowMapSize={shadowMapSize}
         />
 
-        <TerrainSlab
-          showWireframeGrid={showWireframeGrid}
-          isSoftwareGl={isSoftwareGl}
-        />
+        <group name="perf:terrain">
+          <TerrainSlab showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
+        </group>
 
-        <Structures
-          lightingPreset={lightingPreset}
-          driveMode={driveMode}
-          distantWar={quality.distantWar}
-          isSoftwareGl={isSoftwareGl}
-          onSelectSector={(id) => {
-            if (!driveMode) onSelectSector(id);
-          }}
-        />
+        <group name="perf:structures">
+          <Structures
+            lightingPreset={lightingPreset}
+            driveMode={driveMode}
+            distantWar={quality.distantWar}
+            isSoftwareGl={isSoftwareGl}
+            onSelectSector={(id) => {
+              if (!driveMode) onSelectSector(id);
+            }}
+          />
+        </group>
 
+        <group name="perf:mech">
         <SovietMech
           aimRef={aimRef}
           driveMode={driveMode}
@@ -713,6 +715,7 @@ export function MapScene({
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
+        </group>
 
         <CombatCamera
           active={driveMode}
@@ -723,12 +726,15 @@ export function MapScene({
           onShadowFocus={(focus, cam) => syncShadowFrustum(
             sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
         />
-        <CombatActors
-          combatRef={combatRef}
-          driveMode={driveMode}
-          isSoftwareGl={isSoftwareGl || quality.reducedParticles}
-        />
+        <group name="perf:combat">
+          <CombatActors
+            combatRef={combatRef}
+            driveMode={driveMode}
+            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+          />
+        </group>
 
+        <group name="perf:foliage">
         <FoliageAndUnits
           showUnits={showUnits}
           showMist={showMist}
@@ -741,13 +747,16 @@ export function MapScene({
           mechPoseRef={mechPoseRef}
           combatRef={combatRef}
         />
+        </group>
 
+        <group name="perf:shafts">
         <VolumetricSunShafts
           lightingPreset={lightingPreset}
           sunPos={lightCfg.keyPos}
           visible={showMist && quality.fullAtmosphere}
           isSoftwareGl={isSoftwareGl}
         />
+        </group>
 
         <TacticalMarkers
           visible={showMarkers && !driveMode}
