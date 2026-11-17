@@ -28,8 +28,8 @@ import {
 } from '../../game/combatSimulation';
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
-import { castCombatRay } from '../../map/worldRaycaster';
-import { PLAYER_MAX_RANGE } from '../../game/combatSimulation';
+import { predictPhysicalShotEndpoint } from '../../game/weaponReticle';
+
 import { resetCombatAim, updateCombatAim, approachTurretWorldYaw } from '../../game/combatAim';
 import type { CombatAimState } from '../../game/combatAim';
 
@@ -316,9 +316,10 @@ export function SovietMech({
       muzzle.getWorldPosition(_aimMuzzle);
       muzzle.getWorldQuaternion(_aimQuat);
       _aimDir.set(0, 0, 1).applyQuaternion(_aimQuat).normalize();
-      const hit = castCombatRay(_aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
-        _aimDir.x, _aimDir.y, _aimDir.z, PLAYER_MAX_RANGE);
-      _aimImpact.copy(_aimMuzzle).addScaledVector(_aimDir, hit?.distance ?? PLAYER_MAX_RANGE);
+      const predicted = predictPhysicalShotEndpoint(combat,
+        _aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
+        _aimDir.x, _aimDir.y, _aimDir.z);
+      _aimImpact.copy(_aimMuzzle).addScaledVector(_aimDir, predicted.distance);
       camera.updateMatrixWorld();
       const projected = _aimImpact.project(camera);
       if (Number.isFinite(projected.x) && Number.isFinite(projected.y) &&
