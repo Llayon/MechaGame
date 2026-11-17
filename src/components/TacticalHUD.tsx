@@ -41,6 +41,7 @@ import type { CombatTelemetrySnapshot } from '../game/combatTypes';
 import type { DeviceLayoutMode, InputControlPreference } from '../utils/touchControls';
 import { MobileControls } from './MobileControls';
 import { projectedReticlePercent } from '../game/combatAim';
+import { smoothMuzzleIndicator } from '../game/reticlePresentation';
 import type { CombatAimState } from '../game/combatAim';
 
 interface TacticalHUDProps {
@@ -130,30 +131,40 @@ export function TacticalHUD({
   onToggleHud,
 }: TacticalHUDProps) {
   const sector = SECTORS[activeSector];
-  const projectedReticleRef = useRef<HTMLDivElement>(null);
+  const muzzleIndicatorRef = useRef<HTMLDivElement>(null);
   const sightLabelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!driveMode || paused || missionOutcome !== null || hudHidden) return;
     let raf = 0;
-    const update = () => {
+    let lastFrameTime: number | null = null;
+    let displayed: { x: number; y: number } | null = null;
+    const update = (now: number) => {
       const aim = aimRef.current;
-      const marker = projectedReticleRef.current;
+      const marker = muzzleIndicatorRef.current;
       if (marker) {
-        const {x,y} = projectedReticlePercent(aim.reticleX, aim.reticleY);
-        marker.style.left = x + '%';
-        marker.style.top = y + '%';
-        marker.style.opacity = aim.reticleVisible ? '1' : '0.25';
+        if (aim.reticleVisible) {
+          const target = projectedReticlePercent(aim.reticleX, aim.reticleY);
+          displayed = smoothMuzzleIndicator(displayed, target,
+            lastFrameTime === null ? 0 : (now - lastFrameTime) / 1000);
+          marker.style.left = displayed.x + '%';
+          marker.style.top = displayed.y + '%';
+          marker.style.opacity = '0.82';
+          const rings = marker.querySelector('[data-testid="muzzle-indicator-ring"]');
+          if (rings) rings.setAttribute('stroke',
+            aim.reticleHit === 'enemy' ? '#fbbf24' : '#67cfe6');
+        } else {
+          marker.style.opacity = '0';
+          displayed = null;
+        }
       }
-      const bracket = marker?.querySelector('[data-testid="reticle-brackets"]');
-      if (bracket) bracket.setAttribute('stroke',
-        aim.reticleHit === 'enemy' ? '#fbbf24' : '#94a3b8');
       if (sightLabelRef.current) {
         sightLabelRef.current.textContent = aim.reticleHit === 'enemy'
-          ? 'ЦЕЛЬ ПОД ПРИЦЕЛОМ'
-          : aim.reticleHit === 'cover' ? 'УКРЫТИЕ'
-          : aim.precise ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'БАШНЯ · ОРУЖИЕ';
+          ? 'СТВОЛ · ЦЕЛЬ'
+          : aim.reticleHit === 'cover' ? 'СТВОЛ · УКРЫТИЕ'
+          : aim.precise ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'НАВЕДЕНИЕ';
       }
+      lastFrameTime = now;
       raf = requestAnimationFrame(update);
     };
     raf = requestAnimationFrame(update);
@@ -445,11 +456,10 @@ export function TacticalHUD({
         />
       )}
 
-      {/* Center Turret Reticle, 360 Threat Chevrons & Target Lock Strip (Drive Mode only) */}
+      {/* Fixed player view crosshair + separate damped physical muzzle-direction cue. */}
       {driveMode && !hudHidden && !paused && missionOutcome === null && (
         <div
           aria-hidden="true"
-          ref={projectedReticleRef}
           data-testid="combat-reticle"
           className="pointer-events-none fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         >
@@ -498,7 +508,7 @@ export function TacticalHUD({
                 d="M12 16 L12 12 L16 12 M28 12 L32 12 L32 16 M32 28 L32 32 L28 32 M16 32 L12 32 L12 28"
                 fill="none"
                 data-testid="reticle-brackets"
-                stroke="#94a3b8"
+                stroke="#fbbf24"
                 strokeWidth="1.6"
                 strokeLinecap="square"
               />
@@ -519,7 +529,7 @@ export function TacticalHUD({
               )}
             </svg>
             <div ref={sightLabelRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] text-amber-200/80">
-              БАШНЯ · ОРУЖИЕ
+              НАВЕДЕНИЕ
             </div>
             {combatHud.lockedTarget &&
              aimRef.current.reticleHit === 'enemy' &&
@@ -542,6 +552,24 @@ export function TacticalHUD({
               </div>
             )}
           </div>
+        </div>
+      )}
+      {driveMode && !hudHidden && !paused && missionOutcome === null && (
+        <div
+          ref={muzzleIndicatorRef}
+          aria-hidden="true"
+          data-testid="muzzle-direction-indicator"
+          className="pointer-events-none fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{ opacity: 0 }}
+        >
+          <svg width="30" height="30" viewBox="0 0 30 30">
+            <g data-testid="muzzle-indicator-ring" fill="none" stroke="#67cfe6"
+              strokeWidth="1.5" strokeLinecap="round" opacity="0.9">
+              <circle cx="15" cy="15" r="8.5" strokeDasharray="5 3" />
+              <path d="M15 2V5 M15 25V28 M2 15H5 M25 15H28" />
+            </g>
+            <circle cx="15" cy="15" r="1.5" fill="#67cfe6" />
+          </svg>
         </div>
       )}
 

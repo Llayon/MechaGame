@@ -7,6 +7,7 @@ import { getWalkableSurfaceY } from '../map/mechKinematics';
 import { castCombatRay } from '../map/worldRaycaster';
 import { aimDirection } from '../game/combatAim';
 import { COMBAT_CAMERA_DEFAULT, COMBAT_CAMERA_PRECISION } from '../game/combatCameraSettings';
+import { projectMuzzleDirection } from '../game/reticlePresentation';
 import type { CombatAimState } from '../game/combatAim';
 
 interface Props {
@@ -30,6 +31,7 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
   const cameraTarget = useRef(new THREE.Vector3());
   const cameraLook = useRef(new THREE.Vector3());
   const lastSafeDistance = useRef(COMBAT_CAMERA_DEFAULT.distance);
+  const muzzleDirection = useRef(new THREE.Vector3());
 
   useEffect(() => {
     if (!active) {
@@ -114,6 +116,23 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
     if (Math.abs(perspective.fov - nextFov) > 0.01) {
       perspective.fov = nextFov;
       perspective.updateProjectionMatrix();
+    }
+    // The camera has just been positioned and oriented. Project the physical
+    // muzzle's DIRECTION, not a hitpoint at a changing depth. The HUD will
+    // smooth this secondary indicator; the main crosshair stays at screen center.
+    if (aim.muzzleDirectionValid) {
+      muzzleDirection.current.set(
+        aim.muzzleDirectionX, aim.muzzleDirectionY, aim.muzzleDirectionZ);
+      const projectedGun = projectMuzzleDirection(camera, muzzleDirection.current);
+      if (projectedGun) {
+        aim.reticleX = projectedGun.x;
+        aim.reticleY = projectedGun.y;
+        aim.reticleVisible = true;
+      } else {
+        aim.reticleVisible = false;
+      }
+    } else {
+      aim.reticleVisible = false;
     }
     onShadowFocus(focalPoint, camera);
     invalidate();

@@ -41,7 +41,6 @@ const _heavyQuat = new THREE.Quaternion();
 const _aimMuzzle = new THREE.Vector3();
 const _aimDir = new THREE.Vector3();
 const _aimQuat = new THREE.Quaternion();
-const _aimImpact = new THREE.Vector3();
 
 export type { MechDriveInput } from './MechState';
 export interface SovietMechProps {
@@ -74,7 +73,7 @@ export function SovietMech({
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
-  const { gl, camera, invalidate } = useThree();
+  const { gl, invalidate } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const containerRef = useRef<THREE.Group>(null);
   const worldFxRef = useRef<THREE.Group>(null);
@@ -201,7 +200,7 @@ export function SovietMech({
   // Battle view starts aligned to chassis; reset after replay or new drive session.
   useEffect(() => {
     if (driveMode) resetCombatAim(aimRef.current, mechPoseRef.current.yaw);
-    else { aimRef.current.precise = false; aimRef.current.reticleVisible = false; }
+    else { aimRef.current.precise = false; aimRef.current.reticleVisible = false; aimRef.current.muzzleDirectionValid = false; }
   }, [driveMode, resetNonce, aimRef, mechPoseRef]);
 
   // Reset initial pose cleanly on mount
@@ -310,26 +309,33 @@ export function SovietMech({
       Math.min(1, Math.abs(control.targetSpeed) / 3.45),
     );
     const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch);
-    // HUD marker follows actual muzzle orientation, not a static screen center.
-    if (canControl && rig.gunBarrels.length > 0 && (++reticleTickRef.current % 2 === 0)) {
+    // Record the ACTUAL gun direction every frame. Secondary HUD indicator
+    // projects this angular direction from the camera, not the hit-point
+    // distance: transitions between enemy/cover/range cannot teleport it.
+    if (canControl && rig.gunBarrels.length > 0) {
       const muzzle = rig.gunBarrels[0].muzzleAnchor;
-      muzzle.getWorldPosition(_aimMuzzle);
       muzzle.getWorldQuaternion(_aimQuat);
       _aimDir.set(0, 0, 1).applyQuaternion(_aimQuat).normalize();
-      const predicted = predictPhysicalShotEndpoint(combat,
-        _aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
-        _aimDir.x, _aimDir.y, _aimDir.z);
-      _aimImpact.copy(_aimMuzzle).addScaledVector(_aimDir, predicted.distance);
-      aimRef.current.reticleHit = predicted.hit;
-      aimRef.current.reticleTargetId = predicted.targetId ?? null;
-      camera.updateMatrixWorld();
-      const projected = _aimImpact.project(camera);
-      if (Number.isFinite(projected.x) && Number.isFinite(projected.y) &&
-          projected.z >= -1 && projected.z <= 1) {
-        aimRef.current.reticleX = projected.x;
-        aimRef.current.reticleY = projected.y;
-        aimRef.current.reticleVisible = true;
-      } else aimRef.current.reticleVisible = false;
+      const viewAim = aimRef.current;
+      viewAim.muzzleDirectionX = _aimDir.x;
+      viewAim.muzzleDirectionY = _aimDir.y;
+      viewAim.muzzleDirectionZ = _aimDir.z;
+      viewAim.muzzleDirectionValid = true;
+      // Contact classification is still computed from the real muzzle origin.
+      // It affects target feedback only, never visual indicator position.
+      if (++reticleTickRef.current % 2 === 0) {
+        muzzle.getWorldPosition(_aimMuzzle);
+        const predicted = predictPhysicalShotEndpoint(combat,
+          _aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
+          _aimDir.x, _aimDir.y, _aimDir.z);
+        viewAim.reticleHit = predicted.hit;
+        viewAim.reticleTargetId = predicted.targetId ?? null;
+      }
+    } else {
+      aimRef.current.muzzleDirectionValid = false;
+      aimRef.current.reticleVisible = false;
+      aimRef.current.reticleHit = 'range';
+      aimRef.current.reticleTargetId = null;
     }
 
     // Consume edge-triggered Heavy Cannon (KeyF) and Emergency Repair (KeyV)

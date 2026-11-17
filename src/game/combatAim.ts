@@ -11,6 +11,11 @@ export interface CombatAimState {
   reticleX: number;
   reticleY: number;
   reticleVisible: boolean;
+  /** Unit direction of the physical muzzle. Reticle projection is independent of hit distance. */
+  muzzleDirectionX: number;
+  muzzleDirectionY: number;
+  muzzleDirectionZ: number;
+  muzzleDirectionValid: boolean;
   reticleHit: 'enemy' | 'barrel' | 'cover' | 'range';
   reticleTargetId: string | null;
 }
@@ -40,6 +45,8 @@ export function createCombatAimState(yaw: number): CombatAimState {
   return {
     yaw, elevation: -0.025, initialized: false, precise: false,
     reticleX: 0, reticleY: 0, reticleVisible: false,
+    muzzleDirectionX: 0, muzzleDirectionY: 0, muzzleDirectionZ: 1,
+    muzzleDirectionValid: false,
     reticleHit: 'range', reticleTargetId: null,
   };
 }
@@ -52,6 +59,10 @@ export function resetCombatAim(aim: CombatAimState, hullYaw: number): void {
   aim.reticleX = 0;
   aim.reticleY = 0;
   aim.reticleVisible = false;
+  aim.muzzleDirectionValid = false;
+  aim.muzzleDirectionX = 0;
+  aim.muzzleDirectionY = 0;
+  aim.muzzleDirectionZ = 1;
   aim.reticleHit = 'range';
   aim.reticleTargetId = null;
 }
