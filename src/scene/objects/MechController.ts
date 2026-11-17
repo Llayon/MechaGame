@@ -13,7 +13,7 @@ export function resolveMechControl(
   const turTurn = driveMode ? THREE.MathUtils.clamp(input.turretTurn, -1, 1) : 0;
   const isCrouched = driveMode && input.crouch && !isDashing;
   const isSprinting = driveMode && !isDashing && input.sprint && !isCrouched && Math.abs(fwd) > 0.1;
-  const isFiring = driveMode && input.fire;
+  const isFiring = driveMode && (input.fire || !!input.pointerFire);
 
   // Calibrated heavy Mech speeds (world units/sec):
   // 1.35 (~18.2 km/h crouch), 2.35 (~31.7 km/h walk), 3.45 (~46.6 km/h sprint), 6.2 (~83.7 km/h dash)
@@ -70,6 +70,7 @@ export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
   input.gunAimDelta = 0;
   input.precisionAim = false;
   input.fire = false;
+  input.pointerFire = false;
   input.heavyFire = false;
   input.repair = false;
   input.dash = false;

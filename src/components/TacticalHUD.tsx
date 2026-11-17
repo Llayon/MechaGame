@@ -1576,10 +1576,10 @@ export function TacticalHUD({
                         ? 'border-amber-300 bg-red-500/75 text-white shadow-[0_0_12px_rgba(245,158,11,0.45)]'
                         : 'border-red-400/55 bg-red-600/30 text-amber-100 hover:bg-red-600/45'
                     }`}
-                    aria-label="Огонь 37-мм (Space)"
+                    aria-label="Огонь 37-мм (ЛКМ / Space)"
                   >
                     <Flame className="h-3.5 w-3.5 text-amber-300" />
-                    <span>Огонь (Space)</span>
+                    <span>Огонь (ЛКМ / Space)</span>
                   </button>
                   <button
                     type="button"

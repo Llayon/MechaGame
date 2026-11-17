@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import type { MechDriveInput } from '../scene/objects/MechState';
 import { MOUSE_ELEVATION_SENSITIVITY, MOUSE_YAW_SENSITIVITY } from '../game/combatAim';
@@ -16,11 +16,14 @@ interface Props {
  * LMB fires, RMB focuses. Release, blur, pause and exiting combat clear input.
  */
 export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControls, driveInputRef}: Props) {
+  const [locked, setLocked] = useState(false);
   useEffect(() => {
     const active = driveMode && !paused && !gameOver && !useTouchControls;
     const input = driveInputRef.current;
     if (!active) {
+      setLocked(false);
       input.precisionAim = false;
+      input.pointerFire = false;
       input.gunAimDelta = 0;
       input.turretAimDelta = 0;
       if (document.pointerLockElement) document.exitPointerLock?.();
@@ -33,7 +36,7 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
           !canvas.closest('[data-testid="map-canvas-container"]')) return;
       if (event.button !== 0 && event.button !== 2) return;
       event.preventDefault();
-      if (event.button === 0) input.fire = true;
+      if (event.button === 0) input.pointerFire = true;
       if (event.button === 2) input.precisionAim = true;
       if (document.pointerLockElement !== canvas) {
         void canvas.requestPointerLock?.();
@@ -47,21 +50,22 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
         event.movementY * MOUSE_ELEVATION_SENSITIVITY;
     };
     const onMouseUp = (event: MouseEvent) => {
-      if (event.button === 0) input.fire = false;
+      if (event.button === 0) input.pointerFire = false;
       if (event.button === 2) input.precisionAim = false;
     };
     const onContextMenu = (event: MouseEvent) => {
       if (event.target instanceof HTMLCanvasElement) event.preventDefault();
     };
     const onUnlock = () => {
+      setLocked(Boolean(document.pointerLockElement));
       if (document.pointerLockElement) return;
-      input.fire = false;
+      input.pointerFire = false;
       input.precisionAim = false;
       input.turretAimDelta = 0;
       input.gunAimDelta = 0;
     };
     const onBlur = () => {
-      input.fire = false;
+      input.pointerFire = false;
       input.precisionAim = false;
       input.turretAimDelta = 0;
       input.gunAimDelta = 0;
@@ -81,11 +85,17 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
       document.removeEventListener('pointerlockchange', onUnlock);
       window.removeEventListener('blur', onBlur);
       input.precisionAim = false;
-      input.fire = false;
+      input.pointerFire = false;
       input.gunAimDelta = 0;
       input.turretAimDelta = 0;
       if (document.pointerLockElement) document.exitPointerLock?.();
     };
   }, [driveMode, paused, gameOver, useTouchControls, driveInputRef]);
-  return null;
+  const showHint = driveMode && !paused && !gameOver && !useTouchControls && !locked;
+  return showHint ? (
+    <div data-testid="desktop-aim-hint" aria-live="polite"
+      className="pointer-events-none fixed bottom-24 left-1/2 z-[15] w-max max-w-[94vw] -translate-x-1/2 rounded-md border border-amber-400/35 bg-[#09131d]/85 px-3 py-2 text-center text-[11px] font-medium text-amber-100 shadow-lg">
+      Клик по сцене — управление мышью · ЛКМ огонь · ПКМ точный прицел · Esc курсор
+    </div>
+  ) : null;
 }

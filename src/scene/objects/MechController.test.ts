@@ -13,6 +13,17 @@ test('drive disabled blocks movement, turret rotation and firing', () => {
   assert.equal(c.turTurn, 0);
   assert.equal(c.isFiring, false);
 });
+
+test('held left mouse fire survives movement-key synchronization and clears on blur/pause', () => {
+  const input: MechDriveInput = { ...neutral, pointerFire: true };
+  syncMechInputFromKeys(new Set(['KeyW']), input);
+  assert.equal(input.fire, false);
+  assert.equal(input.pointerFire, true);
+  assert.equal(resolveMechControl(input, true).isFiring, true);
+  clearMechInput(new Set(['KeyW']), input);
+  assert.equal(input.pointerFire, false);
+  assert.equal(resolveMechControl(input, true).isFiring, false);
+});
 test('sprint and crouch preserve calibrated speeds and priorities', () => {
   assert.equal(resolveMechControl({ ...neutral, forward: 1 }, true).targetSpeed, 2.35);
   assert.equal(resolveMechControl({ ...neutral, forward: 1, sprint: true }, true).targetSpeed, 3.45);

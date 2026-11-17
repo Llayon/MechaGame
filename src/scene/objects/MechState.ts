@@ -11,6 +11,8 @@ export interface MechDriveInput {
   gunAimDelta?: number;
   precisionAim?: boolean;
   fire: boolean;
+  /** Separate mouse button state; keyboard event sync must never clear held LMB. */
+  pointerFire?: boolean;
   heavyFire?: boolean;
   repair?: boolean;
   dash?: boolean;
