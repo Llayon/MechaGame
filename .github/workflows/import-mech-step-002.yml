@@ -1,0 +1,34 @@
+name: Import pgi CC0 mech_step_002
+
+on:
+  push:
+    branches: ['feat/mech-step-002']
+    paths:
+      - 'scripts/import-mech-step-002.py'
+      - '.github/workflows/import-mech-step-002.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install audio encoder
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Download original CC0 pgi step and encode OGG/MP3
+        run: python3 scripts/import-mech-step-002.py
+      - name: Commit locally bundled audio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/audio/industrial-v1
+          git diff --cached --stat
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "assets(audio): bundle pgi mech_step_002 CC0 footstep"
+          git push origin "HEAD:$GITHUB_REF_NAME"
