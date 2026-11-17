@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -154,9 +155,12 @@ export function VolumetricSearchlight({
     }
   }, [baseYaw, basePitch, sweepAmp, phase]);
 
+  const { paused, clockRef } = useSceneSimulation();
+
   useFrame((state) => {
+    if (paused) return;
     if (!active) return;
-    const t = state.clock.getElapsedTime();
+    const t = clockRef.current.elapsed;
     beamMat.uniforms.uTime.value = t;
     if (isSoftwareGl && t < 0.05) return;
 

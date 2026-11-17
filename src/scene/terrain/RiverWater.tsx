@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -189,7 +190,10 @@ material.clearcoat *= ( 1.0 - wFoam * 0.92 );`,
     };
   }, [waterMaterial, waterDepthTex, waterNormal]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (isSoftwareGl) return;
     timeUniformRef.current.value += delta;
     waterNormal.offset.x = (waterNormal.offset.x + delta * 0.018) % 1;

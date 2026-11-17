@@ -1,3 +1,4 @@
+import { useSceneSimulation } from './SceneSimulation';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -230,7 +231,10 @@ export function ProceduralSky({
     };
   }, [gl, scene, sky, lightingPreset, sunPos, invalidate]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (isSoftwareGl) return;
     sky.material.uniforms.time.value += delta;
   });

@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -16,7 +17,10 @@ export function Helicopter({
   const mainRotorRef = useRef<THREE.Group>(null);
   const tailRotorRef = useRef<THREE.Group>(null);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (rotorSpin) {
       if (mainRotorRef.current) {
         mainRotorRef.current.rotation.y += delta * 12;

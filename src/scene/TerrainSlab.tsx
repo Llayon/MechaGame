@@ -1,3 +1,4 @@
+import { useSceneSimulation } from './SceneSimulation';
 import { useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { createTerrainBumpTexture } from './textures';
@@ -23,7 +24,10 @@ export function TerrainSlab({ showWireframeGrid, isSoftwareGl }: TerrainSlabProp
     return () => terrainBump.dispose();
   }, [terrainBump]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (isSoftwareGl) return;
     puddleTimeUniform.value += Math.min(delta, 0.05);
   });
