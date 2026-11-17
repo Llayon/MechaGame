@@ -109,10 +109,10 @@ export function computeJoystickAxes(
 
 /**
  * Converts horizontal touch-drag pixels on the aim zone into bounded turret yaw delta (rad).
- * Swiping right (+deltaPxX) turns the view heading to the right (+yaw).
+ * Swiping screen-right must decrease world yaw for our +Z-forward camera.
  */
 export function computeTouchAimDelta(deltaPxX: number, sensitivity = 0.0065): number {
-  const raw = deltaPxX * sensitivity;
+  const raw = -deltaPxX * sensitivity;
   return Math.max(-0.35, Math.min(0.35, raw));
 }
 

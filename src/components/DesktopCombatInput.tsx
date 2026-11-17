@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import type { MechDriveInput } from '../scene/objects/MechState';
-import { MOUSE_ELEVATION_SENSITIVITY, MOUSE_YAW_SENSITIVITY } from '../game/combatAim';
+import { mouseMovementToAimDelta } from '../game/combatAim';
 
 interface Props {
   driveMode: boolean;
@@ -44,10 +44,9 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
     };
     const onMouseMove = (event: MouseEvent) => {
       if (!document.pointerLockElement) return;
-      input.turretAimDelta = (input.turretAimDelta ?? 0) +
-        event.movementX * MOUSE_YAW_SENSITIVITY;
-      input.gunAimDelta = (input.gunAimDelta ?? 0) -
-        event.movementY * MOUSE_ELEVATION_SENSITIVITY;
+      const { yaw, elevation } = mouseMovementToAimDelta(event.movementX, event.movementY);
+      input.turretAimDelta = (input.turretAimDelta ?? 0) + yaw;
+      input.gunAimDelta = (input.gunAimDelta ?? 0) + elevation;
     };
     const onMouseUp = (event: MouseEvent) => {
       if (event.button === 0) input.pointerFire = false;

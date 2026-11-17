@@ -21,6 +21,21 @@ export const MOUSE_YAW_SENSITIVITY = 0.00255;
 export const MOUSE_ELEVATION_SENSITIVITY = 0.00225;
 export const TURRET_ROTATION_RATE = 2.0;
 
+/**
+ * A Three.js camera looking along mech-forward +Z has screen-right toward -X.
+ * Hence mouse RIGHT must decrease world yaw for the camera to turn visually RIGHT.
+ * Mouse UP (negative movementY) must increase elevation, as before.
+ */
+export function mouseMovementToAimDelta(
+  movementX: number,
+  movementY: number,
+): { yaw: number; elevation: number } {
+  return {
+    yaw: Number.isFinite(movementX) ? -movementX * MOUSE_YAW_SENSITIVITY : 0,
+    elevation: Number.isFinite(movementY) ? -movementY * MOUSE_ELEVATION_SENSITIVITY : 0,
+  };
+}
+
 export function createCombatAimState(yaw: number): CombatAimState {
   return {
     yaw, elevation: -0.025, initialized: false, precise: false,
