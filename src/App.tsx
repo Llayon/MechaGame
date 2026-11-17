@@ -124,9 +124,15 @@ export default function App() {
     }
   }, [driveMode, paused, missionOutcome]);
 
+  // Suspend the Web Audio timeline as well as the simulation clock.
+  useEffect(() => {
+    combatAudio.setPaused(paused);
+  }, [paused]);
+
   const handleSelectSector = useCallback(
     (id: SectorId) => {
       clearDriveInput();
+      if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
       setDriveMode(false);
       setPaused(false);
       setActiveSector(id);
@@ -137,6 +143,7 @@ export default function App() {
 
   const handleResetOverview = useCallback(() => {
     clearDriveInput();
+    if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
     setDriveMode(false);
     setPaused(false);
     setActiveSector('overview');
@@ -148,7 +155,7 @@ export default function App() {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    if (combatRef.current.missionStatus === 'idle') {
+    if (combatRef.current.missionStatus === 'idle' || combatRef.current.missionStatus === 'paused') {
       combatRef.current.missionStatus = 'playing';
     }
     setPaused(false);
@@ -163,10 +170,11 @@ export default function App() {
     setDriveMode((prev) => {
       if (prev) {
         clearDriveInput();
+        if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
         setPaused(false);
         setTransitionNonce((n) => n + 1);
       } else {
-        if (combatRef.current.missionStatus === 'idle') {
+        if (combatRef.current.missionStatus === 'idle' || combatRef.current.missionStatus === 'paused') {
           combatRef.current.missionStatus = 'playing';
         }
         setPaused(false);
@@ -178,12 +186,11 @@ export default function App() {
   const handleTogglePause = useCallback(() => {
     if (!driveMode || missionOutcome !== null) return;
     clearDriveInput();
-    setPaused((prev) => {
-      const next = !prev;
-      combatRef.current.missionStatus = next ? 'paused' : 'playing';
-      return next;
-    });
-  }, [driveMode, missionOutcome, clearDriveInput]);
+    const next = !paused;
+    combatRef.current.missionStatus = next ? 'paused' : 'playing';
+    combatAudio.setPaused(next);
+    setPaused(next);
+  }, [driveMode, missionOutcome, paused, clearDriveInput]);
 
   const handleRestartMission = useCallback(() => {
     combatAudio.unlock();

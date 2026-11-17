@@ -141,9 +141,9 @@ export function TacticalHUD({
   useEffect(() => {
     setMechHud({ ...mechPoseRef.current });
     setCombatHud({ ...combatTelemetryRef.current });
-    setGhostHp(combatTelemetryRef.current.playerHp);
+    if (!paused) setGhostHp(combatTelemetryRef.current.playerHp);
     setCrouchUi(driveInputRef.current.crouch);
-    if (!driveMode) return;
+    if (!driveMode || paused) return;
     const id = window.setInterval(() => {
       const next = mechPoseRef.current;
       const nextCombat = combatTelemetryRef.current;
@@ -210,7 +210,7 @@ export function TacticalHUD({
       });
     }, 100);
     return () => window.clearInterval(id);
-  }, [driveMode, mechPoseRef, driveInputRef, combatTelemetryRef]);
+  }, [driveMode, paused, mechPoseRef, driveInputRef, combatTelemetryRef]);
 
   const setHoldInput = (
     patch: Partial<Pick<MechDriveInput, 'forward' | 'turn' | 'turretTurn' | 'fire' | 'sprint'>>,

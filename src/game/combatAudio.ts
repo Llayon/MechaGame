@@ -1,6 +1,7 @@
 class CombatAudioEngine {
   private ctx: AudioContext | null = null;
   private muted = false;
+  private paused = false;
   private lastShotSoundAt = 0;
   private lastHitSoundAt = 0;
   private lastTreeSnapAt = 0;
@@ -20,8 +21,32 @@ class CombatAudioEngine {
     return this.muted;
   }
 
+  isPaused(): boolean {
+    return this.paused;
+  }
+
+  /** Freeze currently playing sources and prevent any new sounds while paused. */
+  setPaused(paused: boolean): void {
+    if (this.paused === paused) return;
+    this.paused = paused;
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    if (paused && ctx.state === 'running') {
+      // Resume after a pending suspend if the user toggles pause twice quickly.
+      void ctx.suspend().then(() => {
+        if (!this.paused && !this.muted && ctx.state === 'suspended') {
+          void ctx.resume().catch(() => {});
+        }
+      }).catch(() => {});
+    } else if (!paused && !this.muted && ctx.state === 'suspended') {
+      // Unpausing is a user input, allowing AudioContext.resume() on mobile browsers.
+      void ctx.resume().catch(() => {});
+    }
+  }
+
   private ensureContext(): AudioContext | null {
-    if (this.muted || typeof window === 'undefined') return null;
+    if (this.muted || this.paused || typeof window === 'undefined') return null;
     const Ctor =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -389,7 +414,7 @@ class CombatAudioEngine {
    * Only plays when AudioContext is already unlocked & running (never triggers autoplay warnings).
    */
   playDistantCannonade(orbital = false): void {
-    if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+    if (this.muted || this.paused || !this.ctx || this.ctx.state !== 'running') return;
     const ctx = this.ctx;
     const now = ctx.currentTime;
     if (!orbital && now - this.lastDistantBoomAt < 2.6) return;
