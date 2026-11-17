@@ -163,6 +163,12 @@ export function SovietMech({
     invalidate();
   }, [resetNonce, rig, mats, mechPoseRef, combatRef, combatTelemetryRef, invalidate]);
 
+  // Ensure a diesel loop never survives switching to the map or unmounting.
+  useEffect(() => {
+    if (!driveMode) combatAudio.stopEngine();
+    return () => combatAudio.stopEngine();
+  }, [driveMode]);
+
   // Reset initial pose cleanly on mount
   useEffect(() => {
     const sim = simRef.current;
@@ -245,6 +251,20 @@ export function SovietMech({
 
     const motion = stepMechMovement(rig, sim, control, canControl, dt, elapsed, desiredPitch);
     const ik = stepMechIK(rig, sim, dt, control, motion);
+    // Event-driven foley: no artificial footsteps generated from a wall-clock timer.
+    // Actual IK contacts trigger the weight of the mech; liftoffs trigger hydraulics.
+    if (canControl) {
+      for (const impact of ik.footImpacts) {
+        combatAudio.playMechFootstep(ik.inWater);
+      }
+      for (const liftoff of ik.footLiftOffs) {
+        combatAudio.playHydraulic();
+      }
+    }
+    combatAudio.syncEngine(
+      driveMode && canControl && !paused,
+      Math.min(1, Math.abs(control.targetSpeed) / 3.45),
+    );
     const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch);
 
     // Consume edge-triggered Heavy Cannon (KeyF) and Emergency Repair (KeyV)
