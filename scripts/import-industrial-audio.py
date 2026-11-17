@@ -77,28 +77,24 @@ def main():
             else:
                 outputs = [encode(file, "heavy_cannon.ogg", 0, duration, lo=10500, hi=25)]
             manifest.append({**meta, "outputs": outputs})
-        zipbytes = download(KENNEY)
-        zipfile_path = tmp / "kenney.zip"
-        zipfile_path.write_bytes(zipbytes)
-        with zipfile.ZipFile(zipfile_path) as z:
-            names = z.namelist()
-            outputs = []
-            for src, dst in [
-                ("impactMetal_heavy_000.ogg", "armor_hit_1.ogg"),
-                ("impactMetal_heavy_002.ogg", "armor_hit_2.ogg"),
-                ("impactPlate_heavy_000.ogg", "foot_metal.ogg"),
-                ("impactPlate_heavy_001.ogg", "recoil.ogg"),
-                ("impactMining_000.ogg", "explosion_debris.ogg"),
-            ]:
-                matches = [n for n in names if n.endswith("Audio/" + src)]
-                if len(matches) != 1: raise RuntimeError(f"Missing Kenney {src}, sample={names[:9]}")
-                p = tmp / src
-                p.write_bytes(z.read(matches[0]))
-                outputs.append(encode(p, dst, 0, 4.0))
-            manifest.append({"sourcePage": "https://kenney.nl/assets/impact-sounds",
-                            "author": "Kenney", "license": "CC0",
-                            "zipUrl": KENNEY, "sourceSha256": hashlib.sha256(zipbytes).hexdigest(),
-                            "outputs": outputs})
+        outputs = []
+        for src, dst in [
+            ("impactMetal_heavy_000.ogg", "armor_hit_1.ogg"),
+            ("impactMetal_heavy_002.ogg", "armor_hit_2.ogg"),
+            ("impactPlate_heavy_000.ogg", "foot_metal.ogg"),
+            ("impactPlate_heavy_001.ogg", "recoil.ogg"),
+            ("impactMining_000.ogg", "explosion_debris.ogg"),
+        ]:
+            # This mirror retains the unchanged official CC0 Kenney OGG files.
+            url = ("https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/"
+                   "assets/kenney/impact-sounds/Audio/" + src)
+            p = tmp / src
+            p.write_bytes(download(url))
+            outputs.append({"sourceFile": url, "output": encode(p, dst, 0, 4.0)})
+        manifest.append({"sourcePage": "https://kenney.nl/assets/impact-sounds",
+                        "author": "Kenney", "license": "CC0",
+                        "mirror": "https://github.com/GeorgeQLe/assets-sfx-combat",
+                        "outputs": outputs})
     (OUT / "SOURCES.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print("IMPORTED", len(list(OUT.glob("*.ogg"))), "OGG files",
           sum(p.stat().st_size for p in OUT.glob("*.ogg")), "bytes", flush=True)
