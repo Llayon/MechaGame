@@ -374,7 +374,8 @@ function CameraRig({
   ]);
 
   useFrame((_, delta) => {
-    if (paused || driveMode) return; // CombatCamera exclusively owns battle view.
+    if (paused) return;
+    if (driveMode) return; // CombatCamera exclusively owns battle view.
     const controls = controlsRef.current;
     if (!controls) return;
 
