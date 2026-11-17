@@ -20,6 +20,7 @@ import {
   lerp,
 } from './terrainMath';
 import { MECH_COLLISION_RADIUS, resolveWorldObstacles } from './worldColliders';
+import { getTitanWreckDeckYAt } from './titanWrecks';
 
 export function worldSpeedToKmh(unitsPerSec: number): number {
   return unitsPerSec * METERS_PER_UNIT * 3.6;
@@ -86,6 +87,16 @@ export function getWalkableSurfaceY(
         onBridge = true;
         onConcrete = true;
       }
+    }
+  }
+
+  // 1b. Check walkable Titan wreck spine bridge & leg-ramp carapace decks
+  const titanDeckY = getTitanWreckDeckYAt(x, z);
+  if (titanDeckY !== null && titanDeckY > y - 0.35) {
+    const withinStepReach = currentY === undefined || currentY >= titanDeckY - 1.35;
+    if (withinStepReach) {
+      y = Math.max(y, titanDeckY);
+      onBridge = true;
     }
   }
 

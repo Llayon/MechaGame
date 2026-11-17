@@ -22,6 +22,7 @@ import {
   getTerrainHeight,
   getTerrainSlope,
 } from './terrainMath';
+import { isInsideTitanWreckFootprint } from './titanWrecks';
 
 export interface BarricadeNode {
   x: number;
@@ -205,6 +206,7 @@ function isClearForFoliage(x: number, z: number, extraMargin = 0): boolean {
   if (ANTI_MECH_BARRICADE_NODES.some((n) => Math.hypot(x - n.x, z - n.z) < 4.4 + extraMargin)) {
     return false;
   }
+  if (isInsideTitanWreckFootprint(x, z, extraMargin)) return false;
   return true;
 }
 
@@ -236,6 +238,7 @@ function isClearForRock(x: number, z: number): boolean {
     return false;
   }
   if (ANTI_MECH_BARRICADE_NODES.some((n) => Math.hypot(x - n.x, z - n.z) < 4.5)) return false;
+  if (isInsideTitanWreckFootprint(x, z, 0.8)) return false;
 
   return true;
 }

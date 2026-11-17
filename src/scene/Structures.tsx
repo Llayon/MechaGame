@@ -9,6 +9,7 @@ import { QuarryAndPassZone } from './zones/QuarryAndPassZone';
 import { HorizonLandmarks } from './objects/HorizonLandmarks';
 import { WindTurbines } from './objects/WindTurbines';
 import { HorizonWarSystem } from './objects/HorizonWarSystem';
+import { TitanWrecks } from './objects/TitanWrecks';
 
 interface StructuresProps {
   lightingPreset: LightingPreset;
@@ -61,6 +62,7 @@ export function Structures({
         onSelectSector={onSelectSector}
       />
       <HorizonLandmarks />
+      <TitanWrecks />
       <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />
       {distantWar && <HorizonWarSystem
         lightingPreset={lightingPreset}

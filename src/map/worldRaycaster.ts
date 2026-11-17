@@ -19,6 +19,7 @@ import {
   WorldCollider,
   queryCollidersAlongSegment,
 } from './worldColliders';
+import { getTitanWreckDeckYAt } from './titanWrecks';
 
 export type RayHitKind = 'terrain' | 'bridge' | 'obstacle';
 
@@ -47,6 +48,7 @@ const TAG_HEIGHT: Record<ColliderTag, number> = {
   tree: 5.2,
   'bridge-pier': 9.0,
   'bridge-deck': 1.55,
+  'titan-wreck': 4.8,
 };
 
 function getSolidGroundY(x: number, z: number): number {
@@ -194,6 +196,10 @@ function sampleBridgeDeckHit(px: number, py: number, pz: number): boolean {
     if (deckY !== null && py <= deckY + 0.14 && py >= deckY - 0.58) {
       return true;
     }
+  }
+  const titanDeckY = getTitanWreckDeckYAt(px, pz);
+  if (titanDeckY !== null && py <= titanDeckY + 0.14 && py >= titanDeckY - 0.85) {
+    return true;
   }
   return false;
 }

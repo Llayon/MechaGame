@@ -40,6 +40,7 @@ import {
   generatePineForestData,
   generateRockOutcropsData,
 } from './worldStructures';
+import { getTitanWreckColliders } from './titanWrecks';
 
 // Effective XZ bounding radius for Soviet Object 316 at MECH_SCALE = 0.8 (~4.3 m)
 export const MECH_COLLISION_RADIUS = 1.15;
@@ -55,7 +56,8 @@ export type ColliderTag =
   | 'barricade'
   | 'rock'
   | 'tree'
-  | 'vehicle';
+  | 'vehicle'
+  | 'titan-wreck';
 
 export interface CircleCollider {
   kind: 'circle';
@@ -677,6 +679,11 @@ function buildWorldColliders(): WorldCollider[] {
     if (rad >= 0.78) {
       list.push(makeCircle(r.x, r.z, rad, 'rock'));
     }
+  }
+
+  // 9. Colossal buried Titan wrecks (bulwarks, reactor shields, & splayed flank legs)
+  for (const tc of getTitanWreckColliders()) {
+    list.push(tc);
   }
 
   return list;
