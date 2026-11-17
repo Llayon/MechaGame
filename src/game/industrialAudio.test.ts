@@ -13,6 +13,8 @@ test('15 bundled CC0 sounds have actual non-empty Ogg bitstreams', () => {
     const bytes = readFileSync('public/assets/audio/industrial-v1/' + name + '.ogg');
     assert.ok(bytes.byteLength >= 900, name + ' must contain actual audio samples');
     assert.equal(bytes.toString('ascii', 0, 4), 'OggS', name + ' is not a valid Ogg header');
+    const mp3 = readFileSync('public/assets/audio/industrial-v1/' + name + '.mp3');
+    assert.ok(mp3.byteLength >= 900, name + ' missing MP3 fallback for older Safari');
   }
 });
 
@@ -23,6 +25,8 @@ test('audio asset paths work at GitHub Pages subpath and root', () => {
     '/MechaGame/assets/audio/industrial-v1/heavy_cannon.ogg');
   assert.equal(soundAssetUrl('foot_metal', '/MechaGame'),
     '/MechaGame/assets/audio/industrial-v1/foot_metal.ogg');
+  assert.equal(soundAssetUrl('diesel_idle', '/MechaGame/', 'mp3'),
+    '/MechaGame/assets/audio/industrial-v1/diesel_idle.mp3');
 });
 
 test('diesel engine load mapping is bounded and rises smoothly', () => {
