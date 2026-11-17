@@ -1,0 +1,56 @@
+name: MechaGame performance benchmark
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/perf/**'
+      - 'src/scene/MapScene.tsx'
+      - 'scripts/perf-benchmark.mjs'
+      - '.github/workflows/performance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/perf/**'
+      - 'src/scene/MapScene.tsx'
+      - 'scripts/perf-benchmark.mjs'
+      - '.github/workflows/performance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Start Vite preview server
+        run: |
+          bun run preview --host 127.0.0.1 --port 4173 > /tmp/mech-preview.log 2>&1 &
+          echo $! > /tmp/mech-preview.pid
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/mech-preview.log
+          exit 1
+      - name: Desktop and mobile-emulation real-time Chrome WebGL benchmark
+        run: |
+          export CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          bun scripts/perf-benchmark.mjs
+      - name: Upload benchmark reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mech-perf-swiftshader-reports
+          path: benchmarks/results/
+          if-no-files-found: warn
+      - name: Stop Vite preview
+        if: always()
+        run: |
+          if [ -f /tmp/mech-preview.pid ]; then kill "$(cat /tmp/mech-preview.pid)" || true; fi
