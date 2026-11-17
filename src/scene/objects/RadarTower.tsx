@@ -14,7 +14,8 @@ export function RadarTower({ position, isSoftwareGl }: RadarTowerProps) {
   const { paused } = useSceneSimulation();
 
   useFrame((_, delta) => {
-    if (paused || isSoftwareGl) return;
+    if (paused) return;
+    if (isSoftwareGl) return;
     if (radarRef.current) {
       radarRef.current.rotation.y += delta * 0.65;
     }
