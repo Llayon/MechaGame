@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+.tools/
+public/assets/infantry/*.blend1
+docs/infantry/animations/*/

@@ -1,0 +1,34 @@
+{
+  "blender": "5.2.0 LTS",
+  "meshes": 1,
+  "bones": 14,
+  "triangles": 1247,
+  "importer_bone_display_helpers": [
+    "Icosphere"
+  ],
+  "render_vertices": 1458,
+  "clips": [
+    "crouch",
+    "death",
+    "fire",
+    "hit",
+    "idle",
+    "run",
+    "walk"
+  ],
+  "maps": [
+    [
+      512,
+      512
+    ],
+    [
+      512,
+      512
+    ],
+    [
+      512,
+      512
+    ]
+  ],
+  "source_sha256": "8fd7de705b2c34f888cf4c726b4cca4813c89ef7d23a471b3f47f8f5b4805667"
+}

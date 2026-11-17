@@ -16,8 +16,9 @@ OUT = ROOT / 'public/assets/infantry'
 DOC = ROOT / 'docs/infantry'
 OUT.mkdir(parents=True, exist_ok=True)
 SOURCE = ROOT / 'tripo_convert_299d1949-842a-4082-b69e-3a43beb1f36e.glb'
+if not SOURCE.is_file(): SOURCE = OUT / 'source.glb'
 if not SOURCE.is_file(): raise RuntimeError('BLOCKED: missing original Tripo model')
-shutil.copyfile(SOURCE, OUT / 'source.glb')
+if SOURCE.resolve() != (OUT / 'source.glb').resolve(): shutil.copyfile(SOURCE, OUT / 'source.glb')
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 bpy.ops.import_scene.gltf(filepath=str(SOURCE))
 body = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
@@ -130,9 +131,14 @@ def pose(clip,t,duration):
     if clip=='fire':
         recoil=.009*H*math.exp(-((p*2)%1)*18)
         spineD=spineD @ Matrix.Translation((0,recoil*.45,0))
+    # Raise the original complete two-handed assembly around the shoulder axis.
+    # Both shoulders share this Y/Z pivot; armor, hands and rifle rotate rigidly
+    # together so the low-ready source becomes a forward firing pose.
+    aimD=around(v(0,0,.79),Quaternion((1,0,0),-.43).to_matrix()) if clip=='fire' else Matrix.Identity(4)
+    armsD=spineD @ Matrix.Translation((0,recoil,0)) @ aimD
     desired={'pelvis':pelvisD@rest['pelvis'],'spine':spineD@rest['spine'],
              'head':spineD@around(v(0,0,.84),Quaternion((0,0,1),.015*wave if clip=='idle' else 0).to_matrix())@rest['head'],
-             'weapon':spineD@Matrix.Translation((0,recoil,0))@rest['weapon']}
+             'weapon':armsD@rest['weapon']}
     for side,sign in [('L',1),('R',-1)]:
         hip=pelvisD@v(sign*.105,0,.53)
         ankle=v(sign*.105,.012,.055)
@@ -149,7 +155,8 @@ def pose(clip,t,duration):
         l2=(rig.data.bones['shin_'+side].tail_local-rig.data.bones['shin_'+side].head_local).length
         delta=ankle-hip; d=min(max(delta.length,abs(l2-l1)+.0001),l1+l2-.00001); direction=delta.normalized()
         a=(l1*l1-l2*l2+d*d)/(2*d); height=math.sqrt(max(0,l1*l1-a*a))
-        bend=Vector((0,-1,0)); bend=(bend-direction*bend.dot(direction)).normalized()
+        bend=globalD.to_3x3()@Vector((0,-1,0)) if clip=='death' else Vector((0,-1,0))
+        bend=(bend-direction*bend.dot(direction)).normalized()
         knee=hip+direction*a+bend*height
         desired['thigh_'+side]=segment('thigh_'+side,hip,knee)
         desired['shin_'+side]=segment('shin_'+side,knee,ankle)
@@ -157,7 +164,7 @@ def pose(clip,t,duration):
         if clip=='death': footD=globalD
         desired['foot_'+side]=footD@rest['foot_'+side]
         for part in ['upperarm_','forearm_']:
-            desired[part+side]=spineD@Matrix.Translation((0,recoil,0))@rest[part+side]
+            desired[part+side]=armsD@rest[part+side]
     # Ground support correction, evaluated from the same weights as the armature.
     # Important during the terminal fall: keep all source equipment above the floor.
     if clip=='death':
@@ -226,5 +233,6 @@ bpy.ops.export_scene.gltf(filepath=str(OUT/'infantry-rigged.glb'),use_selection=
 for track in rig.animation_data.nla_tracks: track.mute=True
 rig.animation_data.action=bpy.data.actions.get('idle'); scene.frame_set(0)
 scene.frame_start=0;scene.frame_end=71
+bpy.context.preferences.filepaths.save_version=0
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'infantry-work.blend'))
 print('INFANTRY_ASSET='+json.dumps({'bones':len(names),'clips':manifest,'atlas_bytes':len(atlas)*2}))

@@ -9,6 +9,7 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / 'tripo_convert_299d1949-842a-4082-b69e-3a43beb1f36e.glb'
+if not SOURCE.is_file(): SOURCE = ROOT / 'public/assets/infantry/source.glb'
 OUT = ROOT / 'docs/infantry'
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / 'images').mkdir(exist_ok=True)
