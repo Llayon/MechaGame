@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { SceneSimulationProvider } from './SceneSimulation';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
@@ -370,6 +371,7 @@ function CameraRig({
   ]);
 
   useFrame((_, delta) => {
+    if (paused) return;
     const controls = controlsRef.current;
     if (!controls) return;
 
@@ -491,7 +493,7 @@ function CameraRig({
     <OrbitControls
       ref={controlsRef}
       makeDefault
-      enabled={!driveMode || !useTouchControls}
+      enabled={!paused && (!driveMode || !useTouchControls)}
       enableDamping={!isSoftwareGl}
       dampingFactor={0.07}
       minDistance={driveMode ? 6.5 : 18}
@@ -573,7 +575,7 @@ export function MapScene({
       className="relative w-full h-full bg-[#091016]"
     >
       <Canvas
-        frameloop={isSoftwareGl ? 'demand' : 'always'}
+        frameloop={paused || isSoftwareGl ? 'demand' : 'always'}
         dpr={isSoftwareGl ? 1 : [1, 2]}
         shadows
         camera={{
@@ -595,6 +597,7 @@ export function MapScene({
           });
         }}
       >
+        <SceneSimulationProvider paused={paused}>
         <color attach="background" args={[lightCfg.bg]} />
         <fogExp2 attach="fog" args={[lightCfg.fogColor, lightCfg.fogDensity]} />
 
@@ -713,6 +716,7 @@ export function MapScene({
           activeSector={activeSector}
           onSelectSector={onSelectSector}
         />
+        </SceneSimulationProvider>
       </Canvas>
     </div>
   );
