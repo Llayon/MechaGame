@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { MutableRefObject, RefObject } from 'react';
+import type { MutableRefObject } from 'react';
 import type { MechTelemetrySnapshot } from '../map/mechKinematics';
 import { getWalkableSurfaceY } from '../map/mechKinematics';
 import { castCombatRay } from '../map/worldRaycaster';
@@ -14,9 +14,8 @@ interface Props {
   resetNonce: number;
   aimRef: MutableRefObject<CombatAimState>;
   mechPoseRef: MutableRefObject<MechTelemetrySnapshot>;
-  sunLightRef: RefObject<THREE.DirectionalLight | null>;
-  /** Existing shadow frustum is maintained by the overview rig until battle. */
-  onShadowFocus: (focus: THREE.Vector3) => void;
+  /** Shadow follows the view while the normal overview camera is suspended. */
+  onShadowFocus: (focus: THREE.Vector3, camera: THREE.Camera) => void;
 }
 
 /**
@@ -113,7 +112,7 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
       perspective.fov = nextFov;
       perspective.updateProjectionMatrix();
     }
-    onShadowFocus(focalPoint);
+    onShadowFocus(focalPoint, camera);
     invalidate();
   });
 

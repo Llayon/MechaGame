@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
 import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
+import { CombatCamera } from './CombatCamera';
+import type { CombatAimState } from '../game/combatAim';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
@@ -372,7 +374,7 @@ function CameraRig({
   ]);
 
   useFrame((_, delta) => {
-    if (paused) return;
+    if (paused || driveMode) return; // CombatCamera exclusively owns battle view.
     const controls = controlsRef.current;
     if (!controls) return;
 
@@ -494,7 +496,7 @@ function CameraRig({
     <OrbitControls
       ref={controlsRef}
       makeDefault
-      enabled={!paused && (!driveMode || !useTouchControls)}
+      enabled={!paused && !driveMode}
       enableDamping={!isSoftwareGl}
       dampingFactor={0.07}
       minDistance={driveMode ? 6.5 : 18}
@@ -531,6 +533,7 @@ export interface MapSceneProps {
   paused: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   driveInputRef: React.MutableRefObject<MechDriveInput>;
+  aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
   combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   showMarkers: boolean;
@@ -552,6 +555,7 @@ export function MapScene({
   paused,
   mechPoseRef,
   driveInputRef,
+  aimRef,
   combatRef,
   combatTelemetryRef,
   showMarkers,
@@ -681,6 +685,7 @@ export function MapScene({
         />
 
         <SovietMech
+          aimRef={aimRef}
           driveMode={driveMode}
           paused={paused}
           resetNonce={resetNonce}
@@ -694,6 +699,15 @@ export function MapScene({
           onMissionEnded={onMissionEnded}
         />
 
+        <CombatCamera
+          active={driveMode}
+          paused={paused}
+          resetNonce={resetNonce}
+          aimRef={aimRef}
+          mechPoseRef={mechPoseRef}
+          onShadowFocus={(focus, cam) => syncShadowFrustum(
+            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
+        />
         <CombatActors
           combatRef={combatRef}
           driveMode={driveMode}
