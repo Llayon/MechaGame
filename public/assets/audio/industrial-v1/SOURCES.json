@@ -186,5 +186,26 @@
         }
       }
     ]
+  },
+  {
+    "sourcePage": "https://freesound.org/people/pgi/sounds/213041/",
+    "pixabayPage": "https://pixabay.com/sound-effects/film-special-effects-mech-step-002-87150/",
+    "author": "pgi",
+    "soundId": 213041,
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/213/213041_1654571-hq.mp3",
+    "sourceSha256": "c7fc120eb73586f05f5da1cf1779fe9136a99d66e8ca0ae0f3882d7a43ca1e8f",
+    "outputs": [
+      {
+        "file": "mech_step_002.ogg",
+        "size": 15229,
+        "sha256": "4ce3725f8fb973ae0efd8a50b25fcfb1d7161d4d39edff7915054b55d9c3698f"
+      },
+      {
+        "file": "mech_step_002.mp3",
+        "size": 21644,
+        "sha256": "16eb9a9da24af9e8990add319a4ecf2f63fc591119e0cce8454af3a4fd1f171f"
+      }
+    ]
   }
 ]
