@@ -54,7 +54,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mech-perf-swiftshader-\${{ matrix.quality }}
+          name: mech-perf-swiftshader-${{ matrix.quality }}
           path: benchmarks/results/
           if-no-files-found: warn
       - name: Stop Vite preview
