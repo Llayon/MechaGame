@@ -6,6 +6,11 @@ import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
 import { PerformancePanel } from './perf/PerformancePanel';
+import { GraphicsSettingsMenu } from './components/GraphicsSettingsMenu';
+import {
+  GRAPHICS_PRESETS, readGraphicsSettings, saveGraphicsSettings, withGraphicsPreset,
+} from './game/graphicsSettings';
+import type { GraphicsSettings } from './game/graphicsSettings';
 import { clearMechInput, syncMechInputFromKeys } from './scene/objects/MechController';
 import { DesktopCombatInput } from './components/DesktopCombatInput';
 import { createCombatAimState } from './game/combatAim';
@@ -46,6 +51,21 @@ export default function App() {
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
   const [driveMode, setDriveMode] = useState(autostart);
   const [paused, setPaused] = useState(false);
+  const [graphicsOpen, setGraphicsOpen] = useState(false);
+  const graphicsWasRunningRef = useRef(false);
+  const [graphics, setGraphics] = useState<GraphicsSettings>(() => {
+    // Explicit URL presets make CI A/B benchmarking reproducible.
+    const preset = typeof window === 'undefined' ? null :
+      new URLSearchParams(window.location.search).get('graphics');
+    if (preset && Object.prototype.hasOwnProperty.call(GRAPHICS_PRESETS, preset)) {
+      return withGraphicsPreset(preset as keyof typeof GRAPHICS_PRESETS);
+    }
+    return readGraphicsSettings();
+  });
+
+  useEffect(() => {
+    saveGraphicsSettings(graphics);
+  }, [graphics]);
   const [muted, setMuted] = useState(false);
   const [missionOutcome, setMissionOutcome] = useState<'victory' | 'defeat' | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -228,6 +248,29 @@ export default function App() {
     setPaused(next);
   }, [driveMode, missionOutcome, paused, clearDriveInput]);
 
+  const handleOpenGraphics = useCallback(() => {
+    if (graphicsOpen) return;
+    graphicsWasRunningRef.current = driveMode && !paused && missionOutcome === null;
+    clearDriveInput();
+    if (document.pointerLockElement) document.exitPointerLock?.();
+    if (graphicsWasRunningRef.current) {
+      combatRef.current.missionStatus = 'paused';
+      combatAudio.setPaused(true);
+      setPaused(true);
+    }
+    setGraphicsOpen(true);
+  }, [graphicsOpen, driveMode, paused, missionOutcome, clearDriveInput]);
+
+  const handleCloseGraphics = useCallback(() => {
+    setGraphicsOpen(false);
+    if (graphicsWasRunningRef.current && driveMode && missionOutcome === null) {
+      combatRef.current.missionStatus = 'playing';
+      combatAudio.setPaused(false);
+      setPaused(false);
+    }
+    graphicsWasRunningRef.current = false;
+  }, [driveMode, missionOutcome]);
+
   const handleRestartMission = useCallback(() => {
     combatAudio.unlock();
     if (document.activeElement instanceof HTMLElement) {
@@ -257,7 +300,20 @@ export default function App() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (graphicsOpen) {
+        if (e.code === 'Escape' || (e.code === 'KeyG' && !e.repeat)) {
+          e.preventDefault();
+          handleCloseGraphics();
+        }
+        return; // The graphics menu must not control the mech underneath.
+      }
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement) {
+        return;
+      }
+      if (e.code === 'KeyG' && !e.repeat) {
+        e.preventDefault();
+        handleOpenGraphics();
         return;
       }
       combatAudio.unlock();
@@ -350,6 +406,9 @@ export default function App() {
     driveMode,
     paused,
     missionOutcome,
+    graphicsOpen,
+    handleOpenGraphics,
+    handleCloseGraphics,
     handleResetOverview,
     handleToggleDriveMode,
     handleTogglePause,
@@ -374,6 +433,7 @@ export default function App() {
         transitionNonce={transitionNonce}
         resetNonce={resetNonce}
         lightingPreset={lightingPreset}
+        graphics={graphics}
         driveMode={driveMode}
         useTouchControls={layoutMode.useTouchControls}
         paused={paused}
@@ -428,6 +488,13 @@ export default function App() {
         gameOver={missionOutcome !== null}
         useTouchControls={layoutMode.useTouchControls}
         driveInputRef={driveInputRef}
+      />
+      <GraphicsSettingsMenu
+        open={graphicsOpen}
+        settings={graphics}
+        onChange={setGraphics}
+        onOpen={handleOpenGraphics}
+        onClose={handleCloseGraphics}
       />
       <PerformancePanel />
     </main>
