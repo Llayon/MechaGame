@@ -1,0 +1,145 @@
+[
+  {
+    "sourcePage": "https://freesound.org/people/AugustSandberg/sounds/237292/",
+    "author": "AugustSandberg",
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/237/237292_1934171-hq.mp3",
+    "sourceSha256": "1855131a456d04f2751fa94115330b93694ee8cf55f0e72a08521ff52d687502",
+    "outputs": [
+      {
+        "file": "diesel_idle.ogg",
+        "size": 53304,
+        "sha256": "aa095bce276d020348dd78abd8890f1b9c0c2d7fa38de04e1f1d7e6b37e1b0a7"
+      }
+    ]
+  },
+  {
+    "sourcePage": "https://freesound.org/people/Breviceps/sounds/557594/",
+    "author": "Breviceps",
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/557/557594_9159316-hq.mp3",
+    "sourceSha256": "47e868d3c965eb86335f0f390db6636eb40d3d95fcb08205283e7bf1d2ebdf22",
+    "outputs": [
+      {
+        "file": "mech_step_1.ogg",
+        "size": 11327,
+        "sha256": "e1314b4fd19434c3e4c6f44ee9677442c33cf44147a72033ac722c9658355b7e"
+      },
+      {
+        "file": "mech_step_2.ogg",
+        "size": 11237,
+        "sha256": "f5c356ff6b485316922bfaa3d2c36e5b60a083f9222e2d852a255aed49d55b77"
+      },
+      {
+        "file": "mech_step_3.ogg",
+        "size": 10861,
+        "sha256": "6779f81001b8c5b72b3c5a35796a024e48f82cacf5bafcfd3e14c988574c1762"
+      }
+    ]
+  },
+  {
+    "sourcePage": "https://freesound.org/people/nuckan/sounds/212941/",
+    "author": "nuckan",
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/212/212941_3910980-hq.mp3",
+    "sourceSha256": "0f37bda459666a71a79482b11832bef455f23b8cf1505462677627e117d76459",
+    "outputs": [
+      {
+        "file": "hydraulic_a.ogg",
+        "size": 12986,
+        "sha256": "05b3c0620690e58582c3646d98147adbf70ad0f1788194eec418be831cb6c515"
+      },
+      {
+        "file": "hydraulic_b.ogg",
+        "size": 12560,
+        "sha256": "65ec19a6491076eaeb895161daa377765ef56cb989afd3e5548b86b31f9f6204"
+      }
+    ]
+  },
+  {
+    "sourcePage": "https://freesound.org/people/ShawnyBoy/sounds/165394/",
+    "author": "ShawnyBoy",
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/165/165394_2989529-hq.mp3",
+    "sourceSha256": "b453b770b3d04c26ca3df9d4995138cf227221556f3ce9e76aae2e93f17ecdb3",
+    "outputs": [
+      {
+        "file": "autocannon_1.ogg",
+        "size": 5457,
+        "sha256": "f44e0ac2127685b1f1e8b42c030bee786e2d088f8e244fbf2ce7d5d82a0d97b4"
+      },
+      {
+        "file": "autocannon_2.ogg",
+        "size": 5455,
+        "sha256": "8ddf1565d31dcadf52aa25f53cac7417ca38dc6a31d084a794fd570e51b36501"
+      },
+      {
+        "file": "autocannon_3.ogg",
+        "size": 5385,
+        "sha256": "aa915a09865af611a164cd9e59666accc096438f62d1470c59a463e626c7d4f2"
+      }
+    ]
+  },
+  {
+    "sourcePage": "https://freesound.org/people/GaryQ/sounds/127845/",
+    "author": "GaryQ",
+    "license": "CC0",
+    "previewUrl": "https://cdn.freesound.org/previews/127/127845_1931452-hq.mp3",
+    "sourceSha256": "59f2def823055fc28241ff21eaba3e707ed649bee9ae3a6167d5a2ab724501dc",
+    "outputs": [
+      {
+        "file": "heavy_cannon.ogg",
+        "size": 31751,
+        "sha256": "29154e55509acf908d7c1ec9cb45b27b7ec37a44121a6e8dc8e8085d7d919ab3"
+      }
+    ]
+  },
+  {
+    "sourcePage": "https://kenney.nl/assets/impact-sounds",
+    "author": "Kenney",
+    "license": "CC0",
+    "mirror": "https://github.com/GeorgeQLe/assets-sfx-combat",
+    "outputs": [
+      {
+        "sourceFile": "https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/assets/kenney/impact-sounds/Audio/impactMetal_heavy_000.ogg",
+        "output": {
+          "file": "armor_hit_1.ogg",
+          "size": 4322,
+          "sha256": "36c1a8e312ed3347106e7c72e46d734dd969f6896a5bcc792ae4a2d414192001"
+        }
+      },
+      {
+        "sourceFile": "https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/assets/kenney/impact-sounds/Audio/impactMetal_heavy_002.ogg",
+        "output": {
+          "file": "armor_hit_2.ogg",
+          "size": 4195,
+          "sha256": "17a8afea559b323171b4e9f5e9721602598ace7cb16b985d49967c1cc691b5a2"
+        }
+      },
+      {
+        "sourceFile": "https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/assets/kenney/impact-sounds/Audio/impactPlate_heavy_000.ogg",
+        "output": {
+          "file": "foot_metal.ogg",
+          "size": 6878,
+          "sha256": "294c5ef743a4f602d92d6f21f637e81eccfb1a5da1dfded4d2b4d66eb2b20cac"
+        }
+      },
+      {
+        "sourceFile": "https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/assets/kenney/impact-sounds/Audio/impactPlate_heavy_001.ogg",
+        "output": {
+          "file": "recoil.ogg",
+          "size": 6025,
+          "sha256": "5448830811efbbad03c3740df8e6d9ac2b4ef7ef3358a2ebc72aaae3a504a730"
+        }
+      },
+      {
+        "sourceFile": "https://raw.githubusercontent.com/GeorgeQLe/assets-sfx-combat/main/assets/kenney/impact-sounds/Audio/impactMining_000.ogg",
+        "output": {
+          "file": "explosion_debris.ogg",
+          "size": 7422,
+          "sha256": "410f1ff84e3391db12e46cd8cde078ec387dba556c65f687e89538b7f560747e"
+        }
+      }
+    ]
+  }
+]
