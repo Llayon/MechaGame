@@ -41,7 +41,8 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
   }, [active, resetNonce]);
 
   useFrame((_, delta) => {
-    if (!active || paused) return;
+    if (paused) return;
+    if (!active) return;
     const aim = aimRef.current;
     const mech = mechPoseRef.current;
     if (!aim.initialized) return;
