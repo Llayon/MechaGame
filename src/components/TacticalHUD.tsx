@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -40,6 +40,8 @@ import type { MechDriveInput } from '../scene/objects/SovietMech';
 import type { CombatTelemetrySnapshot } from '../game/combatTypes';
 import type { DeviceLayoutMode, InputControlPreference } from '../utils/touchControls';
 import { MobileControls } from './MobileControls';
+import { projectedReticlePercent } from '../game/combatAim';
+import type { CombatAimState } from '../game/combatAim';
 
 interface TacticalHUDProps {
   activeSector: SectorId;
@@ -52,6 +54,7 @@ interface TacticalHUDProps {
   inputPref: InputControlPreference;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   driveInputRef: React.MutableRefObject<MechDriveInput>;
+  aimRef: React.MutableRefObject<CombatAimState>;
   combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   showMarkers: boolean;
   showUnits: boolean;
@@ -105,6 +108,7 @@ export function TacticalHUD({
   inputPref,
   mechPoseRef,
   driveInputRef,
+  aimRef,
   combatTelemetryRef,
   showMarkers,
   showUnits,
@@ -126,6 +130,30 @@ export function TacticalHUD({
   onToggleHud,
 }: TacticalHUDProps) {
   const sector = SECTORS[activeSector];
+  const projectedReticleRef = useRef<HTMLDivElement>(null);
+  const sightLabelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!driveMode || paused || missionOutcome !== null || hudHidden) return;
+    let raf = 0;
+    const update = () => {
+      const aim = aimRef.current;
+      const marker = projectedReticleRef.current;
+      if (marker) {
+        const {x,y} = projectedReticlePercent(aim.reticleX, aim.reticleY);
+        marker.style.left = x + '%';
+        marker.style.top = y + '%';
+        marker.style.opacity = aim.reticleVisible ? '1' : '0.25';
+      }
+      if (sightLabelRef.current) {
+        sightLabelRef.current.textContent = aim.precise
+          ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'БАШНЯ · ОРУЖИЕ';
+      }
+      raf = requestAnimationFrame(update);
+    };
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, [driveMode, paused, missionOutcome, hudHidden, aimRef]);
   const [mechHud, setMechHud] = useState<MechTelemetrySnapshot>(() => ({
     ...mechPoseRef.current,
   }));
@@ -416,6 +444,8 @@ export function TacticalHUD({
       {driveMode && !hudHidden && !paused && missionOutcome === null && (
         <div
           aria-hidden="true"
+          ref={projectedReticleRef}
+          data-testid="combat-reticle"
           className="pointer-events-none fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         >
           <div className="relative flex h-11 w-11 items-center justify-center">
@@ -482,8 +512,11 @@ export function TacticalHUD({
                 />
               )}
             </svg>
+            <div ref={sightLabelRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] text-amber-200/80">
+              БАШНЯ · ОРУЖИЕ
+            </div>
             {combatHud.lockedTarget && (
-              <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-amber-400/50 bg-[#0b131b]/92 px-2 py-0.5 text-center shadow">
+              <div className="absolute left-1/2 top-full mt-5 -translate-x-1/2 whitespace-nowrap rounded border border-amber-400/50 bg-[#0b131b]/92 px-2 py-0.5 text-center shadow">
               <div className="flex items-center gap-2 font-mono-tabular text-[10px] font-semibold text-amber-200">
                 <span>{combatHud.lockedTarget.name}</span>
                 <span className="text-slate-400">{combatHud.lockedTarget.distanceM} м</span>

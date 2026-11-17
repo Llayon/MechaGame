@@ -346,6 +346,23 @@ export function MobileControls({
               </button>
             </div>
 
+            {/* Hold precision zoom; preserves two-thumb movement and aim. */}
+            <button
+              type="button"
+              data-testid="mobile-precision-aim"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                driveInputRef.current.precisionAim = true;
+              }}
+              onPointerUp={() => { driveInputRef.current.precisionAim = false; }}
+              onPointerCancel={() => { driveInputRef.current.precisionAim = false; }}
+              onPointerLeave={() => { driveInputRef.current.precisionAim = false; }}
+              className="min-h-[66px] min-w-[44px] rounded-lg border border-sky-400/60 bg-[#0b131b]/90 px-2 text-[10px] font-semibold text-sky-100 touch-none"
+              aria-label="Удерживать точный прицел"
+            >
+              ПРИЦЕЛ
+            </button>
+
             {/* Primary 37-mm Hold-to-Fire Trigger */}
             <button
               type="button"
