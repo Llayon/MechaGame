@@ -22,6 +22,11 @@ permissions:
 
 jobs:
   benchmark:
+    name: WebGL software A/B — ${{ matrix.quality }}
+    strategy:
+      fail-fast: false
+      matrix:
+        quality: [low, high]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -40,6 +45,8 @@ jobs:
           cat /tmp/mech-preview.log
           exit 1
       - name: Desktop and mobile-emulation real-time Chrome WebGL benchmark
+        env:
+          BENCH_GRAPHICS_PRESET: ${{ matrix.quality }}
         run: |
           export CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
           bun scripts/perf-benchmark.mjs
@@ -47,7 +54,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mech-perf-swiftshader-reports
+          name: mech-perf-swiftshader-\${{ matrix.quality }}
           path: benchmarks/results/
           if-no-files-found: warn
       - name: Stop Vite preview

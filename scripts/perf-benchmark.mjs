@@ -12,6 +12,10 @@ const ORIGIN = process.env.BENCH_ORIGIN || 'http://127.0.0.1:4173';
 const CHROME = process.env.CHROME || 'google-chrome';
 const DEST = process.env.BENCH_OUTPUT || 'benchmarks/results';
 const DURATION_MS = Number(process.env.BENCH_DURATION_MS || 20000);
+const GRAPHICS_PRESET = process.env.BENCH_GRAPHICS_PRESET || 'high';
+if (!['low', 'balanced', 'high', 'ultra'].includes(GRAPHICS_PRESET)) {
+  throw Error('Invalid BENCH_GRAPHICS_PRESET: ' + GRAPHICS_PRESET);
+}
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const scenarios = [
@@ -125,7 +129,7 @@ async function measure(scenario) {
       });
     }
     await cdp.send('Page.navigate', {
-      url: ORIGIN + '/?autostart=1&profile=1&benchmark=1',
+      url: ORIGIN + '/?autostart=1&profile=1&benchmark=1&graphics=' + GRAPHICS_PRESET,
     });
     await waitFor(async () => {
       const ok = await cdp.evaluate('Boolean(window.__mechaPerf && document.querySelector("canvas"))');
@@ -153,6 +157,9 @@ async function measure(scenario) {
     if (report.environment.scenario !== 'combat') {
       throw Error('Benchmark did not enter the active combat scene');
     }
+    if (report.environment.graphicsPreset !== GRAPHICS_PRESET) {
+      throw Error('Captured graphics preset mismatch: ' + report.environment.graphicsPreset);
+    }
     if (!(report.rendererStats.fps > 0) || !Number.isFinite(report.rendererStats.p95Ms)) {
       throw Error('Invalid report FPS or p95');
     }
@@ -162,6 +169,7 @@ async function measure(scenario) {
     }
     report.automation = {
       scenario: scenario.id,
+      graphicsPreset: GRAPHICS_PRESET,
       host: 'GitHub-hosted ubuntu-latest VM',
       rendererMode: 'Chrome headless + SwiftShader software WebGL',
       mobileEmulation: scenario.mobile,
@@ -187,6 +195,9 @@ for (const scenario of scenarios) {
   writeFileSync(join(DEST, scenario.id + '.json'), JSON.stringify(report, null, 2));
   output.push({
     scenario: scenario.id,
+    preset: GRAPHICS_PRESET,
+    effectiveDpr: report.environment.renderDpr,
+    shadowMapSize: report.environment.shadowMapSize,
     fps: report.rendererStats.fps,
     frameP50Ms: report.rendererStats.p50Ms,
     frameP95Ms: report.rendererStats.p95Ms,
@@ -200,7 +211,7 @@ for (const scenario of scenarios) {
   console.log(JSON.stringify(output[output.length - 1], null, 2));
 }
 writeFileSync(join(DEST, 'summary.json'), JSON.stringify(output, null, 2));
-const cells = ['scenario', 'fps', 'frameP50Ms', 'frameP95Ms', 'frameP99Ms',
+const cells = ['scenario', 'preset', 'effectiveDpr', 'shadowMapSize', 'fps', 'frameP50Ms', 'frameP95Ms', 'frameP99Ms',
   'drawCallsMean', 'trianglesMean', 'frames', 'renderer', 'device'];
 writeFileSync(join(DEST, 'summary.csv'), [
   cells.join(','),
