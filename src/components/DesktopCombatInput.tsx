@@ -35,11 +35,23 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
       if (!(canvas instanceof HTMLCanvasElement) ||
           !canvas.closest('[data-testid="map-canvas-container"]')) return;
       if (event.button !== 0 && event.button !== 2) return;
-      event.preventDefault();
+      // Only suppress browser default on RMB so LMB naturally focuses the canvas/iframe
+      if (event.button === 2) event.preventDefault();
+      if (document.activeElement instanceof HTMLButtonElement) {
+        document.activeElement.blur();
+      }
+      window.focus();
       if (event.button === 0) input.pointerFire = true;
       if (event.button === 2) input.precisionAim = true;
       if (document.pointerLockElement !== canvas) {
-        void canvas.requestPointerLock?.();
+        try {
+          const maybePromise = canvas.requestPointerLock?.() as unknown;
+          if (maybePromise && typeof (maybePromise as Promise<unknown>).catch === 'function') {
+            (maybePromise as Promise<unknown>).catch(() => {});
+          }
+        } catch {
+          // Pointer lock may be blocked in sandboxed iframes; keyboard & drag aim remain active.
+        }
       }
     };
     const onMouseMove = (event: MouseEvent) => {

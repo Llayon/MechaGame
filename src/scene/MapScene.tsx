@@ -18,6 +18,8 @@ import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader } from './heightFog';
 import { MechDriveInput, SovietMech } from './objects/SovietMech';
 import { CombatActors } from './objects/CombatActors';
+import { DropshipFlyby } from './objects/DropshipFlyby';
+import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import {
   MechTelemetrySnapshot,
@@ -230,7 +232,7 @@ function CameraRig({
   }, [sunPos, shadowMapSize, camera, sunLightRef, invalidate]);
 
   useEffect(() => {
-    if (!isSoftwareGl || !driveMode || paused) return;
+    if (!isSoftwareGl || paused) return;
     let cancelled = false;
     let timerId = 0;
     let idleTicksRemaining = 2;
@@ -246,16 +248,17 @@ function CameraRig({
           d.forward !== 0 ||
           d.turn !== 0 ||
           d.turretTurn !== 0 ||
-          d.fire ||
-          d.heavyFire ||
-          d.repair ||
-          d.dash ||
-          d.centerTurret ||
-          Math.abs(d.turretAimDelta ?? 0) > 0.001 ||
-          c.projectiles.length > 0 ||
-          c.heavyBeams.length > 0 ||
-          c.dashTimer > 0 ||
-          c.hitstopTimer > 0;
+          (driveMode &&
+            (d.fire ||
+              d.heavyFire ||
+              d.repair ||
+              d.dash ||
+              d.centerTurret ||
+              Math.abs(d.turretAimDelta ?? 0) > 0.001 ||
+              c.projectiles.length > 0 ||
+              c.heavyBeams.length > 0 ||
+              c.dashTimer > 0 ||
+              c.hitstopTimer > 0));
         if (active) {
           idleTicksRemaining = 1;
           scheduleStep(220);
@@ -466,6 +469,56 @@ function CameraRig({
       return;
     }
 
+    // Overview keyboard panning (WASD / Arrows) & orbit yaw (Q / E)
+    const kb = driveInputRef.current;
+    if (kb.forward !== 0 || kb.turn !== 0 || kb.turretTurn !== 0) {
+      transitioningRef.current = false;
+      const dt = Math.min(delta, 0.05);
+      const speedScale = kb.sprint ? 1.85 : 1.0;
+      const camDist = camera.position.distanceTo(controls.target);
+      const panSpeed = Math.max(26, camDist * 0.42) * speedScale * dt;
+
+      let fwdX = controls.target.x - camera.position.x;
+      let fwdZ = controls.target.z - camera.position.z;
+      const fwdLen = Math.hypot(fwdX, fwdZ) || 1;
+      fwdX /= fwdLen;
+      fwdZ /= fwdLen;
+      const rightX = -fwdZ;
+      const rightZ = fwdX;
+
+      const moveFwd = kb.forward * panSpeed;
+      const moveRight = -kb.turn * panSpeed;
+      const dxPan = fwdX * moveFwd + rightX * moveRight;
+      const dzPan = fwdZ * moveFwd + rightZ * moveRight;
+
+      const nextTx = Math.max(-195, Math.min(195, controls.target.x + dxPan));
+      const nextTz = Math.max(-160, Math.min(160, controls.target.z + dzPan));
+      const appliedDx = nextTx - controls.target.x;
+      const appliedDz = nextTz - controls.target.z;
+
+      controls.target.x = nextTx;
+      controls.target.z = nextTz;
+      camera.position.x += appliedDx;
+      camera.position.z += appliedDz;
+
+      if (kb.turretTurn !== 0) {
+        const yawStep = kb.turretTurn * 1.15 * dt;
+        const ox = camera.position.x - controls.target.x;
+        const oz = camera.position.z - controls.target.z;
+        const cosA = Math.cos(yawStep);
+        const sinA = Math.sin(yawStep);
+        camera.position.x = controls.target.x + (ox * cosA + oz * sinA);
+        camera.position.z = controls.target.z + (-ox * sinA + oz * cosA);
+      }
+
+      programmaticUpdateRef.current = true;
+      controls.update();
+      programmaticUpdateRef.current = false;
+      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
+      if (isSoftwareGl) invalidate();
+      return;
+    }
+
     if (!transitioningRef.current) return;
 
     const lambda = 5.5;
@@ -596,6 +649,12 @@ export function MapScene({
       data-render-dpr={quality.dpr}
       data-shadows={quality.shadowEnabled ? 'on' : 'off'}
       data-shadow-map-size={quality.shadowMapSize}
+      onPointerDown={() => {
+        if (document.activeElement instanceof HTMLButtonElement) {
+          document.activeElement.blur();
+        }
+        window.focus();
+      }}
       className="relative w-full h-full bg-[#091016]"
     >
       <Canvas
@@ -697,6 +756,19 @@ export function MapScene({
             onSelectSector={(id) => {
               if (!driveMode) onSelectSector(id);
             }}
+          />
+          <DropshipFlyby
+            lightingPreset={lightingPreset}
+            sunPos={lightCfg.keyPos}
+            visible={quality.distantWar}
+            driveMode={driveMode}
+            isSoftwareGl={isSoftwareGl}
+            mechPoseRef={mechPoseRef}
+            combatRef={combatRef}
+          />
+          <HologramSigns
+            lightingPreset={lightingPreset}
+            combatRef={combatRef}
           />
         </group>
 

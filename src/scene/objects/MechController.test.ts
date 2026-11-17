@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveMechControl, syncMechInputFromKeys, clearMechInput } from './MechController';
+import {
+  clearMechInput,
+  normalizeKeyboardCode,
+  resolveMechControl,
+  syncMechInputFromKeys,
+} from './MechController';
 import type { MechDriveInput } from './MechState';
 
 const neutral: MechDriveInput = {
@@ -65,5 +70,13 @@ test('Jet-Dash boosts mech speed to 6.2 u/s forward or reverse and overrides cro
 
   const revDash = resolveMechControl({ ...neutral, forward: -1 }, true, true);
   assert.equal(revDash.targetSpeed, -6.2);
+});
+
+test('normalizeKeyboardCode preserves physical codes and maps Cyrillic/fallback keys when code is empty', () => {
+  assert.equal(normalizeKeyboardCode('KeyW', 'ц'), 'KeyW');
+  assert.equal(normalizeKeyboardCode('', 'Ц'), 'KeyW');
+  assert.equal(normalizeKeyboardCode('', 'ф'), 'KeyA');
+  assert.equal(normalizeKeyboardCode('Unidentified', ' '), 'Space');
+  assert.equal(normalizeKeyboardCode('', 'ArrowUp'), 'ArrowUp');
 });
 

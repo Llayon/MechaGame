@@ -78,3 +78,38 @@ export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
   input.sprint = false;
   // Crouch is a persistent toggle, matching the existing input contract.
 }
+
+const KEY_TO_CODE_FALLBACK: Record<string, string> = {
+  w: 'KeyW', ц: 'KeyW',
+  s: 'KeyS', ы: 'KeyS',
+  a: 'KeyA', ф: 'KeyA',
+  d: 'KeyD', в: 'KeyD',
+  q: 'KeyQ', й: 'KeyQ',
+  e: 'KeyE', у: 'KeyE',
+  m: 'KeyM', ь: 'KeyM',
+  c: 'KeyC', с: 'KeyC',
+  f: 'KeyF', а: 'KeyF',
+  v: 'KeyV', м: 'KeyV',
+  x: 'KeyX', ч: 'KeyX',
+  t: 'KeyT', е: 'KeyT',
+  h: 'KeyH', р: 'KeyH',
+  g: 'KeyG', п: 'KeyG',
+  p: 'KeyP', з: 'KeyP',
+  r: 'KeyR', к: 'KeyR',
+  u: 'KeyU', г: 'KeyU',
+  ' ': 'Space',
+  spacebar: 'Space',
+  arrowup: 'ArrowUp',
+  arrowdown: 'ArrowDown',
+  arrowleft: 'ArrowLeft',
+  arrowright: 'ArrowRight',
+  shift: 'ShiftLeft',
+  escape: 'Escape',
+};
+
+/** Normalizes KeyboardEvent.code with fallback mapping from KeyboardEvent.key (incl. Cyrillic). */
+export function normalizeKeyboardCode(code: string, key = ''): string {
+  if (code && code !== 'Unidentified') return code;
+  const lower = key.toLowerCase();
+  return KEY_TO_CODE_FALLBACK[lower] ?? '';
+}

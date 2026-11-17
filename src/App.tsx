@@ -11,7 +11,11 @@ import {
   GRAPHICS_PRESETS, readGraphicsSettings, saveGraphicsSettings, withGraphicsPreset,
 } from './game/graphicsSettings';
 import type { GraphicsSettings } from './game/graphicsSettings';
-import { clearMechInput, syncMechInputFromKeys } from './scene/objects/MechController';
+import {
+  clearMechInput,
+  normalizeKeyboardCode,
+  syncMechInputFromKeys,
+} from './scene/objects/MechController';
 import { DesktopCombatInput } from './components/DesktopCombatInput';
 import { createCombatAimState } from './game/combatAim';
 import {
@@ -206,11 +210,15 @@ export default function App() {
     setTransitionNonce((n) => n + 1);
   }, [clearDriveInput]);
 
+  const driveModeRef = useRef(driveMode);
+  driveModeRef.current = driveMode;
+
   const handleEnterDriveMode = useCallback(() => {
     combatAudio.unlock();
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
+    window.focus();
     if (combatRef.current.missionStatus === 'idle' || combatRef.current.missionStatus === 'paused') {
       combatRef.current.missionStatus = 'playing';
     }
@@ -223,20 +231,20 @@ export default function App() {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    setDriveMode((prev) => {
-      if (prev) {
-        clearDriveInput();
-        if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
-        setPaused(false);
-        setTransitionNonce((n) => n + 1);
-      } else {
-        if (combatRef.current.missionStatus === 'idle' || combatRef.current.missionStatus === 'paused') {
-          combatRef.current.missionStatus = 'playing';
-        }
-        setPaused(false);
+    window.focus();
+    if (driveModeRef.current) {
+      clearDriveInput();
+      if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
+      setPaused(false);
+      setTransitionNonce((n) => n + 1);
+      setDriveMode(false);
+    } else {
+      if (combatRef.current.missionStatus === 'idle' || combatRef.current.missionStatus === 'paused') {
+        combatRef.current.missionStatus = 'playing';
       }
-      return !prev;
-    });
+      setPaused(false);
+      setDriveMode(true);
+    }
   }, [clearDriveInput]);
 
   const handleTogglePause = useCallback(() => {
@@ -298,111 +306,7 @@ export default function App() {
     [clearDriveInput],
   );
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (graphicsOpen) {
-        if (e.code === 'Escape' || (e.code === 'KeyG' && !e.repeat)) {
-          e.preventDefault();
-          handleCloseGraphics();
-        }
-        return; // The graphics menu must not control the mech underneath.
-      }
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement ||
-          e.target instanceof HTMLSelectElement) {
-        return;
-      }
-      if (e.code === 'KeyG' && !e.repeat) {
-        e.preventDefault();
-        handleOpenGraphics();
-        return;
-      }
-      combatAudio.unlock();
-
-      if (e.code === 'KeyH') {
-        setHudHidden((prev) => !prev);
-        return;
-      }
-      if (e.code === 'KeyU' && !e.repeat) {
-        handleToggleMute();
-        return;
-      }
-      if (e.code === 'KeyM' && !e.repeat) {
-        handleToggleDriveMode();
-        return;
-      }
-      if (e.code === 'KeyP' && driveMode && !e.repeat) {
-        handleTogglePause();
-        return;
-      }
-      if (e.code === 'KeyR' && driveMode && !e.repeat) {
-        handleRestartMission();
-        return;
-      }
-      if (e.code === 'Escape') {
-        if (document.pointerLockElement) {
-          document.exitPointerLock?.();
-          clearDriveInput();
-        } else {
-          handleResetOverview();
-        }
-        return;
-      }
-
-      if (driveMode && !paused && missionOutcome === null) {
-        if (
-          e.code === 'Space' ||
-          e.code === 'ArrowUp' ||
-          e.code === 'ArrowDown' ||
-          e.code === 'ArrowLeft' ||
-          e.code === 'ArrowRight'
-        ) {
-          e.preventDefault();
-        }
-        if (e.code === 'KeyC' && !e.repeat) {
-          driveInputRef.current.crouch = !driveInputRef.current.crouch;
-          return;
-        }
-        if (e.code === 'KeyF' && !e.repeat) {
-          driveInputRef.current.heavyFire = true;
-          return;
-        }
-        if (e.code === 'KeyV' && !e.repeat) {
-          driveInputRef.current.repair = true;
-          return;
-        }
-        if (e.code === 'KeyX' && !e.repeat) {
-          driveInputRef.current.dash = true;
-          return;
-        }
-        if (e.code === 'KeyT' && !e.repeat) {
-          driveInputRef.current.centerTurret = true;
-          return;
-        }
-        pressedKeysRef.current.add(e.code);
-        syncDriveInputFromKeys();
-      }
-    };
-
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (pressedKeysRef.current.has(e.code)) {
-        pressedKeysRef.current.delete(e.code);
-        syncDriveInputFromKeys();
-      }
-    };
-
-    const onBlur = () => {
-      clearDriveInput();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('blur', onBlur);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', onBlur);
-    };
-  }, [
+  const keyboardActionsRef = useRef({
     driveMode,
     paused,
     missionOutcome,
@@ -416,7 +320,153 @@ export default function App() {
     handleToggleMute,
     syncDriveInputFromKeys,
     clearDriveInput,
-  ]);
+  });
+  keyboardActionsRef.current = {
+    driveMode,
+    paused,
+    missionOutcome,
+    graphicsOpen,
+    handleOpenGraphics,
+    handleCloseGraphics,
+    handleResetOverview,
+    handleToggleDriveMode,
+    handleTogglePause,
+    handleRestartMission,
+    handleToggleMute,
+    syncDriveInputFromKeys,
+    clearDriveInput,
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const ctx = keyboardActionsRef.current;
+      const code = normalizeKeyboardCode(e.code, e.key);
+      if (!code) return;
+
+      if (ctx.graphicsOpen) {
+        if (code === 'Escape' || (code === 'KeyG' && !e.repeat)) {
+          e.preventDefault();
+          ctx.handleCloseGraphics();
+        }
+        return; // The graphics menu must not control the mech underneath.
+      }
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      if (code === 'KeyG' && !e.repeat) {
+        e.preventDefault();
+        ctx.handleOpenGraphics();
+        return;
+      }
+      combatAudio.unlock();
+
+      if (code === 'KeyH' && !e.repeat) {
+        setHudHidden((prev) => !prev);
+        return;
+      }
+      if (code === 'KeyU' && !e.repeat) {
+        ctx.handleToggleMute();
+        return;
+      }
+      if (code === 'KeyM' && !e.repeat) {
+        e.preventDefault();
+        ctx.handleToggleDriveMode();
+        return;
+      }
+      if (code === 'KeyP' && ctx.driveMode && !e.repeat) {
+        ctx.handleTogglePause();
+        return;
+      }
+      if (code === 'KeyR' && ctx.driveMode && !e.repeat) {
+        ctx.handleRestartMission();
+        return;
+      }
+      if (code === 'Escape') {
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+          ctx.clearDriveInput();
+        } else {
+          ctx.handleResetOverview();
+        }
+        return;
+      }
+
+      if (!ctx.paused && ctx.missionOutcome === null) {
+        const isNavKey =
+          code === 'Space' ||
+          code === 'ArrowUp' ||
+          code === 'ArrowDown' ||
+          code === 'ArrowLeft' ||
+          code === 'ArrowRight';
+        if (isNavKey) {
+          e.preventDefault();
+          // Ensure Space/Arrows never re-trigger a focused HUD button
+          if (document.activeElement instanceof HTMLButtonElement) {
+            document.activeElement.blur();
+          }
+        }
+
+        if (ctx.driveMode) {
+          if (code === 'KeyC' && !e.repeat) {
+            driveInputRef.current.crouch = !driveInputRef.current.crouch;
+            return;
+          }
+          if (code === 'KeyF' && !e.repeat) {
+            driveInputRef.current.heavyFire = true;
+            return;
+          }
+          if (code === 'KeyV' && !e.repeat) {
+            driveInputRef.current.repair = true;
+            return;
+          }
+          if (code === 'KeyX' && !e.repeat) {
+            driveInputRef.current.dash = true;
+            return;
+          }
+          if (code === 'KeyT' && !e.repeat) {
+            driveInputRef.current.centerTurret = true;
+            return;
+          }
+        }
+
+        pressedKeysRef.current.add(code);
+        ctx.syncDriveInputFromKeys();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const code = normalizeKeyboardCode(e.code, e.key);
+      if (code && pressedKeysRef.current.has(code)) {
+        pressedKeysRef.current.delete(code);
+        keyboardActionsRef.current.syncDriveInputFromKeys();
+      }
+    };
+
+    const onBlur = () => {
+      keyboardActionsRef.current.clearDriveInput();
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') {
+        keyboardActionsRef.current.clearDriveInput();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+    window.addEventListener('keyup', onKeyUp, { capture: true });
+    window.addEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, { capture: true });
+      window.removeEventListener('keyup', onKeyUp, { capture: true });
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const handleCycleInputPref = useCallback(() => {
     setInputPref((prev) => {

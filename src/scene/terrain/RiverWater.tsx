@@ -11,6 +11,10 @@ import {
   bakeWaterDepthData,
 } from '../../map/waterDepth';
 import { createWaterNormalTexture } from '../textures';
+import {
+  GLSL_FLYBY_SHADOW_PARS,
+  bindFlybyShadowUniforms,
+} from '../flybyShadow';
 
 export interface RiverWaterProps {
   isSoftwareGl: boolean;
@@ -65,7 +69,7 @@ export function RiverWater({ isSoftwareGl }: RiverWaterProps) {
       depthWrite: false,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v1';
+    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v2';
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uWaterDepthMap = { value: waterDepthTex };
@@ -75,6 +79,7 @@ export function RiverWater({ isSoftwareGl }: RiverWaterProps) {
       shader.uniforms.uMaxWaterDepth = { value: MAX_WATER_DEPTH };
       shader.uniforms.uMaxObstDist = { value: MAX_OBSTACLE_DIST };
       shader.uniforms.uWaterTime = timeUniformRef.current;
+      bindFlybyShadowUniforms(shader.uniforms);
 
       shader.vertexShader = shader.vertexShader
         .replace(
@@ -98,6 +103,7 @@ uniform float uMaxWaterDepth;
 uniform float uMaxObstDist;
 uniform float uWaterTime;
 varying vec3 vWaterWorldPos;
+${GLSL_FLYBY_SHADOW_PARS}
 
 float waterHash( vec2 p ) {
   return fract( sin( dot( p, vec2( 127.1, 311.7 ) ) ) * 43758.5453123 );
@@ -163,6 +169,7 @@ float wFoam = clamp( max( wShoreFoam, wPierFoam ) * smoothstep( 0.005, 0.035, wD
 vec3 wFoamCol = pow( vec3( 0.87, 0.92, 0.94 ), vec3( 2.2 ) );
 
 diffuseColor.rgb = mix( wBaseCol, wFoamCol, wFoam );
+diffuseColor.rgb *= ( 1.0 - sampleFlybyShipShadow( vWaterWorldPos ) * 0.85 );
 float wWaterAlpha = mix( 0.94, 0.24, pow( wShallowT, 1.35 ) );
 float wEdgeFeather = smoothstep( 0.0, 0.035, wDepth );
 diffuseColor.a = clamp( max( wWaterAlpha, wFoam * 0.92 ) * wEdgeFeather, 0.0, 0.97 );`,

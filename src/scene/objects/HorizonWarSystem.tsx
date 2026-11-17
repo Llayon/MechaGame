@@ -183,7 +183,8 @@ function syncWarInstancesToGpu(
 
     if (t.isOrbital) {
       const shrink = Math.max(0.08, 1.0 - t.life / t.maxLife);
-      _dummy.quaternion.identity();
+      const yawToCam = Math.atan2(camera.position.x - t.x, camera.position.z - t.z);
+      _dummy.quaternion.setFromAxisAngle(_up, yawToCam);
       _dummy.scale.set(t.scaleX * shrink, t.scaleY, 1.0);
     } else {
       _dir.set(t.vx, t.vy, t.vz).normalize();

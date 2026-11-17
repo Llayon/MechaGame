@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import { GLSL_PUDDLE_HELPERS } from '../../map/puddles';
+import {
+  GLSL_FLYBY_SHADOW_PARS,
+  bindFlybyShadowUniforms,
+} from '../flybyShadow';
 
 /**
  * Creates a PBR MeshStandardMaterial patched via onBeforeCompile with pixel-level
@@ -24,10 +28,11 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v5';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v6';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
+    bindFlybyShadowUniforms(shader.uniforms);
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
@@ -62,6 +67,7 @@ varying vec4 vTerrZone;
 varying vec4 vTerrHint;
 varying vec3 vPuddleUp;
 ${GLSL_PUDDLE_HELPERS}
+${GLSL_FLYBY_SHADOW_PARS}
 
 vec3 terrSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -328,6 +334,9 @@ if ( vTerrWorldPos.y > 1.4 && vTerrWorldPos.y < 14.5 && terrNY > 0.968 && terrCo
 if ( terrDetailFade > 0.001 ) {
   diffuseColor.rgb *= mix( 1.0, 0.90 + terrDetailGrit * 0.20, terrDetailFade * ( 1.0 - terrPuddleWater ) );
 }
+
+// 7. Analytical solar shadow cast by high-altitude dropship flyby (evaluated before lighting & fog)
+diffuseColor.rgb *= ( 1.0 - sampleFlybyShipShadow( vTerrWorldPos ) );
 
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
 float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );

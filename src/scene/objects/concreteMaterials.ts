@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import { WATER_LEVEL } from '../../map/terrainMath';
+import {
+  GLSL_FLYBY_SHADOW_PARS,
+  bindFlybyShadowUniforms,
+} from '../flybyShadow';
 
 export type ConcreteMossPreset = 'bridge' | 'wall' | 'ruin';
 
@@ -57,12 +61,13 @@ export function getOvergrownConcreteMaterial(
   }
   const mat = new THREE.MeshStandardMaterial(matParams);
 
-  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v1-${preset}`;
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v2-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
     shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
     shader.uniforms.uGrimeStrength = { value: cfg.grimeStrength };
     shader.uniforms.uWaterLevel = { value: WATER_LEVEL };
+    bindFlybyShadowUniforms(shader.uniforms);
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -97,6 +102,7 @@ uniform float uWaterLevel;
 varying vec3 vConcWorldPos;
 varying vec3 vConcWorldNormal;
 varying vec3 vConcLocalPos;
+${GLSL_FLYBY_SHADOW_PARS}
 
 vec3 concSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -158,7 +164,11 @@ diffuseColor.rgb = mix( diffuseColor.rgb, mossBlend, wallMoss );
 // 3. Upward horizontal ledges/ruin roofs: weathered moss & patchy turf
 float topFactor = smoothstep( 0.70, 0.92, vConcWorldNormal.y );
 float roofMask = smoothstep( 0.44, 0.72, cOrganic ) * topFactor * uRoofMoss;
-diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.6 ), roofMask );`,
+diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.6 ), roofMask );
+
+// 4. Overhead dropship flyby SDF shadow across roofs, bridge decks & concrete aprons
+float concFlyby = sampleFlybyShipShadow( vConcWorldPos ) * mix( 0.45, 1.0, smoothstep( 0.15, 0.75, vConcWorldNormal.y ) );
+diffuseColor.rgb *= ( 1.0 - concFlyby );`,
       );
   };
 

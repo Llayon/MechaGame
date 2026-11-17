@@ -529,6 +529,50 @@ class CombatAudioEngine {
     osc.stop(now + (orbital ? 1.28 : 0.8));
     sub.stop(now + (orbital ? 1.28 : 0.8));
   }
+
+  /**
+   * Low-pass Doppler jet/VTOL turbine roar when a heavy dropship passes overhead.
+   */
+  playDropshipFlyby(): void {
+    if (this.muted || this.paused || !this.ctx || this.ctx.state !== 'running') return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(160, now);
+    filter.frequency.linearRampToValueAtTime(380, now + 0.95);
+    filter.frequency.exponentialRampToValueAtTime(135, now + 2.35);
+    filter.Q.setValueAtTime(1.1, now);
+
+    const turbine = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    turbine.type = 'sawtooth';
+    turbine.frequency.setValueAtTime(84, now);
+    turbine.frequency.linearRampToValueAtTime(106, now + 0.9);
+    turbine.frequency.exponentialRampToValueAtTime(52, now + 2.35);
+
+    sub.type = 'triangle';
+    sub.frequency.setValueAtTime(46, now);
+    sub.frequency.linearRampToValueAtTime(58, now + 0.9);
+    sub.frequency.exponentialRampToValueAtTime(30, now + 2.35);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.068, now + 0.85);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
+
+    turbine.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    turbine.start(now);
+    sub.start(now);
+    turbine.stop(now + 2.45);
+    sub.stop(now + 2.45);
+  }
 }
 
 export const combatAudio = new CombatAudioEngine();
