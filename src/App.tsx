@@ -26,6 +26,17 @@ function hasAutostartParam(): boolean {
   return new URLSearchParams(window.location.search).get('autostart') === '1';
 }
 
+declare global {
+  interface Window {
+    __mechaAimDebug?: () => {
+      aimYaw: number; elevation: number; precise: boolean;
+      reticleVisible: boolean; turretYaw: number; hullYaw: number;
+      pendingYaw: number; pendingElevation: number;
+      pointerFire: boolean; keyboardFire: boolean; pointerLocked: boolean;
+    };
+  }
+}
+
 export default function App() {
   const autostart = useRef(hasAutostartParam()).current;
 
@@ -108,6 +119,25 @@ export default function App() {
   );
 
   const pressedKeysRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Read-only QA hook, available only with an explicit debug URL parameter.
+    if (new URLSearchParams(window.location.search).get('debugAim') !== '1') return;
+    window.__mechaAimDebug = () => ({
+      aimYaw: aimRef.current.yaw,
+      elevation: aimRef.current.elevation,
+      precise: aimRef.current.precise,
+      reticleVisible: aimRef.current.reticleVisible,
+      turretYaw: mechPoseRef.current.turretYaw,
+      hullYaw: mechPoseRef.current.yaw,
+      pendingYaw: driveInputRef.current.turretAimDelta ?? 0,
+      pendingElevation: driveInputRef.current.gunAimDelta ?? 0,
+      pointerFire: !!driveInputRef.current.pointerFire,
+      keyboardFire: driveInputRef.current.fire,
+      pointerLocked: Boolean(document.pointerLockElement),
+    });
+    return () => { delete window.__mechaAimDebug; };
+  }, []);
 
   const syncDriveInputFromKeys = useCallback(() => {
     syncMechInputFromKeys(pressedKeysRef.current, driveInputRef.current);
