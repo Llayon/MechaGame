@@ -13,4 +13,12 @@ game itself, so no gameplay requests go to Freesound or Kenney.
 
 For Freesound the import script uses public HQ preview files, not the
 authenticated original WAV download. Every clip is edited and compressed to
-mono OGG Vorbis 32 kHz. The audio engine does not use any paid API.
+mono OGG Vorbis 32 kHz plus a matching 96 kbps MP3 for older iOS Safari.
+The browser prefers OGG when fully supported, otherwise MP3, and retries
+the alternate codec if decoding fails. The audio engine does not use any paid API.
+
+The audio mixer uses dynamic compression and an upper voice budget; IK foot
+contacts drive sample-based footsteps, footsteps off the ground drive real
+hydraulic foley, and the diesel loop changes pitch and EQ with movement load.
+These source clips are intentionally short prototype selections, not recordings
+of the fictional vehicle itself. Tune the mix by listening in Chrome and Safari.
