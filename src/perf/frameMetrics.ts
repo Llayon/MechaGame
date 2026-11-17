@@ -33,7 +33,7 @@ export interface ProfilerEnvironment {
   webglVersion: string;
   softwareMode: boolean;
   benchmarkContinuousFrames: boolean;
-  scenario: 'combat' | 'overview';
+  scenario: 'combat' | 'overview' | 'infantry';
   lighting: string;
   graphicsPreset?: string;
   renderDpr?: number;
