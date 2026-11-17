@@ -9,7 +9,10 @@
       {
         "file": "diesel_idle.ogg",
         "size": 53304,
-        "sha256": "aa095bce276d020348dd78abd8890f1b9c0c2d7fa38de04e1f1d7e6b37e1b0a7"
+        "sha256": "e4b2a0fb9254ee856815ad57cbd48762c4c14f3bb1fcec437a893995d1b2a217",
+        "mp3File": "diesel_idle.mp3",
+        "mp3Size": 85148,
+        "mp3Sha256": "34e96f06ed71d0eb910196f481ae1226aaeb4f702fc0e879e1996ec901d83fa0"
       }
     ]
   },
@@ -23,17 +26,26 @@
       {
         "file": "mech_step_1.ogg",
         "size": 11327,
-        "sha256": "e1314b4fd19434c3e4c6f44ee9677442c33cf44147a72033ac722c9658355b7e"
+        "sha256": "b593c2071e4fc8e97eeca495b92545379ed7e58389bee965e5cf2fbd8befbef7",
+        "mp3File": "mech_step_1.mp3",
+        "mp3Size": 11708,
+        "mp3Sha256": "9aba8a85f19dae16bb7df967b77511fecfc45b0930ea0a78e18bacf94c69c47f"
       },
       {
         "file": "mech_step_2.ogg",
         "size": 11237,
-        "sha256": "f5c356ff6b485316922bfaa3d2c36e5b60a083f9222e2d852a255aed49d55b77"
+        "sha256": "3dfa890bd06c779b55e6e54f06baeb91214847237ce3863b20f86089ecd5d308",
+        "mp3File": "mech_step_2.mp3",
+        "mp3Size": 11708,
+        "mp3Sha256": "d6999b7b6008544221545adb0efa0da9e85c9b66d07f6e10e22c8b3b45823b00"
       },
       {
         "file": "mech_step_3.ogg",
         "size": 10861,
-        "sha256": "6779f81001b8c5b72b3c5a35796a024e48f82cacf5bafcfd3e14c988574c1762"
+        "sha256": "f77237fe0699ade2f3e2e8ccd453e605ef270712d7706ad2b332d61e1a15871e",
+        "mp3File": "mech_step_3.mp3",
+        "mp3Size": 11708,
+        "mp3Sha256": "231bbf3bc887114d042883da0e97d867c115289b0ba0ba44e4604d296f431b72"
       }
     ]
   },
@@ -47,12 +59,18 @@
       {
         "file": "hydraulic_a.ogg",
         "size": 12986,
-        "sha256": "05b3c0620690e58582c3646d98147adbf70ad0f1788194eec418be831cb6c515"
+        "sha256": "f5b1605578151fd8c6274559c0e07f5a59b31a75df63776c3a11f05cbb6157a9",
+        "mp3File": "hydraulic_a.mp3",
+        "mp3Size": 15596,
+        "mp3Sha256": "defa12427f8cf2513303cb9042963142edad4e3ca004478dc106ce5515dee903"
       },
       {
         "file": "hydraulic_b.ogg",
         "size": 12560,
-        "sha256": "65ec19a6491076eaeb895161daa377765ef56cb989afd3e5548b86b31f9f6204"
+        "sha256": "20be73c34f05616304ee42f44aa629c226b1cdcfb58bd3ab6049aad3211f6d7e",
+        "mp3File": "hydraulic_b.mp3",
+        "mp3Size": 15596,
+        "mp3Sha256": "5302a60661f4d96a5e4235763ec202adff5038921a1f36c674d0e8b02fd0de27"
       }
     ]
   },
@@ -66,17 +84,26 @@
       {
         "file": "autocannon_1.ogg",
         "size": 5457,
-        "sha256": "f44e0ac2127685b1f1e8b42c030bee786e2d088f8e244fbf2ce7d5d82a0d97b4"
+        "sha256": "88e80695042993e5888279fb62e5947e23574e5f5cc9dea7b6060dd764b1e5dd",
+        "mp3File": "autocannon_1.mp3",
+        "mp3Size": 3932,
+        "mp3Sha256": "9e0de573ff61255653d82aa3e09493cd7a7794ce5c809fefec21bdb5873a488b"
       },
       {
         "file": "autocannon_2.ogg",
         "size": 5455,
-        "sha256": "8ddf1565d31dcadf52aa25f53cac7417ca38dc6a31d084a794fd570e51b36501"
+        "sha256": "4d322f497efbe208374806cea6571aae8fe2a9a61c0f8f0d768067270a0efb98",
+        "mp3File": "autocannon_2.mp3",
+        "mp3Size": 3932,
+        "mp3Sha256": "90c48890ca7481754751a500ad475b4174e5fc68a9b41468f0440f782c3321a1"
       },
       {
         "file": "autocannon_3.ogg",
         "size": 5385,
-        "sha256": "aa915a09865af611a164cd9e59666accc096438f62d1470c59a463e626c7d4f2"
+        "sha256": "26eaab5d57c91f4287e8eba661be70fe209a92be812878dca2563773c4b4956c",
+        "mp3File": "autocannon_3.mp3",
+        "mp3Size": 3932,
+        "mp3Sha256": "6a88ae352b3e02d21f9f3dd5d7deb05e150ed8197c4904f1c8deda70535dfd66"
       }
     ]
   },
@@ -90,7 +117,10 @@
       {
         "file": "heavy_cannon.ogg",
         "size": 31751,
-        "sha256": "29154e55509acf908d7c1ec9cb45b27b7ec37a44121a6e8dc8e8085d7d919ab3"
+        "sha256": "9f0749515f378e2c22e3a5e112a71cee7f09b72a84fea7cd4cb5494e89b55c40",
+        "mp3File": "heavy_cannon.mp3",
+        "mp3Size": 50156,
+        "mp3Sha256": "014f93d8d402db62a303e72de70f83308ccc38a6f6c8de473510892b48ea088f"
       }
     ]
   },
@@ -105,7 +135,10 @@
         "output": {
           "file": "armor_hit_1.ogg",
           "size": 4322,
-          "sha256": "36c1a8e312ed3347106e7c72e46d734dd969f6896a5bcc792ae4a2d414192001"
+          "sha256": "cc7f2625036d6160c6aa0550e2a1006fe38eb2bcb2516b773bc85ad46aa90375",
+          "mp3File": "armor_hit_1.mp3",
+          "mp3Size": 3068,
+          "mp3Sha256": "9981b2baeef28d99b3880e17ebd9decf84cc41e3e5497544a00f06ad043bec44"
         }
       },
       {
@@ -113,7 +146,10 @@
         "output": {
           "file": "armor_hit_2.ogg",
           "size": 4195,
-          "sha256": "17a8afea559b323171b4e9f5e9721602598ace7cb16b985d49967c1cc691b5a2"
+          "sha256": "2c853a4cdcaa67b8f0c9de2d649e7511f8bfe1bd3700146b91b59bcab21a6001",
+          "mp3File": "armor_hit_2.mp3",
+          "mp3Size": 2636,
+          "mp3Sha256": "3290ed9ce58c2481b8ca4c2191d64047fe9b55e7f4c165bb06cf1007ea6b754f"
         }
       },
       {
@@ -121,7 +157,10 @@
         "output": {
           "file": "foot_metal.ogg",
           "size": 6878,
-          "sha256": "294c5ef743a4f602d92d6f21f637e81eccfb1a5da1dfded4d2b4d66eb2b20cac"
+          "sha256": "377bc28ac32a48c993d44c82d3c30c18175103d68dc3d688968977aa108a815d",
+          "mp3File": "foot_metal.mp3",
+          "mp3Size": 6956,
+          "mp3Sha256": "96d329d339dc7a0e3006318097d64a0d4cb8ed08f8a393146ba284aee044bd57"
         }
       },
       {
@@ -129,7 +168,10 @@
         "output": {
           "file": "recoil.ogg",
           "size": 6025,
-          "sha256": "5448830811efbbad03c3740df8e6d9ac2b4ef7ef3358a2ebc72aaae3a504a730"
+          "sha256": "6296550ce47e1a3e7deba49b8ab2e9a47133a85638f1402b26c697c6faa34d7b",
+          "mp3File": "recoil.mp3",
+          "mp3Size": 5228,
+          "mp3Sha256": "e6843175a4eb87cb83dd4c011ecb61975e867ba666ad4d0a2590b2ee3b2cb0c5"
         }
       },
       {
@@ -137,7 +179,10 @@
         "output": {
           "file": "explosion_debris.ogg",
           "size": 7422,
-          "sha256": "410f1ff84e3391db12e46cd8cde078ec387dba556c65f687e89538b7f560747e"
+          "sha256": "ebdca22288a1641b16684778bb7a4788c1704fb1163f25150f8970d97d336b50",
+          "mp3File": "explosion_debris.mp3",
+          "mp3Size": 12572,
+          "mp3Sha256": "70ccc9361d61902159e5e78a1e8ed88b32af95d2c2cdadceaefe18ba17c600e8"
         }
       }
     ]
