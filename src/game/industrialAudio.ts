@@ -22,9 +22,9 @@ export interface SamplePlayOptions {
   delay?: number;
 }
 
-export function soundAssetUrl(name: IndustrialSample, base: string): string {
+export function soundAssetUrl(name: IndustrialSample, base: string, format: 'ogg' | 'mp3' = 'ogg'): string {
   const root = base.endsWith('/') ? base : base + '/';
-  return root + 'assets/audio/industrial-v1/' + name + '.ogg';
+  return root + 'assets/audio/industrial-v1/' + name + '.' + format;
 }
 
 export function engineMix(speed: number): { gain: number; rate: number; cutoff: number } {
@@ -82,12 +82,27 @@ export class IndustrialSampleBank {
     const ctx = this.ctx;
     if (!ctx || typeof fetch === 'undefined') return Promise.resolve();
     const base = import.meta.env.BASE_URL;
+    // Ogg/Vorbis gained full iOS Safari support only in 18.4.
+    // Prefer MP3 unless the browser explicitly declares strong Vorbis support.
+    const probe = typeof document === 'undefined' ? null : document.createElement('audio');
+    const preferred: 'ogg' | 'mp3' =
+      probe?.canPlayType('audio/ogg; codecs="vorbis"') === 'probably' ? 'ogg' : 'mp3';
+    const fallback: 'ogg' | 'mp3' = preferred === 'ogg' ? 'mp3' : 'ogg';
     this.inFlight = Promise.allSettled(INDUSTRIAL_SAMPLES.map(async name => {
-      const res = await fetch(soundAssetUrl(name, base), { cache: 'force-cache' });
-      if (!res.ok) throw Error(name + ': HTTP ' + res.status);
-      const buffer = await ctx.decodeAudioData(await res.arrayBuffer());
-      if (buffer.duration <= 0.02) throw Error(name + ': empty audio buffer');
-      this.buffers.set(name, buffer);
+      const errors: string[] = [];
+      for (const format of [preferred, fallback]) {
+        try {
+          const res = await fetch(soundAssetUrl(name, base, format), { cache: 'force-cache' });
+          if (!res.ok) throw Error('HTTP ' + res.status);
+          const buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+          if (buffer.duration <= 0.02) throw Error('empty audio buffer');
+          this.buffers.set(name, buffer);
+          return;
+        } catch (error) {
+          errors.push(format + ': ' + String(error));
+        }
+      }
+      throw Error(name + ': ' + errors.join(' / '));
     })).then(results => {
       const errors = results.filter(r => r.status === 'rejected');
       if (errors.length > 0) {
