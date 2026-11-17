@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -394,7 +395,10 @@ export function HorizonWarSystem({
     };
   }, [cruiserBundle, smokeBundle, warFXBundle]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     const tracerMesh = tracerMeshRef.current;
     const flashMesh = flashMeshRef.current;
     const state = warStateRef.current;

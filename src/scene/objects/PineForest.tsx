@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import type * as React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -429,7 +430,10 @@ export function PineForest({
     }
   }, [trees, shrubs, logs, rootRocks, treeDepthMaterial]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     const dt = Math.min(delta, 0.05);
     if (!isSoftwareGl) {
       windTimeUniform.current.value += dt;

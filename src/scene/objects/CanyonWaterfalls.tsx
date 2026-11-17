@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -332,12 +333,15 @@ if ( diffuseColor.a < 0.015 ) discard;`,
     };
   }, [curtainGeo, splashGeo, rockGeo, curtainMaterial, splashMaterial, rockMaterial, mistTex]);
 
+  const { paused, clockRef } = useSceneSimulation();
+
   useFrame((state, delta) => {
+    if (paused) return;
     if (isSoftwareGl) return;
     timeUniform.current.value += Math.min(delta, 0.05);
 
     if (showMist && mistGroupRef.current) {
-      const t = state.clock.getElapsedTime();
+      const t = clockRef.current.elapsed;
       mistGroupRef.current.children.forEach((child, idx) => {
         const anchor = mistAnchors[idx];
         if (!anchor) return;

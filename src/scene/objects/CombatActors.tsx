@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -508,7 +509,10 @@ export function CombatActors({
     }
   };
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     const dt = Math.min(delta, 0.05);
     const combat = combatRef.current;
     const nodes = visualNodesRef.current;

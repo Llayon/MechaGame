@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -67,9 +68,12 @@ export function PatrolConvoy({ visible, isSoftwareGl }: PatrolConvoyProps) {
     return new THREE.CatmullRomCurve3(pts, true);
   }, []);
 
+  const { paused, clockRef } = useSceneSimulation();
+
   useFrame((state) => {
+    if (paused) return;
     if (!visible) return;
-    const t = state.clock.getElapsedTime();
+    const t = clockRef.current.elapsed;
 
     const u1 = ((isSoftwareGl ? 0.28 : t * 0.022) % 1 + 1) % 1;
     centerPatrolCurve.getPointAt(u1, _vPos);
