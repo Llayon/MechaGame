@@ -5,6 +5,7 @@ import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
+import { PerformancePanel } from './perf/PerformancePanel';
 import { clearMechInput, syncMechInputFromKeys } from './scene/objects/MechController';
 import {
   buildCombatTelemetry,
@@ -379,6 +380,7 @@ export default function App() {
         onToggleGrid={() => setShowWireframeGrid((v) => !v)}
         onToggleHud={() => setHudHidden((v) => !v)}
       />
+      <PerformancePanel />
     </main>
   );
 }

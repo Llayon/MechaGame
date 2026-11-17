@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
+import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
@@ -562,6 +563,12 @@ export function MapScene({
   onMissionEnded,
 }: MapSceneProps) {
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
+  // CI benchmarking opts into a continuous frame loop on software renderers.
+  const benchmarkContinuousFrames = useMemo(
+    () => typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('benchmark') === '1',
+    [],
+  );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const shadowMapSize = isSoftwareGl ? 1024 : 2048;
@@ -575,7 +582,7 @@ export function MapScene({
       className="relative w-full h-full bg-[#091016]"
     >
       <Canvas
-        frameloop={paused || isSoftwareGl ? 'demand' : 'always'}
+        frameloop={paused || (isSoftwareGl && !benchmarkContinuousFrames) ? 'demand' : 'always'}
         dpr={isSoftwareGl ? 1 : [1, 2]}
         shadows
         camera={{
@@ -715,6 +722,13 @@ export function MapScene({
           visible={showMarkers && !driveMode}
           activeSector={activeSector}
           onSelectSector={onSelectSector}
+        />
+        <ScenePerformanceProbe
+          paused={paused}
+          driveMode={driveMode}
+          lightingPreset={lightingPreset}
+          isSoftwareGl={isSoftwareGl}
+          benchmarkContinuousFrames={benchmarkContinuousFrames}
         />
         </SceneSimulationProvider>
       </Canvas>
