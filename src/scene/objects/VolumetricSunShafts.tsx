@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -219,9 +220,12 @@ export function VolumetricSunShafts({
     });
   }, [sunDir, shaftEntries]);
 
+  const { paused, clockRef } = useSceneSimulation();
+
   useFrame((state) => {
+    if (paused) return;
     if (!active || isSoftwareGl) return;
-    const t = state.clock.getElapsedTime();
+    const t = clockRef.current.elapsed;
     for (let i = 0; i < shaftEntries.length; i++) {
       shaftEntries[i].mat.uniforms.uTime.value = t;
     }

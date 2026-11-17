@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -169,7 +170,10 @@ transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
     };
   }, [geometry, texture, material]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (isSoftwareGl) {
       uTimeRef.current.value = 1.1;
       return;

@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -187,7 +188,10 @@ diffuseColor.rgb = mix( diffuseColor.rgb, uRimColor, vWingWeight * 0.36 );`,
 
   const visible = lightingPreset !== 'night';
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (!visible) return;
     if (!isSoftwareGl) {
       uniformsRef.current.uTime.value += Math.min(delta, 0.05);

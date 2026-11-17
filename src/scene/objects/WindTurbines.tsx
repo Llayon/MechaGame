@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -178,7 +179,10 @@ export function WindTurbines({ lightingPreset, isSoftwareGl }: WindTurbinesProps
     };
   }, [towerGeo, rotorGeo, beaconGeo, towerMat, rotorMat, beaconMat]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (isSoftwareGl) return;
     const rotorMesh = rotorMeshRef.current;
     const beaconMesh = beaconMeshRef.current;

@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -31,9 +32,12 @@ export function AtmosphereMist({ visible, isSoftwareGl }: AtmosphereMistProps) {
     return () => mistTex.dispose();
   }, [mistTex]);
 
+  const { paused, clockRef } = useSceneSimulation();
+
   useFrame((state) => {
+    if (paused) return;
     if (!visible || isSoftwareGl || !smokeGroupRef.current) return;
-    const t = state.clock.getElapsedTime();
+    const t = clockRef.current.elapsed;
     smokeGroupRef.current.children.forEach((child, idx) => {
       const phase = (t * 0.35 + idx * 0.24) % 1;
       child.position.y = stackOrigin.y + phase * 12.0;

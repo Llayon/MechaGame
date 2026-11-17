@@ -1,3 +1,4 @@
+import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -440,7 +441,10 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
     };
   }, [geometry, material, terrainMap]);
 
+  const { paused } = useSceneSimulation();
+
   useFrame((_, delta) => {
+    if (paused) return;
     if (!visible) return;
     const m = mechPoseRef.current;
     const u = uniformsRef.current;
