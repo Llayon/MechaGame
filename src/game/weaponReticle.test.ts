@@ -15,6 +15,7 @@ test('predicted muzzle contact respects enemy sphere and uses no hidden aim assi
   const straight = predictPhysicalShotEndpoint(state,
     MECH_SPAWN.x, MECH_SPAWN.y + 1, MECH_SPAWN.z + 1.5, 0, 0, 1);
   assert.equal(straight.hit, 'enemy');
+  assert.equal(straight.targetId, enemy.id);
   assert.ok(straight.distance > 0 && straight.distance < 18);
   const offAxis = predictPhysicalShotEndpoint(state,
     MECH_SPAWN.x, MECH_SPAWN.y + 1, MECH_SPAWN.z + 1.5, 0.4, 0, 1);

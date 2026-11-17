@@ -145,9 +145,14 @@ export function TacticalHUD({
         marker.style.top = y + '%';
         marker.style.opacity = aim.reticleVisible ? '1' : '0.25';
       }
+      const bracket = marker?.querySelector('[data-testid="reticle-brackets"]');
+      if (bracket) bracket.setAttribute('stroke',
+        aim.reticleHit === 'enemy' ? '#fbbf24' : '#94a3b8');
       if (sightLabelRef.current) {
-        sightLabelRef.current.textContent = aim.precise
-          ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'БАШНЯ · ОРУЖИЕ';
+        sightLabelRef.current.textContent = aim.reticleHit === 'enemy'
+          ? 'ЦЕЛЬ ПОД ПРИЦЕЛОМ'
+          : aim.reticleHit === 'cover' ? 'УКРЫТИЕ'
+          : aim.precise ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'БАШНЯ · ОРУЖИЕ';
       }
       raf = requestAnimationFrame(update);
     };
@@ -492,7 +497,8 @@ export function TacticalHUD({
               <path
                 d="M12 16 L12 12 L16 12 M28 12 L32 12 L32 16 M32 28 L32 32 L28 32 M16 32 L12 32 L12 28"
                 fill="none"
-                stroke={combatHud.lockedTarget ? '#fbbf24' : '#94a3b8'}
+                data-testid="reticle-brackets"
+                stroke="#94a3b8"
                 strokeWidth="1.6"
                 strokeLinecap="square"
               />
@@ -515,7 +521,9 @@ export function TacticalHUD({
             <div ref={sightLabelRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] text-amber-200/80">
               БАШНЯ · ОРУЖИЕ
             </div>
-            {combatHud.lockedTarget && (
+            {combatHud.lockedTarget &&
+             aimRef.current.reticleHit === 'enemy' &&
+             aimRef.current.reticleTargetId === combatHud.lockedTarget.id && (
               <div className="absolute left-1/2 top-full mt-5 -translate-x-1/2 whitespace-nowrap rounded border border-amber-400/50 bg-[#0b131b]/92 px-2 py-0.5 text-center shadow">
               <div className="flex items-center gap-2 font-mono-tabular text-[10px] font-semibold text-amber-200">
                 <span>{combatHud.lockedTarget.name}</span>

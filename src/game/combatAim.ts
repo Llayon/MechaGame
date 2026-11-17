@@ -11,6 +11,8 @@ export interface CombatAimState {
   reticleX: number;
   reticleY: number;
   reticleVisible: boolean;
+  reticleHit: 'enemy' | 'barrel' | 'cover' | 'range';
+  reticleTargetId: string | null;
 }
 
 export const AIM_ELEVATION_MIN = -0.34;
@@ -23,6 +25,7 @@ export function createCombatAimState(yaw: number): CombatAimState {
   return {
     yaw, elevation: -0.025, initialized: false, precise: false,
     reticleX: 0, reticleY: 0, reticleVisible: false,
+    reticleHit: 'range', reticleTargetId: null,
   };
 }
 
@@ -34,6 +37,8 @@ export function resetCombatAim(aim: CombatAimState, hullYaw: number): void {
   aim.reticleX = 0;
   aim.reticleY = 0;
   aim.reticleVisible = false;
+  aim.reticleHit = 'range';
+  aim.reticleTargetId = null;
 }
 
 export function updateCombatAim(

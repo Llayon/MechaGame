@@ -320,6 +320,8 @@ export function SovietMech({
         _aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
         _aimDir.x, _aimDir.y, _aimDir.z);
       _aimImpact.copy(_aimMuzzle).addScaledVector(_aimDir, predicted.distance);
+      aimRef.current.reticleHit = predicted.hit;
+      aimRef.current.reticleTargetId = predicted.targetId ?? null;
       camera.updateMatrixWorld();
       const projected = _aimImpact.project(camera);
       if (Number.isFinite(projected.x) && Number.isFinite(projected.y) &&

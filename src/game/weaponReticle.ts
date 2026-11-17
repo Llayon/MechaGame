@@ -5,6 +5,7 @@ import type { CombatSimulationState } from './combatTypes';
 export interface PredictedPhysicalImpact {
   distance: number;
   hit: 'enemy' | 'barrel' | 'cover' | 'range';
+  targetId?: string;
 }
 
 /**
@@ -23,6 +24,7 @@ export function predictPhysicalShotEndpoint(
   const cover = castCombatRay(muzzleX, muzzleY, muzzleZ, dx, dy, dz, PLAYER_MAX_RANGE);
   let closest = cover?.distance ?? PLAYER_MAX_RANGE;
   let kind: PredictedPhysicalImpact['hit'] = cover ? 'cover' : 'range';
+  let targetId: string | null = null;
 
   const sphereEntry = (cx: number, cy: number, cz: number, radius: number) => {
     const rx = cx - muzzleX, ry = cy - muzzleY, rz = cz - muzzleZ;
@@ -40,6 +42,7 @@ export function predictPhysicalShotEndpoint(
     if (distance !== null && distance < closest) {
       closest = distance;
       kind = 'enemy';
+      targetId = e.id;
     }
   }
   for (const barrel of state.barrels) {
@@ -48,7 +51,8 @@ export function predictPhysicalShotEndpoint(
     if (distance !== null && distance < closest) {
       closest = distance;
       kind = 'barrel';
+      targetId = barrel.id;
     }
   }
-  return { distance: closest, hit: kind };
+  return { distance: closest, hit: kind, ...(targetId ? { targetId } : {}) };
 }
