@@ -44,3 +44,12 @@ jobs:
           done
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
           timeout 55s bun scripts/check-audio-decode.mjs
+
+      - name: Gameplay camera and aiming browser smoke
+        run: |
+          if ! curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+            bun run preview --host 127.0.0.1 --port 4173 >/tmp/mecha-aim-preview.log 2>&1 &
+            sleep 3
+          fi
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          timeout 100s bun scripts/control-smoke.mjs
