@@ -5,6 +5,8 @@ import { SceneSimulationProvider } from './SceneSimulation';
 import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
 import { CombatCamera } from './CombatCamera';
 import type { CombatAimState } from '../game/combatAim';
+import { resolveGraphicsRuntime } from '../game/graphicsSettings';
+import type { GraphicsSettings } from '../game/graphicsSettings';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
@@ -529,6 +531,7 @@ export interface MapSceneProps {
   transitionNonce: number;
   resetNonce: number;
   lightingPreset: LightingPreset;
+  graphics: GraphicsSettings;
   driveMode: boolean;
   useTouchControls?: boolean;
   paused: boolean;
@@ -551,6 +554,7 @@ export function MapScene({
   transitionNonce,
   resetNonce,
   lightingPreset,
+  graphics,
   driveMode,
   useTouchControls = false,
   paused,
@@ -576,7 +580,11 @@ export function MapScene({
   );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const shadowMapSize = isSoftwareGl ? 1024 : 2048;
+  const quality = useMemo(() => resolveGraphicsRuntime(
+    graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
+  ), [graphics, isSoftwareGl]);
+  // Keep valid map dimensions when shadows are disabled.
+  const shadowMapSize = quality.shadowMapSize || 512;
 
   return (
     <div
@@ -584,12 +592,16 @@ export function MapScene({
       data-sector={activeSector}
       data-lighting={lightingPreset}
       data-drive-mode={driveMode ? 'true' : 'false'}
+      data-graphics-preset={graphics.preset}
+      data-render-dpr={quality.dpr}
+      data-shadows={quality.shadowEnabled ? 'on' : 'off'}
+      data-shadow-map-size={quality.shadowMapSize}
       className="relative w-full h-full bg-[#091016]"
     >
       <Canvas
         frameloop={paused || (isSoftwareGl && !benchmarkContinuousFrames) ? 'demand' : 'always'}
-        dpr={isSoftwareGl ? 1 : [1, 2]}
-        shadows
+        dpr={quality.dpr}
+        shadows={quality.shadowEnabled}
         camera={{
           position: [...SECTORS.overview.cameraPos],
           fov: 35,
@@ -624,11 +636,12 @@ export function MapScene({
           args={[lightCfg.hemiSky, lightCfg.hemiGround, lightCfg.hemiIntensity]}
         />
         <directionalLight
+          key={'sun-shadow-'+graphics.shadows}
           ref={sunLightRef}
           position={lightCfg.keyPos}
           color={lightCfg.keyColor}
           intensity={lightCfg.keyIntensity}
-          castShadow
+          castShadow={quality.shadowEnabled}
           shadow-mapSize-width={shadowMapSize}
           shadow-mapSize-height={shadowMapSize}
           shadow-camera-near={20}
@@ -679,6 +692,7 @@ export function MapScene({
         <Structures
           lightingPreset={lightingPreset}
           driveMode={driveMode}
+          distantWar={quality.distantWar}
           isSoftwareGl={isSoftwareGl}
           onSelectSector={(id) => {
             if (!driveMode) onSelectSector(id);
@@ -712,12 +726,14 @@ export function MapScene({
         <CombatActors
           combatRef={combatRef}
           driveMode={driveMode}
-          isSoftwareGl={isSoftwareGl}
+          isSoftwareGl={isSoftwareGl || quality.reducedParticles}
         />
 
         <FoliageAndUnits
           showUnits={showUnits}
           showMist={showMist}
+          vegetation={graphics.vegetation}
+          atmosphere={graphics.atmosphere}
           isSoftwareGl={isSoftwareGl}
           driveMode={driveMode}
           lightingPreset={lightingPreset}
@@ -729,7 +745,7 @@ export function MapScene({
         <VolumetricSunShafts
           lightingPreset={lightingPreset}
           sunPos={lightCfg.keyPos}
-          visible={showMist}
+          visible={showMist && quality.fullAtmosphere}
           isSoftwareGl={isSoftwareGl}
         />
 
@@ -742,6 +758,9 @@ export function MapScene({
           paused={paused}
           driveMode={driveMode}
           lightingPreset={lightingPreset}
+          graphics={graphics}
+          renderDpr={quality.dpr}
+          shadowMapSize={quality.shadowMapSize}
           isSoftwareGl={isSoftwareGl}
           benchmarkContinuousFrames={benchmarkContinuousFrames}
         />
