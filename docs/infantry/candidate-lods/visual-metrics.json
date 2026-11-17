@@ -1,0 +1,154 @@
+{
+  "roundtrip": [
+    {
+      "level": 0,
+      "meshes": 1,
+      "triangles": 3999,
+      "renderVertices": 3857,
+      "maps": [
+        {
+          "name": "basecolor-1024",
+          "size": [
+            1024,
+            1024
+          ],
+          "colorspace": "sRGB"
+        },
+        {
+          "name": "metallic-roughness-1024",
+          "size": [
+            1024,
+            1024
+          ],
+          "colorspace": "Non-Color"
+        },
+        {
+          "name": "normal-lod0-1024",
+          "size": [
+            1024,
+            1024
+          ],
+          "colorspace": "Non-Color"
+        }
+      ],
+      "height": 0.4797233663557563,
+      "normalMapLinked": true,
+      "normalSpace": "TANGENT"
+    },
+    {
+      "level": 1,
+      "meshes": 1,
+      "triangles": 1999,
+      "renderVertices": 2263,
+      "maps": [
+        {
+          "name": "basecolor-512",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "sRGB"
+        },
+        {
+          "name": "metallic-roughness-512",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "Non-Color"
+        },
+        {
+          "name": "normal-lod1-512",
+          "size": [
+            512,
+            512
+          ],
+          "colorspace": "Non-Color"
+        }
+      ],
+      "height": 0.4790126420703018,
+      "normalMapLinked": true,
+      "normalSpace": "TANGENT"
+    },
+    {
+      "level": 2,
+      "meshes": 1,
+      "triangles": 999,
+      "renderVertices": 1365,
+      "maps": [
+        {
+          "name": "basecolor-256",
+          "size": [
+            256,
+            256
+          ],
+          "colorspace": "sRGB"
+        },
+        {
+          "name": "metallic-roughness-256",
+          "size": [
+            256,
+            256
+          ],
+          "colorspace": "Non-Color"
+        },
+        {
+          "name": "normal-lod2-256",
+          "size": [
+            256,
+            256
+          ],
+          "colorspace": "Non-Color"
+        }
+      ],
+      "height": 0.4794299017521553,
+      "normalMapLinked": true,
+      "normalSpace": "TANGENT"
+    }
+  ],
+  "silhouette": {
+    "front": [
+      {
+        "level": 0,
+        "intersectionOverUnion": 0.9930180156354135
+      },
+      {
+        "level": 1,
+        "intersectionOverUnion": 0.9835167151469162
+      },
+      {
+        "level": 2,
+        "intersectionOverUnion": 0.9689653358581873
+      }
+    ],
+    "side": [
+      {
+        "level": 0,
+        "intersectionOverUnion": 0.9942328565180061
+      },
+      {
+        "level": 1,
+        "intersectionOverUnion": 0.98648146051972
+      },
+      {
+        "level": 2,
+        "intersectionOverUnion": 0.9731246975318599
+      }
+    ],
+    "angle": [
+      {
+        "level": 0,
+        "intersectionOverUnion": 0.9929726003436532
+      },
+      {
+        "level": 1,
+        "intersectionOverUnion": 0.9864415818838201
+      },
+      {
+        "level": 2,
+        "intersectionOverUnion": 0.9698728692310836
+      }
+    ]
+  },
+  "note": "IoU measures static silhouettes only, not deformation or PBR similarity"
+}

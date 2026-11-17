@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "sourceSha256": "dd369a254695aa41508a48bfff1cecd3d713bb7c846085ad3a53c2dd31a15228",
+  "blender": "5.2.0 LTS",
+  "source": {
+    "triangles": 40000,
+    "vertices": 25425,
+    "components": 285,
+    "originalDimensionsBlenderXYZ": [
+      1.3751109838485718,
+      0.6193709969520569,
+      1.9881550073623657
+    ],
+    "hasRig": false
+  },
+  "normalization": {
+    "heightGameUnits": 0.48,
+    "metersPerUnit": 3.75,
+    "heightMeters": 1.8,
+    "gltfForward": "+Z",
+    "gltfUp": "+Y",
+    "grounded": true
+  },
+  "method": "weld coincident seam vertices; quadric collapse decimation; per-LOD selected-to-active tangent normal bake",
+  "bake": {
+    "normalSpace": "tangent OpenGL +Y",
+    "cageExtrusion": 0.005,
+    "maxRayDistance": 0.02,
+    "floatRenderTargetRequired": false
+  },
+  "lods": [
+    {
+      "level": 0,
+      "targetTriangles": 4000,
+      "triangles": 3999,
+      "vertices": 1996,
+      "weldedSourceVertices": 19996,
+      "components": 2,
+      "materials": 1,
+      "uvLayers": 1,
+      "repairedDegenerateUvFaces": 0,
+      "textureResolution": 1024,
+      "normalNonflatPixels": 793101,
+      "geometryReduction": 10.002500625156289,
+      "surfaceErrorLowToSource": {
+        "p50Meters": 0.0010533800195844378,
+        "p95Meters": 0.0026180111672147177,
+        "p99Meters": 0.0034270659889443778,
+        "maxMeters": 0.005338067858247086
+      },
+      "surfaceErrorSourceToLow": {
+        "p50Meters": 0.0007817604091542307,
+        "p95Meters": 0.0023845713003538553,
+        "p99Meters": 0.0032921349193202323,
+        "maxMeters": 0.010875040024984628
+      },
+      "normalMap": "textures/normal-lod0-1024.png",
+      "repairedExportTangents": 0,
+      "glb": "infantry-candidate-lod0.glb",
+      "glbBytes": 2581792
+    },
+    {
+      "level": 1,
+      "targetTriangles": 2000,
+      "triangles": 1999,
+      "vertices": 996,
+      "weldedSourceVertices": 19996,
+      "components": 2,
+      "materials": 1,
+      "uvLayers": 1,
+      "repairedDegenerateUvFaces": 0,
+      "textureResolution": 512,
+      "normalNonflatPixels": 201216,
+      "geometryReduction": 20.010005002501252,
+      "surfaceErrorLowToSource": {
+        "p50Meters": 0.0020086306540179066,
+        "p95Meters": 0.004865204973611981,
+        "p99Meters": 0.005934119137236844,
+        "maxMeters": 0.008170294167939574
+      },
+      "surfaceErrorSourceToLow": {
+        "p50Meters": 0.001506935223005712,
+        "p95Meters": 0.004810238198842853,
+        "p99Meters": 0.006382151436991986,
+        "maxMeters": 0.011529307812452316
+      },
+      "normalMap": "textures/normal-lod1-512.png",
+      "repairedExportTangents": 1,
+      "glb": "infantry-candidate-lod1.glb",
+      "glbBytes": 853156
+    },
+    {
+      "level": 2,
+      "targetTriangles": 1000,
+      "triangles": 999,
+      "vertices": 496,
+      "weldedSourceVertices": 19996,
+      "components": 2,
+      "materials": 1,
+      "uvLayers": 1,
+      "repairedDegenerateUvFaces": 0,
+      "textureResolution": 256,
+      "normalNonflatPixels": 57964,
+      "geometryReduction": 40.04004004004004,
+      "surfaceErrorLowToSource": {
+        "p50Meters": 0.003786667512031272,
+        "p95Meters": 0.008856806089170277,
+        "p99Meters": 0.010846676930668764,
+        "maxMeters": 0.012892119702883065
+      },
+      "surfaceErrorSourceToLow": {
+        "p50Meters": 0.003124951181234792,
+        "p95Meters": 0.0093474937020801,
+        "p99Meters": 0.012679020361974819,
+        "maxMeters": 0.02037484897300601
+      },
+      "normalMap": "textures/normal-lod2-256.png",
+      "repairedExportTangents": 0,
+      "glb": "infantry-candidate-lod2.glb",
+      "glbBytes": 297264
+    }
+  ],
+  "limitations": [
+    "Static A-pose assets only; no rig or animation included",
+    "Decimation does not produce animation-ready joint loops; deformation QA remains required",
+    "Normal maps transfer existing geometric shading, not relief inferred from painted colors",
+    "LODs carry their own normals and must not interchange normal maps"
+  ]
+}

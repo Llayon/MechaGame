@@ -1,0 +1,131 @@
+{
+  "createdAt": "2026-11-17T21:17:42.426Z",
+  "passed": true,
+  "assets": [
+    {
+      "level": 0,
+      "triangles": 3999,
+      "glbBytes": 2581792,
+      "sha256": "ae35bc9fec393ed8bfff9d0194a7e36232a0de638ea7d92514291ce211f06e68"
+    },
+    {
+      "level": 1,
+      "triangles": 1999,
+      "glbBytes": 853156,
+      "sha256": "4d6d9e57043b9e6b91adbe32865acc8abf193972b24c2233ccffe1a14fa38784"
+    },
+    {
+      "level": 2,
+      "triangles": 999,
+      "glbBytes": 297264,
+      "sha256": "79a8ceb05f8754ee0afa28d01b78a7e1a806dac7bfc988168c32888a58ae1e75"
+    }
+  ],
+  "smoke": {
+    "ready": true,
+    "reports": [
+      {
+        "level": 0,
+        "calls": 1,
+        "triangles": 3999,
+        "geometries": 1,
+        "textures": 4,
+        "changedNormalPixels": 50702,
+        "textureSizes": [
+          [
+            1024,
+            1024
+          ],
+          [
+            1024,
+            1024
+          ],
+          [
+            1024,
+            1024
+          ]
+        ],
+        "normalColorSpace": "",
+        "hasTangents": true
+      },
+      {
+        "level": 1,
+        "calls": 1,
+        "triangles": 1999,
+        "geometries": 1,
+        "textures": 4,
+        "changedNormalPixels": 58393,
+        "textureSizes": [
+          [
+            512,
+            512
+          ],
+          [
+            512,
+            512
+          ],
+          [
+            512,
+            512
+          ]
+        ],
+        "normalColorSpace": "",
+        "hasTangents": true
+      },
+      {
+        "level": 2,
+        "calls": 1,
+        "triangles": 999,
+        "geometries": 1,
+        "textures": 4,
+        "changedNormalPixels": 59318,
+        "textureSizes": [
+          [
+            256,
+            256
+          ],
+          [
+            256,
+            256
+          ],
+          [
+            256,
+            256
+          ]
+        ],
+        "normalColorSpace": "",
+        "hasTangents": true
+      },
+      {
+        "level": 0,
+        "calls": 1,
+        "triangles": 3999,
+        "geometries": 1,
+        "textures": 4,
+        "changedNormalPixels": 50702,
+        "textureSizes": [
+          [
+            1024,
+            1024
+          ],
+          [
+            1024,
+            1024
+          ],
+          [
+            1024,
+            1024
+          ]
+        ],
+        "normalColorSpace": "",
+        "hasTangents": true
+      }
+    ],
+    "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  },
+  "errors": [],
+  "limitations": [
+    "Static asset shading smoke; not an animation or FPS benchmark",
+    "No physical mobile device tested"
+  ]
+}

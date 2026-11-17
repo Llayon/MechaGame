@@ -71,3 +71,9 @@ floor/grid add two. A shadow pass adds one character draw per visible batch.
    target phone frame budget. The current lab's ~60 desktop FPS is not that budget.
 
 No main push, mission infantry, AI or battlefield behavior is part of this change.
+
+## Separate A-pose candidate
+
+The subsequently supplied `textured_mesh 1.glb` has its own
+[normal-baked static LOD package](candidate-lods/README.md). It does not replace
+the Tripo source or change the lab's active character. Candidate rigging is pending.
