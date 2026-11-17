@@ -89,6 +89,30 @@ try{
   await send('Input.dispatchMouseEvent',
     {type:'mouseReleased',x:point.x+160,y:point.y-100,button:'left',clickCount:1});
   await waitFor(async()=>!(await aim())?.pointerFire,5000,'LMB fire stuck after release');
+
+  // Right mouse button zoom/precision mode controls the same camera and muzzle.
+  await send('Input.dispatchMouseEvent',
+    {type:'mousePressed',x:point.x+160,y:point.y-100,button:'right',clickCount:1});
+  await waitFor(async()=>(await aim())?.precise,15000,
+    'RMB was not applied to precision aim');
+  await send('Input.dispatchMouseEvent',
+    {type:'mouseReleased',x:point.x+160,y:point.y-100,button:'right',clickCount:1});
+  await waitFor(async()=>!(await aim())?.precise,15000,
+    'Precision aim remained held after RMB release');
+
+  // Escape should release the mouse without leaving active combat.
+  await evalBrowser('window.dispatchEvent(new KeyboardEvent("keydown",{code:"Escape",key:"Escape",bubbles:true}))');
+  await waitFor(async()=>await evalBrowser(
+    'document.body.dataset.state==="playing" && !document.pointerLockElement'),
+    12000,'Escape did not release pointer while retaining combat');
+  // Re-capture for the pause/unlock test.
+  await send('Input.dispatchMouseEvent',
+    {type:'mousePressed',x:point.x,y:point.y,button:'left',clickCount:1});
+  await waitFor(async()=>(await aim())?.pointerLocked,12000,
+    'Could not recapture mouse after Escape');
+  await send('Input.dispatchMouseEvent',
+    {type:'mouseReleased',x:point.x,y:point.y,button:'left',clickCount:1});
+
   await evalBrowser('window.dispatchEvent(new KeyboardEvent("keydown",{code:"KeyP",key:"p",bubbles:true}))');
   await waitFor(async()=>await evalBrowser(
     'document.body.dataset.state==="paused" && !document.pointerLockElement'),
@@ -108,7 +132,7 @@ try{
     const a=await aim();
     return a&&a.aimYaw>before.aimYaw+0.01&&a.elevation>before.elevation+0.01;
   },25000,'Mobile XY swipe failed to change physical camera aim');
-  console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB, pause:unlock, touch:swipeXY');
+  console.log('GAMEPLAY-AIM-PASS desktop:pointerlock+mouseXY+LMB+RMB+Escape, pause:unlock, touch:swipeXY');
   console.log('FINAL',JSON.stringify(await aim()));
 }catch(e){
   console.error('GAMEPLAY-AIM-FAIL',String(e));
