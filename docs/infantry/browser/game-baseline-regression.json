@@ -1,0 +1,8 @@
+{
+  "createdAt": "2026-11-17T16:40:42.767Z",
+  "script": "scripts/control-smoke.mjs",
+  "baselineCommit": "919aa20",
+  "exitCode": 1,
+  "softwareMode": true,
+  "notHardwareBenchmark": true
+}

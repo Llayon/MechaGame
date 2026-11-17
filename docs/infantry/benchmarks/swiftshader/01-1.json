@@ -1,0 +1,909 @@
+{
+  "schemaVersion": 1,
+  "lab": "infantry",
+  "settings": {
+    "count": 20,
+    "animation": "mixed",
+    "individualPhases": true,
+    "batches": 10,
+    "shadows": false,
+    "travel": false,
+    "matricesEveryFrame": false,
+    "preset": "high",
+    "camera": "medium"
+  },
+  "capture": {
+    "schemaVersion": 1,
+    "createdAt": "2026-11-17T16:35:31.988Z",
+    "requestedDurationMs": 2000,
+    "observedDurationMs": 2047.6000000238419,
+    "rendererStats": {
+      "sampleCount": 35,
+      "fps": 17.64201824709946,
+      "meanMs": 56.68285714217595,
+      "p50Ms": 56.89999997615814,
+      "p95Ms": 61.09999996423721,
+      "p99Ms": 62.5,
+      "worstMs": 62.5,
+      "slowOver33Ms": 35,
+      "slowOver50Ms": 32,
+      "drawCallsMean": 12,
+      "drawCallsPeak": 12,
+      "trianglesMean": 24942,
+      "trianglesPeak": 24942
+    },
+    "frames": [
+      {
+        "atMs": 18016.5,
+        "frameMs": 61,
+        "frame": 244,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18073.599999964237,
+        "frameMs": 57.09999996423721,
+        "frame": 245,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18128,
+        "frameMs": 54.40000003576279,
+        "frame": 246,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18185.399999976158,
+        "frameMs": 57.39999997615814,
+        "frame": 247,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18242.19999998808,
+        "frameMs": 56.80000001192093,
+        "frame": 248,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18301.299999952316,
+        "frameMs": 59.09999996423721,
+        "frame": 249,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18357.799999952316,
+        "frameMs": 56.5,
+        "frame": 250,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18417.69999998808,
+        "frameMs": 59.90000003576279,
+        "frame": 251,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18477.899999976158,
+        "frameMs": 60.19999998807907,
+        "frame": 252,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18534.799999952316,
+        "frameMs": 56.89999997615814,
+        "frame": 253,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18589.799999952316,
+        "frameMs": 55,
+        "frame": 254,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18645.299999952316,
+        "frameMs": 55.5,
+        "frame": 255,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18703.299999952316,
+        "frameMs": 58,
+        "frame": 256,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18759.399999976158,
+        "frameMs": 56.10000002384186,
+        "frame": 257,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18817.5,
+        "frameMs": 58.10000002384186,
+        "frame": 258,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18866.5,
+        "frameMs": 49,
+        "frame": 259,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18921,
+        "frameMs": 54.5,
+        "frame": 260,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 18975.399999976158,
+        "frameMs": 54.39999997615814,
+        "frame": 261,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19032.599999964237,
+        "frameMs": 57.19999998807907,
+        "frame": 262,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19080.799999952316,
+        "frameMs": 48.19999998807907,
+        "frame": 263,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19138.599999964237,
+        "frameMs": 57.80000001192093,
+        "frame": 264,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19194.799999952316,
+        "frameMs": 56.19999998807907,
+        "frame": 265,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19250.299999952316,
+        "frameMs": 55.5,
+        "frame": 266,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19308,
+        "frameMs": 57.700000047683716,
+        "frame": 267,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19369.099999964237,
+        "frameMs": 61.09999996423721,
+        "frame": 268,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19431.599999964237,
+        "frameMs": 62.5,
+        "frame": 269,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19492,
+        "frameMs": 60.40000003576279,
+        "frame": 270,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19548.299999952316,
+        "frameMs": 56.299999952316284,
+        "frame": 271,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19604.299999952316,
+        "frameMs": 56,
+        "frame": 272,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19661.599999964237,
+        "frameMs": 57.30000001192093,
+        "frame": 273,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19709.299999952316,
+        "frameMs": 47.69999998807907,
+        "frame": 274,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19767.599999964237,
+        "frameMs": 58.30000001192093,
+        "frame": 275,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19826.299999952316,
+        "frameMs": 58.69999998807907,
+        "frame": 276,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19882.69999998808,
+        "frameMs": 56.40000003576279,
+        "frame": 277,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      },
+      {
+        "atMs": 19939.399999976158,
+        "frameMs": 56.69999998807907,
+        "frame": 278,
+        "calls": 12,
+        "triangles": 24942,
+        "points": 0,
+        "lines": 98,
+        "geometries": 12,
+        "textures": 5
+      }
+    ],
+    "environment": {
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "softwareMode": true,
+      "benchmarkContinuousFrames": true,
+      "scenario": "infantry",
+      "lighting": "lab-studio",
+      "graphicsPreset": "high",
+      "renderDpr": 1,
+      "shadowMapSize": 0
+    },
+    "device": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "viewport": {
+        "width": 1262,
+        "height": 704,
+        "devicePixelRatio": 1
+      },
+      "hardwareConcurrency": 16,
+      "deviceMemoryGB": 16,
+      "jsHeapUsedBytes": 12440272,
+      "jsHeapLimitBytes": 4395630592
+    },
+    "notes": [
+      "FPS and frame time are rAF inter-frame intervals, not isolated CPU/GPU times.",
+      "Three.js draw calls and triangles are WebGLRenderer.info counters sampled one frame behind.",
+      "Browser APIs do not expose full GPU utilization or VRAM usage.",
+      "Chrome mobile emulation is not a physical mobile device benchmark.",
+      "A software WebGL renderer is not representative of hardware GPU FPS."
+    ]
+  },
+  "runtime": {
+    "ready": true,
+    "settings": {
+      "count": 20,
+      "animation": "mixed",
+      "individualPhases": true,
+      "batches": 10,
+      "shadows": false,
+      "travel": false,
+      "matricesEveryFrame": false,
+      "preset": "high",
+      "camera": "medium"
+    },
+    "gameMissionMounted": false,
+    "sourceTriangles": 1247,
+    "activeInstances": 20,
+    "batches": 10,
+    "resourceBytes": {
+      "geometry": 112458,
+      "animation": 63168,
+      "instanceMatrices": 1280,
+      "configuration": 320
+    },
+    "cpuSkeletonUpdates": 0,
+    "matrixUpdatesLastFrame": 0,
+    "uniformUpdatesLastFrame": 1,
+    "calls": 12,
+    "triangles": 24942,
+    "geometries": 12,
+    "textures": 5,
+    "time": 6.6625,
+    "instances": [
+      {
+        "id": 0,
+        "animation": "idle",
+        "phase": 0,
+        "alive": true
+      },
+      {
+        "id": 1,
+        "animation": "walk",
+        "phase": 0.61803398875,
+        "alive": true
+      },
+      {
+        "id": 2,
+        "animation": "run",
+        "phase": 0.23606797750000008,
+        "alive": true
+      },
+      {
+        "id": 3,
+        "animation": "fire",
+        "phase": 0.85410196625,
+        "alive": true
+      },
+      {
+        "id": 4,
+        "animation": "crouch",
+        "phase": 0.47213595500000016,
+        "alive": true
+      },
+      {
+        "id": 5,
+        "animation": "idle",
+        "phase": 0.09016994375000031,
+        "alive": true
+      },
+      {
+        "id": 6,
+        "animation": "walk",
+        "phase": 0.7082039325,
+        "alive": true
+      },
+      {
+        "id": 7,
+        "animation": "run",
+        "phase": 0.3262379212500006,
+        "alive": true
+      },
+      {
+        "id": 8,
+        "animation": "fire",
+        "phase": 0.9442719100000003,
+        "alive": true
+      },
+      {
+        "id": 9,
+        "animation": "crouch",
+        "phase": 0.56230589875,
+        "alive": true
+      },
+      {
+        "id": 10,
+        "animation": "idle",
+        "phase": 0.18033988750000063,
+        "alive": true
+      },
+      {
+        "id": 11,
+        "animation": "walk",
+        "phase": 0.7983738762500003,
+        "alive": true
+      },
+      {
+        "id": 12,
+        "animation": "run",
+        "phase": 0.41640786500000004,
+        "alive": true
+      },
+      {
+        "id": 13,
+        "animation": "fire",
+        "phase": 0.03444185374999975,
+        "alive": true
+      },
+      {
+        "id": 14,
+        "animation": "crouch",
+        "phase": 0.6524758425000012,
+        "alive": true
+      },
+      {
+        "id": 15,
+        "animation": "idle",
+        "phase": 0.27050983125000094,
+        "alive": true
+      },
+      {
+        "id": 16,
+        "animation": "walk",
+        "phase": 0.8885438200000007,
+        "alive": true
+      },
+      {
+        "id": 17,
+        "animation": "run",
+        "phase": 0.5065778087500004,
+        "alive": true
+      },
+      {
+        "id": 18,
+        "animation": "fire",
+        "phase": 0.12461179750000007,
+        "alive": true
+      },
+      {
+        "id": 19,
+        "animation": "crouch",
+        "phase": 0.7426457862500015,
+        "alive": true
+      }
+    ],
+    "capabilities": {
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "softwareMode": true,
+      "webgl2": true,
+      "maxTextureSize": 8192,
+      "vertexTextureUnits": 32,
+      "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+      "floatRenderTargetRequired": false,
+      "floatLinearFilteringRequired": false,
+      "gpuTimerAvailable": false,
+      "physicalMobileVerified": false
+    },
+    "frame": 280,
+    "points": 0,
+    "lines": 98
+  },
+  "scene": {
+    "createdAt": "2026-11-17T16:35:32.095Z",
+    "scope": "visible-scene-objects",
+    "groups": {
+      "infantry": {
+        "visibleMeshes": 10,
+        "drawCallCandidates": 10,
+        "instancedMeshes": 10,
+        "activeInstances": 20,
+        "estimatedTriangles": 24940,
+        "shadowCasters": 0,
+        "transparentMeshes": 0,
+        "alwaysRenderedMeshes": 0,
+        "uniqueGeometries": 10,
+        "uniqueMaterials": 1
+      },
+      "unclassified": {
+        "visibleMeshes": 1,
+        "drawCallCandidates": 1,
+        "instancedMeshes": 0,
+        "activeInstances": 0,
+        "estimatedTriangles": 2,
+        "shadowCasters": 0,
+        "transparentMeshes": 0,
+        "alwaysRenderedMeshes": 0,
+        "uniqueGeometries": 1,
+        "uniqueMaterials": 1
+      }
+    },
+    "total": {
+      "visibleMeshes": 11,
+      "drawCallCandidates": 11,
+      "instancedMeshes": 10,
+      "activeInstances": 20,
+      "estimatedTriangles": 24942,
+      "shadowCasters": 0,
+      "transparentMeshes": 0,
+      "alwaysRenderedMeshes": 0,
+      "uniqueGeometries": 11,
+      "uniqueMaterials": 2
+    },
+    "limitations": [
+      "Draw-call candidates are object/material counts, not GPU draw calls. Frustum rejection, shaders and multi-pass shadows are not measured.",
+      "Estimated triangles use geometry index or position buffer counts times InstancedMesh.count; they are not hardware triangle throughput.",
+      "Only scene objects marked visible are counted. Actual camera frustum, occlusion and material-group passes are not evaluated.",
+      "GPU time, overdraw, VRAM and CPU scene traversal costs require device-specific profilers."
+    ]
+  },
+  "cpu": {
+    "jsUpdateMs": {
+      "p50": 0,
+      "p95": 0.09999996423721313,
+      "p99": 0.10000002384185791,
+      "samples": 36
+    },
+    "skeletonUpdates": 0,
+    "instanceMatrixUpdates": 0,
+    "uniformUpdates": 36
+  },
+  "gpuTimeMs": null,
+  "updateSamples": [
+    {
+      "at": 17955.19999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18016.299999952316,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18073.19999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18127.69999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18185,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18241.799999952316,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18301,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18357.5,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18417.399999976158,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18477.599999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18534.5,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18589.599999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18644.899999976158,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18702.799999952316,
+      "jsMs": 0.10000002384185791,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18759.099999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18817.099999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18866.19999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18920.5,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 18975.099999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19032.299999952316,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19080.399999976158,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19138.299999952316,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19194.5,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19250,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19307.599999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19368.69999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19431.399999976158,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19491.69999998808,
+      "jsMs": 0.09999996423721313,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19548,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19604,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19661.19999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19709,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19767.399999976158,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19826.099999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19882.19999998808,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    },
+    {
+      "at": 19939.099999964237,
+      "jsMs": 0,
+      "matrices": 0,
+      "gpuMs": null
+    }
+  ],
+  "limitations": [
+    "DEVICE QA NOT VERIFIED: no physical phone tested",
+    "rAF times include scheduling; JS update excludes render submission",
+    "GPU timings are asynchronous query results when the extension is available",
+    "Resource byte counts cover owned geometry/atlas/matrices, not total GPU VRAM",
+    "In-place benchmark uses authored locomotion clips; root-travel checkbox enables planted-foot preview"
+  ],
+  "repeat": 1,
+  "scenario": 1
+}

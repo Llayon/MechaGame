@@ -1,0 +1,879 @@
+{
+  "createdAt": "2026-11-17T16:36:04.801Z",
+  "software": true,
+  "switches": [
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 128.6270000000004
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 539.5492999999997
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 708.6406999999999
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 658.5905999999995
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 523.3725000000004
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 641.7525000000005
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 707.7567000000008
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 96.2538999999997
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 476.3801999999996
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 273.33410000000003
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 683.7021999999997
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 1046.3606
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 1017.7572
+    }
+  ],
+  "scenarios": [
+    {
+      "count": 20,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    }
+  ],
+  "warmupMs": 1000,
+  "captureMs": 2000,
+  "repeats": 2,
+  "viewport": [
+    1280,
+    800
+  ],
+  "reports": [
+    {
+      "scenario": 0,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 34,
+        "fps": 17.435003333482143,
+        "meanMs": 57.35588235188933,
+        "p50Ms": 57.60000002384186,
+        "p95Ms": 61.89999997615814,
+        "p99Ms": 62.90000003576279,
+        "worstMs": 62.90000003576279,
+        "slowOver33Ms": 34,
+        "slowOver50Ms": 31,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 35
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 35
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 0,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 34,
+        "fps": 17.09659576566841,
+        "meanMs": 58.4911764719907,
+        "p50Ms": 58.10000002384186,
+        "p95Ms": 67.40000003576279,
+        "p99Ms": 67.59999996423721,
+        "worstMs": 67.59999996423721,
+        "slowOver33Ms": 34,
+        "slowOver50Ms": 34,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 35
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 35
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 1,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 35,
+        "fps": 17.62691377899866,
+        "meanMs": 56.73142857210977,
+        "p50Ms": 56.60000002384186,
+        "p95Ms": 63.40000003576279,
+        "p99Ms": 64.10000002384186,
+        "worstMs": 64.10000002384186,
+        "slowOver33Ms": 35,
+        "slowOver50Ms": 33,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 36
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 36
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 1,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 35,
+        "fps": 17.64201824709946,
+        "meanMs": 56.68285714217595,
+        "p50Ms": 56.89999997615814,
+        "p95Ms": 61.09999996423721,
+        "p99Ms": 62.5,
+        "worstMs": 62.5,
+        "slowOver33Ms": 35,
+        "slowOver50Ms": 32,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 36
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 36
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 2,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 16,
+        "fps": 8.318602474887351,
+        "meanMs": 120.21249999850988,
+        "p50Ms": 120.59999996423721,
+        "p95Ms": 126.19999998807907,
+        "p99Ms": 126.19999998807907,
+        "worstMs": 126.19999998807907,
+        "slowOver33Ms": 16,
+        "slowOver50Ms": 16,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 17
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 17
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 2,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 16,
+        "fps": 8.35247442044313,
+        "meanMs": 119.72500000149012,
+        "p50Ms": 120,
+        "p95Ms": 124.19999998807907,
+        "p99Ms": 124.19999998807907,
+        "worstMs": 124.19999998807907,
+        "slowOver33Ms": 16,
+        "slowOver50Ms": 16,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 17
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 17
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 3,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 17,
+        "fps": 8.618067525250028,
+        "meanMs": 116.03529411554337,
+        "p50Ms": 115.10000002384186,
+        "p95Ms": 126,
+        "p99Ms": 126,
+        "worstMs": 126,
+        "slowOver33Ms": 17,
+        "slowOver50Ms": 17,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791,
+          "p99": 0.10000002384185791,
+          "samples": 18
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 18
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 3,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 17,
+        "fps": 8.722421754746023,
+        "meanMs": 114.6470588235294,
+        "p50Ms": 114.5,
+        "p95Ms": 120.90000003576279,
+        "p99Ms": 120.90000003576279,
+        "worstMs": 120.90000003576279,
+        "slowOver33Ms": 17,
+        "slowOver50Ms": 17,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 18
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 18
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 4,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 9,
+        "fps": 4.9562200562355665,
+        "meanMs": 201.76666666401758,
+        "p50Ms": 200.20000004768372,
+        "p95Ms": 212.5,
+        "p99Ms": 212.5,
+        "worstMs": 212.5,
+        "slowOver33Ms": 9,
+        "slowOver50Ms": 9,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 10
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 4,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 9,
+        "fps": 4.873030483418554,
+        "meanMs": 205.21111111508475,
+        "p50Ms": 204.10000002384186,
+        "p95Ms": 217.5,
+        "p99Ms": 217.5,
+        "worstMs": 217.5,
+        "slowOver33Ms": 9,
+        "slowOver50Ms": 9,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 10
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 5,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 9,
+        "fps": 4.948589651981631,
+        "meanMs": 202.07777777645322,
+        "p50Ms": 199.30000001192093,
+        "p95Ms": 210.69999998807907,
+        "p99Ms": 210.69999998807907,
+        "worstMs": 210.69999998807907,
+        "slowOver33Ms": 9,
+        "slowOver50Ms": 9,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 10
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 5,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 9,
+        "fps": 4.960044089280793,
+        "meanMs": 201.61111111111111,
+        "p50Ms": 201.5,
+        "p95Ms": 209.5999999642372,
+        "p99Ms": 209.5999999642372,
+        "worstMs": 209.5999999642372,
+        "slowOver33Ms": 9,
+        "slowOver50Ms": 9,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 10
+      },
+      "gpuTimeMs": null,
+      "capabilities": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "softwareMode": true,
+        "webgl2": true,
+        "maxTextureSize": 8192,
+        "vertexTextureUnits": 32,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": false,
+        "physicalMobileVerified": false
+      }
+    }
+  ],
+  "limitations": [
+    "Short isolated lab measurements, not a full mission acceptance test",
+    "DEVICE QA NOT VERIFIED: no physical phone",
+    "Not a smartphone benchmark, including the software run"
+  ]
+}

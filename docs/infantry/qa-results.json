@@ -1,0 +1,120 @@
+{
+  "createdAt": "2026-11-17T16:44:23.108Z",
+  "codeCommit": "8cedfaadd068bd97dbba47aa52555ea322e2d483",
+  "status": "HOLD",
+  "reason": "Final art approval, Death settling, state blending and physical-device QA outstanding",
+  "sourceSha256": "8fd7de705b2c34f888cf4c726b4cca4813c89ef7d23a471b3f47f8f5b4805667",
+  "exportedGlbSha256": "9f7722cef801ead61dba24bfee9e4900b91eb066c67bef7f01ef100c935fa9a3",
+  "animationSha256": "f3ccfbcc7f21bb7b3eea4897d0c13df117ea726de0d773a9eeb14f330627c270",
+  "blenderRoundtrip": {
+    "blender": "5.2.0 LTS",
+    "meshes": 1,
+    "bones": 14,
+    "triangles": 1247,
+    "importer_bone_display_helpers": [
+      "Icosphere"
+    ],
+    "render_vertices": 1458,
+    "clips": [
+      "crouch",
+      "death",
+      "fire",
+      "hit",
+      "idle",
+      "run",
+      "walk"
+    ],
+    "maps": [
+      [
+        512,
+        512
+      ],
+      [
+        512,
+        512
+      ],
+      [
+        512,
+        512
+      ]
+    ],
+    "source_sha256": "8fd7de705b2c34f888cf4c726b4cca4813c89ef7d23a471b3f47f8f5b4805667"
+  },
+  "unitTestSummary": {
+    "passed": 144,
+    "failed": 0,
+    "files": 37
+  },
+  "infantryBrowsers": [
+    {
+      "name": "smoke",
+      "passed": true,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "imageAssertions": {
+        "visorPixels": 430,
+        "changedPosePixels": 29190
+      }
+    },
+    {
+      "name": "smoke-hardware",
+      "passed": true,
+      "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "imageAssertions": {
+        "visorPixels": 428,
+        "changedPosePixels": 29176
+      }
+    },
+    {
+      "name": "smoke-edge",
+      "passed": true,
+      "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "imageAssertions": {
+        "visorPixels": 426,
+        "changedPosePixels": 29430
+      }
+    }
+  ],
+  "videos": [
+    {
+      "path": "docs/infantry/animations/idle.mp4",
+      "seconds": 2.4,
+      "bytes": 58265
+    },
+    {
+      "path": "docs/infantry/animations/run.mp4",
+      "seconds": 0.833333,
+      "bytes": 51853
+    },
+    {
+      "path": "docs/infantry/animations/fire.mp4",
+      "seconds": 0.6,
+      "bytes": 20725
+    },
+    {
+      "path": "docs/infantry/browser/20-mixed.mp4",
+      "seconds": 3,
+      "bytes": 203502
+    },
+    {
+      "path": "docs/infantry/browser/100-mixed.mp4",
+      "seconds": 3,
+      "bytes": 258038
+    },
+    {
+      "path": "docs/infantry/browser/200-mixed.mp4",
+      "seconds": 3,
+      "bytes": 422202
+    }
+  ],
+  "hardwareCaptures": 52,
+  "softwareCaptures": 12,
+  "gameRegression": {
+    "passed": false,
+    "identicalFailureOnBaseline": true,
+    "baselineCommit": "919aa20",
+    "assertion": "Trusted canvas click failed to capture pointer"
+  },
+  "physicalMobileVerified": false,
+  "independentBrowserEngineVerified": false,
+  "longLeakTestVerified": false
+}

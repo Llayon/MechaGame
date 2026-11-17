@@ -1,0 +1,3792 @@
+{
+  "createdAt": "2026-11-17T16:35:09.840Z",
+  "software": false,
+  "switches": [
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 4.6603000000000065
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 167.92410000000018
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 159.3501000000001
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 166.72890000000007
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 170.1322
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 159.53129999999965
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "preset": "high",
+        "shadows": false,
+        "batches": 1,
+        "camera": "medium"
+      },
+      "latencyMs": 167.59000000000015
+    },
+    {
+      "settings": {
+        "count": 1,
+        "animation": "idle",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 168.0030999999999
+    },
+    {
+      "settings": {
+        "count": 1,
+        "animation": "run",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 165.91649999999936
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 166.24259999999776
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 164.15820000000167
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 163.60740000000078
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 162.56209999999555
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 165.1785000000018
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 161.6895000000004
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 163.87189999999828
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 164.76580000000104
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 161.56570000000647
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 163.0581999999995
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 166.9149000000034
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 156.99629999999888
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 169.89680000000226
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 166.94199999999546
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 159.93520000000717
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 162.10869999999704
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 159.82730000000447
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 163.04569999998785
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": true,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 304.3485000000219
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "close",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 159.1419000000169
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 1,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": true,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 163.13569999998435
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": true,
+        "camera": "medium",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 161.28750000000582
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "close",
+        "matricesEveryFrame": false,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 161.67410000000382
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "batches": 10,
+        "shadows": false,
+        "camera": "medium",
+        "matricesEveryFrame": true,
+        "individualPhases": true,
+        "travel": false,
+        "preset": "high"
+      },
+      "latencyMs": 161.87830000001122
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "batches": 1,
+        "camera": "medium",
+        "shadows": false,
+        "matricesEveryFrame": false
+      },
+      "latencyMs": 162.22039999999106
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "idle"
+      },
+      "latencyMs": 162.18109999998705
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "run"
+      },
+      "latencyMs": 167.03140000000712
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "run"
+      },
+      "latencyMs": 163.5003999999899
+    },
+    {
+      "settings": {
+        "count": 100,
+        "animation": "idle"
+      },
+      "latencyMs": 165.10559999998077
+    },
+    {
+      "settings": {
+        "count": 200,
+        "animation": "run"
+      },
+      "latencyMs": 158.3864000000176
+    },
+    {
+      "settings": {
+        "count": 20,
+        "animation": "run"
+      },
+      "latencyMs": 166.77999999999884
+    }
+  ],
+  "scenarios": [
+    {
+      "count": 1,
+      "animation": "idle",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 1,
+      "animation": "run",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "idle",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "idle",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "run",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "run",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 20,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "idle",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "idle",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "run",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "run",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 100,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "idle",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "idle",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "run",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "run",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": true,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "close",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 1,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": true
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": true,
+      "camera": "medium",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "close",
+      "matricesEveryFrame": false
+    },
+    {
+      "count": 200,
+      "animation": "mixed",
+      "batches": 10,
+      "shadows": false,
+      "camera": "medium",
+      "matricesEveryFrame": true
+    }
+  ],
+  "warmupMs": 1000,
+  "captureMs": 2000,
+  "repeats": 2,
+  "viewport": [
+    1280,
+    800
+  ],
+  "reports": [
+    {
+      "scenario": 0,
+      "repeat": 0,
+      "settings": {
+        "count": 1,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.02219308087691,
+        "meanMs": 16.660504201380146,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 17.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 1249,
+        "trianglesPeak": 1249
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.3886,
+        "p95": 1.51284,
+        "p99": 1.54336,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 0,
+      "repeat": 1,
+      "settings": {
+        "count": 1,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.976815685774376,
+        "meanMs": 16.67310924339695,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.799999952316284,
+        "worstMs": 17.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 1249,
+        "trianglesPeak": 1249
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.41924,
+        "p95": 1.52044,
+        "p99": 1.62928,
+        "samples": 118
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 1,
+      "repeat": 0,
+      "settings": {
+        "count": 1,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798326178807,
+        "meanMs": 16.667226890555952,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 17.700000047683716,
+        "worstMs": 18.100000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 1249,
+        "trianglesPeak": 1249
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.41772,
+        "p95": 1.5078,
+        "p99": 1.54216,
+        "samples": 118
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 1,
+      "repeat": 1,
+      "settings": {
+        "count": 1,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.992882201144106,
+        "meanMs": 16.66864406759456,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.100000023841858,
+        "p99Ms": 17.399999976158142,
+        "worstMs": 17.5,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 1249,
+        "trianglesPeak": 1249
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 0.60248,
+        "p95": 1.47948,
+        "p99": 1.53752,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 2,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.98890961370929,
+        "meanMs": 16.669747899059487,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 17.30000001192093,
+        "worstMs": 17.400000035762787,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59492,
+        "p95": 1.6794,
+        "p99": 1.7942,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 2,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.0131121092495,
+        "meanMs": 16.66302520988368,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.599999964237213,
+        "p99Ms": 17.799999952316284,
+        "worstMs": 18.399999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.60304,
+        "p95": 1.67652,
+        "p99": 1.71548,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 3,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.96774843673422,
+        "meanMs": 16.67563025240137,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.69999998807907,
+        "worstMs": 18.100000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.6008,
+        "p95": 1.67588,
+        "p99": 1.69204,
+        "samples": 118
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 3,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.9858856735986,
+        "meanMs": 16.670588235394295,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 18.200000047683716,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999996423721313,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.60244,
+        "p95": 1.67468,
+        "p99": 1.7034,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 4,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.016138793264346,
+        "meanMs": 16.662184874049757,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 18.899999976158142,
+        "worstMs": 19.600000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.60036,
+        "p95": 1.72208,
+        "p99": 1.73764,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 4,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 120,
+        "fps": 60.0510433883118,
+        "meanMs": 16.652499999602636,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.399999976158142,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 18.100000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 121
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 121
+      },
+      "gpuTimeMs": {
+        "p50": 1.59992,
+        "p95": 1.67624,
+        "p99": 1.7006,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 5,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.98890961370929,
+        "meanMs": 16.669747899059487,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 18,
+        "worstMs": 18,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59436,
+        "p95": 1.67824,
+        "p99": 1.70904,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 5,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.98983223182511,
+        "meanMs": 16.66949152542373,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.5,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 18.5,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59576,
+        "p95": 1.66308,
+        "p99": 1.69696,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 6,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798326178807,
+        "meanMs": 16.667226890555952,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.5,
+        "p99Ms": 18,
+        "worstMs": 18,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59772,
+        "p95": 1.67452,
+        "p99": 1.70848,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 6,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.977635458691665,
+        "meanMs": 16.672881355730155,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.400000035762787,
+        "p99Ms": 17.5,
+        "worstMs": 17.599999964237213,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59636,
+        "p95": 1.68052,
+        "p99": 1.73924,
+        "samples": 119
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 7,
+      "repeat": 0,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.983733225251655,
+        "meanMs": 16.671186440576943,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.400000035762787,
+        "worstMs": 19.19999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.58828,
+        "p95": 1.66256,
+        "p99": 1.70496,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 7,
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.010085728693895,
+        "meanMs": 16.66386554621849,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.399999976158142,
+        "p99Ms": 17.69999998807907,
+        "worstMs": 20.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 24942,
+        "trianglesPeak": 24942
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.59784,
+        "p95": 1.678,
+        "p99": 1.71132,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 8,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99495840685657,
+        "meanMs": 16.668067226890756,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.899999976158142,
+        "p99Ms": 18.099999964237213,
+        "worstMs": 18.200000047683716,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.90288,
+        "p95": 1.98588,
+        "p99": 2.06788,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 8,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.013112107445544,
+        "meanMs": 16.66302521038456,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 17.69999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.90344,
+        "p95": 1.97216,
+        "p99": 2.00376,
+        "samples": 117
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 9,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.010085728693895,
+        "meanMs": 16.66386554621849,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89312,
+        "p95": 1.94696,
+        "p99": 1.99624,
+        "samples": 117
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 9,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00403388499158,
+        "meanMs": 16.66554621838722,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.600000023841858,
+        "p99Ms": 18,
+        "worstMs": 39.69999998807907,
+        "slowOver33Ms": 1,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89256,
+        "p95": 1.96312,
+        "p99": 2.01028,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 10,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.982862040138166,
+        "meanMs": 16.67142857122822,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.299999952316284,
+        "p99Ms": 17.5,
+        "worstMs": 18.5,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.88484,
+        "p95": 1.96712,
+        "p99": 1.9898,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 10,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.977635458691665,
+        "meanMs": 16.672881355730155,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.5,
+        "p99Ms": 17.5,
+        "worstMs": 18.399999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89788,
+        "p95": 1.98128,
+        "p99": 2.00576,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 11,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.0131121092495,
+        "meanMs": 16.66302520988368,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.5,
+        "p99Ms": 18.100000023841858,
+        "worstMs": 18.600000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89104,
+        "p95": 1.97212,
+        "p99": 1.99128,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 11,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99495840685657,
+        "meanMs": 16.668067226890756,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.399999976158142,
+        "p99Ms": 17.69999998807907,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89828,
+        "p95": 1.95824,
+        "p99": 2.00544,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 12,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.97379296477923,
+        "meanMs": 16.673949579731758,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.5,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 17.69999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89592,
+        "p95": 1.9878,
+        "p99": 2.0192,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 12,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.010085728693895,
+        "meanMs": 16.66386554621849,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 19.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89864,
+        "p95": 1.97344,
+        "p99": 2.04876,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 13,
+      "repeat": 0,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.98890961370929,
+        "meanMs": 16.669747899059487,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.399999976158142,
+        "p99Ms": 17.69999998807907,
+        "worstMs": 17.69999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.8922,
+        "p95": 1.97972,
+        "p99": 2.01644,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 13,
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00705965335551,
+        "meanMs": 16.664705882553292,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 18,
+        "worstMs": 18.19999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 124702,
+        "trianglesPeak": 124702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.89,
+        "p95": 1.95204,
+        "p99": 1.9768,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 14,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.016138793264346,
+        "meanMs": 16.662184874049757,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.5,
+        "worstMs": 19.30000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.2694,
+        "p95": 2.34856,
+        "p99": 2.39116,
+        "samples": 117
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 14,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798325998503,
+        "meanMs": 16.66722689105683,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 16.899999976158142,
+        "p99Ms": 16.900000035762787,
+        "worstMs": 17,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.34788,
+        "p95": 1.4204,
+        "p99": 1.49116,
+        "samples": 120
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 15,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.96239646396139,
+        "meanMs": 16.677118643865747,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 18.80000001192093,
+        "worstMs": 19.69999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 119
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 119
+      },
+      "gpuTimeMs": {
+        "p50": 2.22472,
+        "p95": 2.30424,
+        "p99": 2.35632,
+        "samples": 112
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 15,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "idle",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.982862040138166,
+        "meanMs": 16.67142857122822,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.600000023841858,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.25668,
+        "p95": 2.3254,
+        "p99": 2.34976,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 16,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00705965335551,
+        "meanMs": 16.664705882553292,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.400000035762787,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.27744,
+        "p95": 2.3676,
+        "p99": 2.40616,
+        "samples": 118
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 16,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.991933856911515,
+        "meanMs": 16.668907563225563,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.400000035762787,
+        "p99Ms": 17.700000047683716,
+        "worstMs": 17.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.27344,
+        "p95": 2.35224,
+        "p99": 2.4228,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 17,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99495840685657,
+        "meanMs": 16.668067226890756,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.5,
+        "p99Ms": 17.80000001192093,
+        "worstMs": 18.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999996423721313,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.27836,
+        "p95": 2.3594,
+        "p99": 2.40296,
+        "samples": 117
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 17,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "run",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.007059655159104,
+        "meanMs": 16.664705882052413,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17,
+        "p99Ms": 17.19999998807907,
+        "worstMs": 17.599999964237213,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.3368,
+        "p95": 2.27552,
+        "p99": 2.3292,
+        "samples": 110
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 18,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00100842175217,
+        "meanMs": 16.666386554221145,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.100000023841858,
+        "p99Ms": 17.30000001192093,
+        "worstMs": 18.80000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999996423721313,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.36076,
+        "p95": 2.314,
+        "p99": 2.38072,
+        "samples": 118
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 18,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.982862040138166,
+        "meanMs": 16.67142857122822,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 17.400000035762787,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.4178,
+        "p95": 2.35568,
+        "p99": 2.4732,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 19,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00403388318817,
+        "meanMs": 16.6655462188881,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.299999952316284,
+        "p99Ms": 20,
+        "worstMs": 21,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.36996,
+        "p95": 2.36876,
+        "p99": 2.44556,
+        "samples": 115
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 19,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99495840685657,
+        "meanMs": 16.668067226890756,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.099999964237213,
+        "p99Ms": 17.399999976158142,
+        "worstMs": 17.5,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.26948,
+        "p95": 2.34844,
+        "p99": 2.44984,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 20,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798326178807,
+        "meanMs": 16.667226890555952,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.600000023841858,
+        "worstMs": 17.899999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 498802,
+        "trianglesPeak": 498802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.70568,
+        "p95": 2.81012,
+        "p99": 2.8784,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 20,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 60.00508517670989,
+        "meanMs": 16.665254237288135,
+        "p50Ms": 16.600000023841858,
+        "p95Ms": 17.099999964237213,
+        "p99Ms": 17.30000001192093,
+        "worstMs": 18.30000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 498802,
+        "trianglesPeak": 498802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.71596,
+        "p95": 2.8388,
+        "p99": 2.87704,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 21,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "close"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00403388499158,
+        "meanMs": 16.66554621838722,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17,
+        "p99Ms": 17.100000023841858,
+        "worstMs": 17.400000035762787,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.55028,
+        "p95": 2.775,
+        "p99": 2.8224,
+        "samples": 116
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 21,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "close"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00100841994894,
+        "meanMs": 16.666386554722024,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 17.399999976158142,
+        "worstMs": 17.599999964237213,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.5088,
+        "p95": 2.82304,
+        "p99": 2.88676,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 22,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00403388318817,
+        "meanMs": 16.6655462188881,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17,
+        "p99Ms": 17.19999998807907,
+        "worstMs": 17.19999998807907,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999996423721313,
+          "p95": 0.19999998807907104,
+          "p99": 0.20000004768371582,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 24000,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.293,
+        "p95": 2.37856,
+        "p99": 2.45364,
+        "samples": 117
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 22,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 118,
+        "fps": 59.995932478790316,
+        "meanMs": 16.667796610270518,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17,
+        "p99Ms": 17,
+        "worstMs": 17,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 3,
+        "drawCallsPeak": 3,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999996423721313,
+          "p95": 0.19999998807907104,
+          "p99": 0.20000004768371582,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 24000,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.29188,
+        "p95": 2.43192,
+        "p99": 2.47532,
+        "samples": 113
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 23,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.007059655159104,
+        "meanMs": 16.664705882052413,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 18.200000047683716,
+        "worstMs": 20.399999976158142,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 22,
+        "drawCallsPeak": 22,
+        "trianglesMean": 498802,
+        "trianglesPeak": 498802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.75548,
+        "p95": 2.8852,
+        "p99": 2.9964,
+        "samples": 110
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 23,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00705965335551,
+        "meanMs": 16.664705882553292,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.19999998807907,
+        "p99Ms": 18.19999998807907,
+        "worstMs": 24.30000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 22,
+        "drawCallsPeak": 22,
+        "trianglesMean": 498802,
+        "trianglesPeak": 498802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.10000002384185791,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.71128,
+        "p95": 2.85484,
+        "p99": 2.93876,
+        "samples": 110
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 24,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "close"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798326178807,
+        "meanMs": 16.667226890555952,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17,
+        "p99Ms": 17.099999964237213,
+        "worstMs": 17.099999964237213,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 10,
+        "drawCallsPeak": 10,
+        "trianglesMean": 199522,
+        "trianglesPeak": 199522
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.26228,
+        "p95": 1.3724,
+        "p99": 2.44208,
+        "samples": 111
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 24,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "close"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 59.99798326178807,
+        "meanMs": 16.667226890555952,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.399999976158142,
+        "p99Ms": 17.69999998807907,
+        "worstMs": 19.299999952316284,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 10,
+        "drawCallsPeak": 10,
+        "trianglesMean": 199522,
+        "trianglesPeak": 199522
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999996423721313,
+          "p99": 0.10000002384185791,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 1.2766,
+        "p95": 2.51328,
+        "p99": 2.6062,
+        "samples": 106
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 25,
+      "repeat": 0,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.013112107445544,
+        "meanMs": 16.66302521038456,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.100000023841858,
+        "p99Ms": 17.30000001192093,
+        "worstMs": 17.30000001192093,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999996423721313,
+          "p95": 0.19999998807907104,
+          "p99": 0.20000004768371582,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 24000,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.28204,
+        "p95": 2.39124,
+        "p99": 2.42948,
+        "samples": 112
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    },
+    {
+      "scenario": 25,
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 119,
+        "fps": 60.00705965335551,
+        "meanMs": 16.664705882553292,
+        "p50Ms": 16.69999998807907,
+        "p95Ms": 17.30000001192093,
+        "p99Ms": 17.5,
+        "worstMs": 17.600000023841858,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 12,
+        "drawCallsPeak": 12,
+        "trianglesMean": 249402,
+        "trianglesPeak": 249402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999996423721313,
+          "p95": 0.10000002384185791,
+          "p99": 0.19999998807907104,
+          "samples": 120
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 24000,
+        "uniformUpdates": 120
+      },
+      "gpuTimeMs": {
+        "p50": 2.29824,
+        "p95": 2.36476,
+        "p99": 2.39868,
+        "samples": 114
+      },
+      "capabilities": {
+        "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "softwareMode": false,
+        "webgl2": true,
+        "maxTextureSize": 16384,
+        "vertexTextureUnits": 16,
+        "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+        "floatRenderTargetRequired": false,
+        "floatLinearFilteringRequired": false,
+        "gpuTimerAvailable": true,
+        "physicalMobileVerified": false
+      }
+    }
+  ],
+  "limitations": [
+    "Short isolated lab measurements, not a full mission acceptance test",
+    "DEVICE QA NOT VERIFIED: no physical phone",
+    "Not a smartphone benchmark, including the software run"
+  ]
+}

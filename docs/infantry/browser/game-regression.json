@@ -1,0 +1,7 @@
+{
+  "createdAt": "2026-11-17T16:38:29.264Z",
+  "script": "scripts/control-smoke.mjs",
+  "exitCode": 1,
+  "softwareMode": true,
+  "notHardwareBenchmark": true
+}

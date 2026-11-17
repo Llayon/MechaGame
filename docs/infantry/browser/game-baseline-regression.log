@@ -1,0 +1,13 @@
+SCENE INVENTORY baseline {"meshes":2746,"triangles":578651,"sections":["combat","foliage","mech","shafts","structures","terrain","unclassified"]}
+INITIAL {"aimYaw":2.528772451424552,"elevation":-0.025,"precise":false,"reticleVisible":true,"turretYaw":0,"hullYaw":2.528772451424552,"pendingYaw":0,"pendingElevation":0,"pointerFire":false,"keyboardFire":false,"pointerLocked":false}
+GAMEPLAY-AIM-FAIL Error: Trusted canvas click failed to capture pointer
+LAST AIM {"aimYaw":2.528772451424552,"elevation":-0.025,"precise":false,"reticleVisible":true,"turretYaw":-0.01583858928560969,"hullYaw":2.528772451424552,"pendingYaw":0,"pendingElevation":0,"pointerFire":true,"keyboardFire":false,"pointerLocked":false}
+file:///D:/Programms/Max/mechagame/scripts/control-smoke.mjs:15
+  throw Error(message+(last?' '+String(last):''));
+        ^
+
+Error: Trusted canvas click failed to capture pointer
+    at waitFor (file:///D:/Programms/Max/mechagame/scripts/control-smoke.mjs:15:9)
+    at async file:///D:/Programms/Max/mechagame/scripts/control-smoke.mjs:95:3
+
+Node.js v24.14.0

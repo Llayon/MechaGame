@@ -18,7 +18,9 @@ node scripts/infantry/smoke.mjs --hardware --edge
 node scripts/infantry/benchmark.mjs
 node scripts/infantry/benchmark.mjs --software
 node scripts/infantry/video.mjs
+node scripts/infantry/regression.mjs
 node scripts/infantry/report.mjs
+node scripts/infantry/verify_artifacts.mjs
 npm run preview -- --host 0.0.0.0 --port 3000
 ```
 
