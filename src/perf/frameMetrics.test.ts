@@ -48,3 +48,14 @@ test('stats of empty intervals do not fabricate FPS', () => {
   assert.equal(stats.fps, 0);
   assert.equal(stats.sampleCount, 0);
 });
+
+test('extremely slow software WebGL frames are measured, not silently discarded', () => {
+  const p = new FrameProfiler();
+  p.setEnabled(true);
+  p.recordFrame(0, counters);
+  p.recordFrame(4000, counters);
+  p.recordFrame(9000, counters);
+  assert.equal(p.getLive().stats.sampleCount, 2);
+  assert.ok(p.getLive().stats.fps > 0.2 && p.getLive().stats.fps < 0.3);
+  assert.equal(p.getLive().stats.slowOver50Ms, 2);
+});

@@ -140,7 +140,7 @@ export class FrameProfiler {
     this.previousFrameTime = now;
     if (previous !== null) {
       const ms = now - previous;
-      if (ms > 0 && ms <= 1000) {
+      if (ms > 0 && Number.isFinite(ms)) {
         const sample = { atMs: now, frameMs: ms, ...counters };
         this.rolling.push(sample);
         if (this.rolling.length > 240) this.rolling.shift();

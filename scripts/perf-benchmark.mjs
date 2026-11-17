@@ -11,7 +11,7 @@ import { join } from 'node:path';
 const ORIGIN = process.env.BENCH_ORIGIN || 'http://127.0.0.1:4173';
 const CHROME = process.env.CHROME || 'google-chrome';
 const DEST = process.env.BENCH_OUTPUT || 'benchmarks/results';
-const DURATION_MS = Number(process.env.BENCH_DURATION_MS || 8000);
+const DURATION_MS = Number(process.env.BENCH_DURATION_MS || 20000);
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const scenarios = [
@@ -141,7 +141,7 @@ async function measure(scenario) {
       return data?.schemaVersion === 1 ? data : null;
     }, DURATION_MS + 18000, 'Performance capture did not finish');
 
-    if (report.rendererStats.sampleCount < 3) {
+    if (report.rendererStats.sampleCount < 1) {
       const diagnostics = await cdp.evaluate(
         '({ visibility: document.visibilityState, state: document.body.dataset.state, url: location.href, canvas: document.querySelector("canvas")?.outerHTML.slice(0,600), profiler: window.__mechaPerf?.getLive(), errors: window.__perfPageErrors })'
       );
@@ -155,6 +155,10 @@ async function measure(scenario) {
     }
     if (!(report.rendererStats.fps > 0) || !Number.isFinite(report.rendererStats.p95Ms)) {
       throw Error('Invalid report FPS or p95');
+    }
+    if (report.rendererStats.sampleCount < 10) {
+      console.warn('LOW-CONFIDENCE BENCHMARK: only ' + report.rendererStats.sampleCount +
+        ' frame intervals; numbers reflect very slow software GPU rendering.');
     }
     report.automation = {
       scenario: scenario.id,
