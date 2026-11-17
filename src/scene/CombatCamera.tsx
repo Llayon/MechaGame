@@ -6,6 +6,7 @@ import type { MechTelemetrySnapshot } from '../map/mechKinematics';
 import { getWalkableSurfaceY } from '../map/mechKinematics';
 import { castCombatRay } from '../map/worldRaycaster';
 import { aimDirection } from '../game/combatAim';
+import { COMBAT_CAMERA_DEFAULT, COMBAT_CAMERA_PRECISION } from '../game/combatCameraSettings';
 import type { CombatAimState } from '../game/combatAim';
 
 interface Props {
@@ -28,7 +29,7 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
   const lastResetNonce = useRef(resetNonce);
   const cameraTarget = useRef(new THREE.Vector3());
   const cameraLook = useRef(new THREE.Vector3());
-  const lastSafeDistance = useRef(13);
+  const lastSafeDistance = useRef(COMBAT_CAMERA_DEFAULT.distance);
 
   useEffect(() => {
     if (!active) {
@@ -51,13 +52,14 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
     const c = Math.cos(aim.yaw);
     const s = Math.sin(aim.yaw);
 
-    const distance = precise ? 9.8 : 13.1;
-    const shoulder = precise ? 1.35 : 2.15;
+    const settings = precise ? COMBAT_CAMERA_PRECISION : COMBAT_CAMERA_DEFAULT;
+    const distance = settings.distance;
+    const shoulder = settings.shoulderOffset;
     const eyeY = mech.y + (mech.isCrouched ? 2.45 : 3.1);
     const focalPoint = cameraLook.current.set(mech.x, eyeY, mech.z);
     const wanted = cameraTarget.current.set(
       mech.x - s * distance + c * shoulder,
-      mech.y + (precise ? 4.7 : 5.8) + aim.elevation * 1.4,
+      mech.y + settings.heightAboveMech + aim.elevation * 1.4,
       mech.z - c * distance - s * shoulder,
     );
     wanted.y = Math.max(wanted.y, getWalkableSurfaceY(wanted.x, wanted.z, mech.y).y + 1.5);
@@ -107,7 +109,7 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
     camera.lookAt(camera.position.x + dx * 100, camera.position.y + dy * 100,
       camera.position.z + dz * 100);
     const perspective = camera as THREE.PerspectiveCamera;
-    const fov = precise ? 29 : 48;
+    const fov = settings.fovDegrees;
     const nextFov = first ? fov : THREE.MathUtils.damp(perspective.fov, fov, 10, delta);
     if (Math.abs(perspective.fov - nextFov) > 0.01) {
       perspective.fov = nextFov;
