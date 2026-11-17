@@ -85,6 +85,11 @@ class CombatAudioEngine {
 
   stopEngine(): void { this.samples.stopEngine(); }
 
+  /** Fade previous footfalls/hydraulics when movement inputs are released. */
+  stopLocomotion(immediate = false): void {
+    this.samples.stopLocomotion(immediate ? 0 : 0.085);
+  }
+
   playMechFootstep(inWater: boolean): void {
     if (!this.ensureContext()) return;
     // pgi's single mech_step_002 is the complete primary foot contact.
@@ -93,14 +98,16 @@ class CombatAudioEngine {
       gain: inWater ? 0.22 : 0.35,
       rate: 0.96 + Math.random() * 0.08,
       lowpass: inWater ? 2300 : 7200,
+      group: 'locomotion',
     })) return;
 
     // Non-blocking legacy fallback until this file is decoded / if unavailable.
     if (this.samples.playVariant(['mech_step_1', 'mech_step_2', 'mech_step_3'], {
       gain: inWater ? 0.24 : 0.34,
       rate: 0.91 + Math.random() * 0.14,
+      group: 'locomotion',
     }) && !inWater) {
-      this.samples.play('foot_metal', { gain: 0.12, rate: 0.94 });
+      this.samples.play('foot_metal', { gain: 0.12, rate: 0.94, group: 'locomotion' });
     }
   }
 
@@ -108,6 +115,7 @@ class CombatAudioEngine {
     if (!this.ensureContext()) return;
     this.samples.playVariant(['hydraulic_a', 'hydraulic_b'], {
       gain: 0.095, rate: 0.88 + Math.random() * 0.18,
+      group: 'locomotion',
     });
   }
 

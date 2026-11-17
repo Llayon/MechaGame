@@ -24,6 +24,8 @@ export interface SamplePlayOptions {
   rate?: number;
   lowpass?: number;
   delay?: number;
+  /** Stop this sound alongside footstep and hydraulic voices when locomotion ends. */
+  group?: 'locomotion';
 }
 
 export function soundAssetUrl(name: IndustrialSample, base: string, format: 'ogg' | 'mp3' = 'ogg'): string {
@@ -48,6 +50,7 @@ export class IndustrialSampleBank {
   private compressor: DynamicsCompressorNode | null = null;
   private voices = 0;
   private readonly maxVoices = 22;
+  private readonly locomotionVoices = new Set<{ source: AudioBufferSourceNode; gain: GainNode }>();
   private engine: AudioBufferSourceNode | null = null;
   private engineGain: GainNode | null = null;
   private engineFilter: BiquadFilterNode | null = null;
@@ -139,14 +142,41 @@ export class IndustrialSampleBank {
       filter.connect(gain);
     } else src.connect(gain);
     gain.connect(this.compressor ?? ctx.destination);
+    const movementVoice = opts.group === 'locomotion' ? { source: src, gain } : null;
+    if (movementVoice) this.locomotionVoices.add(movementVoice);
     this.voices++;
     src.onended = () => {
+      if (movementVoice) this.locomotionVoices.delete(movementVoice);
       this.voices = Math.max(0, this.voices - 1);
       src.disconnect();
       gain.disconnect();
     };
     src.start(now);
     return true;
+  }
+
+  /** Stop only locomotion tails when the mech stops; gunfire, explosions and diesel are untouched.
+   * A short fade avoids clicks; onended still releases source nodes and voice budget.
+   */
+  stopLocomotion(fadeSeconds = 0.085): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const duration = Math.max(0, Math.min(fadeSeconds, 0.25));
+    for (const voice of this.locomotionVoices) {
+      const amp = voice.gain.gain;
+      amp.cancelScheduledValues(now);
+      if (duration > 0) {
+        amp.setValueAtTime(Math.max(0.001, amp.value), now);
+        amp.linearRampToValueAtTime(0.001, now + duration);
+      } else {
+        amp.setValueAtTime(0, now);
+      }
+      try { voice.source.stop(now + duration + (duration > 0 ? 0.005 : 0)); }
+      catch { /* already ended */ }
+    }
+    // Tracked voices still clean up via onended. Clearing now makes repeated stops idempotent.
+    this.locomotionVoices.clear();
   }
 
   playVariant(names: readonly IndustrialSample[], opts: SamplePlayOptions = {}): boolean {

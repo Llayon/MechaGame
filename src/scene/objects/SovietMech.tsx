@@ -92,6 +92,7 @@ export function SovietMech({
   const rig = useMemo(() => buildMechModel(mats), [mats]);
   const simRef = useRef(createMechState());
   const prevResetNonceRef = useRef(resetNonce);
+  const wasLocomotingRef = useRef(false);
 
   // Dispose geometries & leftover particles on unmount
   useEffect(() => {
@@ -116,6 +117,8 @@ export function SovietMech({
       p.mesh.parent?.remove(p.mesh);
       if (p.mat !== mats.brassMat) p.mat.dispose();
     });
+    combatAudio.stopLocomotion(true);
+    wasLocomotingRef.current = false;
     const freshSim = createMechState();
     simRef.current = freshSim;
     const zeroMat = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -163,11 +166,27 @@ export function SovietMech({
     invalidate();
   }, [resetNonce, rig, mats, mechPoseRef, combatRef, combatTelemetryRef, invalidate]);
 
-  // Ensure a diesel loop never survives switching to the map or unmounting.
+  // Never let recorded footsteps from the previous movement/session leak into overview.
   useEffect(() => {
-    if (!driveMode) combatAudio.stopEngine();
-    return () => combatAudio.stopEngine();
+    if (!driveMode) {
+      combatAudio.stopEngine();
+      combatAudio.stopLocomotion(true);
+      wasLocomotingRef.current = false;
+    }
+    return () => {
+      combatAudio.stopEngine();
+      combatAudio.stopLocomotion(true);
+      wasLocomotingRef.current = false;
+    };
   }, [driveMode]);
+
+  useEffect(() => {
+    if (paused) {
+      // Suspension freezes Web Audio time; stop those sources now so resume is quiet.
+      combatAudio.stopLocomotion(true);
+      wasLocomotingRef.current = false;
+    }
+  }, [paused]);
 
   // Reset initial pose cleanly on mount
   useEffect(() => {
@@ -220,6 +239,12 @@ export function SovietMech({
     }
 
     const control = resolveMechControl(driveInputRef.current, canControl, combat.dashTimer > 0);
+    const locomoting = canControl && control.isMoving;
+    if (!locomoting && wasLocomotingRef.current) {
+      // Cut active sample tails on the first stationary frame, without killing gunfire.
+      combatAudio.stopLocomotion();
+    }
+    wasLocomotingRef.current = locomoting;
     const activeFire = control.isFiring && !combat.weaponOverheated;
 
     // Step combat sim first so hitstop freezes movement/physics cleanly while visual timers tick
@@ -253,7 +278,7 @@ export function SovietMech({
     const ik = stepMechIK(rig, sim, dt, control, motion);
     // Event-driven foley: no artificial footsteps generated from a wall-clock timer.
     // Actual IK contacts trigger the weight of the mech; liftoffs trigger hydraulics.
-    if (canControl) {
+    if (locomoting) {
       for (const impact of ik.footImpacts) {
         combatAudio.playMechFootstep(ik.inWater);
       }
