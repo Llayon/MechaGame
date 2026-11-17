@@ -17,7 +17,10 @@ jobs:
         with:
           persist-credentials: true
       - name: Check audio encoder
-        run: ffmpeg -version | head -n 1
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
       - name: Download CC0 and transcode
         run: python3 scripts/import-industrial-audio.py
       - name: Commit sourced binary assets to feature branch
