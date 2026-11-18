@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "variant": "preserved-twist",
+  "roundtripMaximumMatrixError": 1.3589859008789062e-05,
+  "ikPlantedFootMaximumErrorUnits": 1.3584039581584593e-05,
+  "ikPlantedFootMaximumErrorMeters": 5.0940148430942223e-05,
+  "ikBoneLengthMaximumErrorUnits": 0.002077410890544709,
+  "independentGloveMotionUnits": 0.014092049229843997,
+  "stockIkMaximumRelativeCompression": 0.020158765768291172,
+  "qaAction": "QA_IK_PlantedFeet",
+  "clips": [
+    "idle",
+    "walk",
+    "run",
+    "crouch",
+    "crouchWalk",
+    "jump"
+  ],
+  "lods": [
+    3999,
+    1999,
+    999
+  ],
+  "physicalDeviceQA": "NOT VERIFIED",
+  "note": "Planted-foot QA verifies IK functionality; stock soft IK shows small compression. Playback clips use FK. This does not prove locomotion is free of all foot sliding"
+}

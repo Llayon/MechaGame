@@ -1,0 +1,80 @@
+{
+  "variant": "standard",
+  "restoredAxialTwist": false,
+  "blender": "5.2.0 LTS",
+  "rigifyVersion": [
+    0,
+    6,
+    10
+  ],
+  "generatedBones": 146,
+  "deformBones": 17,
+  "metarigBones": 19,
+  "compactBones": 18,
+  "fidelity": [
+    {
+      "clip": "idle",
+      "maximumDeformationMatrixError": 0.43169960379600525,
+      "maximumJointPositionError": 2.1932597198881135e-07
+    },
+    {
+      "clip": "walk",
+      "maximumDeformationMatrixError": 0.3848213702440262,
+      "maximumJointPositionError": 3.337203127736024e-07
+    },
+    {
+      "clip": "run",
+      "maximumDeformationMatrixError": 0.41164982318878174,
+      "maximumJointPositionError": 5.134012308456418e-07
+    },
+    {
+      "clip": "crouch",
+      "maximumDeformationMatrixError": 0.0050554972626066785,
+      "maximumJointPositionError": 2.3825117330437867e-07
+    },
+    {
+      "clip": "crouchWalk",
+      "maximumDeformationMatrixError": 0.0845408522076685,
+      "maximumJointPositionError": 5.611850307365063e-07
+    },
+    {
+      "clip": "jump",
+      "maximumDeformationMatrixError": 0.005055059816700513,
+      "maximumJointPositionError": 4.1560889464940546e-07
+    }
+  ],
+  "compactExportMatrixError": 6.9141387939453125e-06,
+  "lods": [
+    {
+      "level": 0,
+      "glb": "infantry-demo-lod0.glb",
+      "bytes": 2790876,
+      "triangles": 3999,
+      "bones": 18,
+      "repairedTangents": 0
+    },
+    {
+      "level": 1,
+      "glb": "infantry-demo-lod1.glb",
+      "bytes": 1030052,
+      "triangles": 1999,
+      "bones": 18,
+      "repairedTangents": 0
+    },
+    {
+      "level": 2,
+      "glb": "infantry-demo-lod2.glb",
+      "bytes": 456196,
+      "triangles": 999,
+      "bones": 18,
+      "repairedTangents": 0
+    }
+  ],
+  "sourceAssetSha256": "cec92afb010d4be9978fd41fa8d0d7ef73c8fe3899ec45bf7a1a7e6ba94abc32",
+  "notes": [
+    "Armor retains deliberate weights; no automatic heat weighting",
+    "Gloves receive separate hand bones; rigid boots retain foot weights (toe controls are reserved)",
+    "Rigify generation is a tooling change, not automatic animation art approval",
+    "GPU texture atlas is a subsequent step; this export is compact skeletal GLB"
+  ]
+}
