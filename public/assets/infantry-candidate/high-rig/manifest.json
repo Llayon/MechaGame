@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "height": 0.48,
+  "metersPerUnit": 3.75,
+  "forward": "+Z",
+  "weaponGrip": {
+    "position": [
+      0.03709998354315758,
+      0.018599972128868103,
+      0.025400009006261826
+    ],
+    "quaternion": [
+      -0.6178140044212341,
+      -0.329960435628891,
+      -0.7086114883422852,
+      0.0854504406452179
+    ]
+  },
+  "supportGrip": {
+    "position": [
+      -0.03689998388290405,
+      0.017999980598688126,
+      0.0238999854773283
+    ]
+  },
+  "clips": [
+    {
+      "name": "idle",
+      "duration": 3.1,
+      "loop": true,
+      "movementSpeed": 0.0,
+      "source": "mixamo",
+      "sourceClip": "Rifle Aiming Idle.fbx",
+      "sourceSha256": "fa61cee7e34f500cc09d1798675207f6084d925186db49868fd974c2939db680",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": 0.0006415062816813588,
+      "groundMaxBeforeCorrection": 0.0006544765783473849,
+      "sourceFrames": [
+        1.0,
+        94.0
+      ],
+      "lowerBodySource": "idle",
+      "upperBodySource": "Rifle Aiming Idle.fbx"
+    },
+    {
+      "name": "walk",
+      "duration": 1.3,
+      "loop": true,
+      "movementSpeed": 0.27774058139094937,
+      "source": "mixamo",
+      "sourceClip": "Rifle Walk.fbx",
+      "sourceSha256": "d8d3adf90e5b68987e5da0f8eec94b2d3a9f4500d0e74b7f9481864789d1126b",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": -0.02139885351061821,
+      "groundMaxBeforeCorrection": 0.0004305932088755071,
+      "sourceFrames": [
+        1.0,
+        40.0
+      ],
+      "lowerBodySource": "walk",
+      "upperBodySource": "Rifle Walk.fbx"
+    },
+    {
+      "name": "run",
+      "duration": 0.7,
+      "loop": true,
+      "movementSpeed": 0.7936568325385451,
+      "source": "mixamo",
+      "sourceClip": "run",
+      "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": -0.023774927482008934,
+      "groundMaxBeforeCorrection": 0.014124143868684769,
+      "motionPolish": {
+        "method": "circular-support-lift-and-locked-boot-targets-v1",
+        "fps": 30,
+        "lod0": {
+          "rootPeakVerticalAccelerationBefore": 22.726971795782447,
+          "rootPeakVerticalAccelerationAfter": 0.0,
+          "pelvisPeakVerticalAccelerationBefore": 25.510074198246002,
+          "pelvisPeakVerticalAccelerationAfter": 7.242017984390259,
+          "maxBootOriginChangeAt120HzUnits": 0.0017416504496645055,
+          "maximumExportTransformDifference": 7.37607479095459e-06
+        }
+      },
+      "upperBodySource": "Authored two-handed carry"
+    },
+    {
+      "name": "crouch",
+      "duration": 2.1,
+      "loop": true,
+      "movementSpeed": 0.0,
+      "source": "mixamo",
+      "sourceClip": "Idle Crouching.fbx",
+      "sourceSha256": "4dbf5eacbde7a7b9bfe17f19235eae9aaf45707e8d1dbec55e3c7a758caeb316",
+      "sourceAsset": "sources/infantry-motions/Idle Crouching.fbx",
+      "sourceFrames": [
+        1,
+        64
+      ],
+      "displayName": "\u041f\u0440\u0438\u0441\u0435\u0434 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 0.0003410950303077698,
+      "groundMinBeforeCorrection": -0.020450182259082794,
+      "upperBodySource": "Authored two-handed carry"
+    },
+    {
+      "name": "crouchWalk",
+      "duration": 1.1666666666666667,
+      "loop": true,
+      "movementSpeed": 0.3068478605902705,
+      "source": "mixamo",
+      "sourceClip": "Crouch Walking.fbx",
+      "sourceSha256": "e7ccc71c42c876c1569cc8caf9ad8e0669770a66a5477deeb292bbfd02ea11ef",
+      "sourceAsset": "sources/infantry-motions/Crouch Walking.fbx",
+      "sourceFrames": [
+        1,
+        36
+      ],
+      "displayName": "\u0428\u0430\u0433 \u0432 \u043f\u0440\u0438\u0441\u0435\u0434\u0435 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 9.834766387939453e-07,
+      "groundMinBeforeCorrection": -0.03505098074674606,
+      "upperBodySource": "Authored two-handed carry"
+    },
+    {
+      "name": "jump",
+      "duration": 0.6666666666666666,
+      "loop": false,
+      "movementSpeed": 0.0,
+      "source": "mixamo",
+      "sourceClip": "Pistol Jump.fbx",
+      "sourceSha256": "e27dd3e48f393d9a7cf9608b4cbd9c2b60e09490674323899353fad5910781e9",
+      "sourceAsset": "sources/infantry-motions/Pistol Jump.fbx",
+      "sourceFrames": [
+        1,
+        19
+      ],
+      "displayName": "\u041f\u0440\u044b\u0436\u043e\u043a \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "controller",
+      "maximumLiftRemovedUnits": 0.10331166056652827,
+      "maximumLoopSeamMatrixAdjustment": 0,
+      "groundMinBeforeCorrection": -0.05364353209733963,
+      "upperBodySource": "Authored two-handed carry"
+    },
+    {
+      "name": "kneel",
+      "duration": 3.8,
+      "loop": true,
+      "movementSpeed": 0.0,
+      "source": "mixamo",
+      "sourceClip": "Pistol Kneeling Idle.fbx",
+      "sourceSha256": "273945b7e8e900c384610844c557a1a551c85075ff89e3d4b0d01e8325697f18",
+      "sourceAsset": "sources/infantry-motions/Pistol Kneeling Idle.fbx",
+      "sourceFrames": [
+        1,
+        115
+      ],
+      "displayName": "\u041d\u0430 \u043e\u0434\u043d\u043e\u043c \u043a\u043e\u043b\u0435\u043d\u0435 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 1.296401023864746e-06,
+      "groundMinBeforeCorrection": -0.028583047911524773,
+      "upperBodySource": "Authored two-handed carry"
+    },
+    {
+      "name": "fire",
+      "duration": 1.1666666666666667,
+      "loop": false,
+      "movementSpeed": 0.0,
+      "source": "mixamo",
+      "sourceClip": "Firing Rifle.fbx",
+      "sourceSha256": "8b0386c145bce93e1ba05414dfb2f472f482de4e8166ec6097d28656fca15f65",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": 0.0006415062816813588,
+      "groundMaxBeforeCorrection": 0.0006544765783473849,
+      "sourceFrames": [
+        1.0,
+        36.0
+      ],
+      "lowerBodySource": "idle",
+      "upperBodySource": "Firing Rifle.fbx",
+      "muzzleTime": 0.13333333333333333
+    }
+  ],
+  "model": "infantry-high.glb",
+  "authoringFile": "infantry-high.blend",
+  "sourceSha256": "dd369a254695aa41508a48bfff1cecd3d713bb7c846085ad3a53c2dd31a15228",
+  "triangles": 40000,
+  "bones": 18
+}

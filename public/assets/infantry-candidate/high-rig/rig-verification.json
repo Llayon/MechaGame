@@ -1,0 +1,36 @@
+{
+  "triangles": 40000,
+  "vertices": 25434,
+  "bones": 18,
+  "gameHeight": 0.47999998927116394,
+  "textureSha256": {
+    "baseColorTexture": "4a8e39b7c6029867469e9bb8dbfdbf63a52346da4a2b05c9301dc11b63bbc732",
+    "metallicRoughnessTexture": "1738f3d3adea5dc40120f68bbba40cdabbf0644a244b77c191f39f847ef98f4e"
+  },
+  "maximumBindMatrixDifference": 0.0,
+  "checkedFrames": 428,
+  "maximumSupportGapGameUnits": 4.051136729056998e-06,
+  "surface": {
+    "triangleCornersPreserved": 120000,
+    "maxNormalizedPositionError": 0,
+    "maxUVError": 0,
+    "maxNormalVectorError": 0.006575308469607662,
+    "maxNormalAngleDegrees": 0.3767381029802168
+  },
+  "weightTransfer": {
+    "vertices": 25425,
+    "coincidentVertices": 5429,
+    "influencesByVertex": {
+      "2": 6010,
+      "1": 19259,
+      "3": 156
+    },
+    "maximumDiscardedWeight": 9.533773567271808e-07,
+    "transferDistanceP95GameUnits": 0.0006346433656290174,
+    "transferDistanceMaxGameUnits": 0.003185023320838809
+  },
+  "sourceSha256": "dd369a254695aa41508a48bfff1cecd3d713bb7c846085ad3a53c2dd31a15228",
+  "controlBones": 146,
+  "bytes": 4117264,
+  "armedReferenceSha256": "8a5d9651d02fb632faec7ef9a92ee3b70460bf0cf97e43e29b78fdbb49a74eb2"
+}

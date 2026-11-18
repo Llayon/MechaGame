@@ -7,12 +7,13 @@ import { withGraphicsPreset, resolveGraphicsRuntime } from '../../game/graphicsS
 import type { GraphicsPreset } from '../../game/graphicsSettings';
 import { createHeroState, heroAnimation, stepHero } from './controller';
 import type { HeroInput } from './controller';
-import { loadHeroAssets, LOD_TRIANGLES, SKINS, RIG_VARIANTS } from './heroAssets';
-import type { DemoAnimation, DemoKit, HeroAssets, SkinId, RigVariant } from './heroAssets';
+import { loadHeroAssets, LOD_TRIANGLES, SKINS, RIG_VARIANTS, SOURCE_LOD } from './heroAssets';
+import type { DemoAnimation, DemoKit, DemoLod, HeroAssets, SkinId, RigVariant } from './heroAssets';
+import { LocomotionBlend } from './locomotionBlend';
 import { TrainingYard } from './TrainingYard';
 import './playground.css';
 
-interface DemoOptions { skin: SkinId; lod: 0 | 1 | 2; quality: Exclude<GraphicsPreset, 'custom'>; normals: boolean; shadows: boolean; rig: RigVariant; kit: DemoKit; previewAnimation: 'gameplay' | DemoAnimation; paused: boolean; phase: number }
+interface DemoOptions { skin: SkinId; lod: DemoLod; quality: Exclude<GraphicsPreset, 'custom'>; normals: boolean; shadows: boolean; rig: RigVariant; kit: DemoKit; previewAnimation: 'gameplay' | DemoAnimation; paused: boolean; phase: number }
 interface DemoView { ready: boolean; position: number[]; speedMeters: number; grounded: boolean; animation: DemoAnimation; animationSource: 'mixamo' | 'prototype'; rig: RigVariant; kit: DemoKit; phase: number; lod: number; skin: SkinId; triangles: number; weaponTriangles: number; shots: number; flashVisible: boolean; bones: number; time: number; geometries: number; textures: number; missionMounted: false }
 interface DemoApi { inspect(): DemoView | null; configure(settings: Partial<DemoOptions>): void; reset(): void; pose(): number[]; bindPose(): number[]; skeleton(): Array<{ name: string; matrix: number[] }>; inspectWeapon(): null | { muzzle: number[]; primary: number[]; support: number[]; handL: number[]; matrix: number[]; parent: string } }
 declare global { interface Window { __infantryDemo?: DemoApi } }
@@ -29,6 +30,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
   const sunlight = useRef<THREE.DirectionalLight>(null);
   const hero = useRef(createHeroState()), forward = useRef(new THREE.Vector3()), right = useRef(new THREE.Vector3());
   const active = useRef<{ lod: number; name: DemoAnimation; action: THREE.AnimationAction | null }>({ lod: -1, name: 'idle', action: null });
+  const liveBlend = useRef(new LocomotionBlend());
   const previewPhase = useRef(0);
   const shots = useRef(0);
   const flashRemaining = useRef(0);
@@ -38,6 +40,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
   useEffect(() => { assets.setNormals(options.normals); }, [assets, options.normals]);
   useEffect(() => { previewPhase.current = options.phase; }, [options.phase]);
   useEffect(() => {
+    liveBlend.current.reset();
     assets.models.forEach(m => m.mixer.stopAllAction());
     active.current = { lod: -1, name: 'idle', action: null };
     flashRemaining.current = 0;
@@ -45,8 +48,9 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
   }, [assets, input, options.previewAnimation]);
   useEffect(() => { sunlight.current?.shadow.camera.updateProjectionMatrix(); }, []);
   useEffect(() => {
-    view.current = { ready: true, position: [0, 0, 0], speedMeters: 0, grounded: true, animation: 'idle', animationSource: assets.manifest.clips.find(c => c.name === 'idle')?.source ?? 'prototype', lod: options.lod, skin: options.skin,
-      rig: assets.variant, kit: assets.kit, phase: previewPhase.current, triangles: LOD_TRIANGLES[options.lod], weaponTriangles: assets.models[options.lod].weapon?.triangles ?? 0,
+    const lod = assets.models[options.lod] ? options.lod : 2;
+    view.current = { ready: true, position: [0, 0, 0], speedMeters: 0, grounded: true, animation: 'idle', animationSource: assets.manifest.clips.find(c => c.name === 'idle')?.source ?? 'prototype', lod, skin: options.skin,
+      rig: assets.variant, kit: assets.kit, phase: previewPhase.current, triangles: LOD_TRIANGLES[lod], weaponTriangles: assets.models[lod].weapon?.triangles ?? 0,
       bones: assets.models[0].mesh.skeleton.bones.length, time: 0, shots: shots.current, flashVisible: false, geometries: 0, textures: 0, missionMounted: false };
     active.current = { lod: -1, name: 'idle', action: null };
     return () => { view.current = null; assets.models.forEach(m => m.mixer.stopAllAction()); };
@@ -56,7 +60,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
     const state = hero.current, source = input.current;
     if (source.reset) {
       Object.assign(state, createHeroState()); source.reset = false; source.jump = false; source.fire = false; source.crouch = false; source.keys.clear();
-      active.current.action?.stop(); active.current.action = null; flashRemaining.current = 0;
+      liveBlend.current.reset(); active.current.action?.stop(); active.current.action = null; flashRemaining.current = 0;
       assets.root.position.set(0, 0, 0); camera.position.set(0, .7, -1.2); controls.current?.target.set(0, .24, 0);
     }
     if (source.inspect) {
@@ -80,7 +84,8 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
       sunlight.current.position.set(state.x - 3, 6, state.z - 4);
       sunlight.current.target.position.set(state.x, 0, state.z); sunlight.current.target.updateMatrixWorld();
     }
-    const model = assets.models[options.lod];
+    const lod = assets.models[options.lod] ? options.lod : 2;
+    const model = assets.models[lod];
     const locomotion = heroAnimation(state, command);
     const finishingShot = active.current.name === 'fire' && active.current.action?.isRunning();
     const fireRequested = source.fire;
@@ -90,24 +95,29 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
       ? (model.actions[selectedAnimation] ? selectedAnimation : 'idle')
       : (model.actions.fire && locomotion === 'idle' && (finishingShot || fireRequested) ? 'fire' : locomotion);
     const authored = assets.manifest.clips.find(c => c.name === animation)!;
-    const carriedPhase = active.current.lod !== options.lod && active.current.action ? active.current.action.time / active.current.action.getClip().duration : 0;
-    if (active.current.lod !== options.lod) {
-      assets.models.forEach((m, i) => { m.scene.visible = i === options.lod; m.mixer.stopAllAction(); });
-      active.current = { lod: options.lod, name: animation, action: null };
+    const switchingLod = active.current.lod !== lod;
+    const carriedPhase = switchingLod && active.current.action && active.current.name === animation
+      ? active.current.action.time / active.current.action.getClip().duration : 0;
+    if (switchingLod) {
+      liveBlend.current.reset();
+      assets.models.forEach((m, i) => { m.scene.visible = i === lod; m.mixer.stopAllAction(); });
+      active.current = { lod, name: animation, action: null };
     }
-    if (!active.current.action || active.current.name !== animation || (!preview && animation === 'fire' && !finishingShot)) {
+    const restartShot = !preview && animation === 'fire' && !finishingShot;
+    if (!active.current.action || active.current.name !== animation || restartShot) {
       const previous = active.current.action;
-      const action = model.actions[animation]; action.reset().setEffectiveWeight(1).play();
+      const action = model.actions[animation];
+      const startTime = carriedPhase * action.getClip().duration;
       if (preview) {
         if (previous && previous !== action) previous.stop();
-      } else if (previous && previous !== action) {
-        previous.fadeOut(.16);
-        action.fadeIn(.16);
+        action.reset().setEffectiveWeight(1).play();
+        action.time = startTime;
+      } else {
+        liveBlend.current.play(action, authored.movementSpeed, startTime, restartShot);
       }
-      action.time = carriedPhase * action.getClip().duration;
       action.setLoop(authored.loop ? THREE.LoopRepeat : THREE.LoopOnce, authored.loop ? Infinity : 1);
       action.clampWhenFinished = !authored.loop;
-      active.current = { lod: options.lod, name: animation, action };
+      active.current = { lod, name: animation, action };
     }
     const action = active.current.action!;
     const muzzleTime = authored.muzzleTime ?? .12;
@@ -121,8 +131,9 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
       flashRemaining.current = animation === 'fire' && action.time >= muzzleTime ? Math.max(0, .075 - (action.time - muzzleTime)) : 0;
     } else {
       const previousTime = action.time;
-      action.setEffectiveTimeScale(authored.movementSpeed > 0 ? Math.max(.05, state.speed / authored.movementSpeed) : 1);
-      model.mixer.update(Math.min(.05, dt));
+      const delta = Math.min(.05, dt);
+      liveBlend.current.update(delta, state.speed);
+      model.mixer.update(delta);
       if (animation === 'fire' && previousTime < muzzleTime && action.time >= muzzleTime) {
         shots.current++;
         flashRemaining.current = .075;
@@ -141,7 +152,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
       controls.current.target.set(state.x, .24 + state.y * .4, state.z); controls.current.update();
     }
     if (view.current) Object.assign(view.current, { position: [state.x, state.y, state.z], speedMeters: state.speed * 3.75, grounded: state.grounded,
-      animation, animationSource: authored.source ?? 'prototype', lod: options.lod, skin: options.skin, triangles: LOD_TRIANGLES[options.lod], time: model.mixer.time,
+      animation, animationSource: authored.source ?? 'prototype', lod, skin: options.skin, triangles: LOD_TRIANGLES[lod], time: model.mixer.time,
       rig: assets.variant, kit: assets.kit, phase: action.time / action.getClip().duration, weaponTriangles: model.weapon?.triangles ?? 0, shots: shots.current, flashVisible,
       geometries: gl.info.memory.geometries, textures: gl.info.memory.textures });
   });
@@ -174,8 +185,13 @@ function TouchStick({ input }: { input: React.RefObject<InputStore> }) {
 }
 
 export default function InfantryDemo() {
-  const [options, setOptions] = useState<DemoOptions>(() => ({ ...DEFAULT, kit: new URLSearchParams(location.search).get('kit') === 'vpulse' ? 'vpulse' : 'unarmed' }));
+  const [options, setOptions] = useState<DemoOptions>(() => {
+    const query = new URLSearchParams(location.search);
+    const kit = query.get('kit') === 'vpulse' ? 'vpulse' : 'unarmed';
+    return { ...DEFAULT, kit, lod: kit === 'vpulse' && query.get('lod') === 'source' ? SOURCE_LOD : DEFAULT.lod };
+  });
   const [assets, setAssets] = useState<HeroAssets | null>(null), [error, setError] = useState('');
+  const [sourceError, setSourceError] = useState('');
   const [status, setStatus] = useState<DemoView | null>(null), [menu, setMenu] = useState(() => innerWidth > 800);
   const input = useRef<InputStore>({ keys: new Set(), stick: { x: 0, z: 0 }, crouch: false, jump: false, fire: false, reset: false, inspect: false });
   const view = useRef<DemoView | null>(null);
@@ -188,6 +204,13 @@ export default function InfantryDemo() {
     return () => { cancelled = true; };
   }, [options.rig, options.kit]);
   useEffect(() => () => { assets?.dispose(); }, [assets]);
+  useEffect(() => {
+    if (options.lod !== SOURCE_LOD || assets?.kit !== 'vpulse') return;
+    let cancelled = false;
+    setSourceError('');
+    assets.loadSourceModel().catch(error => { if (!cancelled) setSourceError(String(error)); });
+    return () => { cancelled = true; };
+  }, [assets, options.lod]);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if ((event.target as HTMLElement)?.closest('input, select, textarea, [contenteditable=true]')) return;
@@ -264,7 +287,8 @@ export default function InfantryDemo() {
       <p className="play-skin-description">{skin.description}</p>
       <label>ОРУЖИЕ<select data-testid="demo-kit" value={options.kit} onChange={e => {
         const kit = e.target.value as DemoKit;
-        setOptions(s => ({ ...s, kit, previewAnimation: kit === 'unarmed' && s.previewAnimation === 'fire' ? 'gameplay' : s.previewAnimation }));
+        setOptions(s => ({ ...s, kit, lod: kit === 'unarmed' && s.lod === SOURCE_LOD ? 2 : s.lod,
+          previewAnimation: kit === 'unarmed' && s.previewAnimation === 'fire' ? 'gameplay' : s.previewAnimation }));
       }}><option value="unarmed">Без оружия</option><option value="vpulse">V‑Pulse</option></select></label>
       {options.kit === 'unarmed' && <label>РИГ ДЛЯ СРАВНЕНИЯ<select data-testid="demo-rig" value={options.rig} onChange={e => update('rig', e.target.value as RigVariant)}>
         {RIG_VARIANTS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -279,13 +303,20 @@ export default function InfantryDemo() {
         <label><input data-testid="demo-pause" type="checkbox" checked={options.paused} onChange={e => { setOptions(s => ({ ...s, paused: e.target.checked, phase: view.current?.phase ?? s.phase })); }} /> Пауза</label>
         <label>Фаза цикла · {Math.round((status?.phase ?? 0) * 100)}%<input data-testid="demo-phase" aria-label="Фаза анимации" type="range" min="0" max="0.999" step="0.001" value={options.paused ? options.phase : status?.phase ?? 0} onChange={e => setOptions(s => ({ ...s, paused: true, phase: +e.target.value }))} /></label>
       </div>}
-      <label>ДЕТАЛИЗАЦИЯ<select data-testid="demo-lod" value={options.lod} onChange={e => update('lod', +e.target.value as 0 | 1 | 2)}>
+      <label>ДЕТАЛИЗАЦИЯ<select data-testid="demo-lod" value={options.lod} onChange={e => update('lod', +e.target.value as DemoLod)}>
+        {options.kit === 'vpulse' && <option value={SOURCE_LOD}>Исходная модель · 40 000</option>}
         <option value="0">Высокая · 3999 треугольников</option><option value="1">Средняя · 1999 треугольников</option><option value="2">Лёгкая · 999 треугольников</option>
       </select></label>
+      {options.lod === SOURCE_LOD && status?.lod !== SOURCE_LOD && <p className="play-rig-note" role="status">{sourceError || 'Загрузка исходной модели…'}</p>}
       <label>ГРАФИКА<select value={options.quality} onChange={e => update('quality', e.target.value as DemoOptions['quality'])}>
         <option value="low">Низкая</option><option value="balanced">Сбалансированная</option><option value="high">Высокая</option><option value="ultra">Ультра</option>
       </select></label>
-      <div className="play-checks"><label><input type="checkbox" checked={options.normals} onChange={e => update('normals', e.target.checked)} />Рельеф брони</label><label><input type="checkbox" checked={options.shadows} onChange={e => update('shadows', e.target.checked)} />Тени</label></div>
+      <div className="play-checks">
+        <label title={status?.lod === SOURCE_LOD ? 'Исходная модель использует нормали сетки' : undefined}>
+          <input type="checkbox" checked={options.normals} disabled={status?.lod === SOURCE_LOD} onChange={e => update('normals', e.target.checked)} />Рельеф брони
+        </label>
+        <label><input type="checkbox" checked={options.shadows} onChange={e => update('shadows', e.target.checked)} />Тени</label>
+      </div>
       <button className="play-reset play-inspect" data-testid="inspect-front" onClick={() => { input.current.inspect = true; }}>Осмотреть спереди <span>↻</span></button>
       {hasFire && options.previewAnimation === 'gameplay' && <button className="play-reset" data-testid="demo-fire" onClick={() => { input.current.fire = true; }}>Пробный выстрел с места <kbd>F</kbd></button>}
       <button className="play-reset" onClick={() => { input.current.reset = true; }}>Вернуться на старт <kbd>R</kbd></button>

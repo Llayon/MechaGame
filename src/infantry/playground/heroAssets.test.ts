@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SKINS, ARMED_ASSET_DIRECTORY, HERO_ASSET_DIRECTORY, RIG_VARIANTS } from './heroAssets';
+import { SKINS, ARMED_ASSET_DIRECTORY, HERO_ASSET_DIRECTORY, RIG_VARIANTS, SOURCE_RIG_DIRECTORY } from './heroAssets';
 function readGlb(path: string) {
   const bytes = readFileSync(path), length = bytes.readUInt32LE(12), json = JSON.parse(bytes.subarray(20,20+length).toString());
   assert.equal(bytes.readUInt32LE(8),bytes.length);
   const view = (id: number) => { const v=json.bufferViews[id];return bytes.subarray(28+length+(v.byteOffset??0),28+length+(v.byteOffset??0)+v.byteLength); };
   const accessor = (id: number) => {
-    const a=json.accessors[id], v=json.bufferViews[a.bufferView], width=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4} as Record<string,number>)[a.type];
+    const a=json.accessors[id], v=json.bufferViews[a.bufferView], width=({SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT4:16} as Record<string,number>)[a.type];
     const size=a.componentType===5126?4:a.componentType===5123?2:1;
     return Array.from({length:a.count*width},(_,i)=>{
       const offset=28+length+(v.byteOffset??0)+(a.byteOffset??0)+Math.floor(i/width)*(v.byteStride??width*size)+(i%width)*size;
@@ -17,11 +17,61 @@ function readGlb(path: string) {
   };
   const maps = () => {
     const m=json.materials[0];
-    return [m.pbrMetallicRoughness.baseColorTexture.index,m.pbrMetallicRoughness.metallicRoughnessTexture.index,m.normalTexture.index].map(i=>
+    return [m.pbrMetallicRoughness.baseColorTexture.index,m.pbrMetallicRoughness.metallicRoughnessTexture.index,m.normalTexture?.index]
+      .filter(index => Number.isInteger(index)).map(i=>
       createHash('sha256').update(view(json.images[json.textures[i].source].bufferView)).digest('hex'));
   };
   return {json,accessor,maps};
 }
+
+test('the 40,000-triangle source rig keeps original maps and matches the armed animation and bind contract', () => {
+  const sourceFolder = `public/${SOURCE_RIG_DIRECTORY}`;
+  const armedFolder = `public/${ARMED_ASSET_DIRECTORY}`;
+  const sourceAsset = 'public/assets/infantry-candidate/source.glb';
+  const source = readGlb(sourceAsset);
+  const full = readGlb(sourceFolder + 'infantry-high.glb');
+  const optimized = readGlb(armedFolder + 'infantry-demo-lod2.glb');
+  const manifest = JSON.parse(readFileSync(sourceFolder + 'manifest.json', 'utf8'));
+  const armedManifest = JSON.parse(readFileSync(armedFolder + 'manifest.json', 'utf8'));
+  const primitive = full.json.meshes[0].primitives[0];
+  assert.equal(manifest.sourceSha256, createHash('sha256').update(readFileSync(sourceAsset)).digest('hex'));
+  assert.equal(full.json.meshes.length, 1);
+  assert.equal(full.json.accessors[primitive.indices].count / 3, 40000);
+  assert.equal(full.json.skins[0].joints.length, 18);
+  assert.deepEqual(full.maps(), source.maps());
+  assert.deepEqual(full.accessor(full.json.skins[0].inverseBindMatrices), optimized.accessor(optimized.json.skins[0].inverseBindMatrices));
+  type Channel = { target: { node: number; path: string }; sampler: number };
+  type Animation = { name: string; channels: Channel[]; samplers: { input: number; output: number; interpolation: string }[] };
+  const channels = (model: ReturnType<typeof readGlb>, name: string) => {
+    const animation: Animation = model.json.animations.find((item: Animation) => item.name === name);
+    assert.ok(animation, name);
+    return Object.fromEntries(animation.channels.map(({ target, sampler }) => {
+      const { input, output, interpolation } = animation.samplers[sampler];
+      return [`${model.json.nodes[target.node].name}/${target.path}`, {
+        interpolation, times: model.accessor(input), values: model.accessor(output),
+      }];
+    }));
+  };
+  for (const clip of armedManifest.clips) {
+    const matching = manifest.clips.find((candidate: { name: string }) => candidate.name === clip.name);
+    assert.ok(matching && Math.abs(matching.duration - clip.duration) < 1e-6);
+    assert.deepEqual(channels(full, clip.name), channels(optimized, clip.name), clip.name);
+  }
+});
+
+test('Mixamo Run keeps the root stationary across every playable LOD', () => {
+  const assets = [`${SOURCE_RIG_DIRECTORY}infantry-high.glb`, ...[...RIG_VARIANTS.map(variant => variant.directory), ARMED_ASSET_DIRECTORY]
+    .flatMap(directory => [0, 1, 2].map(lod => `${directory}infantry-demo-lod${lod}.glb`))];
+  for (const path of assets) {
+    const { json, accessor } = readGlb(`public/${path}`);
+    const run = json.animations.find((item: { name: string }) => item.name === 'run');
+    const root = run.channels.find((channel: { target: { node: number; path: string } }) =>
+      channel.target.path === 'translation' && json.nodes[channel.target.node].name === 'root');
+    assert.ok(root, path);
+    const values = accessor(run.samplers[root.sampler].output);
+    assert.ok(values.every((value, i) => Math.abs(value - values[i % 3]) < .00001), path);
+  }
+});
 
 test('V-Pulse LODs share a normalized grip, a single material and the same attachment markers', () => {
   const path = 'public/assets/infantry-vpulse/';

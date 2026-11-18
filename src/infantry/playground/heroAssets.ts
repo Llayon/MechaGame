@@ -10,7 +10,10 @@ export const SKINS = [
   { id: 'assault', name: 'Штурмовой', color: '#66555a', accent: '#ed6741', description: 'Тёмная броня · красные маркеры' },
 ] as const;
 export type SkinId = typeof SKINS[number]['id'];
-export const LOD_TRIANGLES = [3999, 1999, 999] as const;
+export const LOD_TRIANGLES = [3999, 1999, 999, 40000] as const;
+export type DemoLod = 0 | 1 | 2 | 3;
+export const SOURCE_LOD: DemoLod = 3;
+export const SOURCE_RIG_DIRECTORY = 'assets/infantry-candidate/high-rig/';
 export const RIG_VARIANTS = [
   { id: 'rigify', name: 'Rigify · стандартный', directory: 'assets/infantry-candidate/rigify-demo/', bones: 18 },
   { id: 'rigifyTwist', name: 'Rigify · сохранённый поворот', directory: 'assets/infantry-candidate/rigify-twist-demo/', bones: 18 },
@@ -76,9 +79,9 @@ export async function loadHeroAssets(variant: RigVariant = 'rigify', kit: DemoKi
   }
   const results = await Promise.allSettled(paths.map(path => new GLTFLoader().loadAsync(path)));
   const loaded = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : []);
-  const release = () => {
+  const release = (entries = loaded) => {
     const materials = new Set<THREE.Material>(), geometries = new Set<THREE.BufferGeometry>(), textures = new Set<THREE.Texture>();
-    loaded.forEach(gltf => gltf.scene.traverse(o => {
+    entries.forEach(gltf => gltf.scene.traverse(o => {
       if (o instanceof THREE.Mesh) {
         geometries.add(o.geometry); (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m));
         if (o instanceof THREE.SkinnedMesh) o.skeleton.dispose();
@@ -89,11 +92,13 @@ export async function loadHeroAssets(variant: RigVariant = 'rigify', kit: DemoKi
   };
   if (results.some(r => r.status === 'rejected')) { release(); throw Error('Не удалось загрузить одну из моделей'); }
   const root = new THREE.Group(), uniforms = { demoSkinArmor: { value: new THREE.Color() }, demoSkinAccent: { value: new THREE.Color() }, demoSkinBlend: { value: 0 } };
+  let normalsEnabled = true;
   const createModel = (gltf: (typeof loaded)[number], level: number) => {
     const mesh = gltf.scene.getObjectByName('DemoInfantry') as THREE.SkinnedMesh;
     if (!mesh?.isSkinnedMesh || Array.isArray(mesh.material)) throw Error('Ожидалась подготовленная модель со скелетом');
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
     const material = mesh.material as THREE.MeshStandardMaterial;
+    material.normalScale.setScalar(normalsEnabled ? 1 : 0);
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
       shader.fragmentShader = 'uniform vec3 demoSkinArmor; uniform vec3 demoSkinAccent; uniform float demoSkinBlend;\n' + shader.fragmentShader;
@@ -122,13 +127,40 @@ export async function loadHeroAssets(variant: RigVariant = 'rigify', kit: DemoKi
     throw error;
   }
   let disposed = false;
+  let sourceLoad: Promise<void> | undefined;
   return { root, models, manifest, variant: kit === 'vpulse' ? 'rigify' : variant, kit,
+    async loadSourceModel() {
+      if (kit !== 'vpulse' || disposed || models[SOURCE_LOD]) return;
+      sourceLoad ??= new GLTFLoader().loadAsync(rootUrl + SOURCE_RIG_DIRECTORY + 'infantry-high.glb').then(gltf => {
+        if (disposed) {
+          release([gltf]);
+          return;
+        }
+        try {
+          const mesh = gltf.scene.getObjectByName('DemoInfantry') as THREE.SkinnedMesh | undefined;
+          const triangles = (mesh?.geometry.index?.count ?? mesh?.geometry.getAttribute('position').count ?? 0) / 3;
+          if (triangles !== LOD_TRIANGLES[SOURCE_LOD]) throw Error('В исходной модели ожидалось 40 000 треугольников');
+          models[SOURCE_LOD] = createModel(gltf, SOURCE_LOD);
+          loaded.push(gltf);
+        } catch (error) {
+          gltf.scene.removeFromParent();
+          const socket = gltf.scene.getObjectByName('VPulseSocket');
+          socket?.removeFromParent();
+          release([gltf]);
+          throw error;
+        }
+      }).finally(() => { sourceLoad = undefined; });
+      await sourceLoad;
+    },
     setSkin(id: SkinId) {
       const skin = SKINS.find(s => s.id === id) ?? SKINS[0];
       uniforms.demoSkinBlend.value = skin.id === 'original' ? 0 : 1;
       uniforms.demoSkinArmor.value.set(skin.color); uniforms.demoSkinAccent.value.set(skin.accent);
     },
-    setNormals(enabled: boolean) { models.forEach(m => (m.mesh.material as THREE.MeshStandardMaterial).normalScale.setScalar(enabled ? 1 : 0)); },
+    setNormals(enabled: boolean) {
+      normalsEnabled = enabled;
+      models.forEach(m => (m.mesh.material as THREE.MeshStandardMaterial).normalScale.setScalar(enabled ? 1 : 0));
+    },
     dispose() {
       if (disposed) return; disposed = true;
       models.forEach(m => { m.mixer.stopAllAction(); m.mixer.uncacheRoot(m.scene); });
