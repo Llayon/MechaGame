@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
 import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
-import { CombatCamera } from './CombatCamera';
+import { PLAYER_MODEL_LAYER } from './playerModelLayer';
 import { stepInfantrySkirmishes } from '../game/infantrySkirmishes';
 import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
 import { frameInfantryEncounter } from './infantryCamera';
@@ -738,7 +738,9 @@ export function MapScene({
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 0.92,
         }}
-        onCreated={({ gl }) => {
+        onCreated={({ gl, camera, raycaster }) => {
+          camera.layers.enable(PLAYER_MODEL_LAYER);
+          raycaster.layers.enable(PLAYER_MODEL_LAYER);
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.domElement.addEventListener('webglcontextlost', (e) => {
             e.preventDefault();
@@ -762,6 +764,7 @@ export function MapScene({
         <directionalLight
           key={'sun-shadow-'+graphics.shadows}
           ref={sunLightRef}
+          onUpdate={light => light.shadow.camera.layers.enable(PLAYER_MODEL_LAYER)}
           position={lightCfg.keyPos}
           color={lightCfg.keyColor}
           intensity={lightCfg.keyIntensity}
@@ -856,20 +859,13 @@ export function MapScene({
           missileRibbonPoolRef={missileRibbonPoolRef}
           casingsPoolRef={casingsPoolRef}
           tracerPoolRef={tracerPoolRef}
+          onShadowFocus={(focus, cam) => syncShadowFrustum(
+            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
         </group>
 
-        <CombatCamera
-          active={driveMode}
-          paused={paused}
-          resetNonce={resetNonce}
-          aimRef={aimRef}
-          mechPoseRef={mechPoseRef}
-          onShadowFocus={(focus, cam) => syncShadowFrustum(
-            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
-        />
         <group name="perf:combat">
           <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
           <CombatActors

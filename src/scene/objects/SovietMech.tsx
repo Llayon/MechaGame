@@ -47,6 +47,7 @@ import {
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
 import { predictPhysicalShotEndpoint, resolveGunSightPoint } from '../../game/weaponReticle';
+import { useCombatCamera } from '../CombatCamera';
 
 import { resetCombatAim, updateCombatAim, approachTurretWorldYaw } from '../../game/combatAim';
 import type { CombatAimState } from '../../game/combatAim';
@@ -79,6 +80,7 @@ export interface SovietMechProps {
   casingsPoolRef?: React.MutableRefObject<BallisticPropPool>;
   tracerPoolRef?: React.MutableRefObject<TracerPoolState>;
   onSelectMech?: () => void;
+  onShadowFocus: (focus: THREE.Vector3, camera: THREE.Camera) => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
 
@@ -101,9 +103,11 @@ export function SovietMech({
   casingsPoolRef,
   tracerPoolRef,
   onSelectMech,
+  onShadowFocus,
   onMissionEnded,
 }: SovietMechProps) {
   const { gl, camera, invalidate } = useThree();
+  const combatCamera = useCombatCamera(driveMode, resetNonce);
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const containerRef = useRef<THREE.Group>(null);
   const worldFxRef = useRef<THREE.Group>(null);
@@ -338,6 +342,10 @@ export function SovietMech({
       driveMode && canControl && !paused,
       Math.min(1, Math.abs(control.targetSpeed) / 3.45),
     );
+    const followMech = driveMode && aimRef.current.initialized;
+    if (followMech) {
+      combatCamera.position(aimRef.current, sim.x, sim.y, sim.z, control.isCrouched, delta);
+    }
     const sight = canControl ? resolveGunSightPoint(combat, camera.position,
       sim.yaw + sim.turretYaw, -motion.gPitch, camera.position.distanceTo(rig.root.position), _sightPoint) : undefined;
     const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch, sight);
@@ -370,6 +378,11 @@ export function SovietMech({
       aimRef.current.reticleHit = 'range';
       aimRef.current.reticleTargetId = null;
       aimRef.current.infantryRole = undefined;
+    }
+
+    if (followMech) {
+      combatCamera.present(aimRef.current, onShadowFocus);
+      invalidate();
     }
 
     // Consume edge-triggered Heavy Cannon (KeyF) and Emergency Repair (KeyV)

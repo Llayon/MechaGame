@@ -4,10 +4,12 @@ The map has free OrbitControls only in overview. During combat, a dedicated
 over-the-shoulder camera follows the intended world aiming direction, maintains
 ground clearance and checks static cover between the chassis and camera.
 
-Default combat view: 10.0 world units distance, 4.8 height above the mech,
-1.6 right shoulder offset, 45° FOV. Precision aim: 7.8 distance,
-4.0 height, 1.15 shoulder, 29° FOV. This replaces the original
-13.1/5.8/2.15/FOV48 distant tactical combat camera; map view is unchanged.
+Both combat views use a sightline 3.55 world units to the side of the mech
+and 4.8 above its feet while standing. The mech appears on the right of the
+screen. The normal view sits 10 units back with a 45° field of view. Holding
+precision aim moves the camera along the same sightline to 7.8 units back
+and narrows the field of view to 29°. If a wall forces the sightline through
+the mech, the camera temporarily hides the player model.
 
 ## Desktop
 - WASD: forward/back and hull rotation.

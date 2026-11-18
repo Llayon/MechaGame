@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { getMainGunRay, stepWeaponSystem } from './WeaponSystem';
 import type { MechRig } from './MechModel';
-import { COMBAT_CAMERA_DEFAULT, COMBAT_CAMERA_PRECISION } from '../../game/combatCameraSettings';
+import { COMBAT_CAMERA_DEFAULT, COMBAT_CAMERA_PRECISION, setCombatCameraEye, setCombatCameraShoulder } from '../../game/combatCameraSettings';
+import { aimDirection } from '../../game/combatAim';
 import { createCombatState, PLAYER_MAX_RANGE, processPlayerShots } from '../../game/combatSimulation';
 import { resolveGunSightPoint } from '../../game/weaponReticle';
 import { getWalkableSurfaceY } from '../../map/mechKinematics';
@@ -115,13 +116,12 @@ test('centered shoulder sights hit a bridge spotter near maximum range from eith
       const dx = target.x - hull.position.x, dz = target.z - hull.position.z;
       const yaw = Math.atan2(dx, dz) - Math.asin(camera.shoulderOffset / Math.hypot(dx, dz));
       hull.rotation.set(-0.045, yaw, 0.025, 'YXZ');
-      const eye = hull.position.clone().add(new THREE.Vector3(
-        camera.shoulderOffset * Math.cos(yaw) - camera.distance * Math.sin(yaw),
-        camera.heightAboveMech,
-        -camera.shoulderOffset * Math.sin(yaw) - camera.distance * Math.cos(yaw),
-      ));
-      const elevation = Math.atan2(target.y - eye.y, Math.hypot(target.x - eye.x, target.z - eye.z))
+      const shoulder = setCombatCameraShoulder(new THREE.Vector3(),
+        hull.position.x, hull.position.y, hull.position.z, yaw, false, camera);
+      const elevation = Math.atan2(target.y - shoulder.y, Math.hypot(target.x - shoulder.x, target.z - shoulder.z))
         + (aimedHigh ? 0.08 : 0);
+      const eye = setCombatCameraEye(new THREE.Vector3(), shoulder,
+        new THREE.Vector3(...aimDirection(yaw, elevation)), camera.distance);
       assert.ok(eye.distanceTo(target) > PLAYER_MAX_RANGE);
       const sight = resolveGunSightPoint(state, eye, yaw, elevation, eye.distanceTo(hull.position), new THREE.Vector3());
       const volley = stepWeaponSystem(rig, 0.05, true, -elevation, sight);
