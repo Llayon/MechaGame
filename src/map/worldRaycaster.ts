@@ -88,15 +88,20 @@ function getSolidGroundY(x: number, z: number): number {
   return y;
 }
 
-function getColliderVerticalBounds(c: WorldCollider): [number, number] {
-  const baseGround = getSolidGroundY(c.cx, c.cz);
-  const minY = c.minY ?? baseGround - 0.5;
-  if (c.maxY !== undefined) {
-    return [minY, c.maxY];
-  }
-  const height = TAG_HEIGHT[c.tag] ?? 3.0;
-  const baseForTop = c.minY !== undefined ? c.minY : baseGround;
-  return [minY, baseForTop + height];
+// Index by collider identity because distinct solids can share a center and tag.
+const colliderVerticalBounds = new WeakMap<WorldCollider, readonly [number, number]>();
+
+function getColliderVerticalBounds(c: WorldCollider): readonly [number, number] {
+  const cached = colliderVerticalBounds.get(c);
+  if (cached) return cached;
+
+  const base = c.minY ?? getSolidGroundY(c.cx, c.cz);
+  const bounds = [
+    c.minY ?? base - 0.5,
+    c.maxY ?? base + TAG_HEIGHT[c.tag],
+  ] as const;
+  colliderVerticalBounds.set(c, bounds);
+  return bounds;
 }
 
 function intersectRayCircleColumn(
