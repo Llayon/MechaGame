@@ -18,13 +18,63 @@ export const RIG_VARIANTS = [
 ] as const;
 export type RigVariant = typeof RIG_VARIANTS[number]['id'];
 export const HERO_ASSET_DIRECTORY = RIG_VARIANTS[0].directory;
-export interface DemoManifest { clips: Array<{ name: HeroAnimation; duration: number; movementSpeed: number; loop: boolean; source?: 'mixamo' | 'prototype'; sourceClip?: string }> }
-export async function loadHeroAssets(variant: RigVariant = 'rigify') {
-  const base = import.meta.env.BASE_URL + RIG_VARIANTS.find(r => r.id === variant)!.directory;
+export const ARMED_ASSET_DIRECTORY = 'assets/infantry-armed/';
+export type DemoKit = 'unarmed' | 'vpulse';
+export type DemoAnimation = HeroAnimation | 'fire';
+export interface DemoManifest {
+  clips: Array<{ name: DemoAnimation; duration: number; movementSpeed: number; loop: boolean; source?: 'mixamo' | 'prototype'; sourceClip?: string; muzzleTime?: number }>;
+  weaponGrip?: { position: [number, number, number]; quaternion: [number, number, number, number] };
+  supportGrip?: { position: [number, number, number] };
+}
+
+function attachVPulse(mesh: THREE.SkinnedMesh, template: THREE.Group, grip: NonNullable<DemoManifest['weaponGrip']>) {
+  const hand = mesh.skeleton.getBoneByName('hand_R');
+  if (!hand) throw Error('В модели Rigify отсутствует правая кисть');
+  const rifle = template.clone(true);
+  const socket = new THREE.Group();
+  socket.name = 'VPulseSocket';
+  socket.position.fromArray(grip.position);
+  socket.quaternion.fromArray(grip.quaternion).normalize();
+  socket.add(rifle);
+  const muzzle = rifle.getObjectByName('muzzle');
+  const support = rifle.getObjectByName('grip_left');
+  const primary = rifle.getObjectByName('grip_right');
+  if (!muzzle || !support || !primary) throw Error('В модели V‑Pulse отсутствуют точки привязки');
+  let triangles = 0;
+  rifle.traverse(object => {
+    if (!(object instanceof THREE.Mesh)) return;
+    triangles += (object.geometry.index?.count ?? object.geometry.getAttribute('position').count) / 3;
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+  const flash = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 12, 8),
+    new THREE.MeshBasicMaterial({ color: 0x75e8ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }),
+  );
+  flash.name = 'VPulseFlash';
+  flash.position.z = .009;
+  flash.visible = false;
+  muzzle.add(flash);
+  hand.add(socket);
+  return { socket, muzzle, support, primary, flash, triangles };
+}
+
+export async function loadHeroAssets(variant: RigVariant = 'rigify', kit: DemoKit = 'unarmed') {
+  const rootUrl = import.meta.env.BASE_URL;
+  const base = rootUrl + (kit === 'vpulse' ? ARMED_ASSET_DIRECTORY : RIG_VARIANTS.find(r => r.id === variant)!.directory);
   const response = await fetch(base + 'manifest.json');
   if (!response.ok) throw Error('Не удалось загрузить описание анимаций');
   const manifest = await response.json() as DemoManifest;
-  const results = await Promise.allSettled([0, 1, 2].map(level => new GLTFLoader().loadAsync(base + `infantry-demo-lod${level}.glb`)));
+  const paths = [0, 1, 2].map(level => base + `infantry-demo-lod${level}.glb`);
+  if (kit === 'vpulse') {
+    const grip = manifest.weaponGrip;
+    if (!grip || grip.position?.length !== 3 || grip.quaternion?.length !== 4 ||
+        ![...grip.position, ...grip.quaternion].every(Number.isFinite) || Math.hypot(...grip.quaternion) < .99) {
+      throw Error('Некорректная привязка V‑Pulse к кисти');
+    }
+    paths.push(rootUrl + 'assets/infantry-vpulse/v-pulse.glb', rootUrl + 'assets/infantry-vpulse/v-pulse-crowd.glb');
+  }
+  const results = await Promise.allSettled(paths.map(path => new GLTFLoader().loadAsync(path)));
   const loaded = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : []);
   const release = () => {
     const materials = new Set<THREE.Material>(), geometries = new Set<THREE.BufferGeometry>(), textures = new Set<THREE.Texture>();
@@ -39,7 +89,7 @@ export async function loadHeroAssets(variant: RigVariant = 'rigify') {
   };
   if (results.some(r => r.status === 'rejected')) { release(); throw Error('Не удалось загрузить одну из моделей'); }
   const root = new THREE.Group(), uniforms = { demoSkinArmor: { value: new THREE.Color() }, demoSkinAccent: { value: new THREE.Color() }, demoSkinBlend: { value: 0 } };
-  const models = loaded.map((gltf, level) => {
+  const createModel = (gltf: (typeof loaded)[number], level: number) => {
     const mesh = gltf.scene.getObjectByName('DemoInfantry') as THREE.SkinnedMesh;
     if (!mesh?.isSkinnedMesh || Array.isArray(mesh.material)) throw Error('Ожидалась подготовленная модель со скелетом');
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
@@ -59,12 +109,20 @@ export async function loadHeroAssets(variant: RigVariant = 'rigify') {
     material.customProgramCacheKey = () => 'infantry-playground-palette-v1';
     gltf.scene.visible = level === 2; root.add(gltf.scene);
     const mixer = new THREE.AnimationMixer(gltf.scene);
-    const actions = Object.fromEntries(gltf.animations.map(clip => [clip.name, mixer.clipAction(clip)])) as Record<HeroAnimation, THREE.AnimationAction>;
+    const actions = Object.fromEntries(gltf.animations.map(clip => [clip.name, mixer.clipAction(clip)])) as Record<DemoAnimation, THREE.AnimationAction>;
     for (const clip of manifest.clips) if (!actions[clip.name]) throw Error('Missing demo animation: ' + clip.name);
-    return { ...gltf, mesh, mixer, actions };
-  });
+    const weapon = kit === 'vpulse' ? attachVPulse(mesh, loaded[level === 2 ? 4 : 3].scene, manifest.weaponGrip!) : null;
+    return { ...gltf, mesh, mixer, actions, weapon };
+  };
+  let models: ReturnType<typeof createModel>[];
+  try {
+    models = loaded.slice(0, 3).map(createModel);
+  } catch (error) {
+    release();
+    throw error;
+  }
   let disposed = false;
-  return { root, models, manifest, variant,
+  return { root, models, manifest, variant: kit === 'vpulse' ? 'rigify' : variant, kit,
     setSkin(id: SkinId) {
       const skin = SKINS.find(s => s.id === id) ?? SKINS[0];
       uniforms.demoSkinBlend.value = skin.id === 'original' ? 0 : 1;

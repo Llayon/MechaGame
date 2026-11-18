@@ -1,0 +1,94 @@
+{
+  "rightAndLeftGrip": {
+    "idle": {
+      "maxRightMountMatrixError": 1.9848346710205078e-05,
+      "maxSupportPalmDistance": 1.8130302605115807e-06,
+      "maxReachCorrection": 0.00711247114745698
+    },
+    "walk": {
+      "maxRightMountMatrixError": 2.6015564799308777e-05,
+      "maxSupportPalmDistance": 3.3772032131951633e-06,
+      "maxReachCorrection": 0.00026974129901997696
+    },
+    "run": {
+      "maxRightMountMatrixError": 6.258487701416016e-07,
+      "maxSupportPalmDistance": 1.962515463042673e-07,
+      "maxReachCorrection": 0.010826946327999513
+    },
+    "crouch": {
+      "maxRightMountMatrixError": 5.364418029785156e-07,
+      "maxSupportPalmDistance": 1.5914447131226828e-07,
+      "maxReachCorrection": 0
+    },
+    "crouchWalk": {
+      "maxRightMountMatrixError": 4.991888999938965e-07,
+      "maxSupportPalmDistance": 1.1330028120983802e-07,
+      "maxReachCorrection": 0
+    },
+    "jump": {
+      "maxRightMountMatrixError": 5.21540641784668e-07,
+      "maxSupportPalmDistance": 1.5269146510898468e-07,
+      "maxReachCorrection": 0
+    },
+    "kneel": {
+      "maxRightMountMatrixError": 7.82310962677002e-07,
+      "maxSupportPalmDistance": 1.4919776018337002e-07,
+      "maxReachCorrection": 0.006677153195124156
+    },
+    "fire": {
+      "maxRightMountMatrixError": 1.5435507521033287e-05,
+      "maxSupportPalmDistance": 8.764260064240793e-07,
+      "maxReachCorrection": 0.027600647025818,
+      "muzzleAtPulse": {
+        "yawDegrees": 10.787749765640005,
+        "pitchDegrees": -0.36498613991162165
+      }
+    }
+  },
+  "maxNonRigidSkinMatrixError": 4.494190216064453e-05,
+  "rows": 428,
+  "atlasBytes": 123264,
+  "lods": [
+    {
+      "level": 0,
+      "glb": "infantry-demo-lod0.glb",
+      "bytes": 2872588,
+      "triangles": 3999,
+      "bones": 18,
+      "repairedTangents": 0
+    },
+    {
+      "level": 1,
+      "glb": "infantry-demo-lod1.glb",
+      "bytes": 1111704,
+      "triangles": 1999,
+      "bones": 18,
+      "repairedTangents": 0
+    },
+    {
+      "level": 2,
+      "glb": "infantry-demo-lod2.glb",
+      "bytes": 537784,
+      "triangles": 999,
+      "bones": 18,
+      "repairedTangents": 0
+    }
+  ],
+  "glbAtlasPlayback": [
+    {
+      "lod": 0,
+      "maxHalfFloatMatrixDifference": 0.0006520822644233704,
+      "maxExportedSupportDistance": 4.051136729056998e-06
+    },
+    {
+      "lod": 1,
+      "maxHalfFloatMatrixDifference": 0.0006520822644233704,
+      "maxExportedSupportDistance": 4.051136729056998e-06
+    },
+    {
+      "lod": 2,
+      "maxHalfFloatMatrixDifference": 0.0006520822644233704,
+      "maxExportedSupportDistance": 4.051136729056998e-06
+    }
+  ]
+}

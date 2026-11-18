@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SKINS, HERO_ASSET_DIRECTORY, RIG_VARIANTS } from './heroAssets';
+import { SKINS, ARMED_ASSET_DIRECTORY, HERO_ASSET_DIRECTORY, RIG_VARIANTS } from './heroAssets';
 function readGlb(path: string) {
   const bytes = readFileSync(path), length = bytes.readUInt32LE(12), json = JSON.parse(bytes.subarray(20,20+length).toString());
   assert.equal(bytes.readUInt32LE(8),bytes.length);
@@ -22,6 +22,61 @@ function readGlb(path: string) {
   };
   return {json,accessor,maps};
 }
+
+test('V-Pulse LODs share a normalized grip, a single material and the same attachment markers', () => {
+  const path = 'public/assets/infantry-vpulse/';
+  const manifest = JSON.parse(readFileSync(path + 'manifest.json', 'utf8'));
+  let length = 0;
+  for (const [name, budget] of [['close', 4000], ['crowd', 600]] as const) {
+    const variant = manifest.variants[name];
+    const { json, accessor } = readGlb(path + variant.file);
+    const primitive = json.meshes[0].primitives[0];
+    assert.equal(json.materials.length, 1);
+    assert.equal(json.meshes.length, 1);
+    assert.equal(json.meshes[0].primitives.length, 1);
+    assert.equal(json.accessors[primitive.indices].count / 3, variant.triangles);
+    assert.ok(variant.triangles <= budget);
+    assert.ok(accessor(primitive.attributes.POSITION).every(Number.isFinite));
+    for (const [marker, expected] of Object.entries(manifest.markers)) {
+      const node = json.nodes.find((n: { name: string }) => n.name === marker);
+      assert.ok(node, marker);
+      assert.deepEqual(node.translation ?? node.matrix?.slice(12, 15) ?? [0, 0, 0], expected);
+    }
+    const bounds = json.accessors[primitive.attributes.POSITION];
+    const span = bounds.max[2] - bounds.min[2];
+    assert.ok(span > .20 && span < .24);
+    if (length) assert.ok(Math.abs(span - length) < .001);
+    length = span;
+  }
+});
+
+test('armed assets keep body geometry and materials, with a shared rigid hand attachment and timed fire clip', () => {
+  const path = `public/${ARMED_ASSET_DIRECTORY}`;
+  const manifest = JSON.parse(readFileSync(path + 'manifest.json', 'utf8'));
+  const { position, quaternion } = manifest.weaponGrip;
+  assert.ok(position.length === 3 && position.every(Number.isFinite));
+  assert.ok(quaternion.length === 4 && Math.abs(Math.hypot(...quaternion) - 1) < 1e-5);
+  assert.ok(manifest.supportGrip.position.length === 3 && manifest.supportGrip.position.every(Number.isFinite));
+  const fire = manifest.clips.find((clip: { name: string }) => clip.name === 'fire');
+  assert.ok(fire.muzzleTime > 0 && fire.muzzleTime < fire.duration && !fire.loop);
+  for (const [level, triangles] of [3999, 1999, 999].entries()) {
+    const original = readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod${level}.glb`);
+    const armed = readGlb(`${path}infantry-demo-lod${level}.glb`);
+    const primitive = armed.json.meshes[0].primitives[0];
+    assert.equal(armed.json.meshes.length, 1);
+    assert.equal(armed.json.accessors[primitive.indices].count / 3, triangles);
+    assert.deepEqual(armed.maps(), original.maps());
+    const bones = armed.json.skins[0].joints.map((index: number) => armed.json.nodes[index].name);
+    assert.ok(bones.includes('hand_R') && bones.includes('hand_L'));
+    for (const clip of manifest.clips) {
+      const animation = armed.json.animations.find((item: { name: string }) => item.name === clip.name);
+      assert.ok(animation, clip.name);
+      const times = armed.accessor(animation.samplers[0].input);
+      assert.equal(times[0], 0);
+      assert.ok(Math.abs(times.at(-1)! - clip.duration) < .001, clip.name);
+    }
+  }
+});
 test('playable LODs preserve source maps and faces, and contain finite normalized rig data',()=>{
   for(const variant of RIG_VARIANTS) for(const level of [0,1,2]) {
     const source=readGlb(`public/assets/infantry-candidate/infantry-candidate-lod${level}.glb`);
