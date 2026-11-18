@@ -1,7 +1,15 @@
-"""GLB tangent validation shared by candidate asset builders."""
+"""GLB and animation helpers shared by candidate asset builders."""
 import json
 import struct
 from mathutils import Vector
+
+
+def linearize_action(action, slot):
+    channel = action.layers[0].strips[0].channelbag(slot)
+    for curve in channel.fcurves:
+        for point in curve.keyframe_points:
+            point.interpolation = 'LINEAR'
+
 
 def repair_export_tangents(path):
  """Repair a rare zero Mikk tangent with that corner's actual UV derivative."""

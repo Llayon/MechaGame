@@ -9,7 +9,7 @@ from mathutils import Vector, Matrix
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from candidate_gltf_utils import repair_export_tangents
+from candidate_gltf_utils import linearize_action, repair_export_tangents
 
 BASE = Path(os.environ.get('INFANTRY_MIXAMO_SOURCE', ROOT / 'public/assets/infantry-candidate/mixamo-demo'))
 RESTORE_TWIST = '--restore-twist' in sys.argv
@@ -167,6 +167,10 @@ for clip in clips:
                     print('ACTUAL', list(map(list, actual)), 'EXPECTED', list(map(list, deltas[src])))
             maximum_error = max(maximum_error, max(abs(actual[i][j] - deltas[src][i][j])
                                                   for i in range(4) for j in range(4)))
+    if name == 'run' and clip.get('bootFloor'):
+        # Keep the editable baking controls while removing cubic overshoot
+        # between the authored foot contact keys.
+        linearize_action(action, rig.animation_data.action_slot)
     fidelity.append({'clip': name, 'maximumDeformationMatrixError': maximum_error,
                      'maximumJointPositionError': maximum_joint_error})
     print('FIDELITY', name, maximum_error)

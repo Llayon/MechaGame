@@ -12,9 +12,43 @@ The revised clip distributes the support lift over neighboring frames with a cir
 
 The run still uses 22 keys at 30 Hz, including the shared loop endpoint. Across all 12 revised GLBs, embedded texture payloads retained their SHA-256 digests and other clips produced identical bone matrices at their authored keys. Only Run changed in the V-Pulse GPU atlas. Its 3 LODs agreed with the atlas within 0.000653 maximum matrix element error. The left palm remained within 0.0000041 game units of its support socket at the authored keys.
 
-At 120 Hz, the maximum Mixamo LOD0 boot origin difference was 0.001742 units (6.5 mm), with boot transforms matching at the authored keys within the export tolerance. Linear interpolation can still place a boot slightly below the floor between keys. The worst sampled penetration was about 4.9 mm after the change and 4.5 mm before it. Remaining velocity differences at the loop boundary reflect the original mocap and linear playback.
+The first polish preserved boot transforms at the authored keys. Later sampling revealed penetration between keys. The floor pass solves the two legs at their original lengths using a smooth vertical ankle correction. The root and pelvis tracks, horizontal ankle positions and 22-key timing were preserved. The top of the playground pad is now at the controller's ground height.
+
+| Bind geometry and playback | Lowest sole point before floor pass | Lowest sole point after floor pass |
+| --- | ---: | ---: |
+| Unarmed Mixamo, worst of three LODs at 960 Hz | −6.60 mm | +0.37 mm |
+| Standard Rigify, worst of three LODs at 960 Hz | −5.44 mm | +0.22 mm |
+| Preserved-twist Rigify, worst of three LODs at 960 Hz | −5.44 mm | +0.26 mm |
+| Armed GLB, worst of three LODs across 1,025 phases | −5.44 mm | +0.22 mm |
+| Armed RGBA16F atlas with shader interpolation, worst of three LODs across 1,025 phases | −4.40 mm | +0.35 mm |
+| Armed source, 40 000 triangles at 240 Hz | −4.28 mm | +0.24 mm |
+
+Negative clearance is below the floor. The measurements cover the steady Run loop on a flat surface. They sample the deformed mesh, including phases between keyframes. The atlas stayed at 36 × 428 texels and its other seven clips remained byte-identical. [Armed GLB and atlas report](../../../public/assets/infantry-armed/rig-verification.json).
+
+A separate 960 Hz sweep found the lowest source GLB sole point at +0.22 mm. On that model the largest upward change at any sampled phase was 6.95 mm. Some phases previously within 5 mm of the floor now reach up to 9.1 mm of clearance. The two unarmed Rigify authoring actions use linear Run curves to avoid cubic overshoot between their editable keys. The live deformed mesh in the 40 000-triangle Blender project cleared the floor by at least 0.27 mm at 960 Hz. [Source model sole close-up](run-boot-contact.png).
 
 ## Reproduce
+
+To reproduce the floor pass, use the assets from `8faa241` as the input. Pass the already polished Mixamo folder followed by a separate output folder, `--boot-floor`, and one `--support-reference` for each of the standard, preserved-twist and armed LODs plus the armed 40 000 GLB. The three Mixamo meshes in the input folder are included automatically.
+
+```powershell
+$blender = 'D:\Programms\Blender Foundation\Blender 5.2\blender.exe'
+$work = Join-Path $PWD '.tools/reproduce-run-floor'
+New-Item -ItemType Directory -Force $work | Out-Null
+git archive --format=zip --output="$work/baseline.zip" 8faa241 public/assets/infantry-candidate public/assets/infantry-armed
+Expand-Archive -LiteralPath "$work/baseline.zip" -DestinationPath "$work/baseline" -Force
+$assets = "$work/baseline/public/assets"
+$references = @()
+foreach ($directory in @('infantry-candidate/rigify-demo', 'infantry-candidate/rigify-twist-demo', 'infantry-armed')) {
+    foreach ($lod in 0..2) { $references += @('--support-reference', "$assets/$directory/infantry-demo-lod$lod.glb") }
+}
+$references += @('--support-reference', "$assets/infantry-candidate/high-rig/infantry-high.glb")
+& $blender --background --factory-startup --python-exit-code 1 --python scripts/infantry/polish_mixamo_run.py -- "$assets/infantry-candidate/mixamo-demo" "$work/mixamo" --boot-floor @references
+```
+
+Point `INFANTRY_MIXAMO_SOURCE` to `$work/mixamo` and rebuild standard and preserved-twist Rigify as below. Point `VPULSE_RIG_SOURCE` to the rebuilt standard rig for the armed bake. Run the armed verifier with `-- --require-run-clearance`, then run `build_high_rig.py` with `VPULSE_RIG_OUT` still pointing to the new armed folder.
+
+### Original retarget pass
 
 Start with the unpolished demo from `b7f84fb`. With Blender 5.2 and Rigify 0.6.10 installed, run these commands from the repository root in PowerShell. The working copies are written under `.tools`.
 

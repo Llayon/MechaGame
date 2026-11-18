@@ -18,7 +18,7 @@ from mathutils import Matrix, Quaternion, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from candidate_gltf_utils import repair_export_tangents
+from candidate_gltf_utils import linearize_action, repair_export_tangents
 
 SOURCE = Path(os.environ.get("VPULSE_RIG_SOURCE", ROOT / "public/assets/infantry-candidate/rigify-demo"))
 RIFLE = ROOT / "public/assets/infantry-vpulse"
@@ -153,13 +153,6 @@ def key_control(action_pose, frame, history):
     history[action_pose.name] = quaternion
     for channel in ("location", "rotation_quaternion", "scale"):
         action_pose.keyframe_insert(data_path=channel, frame=frame, group=action_pose.name)
-
-
-def linearize(action, slot):
-    channel = action.layers[0].strips[0].channelbag(slot)
-    for curve in channel.fcurves:
-        for point in curve.keyframe_points:
-            point.interpolation = "LINEAR"
 
 
 def read_donor(scene, filename, catalog, input_directory):
@@ -342,7 +335,7 @@ def author_carries(scene, rig, base, donors, support, right_offset, left_rest_ro
             support_error = max(support_error, ((right @ support) - left).length)
             for ctrl in CONTROLS:
                 key_control(rig.pose.bones[ctrl], frame, history)
-        linearize(target, rig.animation_data.action_slot)
+        linearize_action(target, rig.animation_data.action_slot)
         diagnosis[name] = {
             "maxRightMountMatrixError": grip_error,
             "maxSupportPalmDistance": support_error,
@@ -412,7 +405,7 @@ def bake_actions(scene, rig, compact, clips, actions, source_mesh):
                 for axis in range(3):
                     lower[axis] = min(lower[axis], point[axis])
                     upper[axis] = max(upper[axis], point[axis])
-        linearize(action, compact.animation_data.action_slot)
+        linearize_action(action, compact.animation_data.action_slot)
         compact.animation_data.action = None
         track = compact.animation_data.nla_tracks.new()
         track.name = name

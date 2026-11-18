@@ -12,18 +12,20 @@ export function TrainingYard() {
   }, []);
   useEffect(() => () => sign.dispose(), [sign]);
   return <group>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color="#434d4d" roughness={.96} /></mesh>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, .001, 0]} receiveShadow><planeGeometry args={[18, 18]} /><meshStandardMaterial color="#69706b" roughness={.91} /></mesh>
-    <gridHelper args={[18, 36, '#7f8780', '#737a74']} position={[0, .002, 0]} />
-    {[-1, 1].flatMap(sign => [0, 1].map(axis => <mesh key={`${sign}-${axis}`} position={axis ? [0, .003, sign * 8.8] : [sign * 8.8, .003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={axis ? [17.6, .045] : [.045, 17.6]} /><meshBasicMaterial color="#d7ac4f" />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.001, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color="#434d4d" roughness={.96} /></mesh>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[18, 18]} /><meshStandardMaterial color="#69706b" roughness={.91} /></mesh>
+    <gridHelper args={[18, 36, '#7f8780', '#737a74']} position={[0, .0001, 0]} />
+    {[-1, 1].flatMap(sign => [0, 1].map(axis => <mesh key={`${sign}-${axis}`} renderOrder={1} position={axis ? [0, 0, sign * 8.8] : [sign * 8.8, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={axis ? [17.6, .045] : [.045, 17.6]} /><meshBasicMaterial color="#d7ac4f" polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} depthWrite={false} />
     </mesh>))}
-    {[-1, 0, 1].map(lane => <mesh key={lane} rotation={[-Math.PI / 2, 0, 0]} position={[lane * 1.7, .004, 1.9]}>
-      <planeGeometry args={[.026, 6.5]} /><meshBasicMaterial color={lane === 0 ? '#e0bb61' : '#a8b1a6'} />
+    {[-1, 0, 1].map(lane => <mesh key={lane} renderOrder={1} rotation={[-Math.PI / 2, 0, 0]} position={[lane * 1.7, 0, 1.9]}>
+      <planeGeometry args={[.026, 6.5]} /><meshBasicMaterial color={lane === 0 ? '#e0bb61' : '#a8b1a6'} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} depthWrite={false} />
     </mesh>)}
     {YARD_OBSTACLES.map((o, index) => <group key={index} position={[o.x, 0, o.z]}>
       <mesh position={[0, o.height / 2, 0]} castShadow receiveShadow><boxGeometry args={[o.width, o.height, o.depth]} /><meshStandardMaterial color={index % 2 ? '#52645d' : '#454f55'} roughness={.78} metalness={.25} /></mesh>
-      <mesh position={[0, o.height + .002, 0]}><boxGeometry args={[o.width * .84, .004, o.depth * .84]} /><meshStandardMaterial color="#81908a" roughness={.8} /></mesh>
+      <mesh position={[0, o.height, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1} receiveShadow>
+        <planeGeometry args={[o.width * .84, o.depth * .84]} /><meshStandardMaterial color="#81908a" roughness={.8} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} depthWrite={false} />
+      </mesh>
       {[-1, 1].map(side => <mesh key={side} position={[o.width * side * .31, o.height / 2, -o.depth / 2 - .001]}>
         <boxGeometry args={[.035, o.height * .86, .003]} /><meshStandardMaterial color="#c6a353" roughness={.8} /></mesh>)}
     </group>)}

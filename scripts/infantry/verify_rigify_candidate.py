@@ -1,9 +1,13 @@
 """Check generated Rigify controls, compact export and save a planted-foot IK study."""
 import bpy, addon_utils, json, math, os, sys, struct
+import numpy as np
 from pathlib import Path
 from mathutils import Matrix, Vector, Quaternion
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from polish_mixamo_run import FLOOR_SAMPLES_PER_KEY, FPS, boot_heights
+
 variant = 'preserved-twist' if '--restore-twist' in sys.argv else 'standard'
 directory = 'rigify-twist-demo' if '--restore-twist' in sys.argv else 'rigify-demo'
 BASE = Path(os.environ.get('INFANTRY_RIG_OUT', ROOT / 'public/assets/infantry-candidate' / directory))
@@ -34,6 +38,31 @@ def reset():
             rig.pose.bones[stem + side]['IK_FK'] = 1.0
             assert rig.pose.bones[stem + side]['IK_Stretch'] == 0
     bpy.context.view_layer.update()
+
+
+def authoring_boot_minimum(mesh, sample_count):
+    reset()
+    rig.animation_data.action = actions['run']
+    start, end = actions['run'].frame_range
+    coordinates = np.empty((len(mesh.data.vertices), 3), dtype=np.float32)
+    mesh.data.vertices.foreach_get('co', coordinates.ravel())
+    world_z = np.asarray(mesh.matrix_world)[2]
+    is_boot = coordinates @ world_z[:3] + world_z[3] <= .10
+    previous_visibility = mesh.hide_get()
+    mesh.hide_set(False)
+    minimum = math.inf
+    try:
+        for i in range(sample_count):
+            sample(start + (end - start) * i / (sample_count - 1))
+            evaluated = mesh.evaluated_get(bpy.context.evaluated_depsgraph_get())
+            evaluated.to_mesh().vertices.foreach_get('co', coordinates.ravel())
+            evaluated.to_mesh_clear()
+            height = coordinates[is_boot] @ world_z[:3] + world_z[3]
+            minimum = min(minimum, float(height.min()))
+    finally:
+        mesh.hide_set(previous_visibility)
+    return minimum
+
 
 reset()
 for side in ['L', 'R']:
@@ -102,6 +131,8 @@ for side in ['L', 'R']:
 maximum_error = 0
 worst_sample = None
 bone_errors = {}
+run = next(clip for clip in manifest['clips'] if clip['name'] == 'run')
+run_floor = []
 for level in range(3):
     bpy.context.view_layer.objects.active = rig
     if bpy.context.mode != 'OBJECT':
@@ -118,6 +149,13 @@ for level in range(3):
     glb = (BASE / f'infantry-demo-lod{level}.glb').read_bytes()
     json_size = struct.unpack_from('<I', glb, 12)[0]
     document = json.loads(glb[20:20 + json_size])
+    if run.get('bootFloor'):
+        heights = boot_heights(document, glb[28 + json_size:], run['duration'])
+        minimum = heights.min(axis=0).tolist()
+        authoring_minimum = authoring_boot_minimum(bpy.data.objects[f'Infantry_LOD{level}'], len(heights))
+        assert min(*minimum, authoring_minimum) > 0, (variant, level, minimum, authoring_minimum)
+        run_floor.append({'lod': level, 'samples': len(heights), 'sampleRateHz': FPS * FLOOR_SAMPLES_PER_KEY,
+                          'minSoleHeightUnits': minimum, 'authoringMinSoleHeightUnits': authoring_minimum})
     def accessor(index):
         a = document['accessors'][index]
         v = document['bufferViews'][a['bufferView']]
@@ -187,5 +225,7 @@ report = {'passed': True, 'variant': variant, 'roundtripMaximumMatrixError': max
           'qaAction': 'QA_IK_PlantedFeet', 'clips': [c['name'] for c in manifest['clips']],
           'lods': [3999, 1999, 999], 'physicalDeviceQA': 'NOT VERIFIED',
           'note': 'Planted-foot QA verifies IK functionality; stock soft IK shows small compression. Playback clips use FK. This does not prove locomotion is free of all foot sliding'}
+if run_floor:
+    report['runBootClearance'] = run_floor
 (DOC / 'verification.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
 print('RIGIFY_QA=' + json.dumps(report))

@@ -52,6 +52,50 @@
           "maxBootOriginChangeAt120HzUnits": 0.0017416504496645055,
           "maximumExportTransformDifference": 1.817941665649414e-05
         }
+      },
+      "bootFloor": {
+        "method": "circular-boot-sole-clearance-v1",
+        "fps": 30,
+        "auditHz": 960,
+        "maximumAnkleLiftUnits": [
+          0.0018190964223707997,
+          0.0010971360679471558
+        ],
+        "lods": [
+          {
+            "minSoleHeightBeforeUnits": [
+              -0.001448740528266948,
+              -0.0008332424746955031
+            ],
+            "minSoleHeightAfterUnits": [
+              0.00018172633444651936,
+              0.00012894970368058922
+            ],
+            "maximumExportTransformDifference": 6.288290023803711e-06
+          },
+          {
+            "minSoleHeightBeforeUnits": [
+              -0.001675816597907772,
+              -0.0008380360293301636
+            ],
+            "minSoleHeightAfterUnits": [
+              0.00018184255508339742,
+              0.00012153110710806225
+            ],
+            "maximumExportTransformDifference": 6.288290023803711e-06
+          },
+          {
+            "minSoleHeightBeforeUnits": [
+              -0.0017590964223707997,
+              -0.0008857241078882652
+            ],
+            "minSoleHeightAfterUnits": [
+              9.958768197271956e-05,
+              0.00013911085595418038
+            ],
+            "maximumExportTransformDifference": 6.318092346191406e-06
+          }
+        ]
       }
     },
     {

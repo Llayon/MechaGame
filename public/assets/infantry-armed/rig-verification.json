@@ -90,5 +90,64 @@
       "maxHalfFloatMatrixDifference": 0.0006520822644233704,
       "maxExportedSupportDistance": 4.051136729056998e-06
     }
+  ],
+  "runBootClearance": [
+    {
+      "lod": 0,
+      "samples": 1025,
+      "bootVertices": 344,
+      "groundY": 0,
+      "toleranceUnits": 1e-06,
+      "gltf": {
+        "minimumUnits": 0.00012203679470775306,
+        "phaseAtMinimum": 0.404296875,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 0.457637980154074
+      },
+      "gpuAtlas": {
+        "minimumUnits": 0.00031375774764141884,
+        "phaseAtMinimum": 0.1669921875,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 1.1765915536553206
+      }
+    },
+    {
+      "lod": 1,
+      "samples": 1025,
+      "bootVertices": 198,
+      "groundY": 0,
+      "toleranceUnits": 1e-06,
+      "gltf": {
+        "minimumUnits": 8.012257033565562e-05,
+        "phaseAtMinimum": 0.033203125,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 0.30045963875870857
+      },
+      "gpuAtlas": {
+        "minimumUnits": 0.00041399732210579965,
+        "phaseAtMinimum": 0.0478515625,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 1.5524899578967486
+      }
+    },
+    {
+      "lod": 2,
+      "samples": 1025,
+      "bootVertices": 115,
+      "groundY": 0,
+      "toleranceUnits": 1e-06,
+      "gltf": {
+        "minimumUnits": 5.867152756583449e-05,
+        "phaseAtMinimum": 0.1669921875,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 0.22001822837187934
+      },
+      "gpuAtlas": {
+        "minimumUnits": 9.39737764139581e-05,
+        "phaseAtMinimum": 0.1669921875,
+        "penetratingSamples": 0,
+        "minimumMillimeters": 0.35240166155234287
+      }
+    }
   ]
 }

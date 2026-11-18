@@ -23,5 +23,37 @@
     999
   ],
   "physicalDeviceQA": "NOT VERIFIED",
-  "note": "Planted-foot QA verifies IK functionality; stock soft IK shows small compression. Playback clips use FK. This does not prove locomotion is free of all foot sliding"
+  "note": "Planted-foot QA verifies IK functionality; stock soft IK shows small compression. Playback clips use FK. This does not prove locomotion is free of all foot sliding",
+  "runBootClearance": [
+    {
+      "lod": 0,
+      "samples": 673,
+      "sampleRateHz": 960,
+      "minSoleHeightUnits": [
+        0.0001819488874868282,
+        0.00012887395879196926
+      ],
+      "authoringMinSoleHeightUnits": 0.00012851040810346603
+    },
+    {
+      "lod": 1,
+      "samples": 673,
+      "sampleRateHz": 960,
+      "minSoleHeightUnits": [
+        0.00021222007416149546,
+        6.924535607517358e-05
+      ],
+      "authoringMinSoleHeightUnits": 6.88815489411354e-05
+    },
+    {
+      "lod": 2,
+      "samples": 673,
+      "sampleRateHz": 960,
+      "minSoleHeightUnits": [
+        0.0008248587005560419,
+        7.140592429565745e-05
+      ],
+      "authoringMinSoleHeightUnits": 7.182732224464417e-05
+    }
+  ]
 }

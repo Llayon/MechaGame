@@ -25,7 +25,7 @@
     {
       "clip": "run",
       "maximumDeformationMatrixError": 4.553794860839844e-05,
-      "maximumJointPositionError": 1.075964189327735e-06
+      "maximumJointPositionError": 1.0780452041438772e-06
     },
     {
       "clip": "crouch",
@@ -75,7 +75,7 @@
       "repairedTangents": 0
     }
   ],
-  "sourceAssetSha256": "67a8b222335b6b84fc80f9e65abda65ad60400b98dda4e36e12ef35bedd85e40",
+  "sourceAssetSha256": "96acb0b88259df02bd9cb8a461f23487e3d3a3683eed4778aac5b88726ff630e",
   "notes": [
     "Armor retains deliberate weights; no automatic heat weighting",
     "Gloves receive separate hand bones; rigid boots retain foot weights (toe controls are reserved)",

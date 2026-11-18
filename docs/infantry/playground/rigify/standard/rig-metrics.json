@@ -25,7 +25,7 @@
     {
       "clip": "run",
       "maximumDeformationMatrixError": 0.41164931654930115,
-      "maximumJointPositionError": 1.0866167974390336e-06
+      "maximumJointPositionError": 1.0646772788701206e-06
     },
     {
       "clip": "crouch",
@@ -48,7 +48,7 @@
       "maximumJointPositionError": 3.178089672511989e-07
     }
   ],
-  "compactExportMatrixError": 1.1682510375976562e-05,
+  "compactExportMatrixError": 1.1622905731201172e-05,
   "lods": [
     {
       "level": 0,
@@ -75,7 +75,7 @@
       "repairedTangents": 0
     }
   ],
-  "sourceAssetSha256": "67a8b222335b6b84fc80f9e65abda65ad60400b98dda4e36e12ef35bedd85e40",
+  "sourceAssetSha256": "96acb0b88259df02bd9cb8a461f23487e3d3a3683eed4778aac5b88726ff630e",
   "notes": [
     "Armor retains deliberate weights; no automatic heat weighting",
     "Gloves receive separate hand bones; rigid boots retain foot weights (toe controls are reserved)",
