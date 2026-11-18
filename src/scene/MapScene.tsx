@@ -7,7 +7,10 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
 import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
-import { CombatCamera } from './CombatCamera';
+import { PLAYER_MODEL_LAYER } from './playerModelLayer';
+import { stepInfantrySkirmishes } from '../game/infantrySkirmishes';
+import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
+import { frameInfantryEncounter } from './infantryCamera';
 import type { CombatAimState } from '../game/combatAim';
 import { resolveGraphicsRuntime } from '../game/graphicsSettings';
 import type { GraphicsSettings } from '../game/graphicsSettings';
@@ -23,6 +26,7 @@ import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader } from './heightFog';
 import { MechDriveInput, SovietMech } from './objects/SovietMech';
 import { CombatActors } from './objects/CombatActors';
+import { InfantryActors } from './objects/InfantryActors';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
@@ -204,6 +208,7 @@ function syncShadowFrustum(
 }
 
 interface CameraRigProps {
+  focusedSite: InfantrySite | null;
   activeSector: SectorId;
   transitionNonce: number;
   resetNonce: number;
@@ -221,6 +226,7 @@ interface CameraRigProps {
 }
 
 function CameraRig({
+  focusedSite,
   activeSector,
   transitionNonce,
   resetNonce,
@@ -236,7 +242,8 @@ function CameraRig({
   sunPos,
   shadowMapSize,
 }: CameraRigProps) {
-  const { camera, scene, gl, invalidate } = useThree();
+  const { camera, scene, gl, invalidate, size } = useThree();
+  const focusAspect = focusedSite ? size.width / Math.max(1, size.height) : 1;
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const transitioningRef = useRef(false);
   const firstMountRef = useRef(true);
@@ -278,6 +285,8 @@ function CameraRig({
         const d = driveInputRef.current;
         const c = combatRef.current;
         const active =
+          (driveMode && c.missionStatus === 'playing') ||
+          (!driveMode && focusedSite !== null && (c.missionStatus === 'idle' || c.missionStatus === 'playing')) ||
           d.forward !== 0 ||
           d.turn !== 0 ||
           d.turretTurn !== 0 ||
@@ -313,6 +322,7 @@ function CameraRig({
       scheduleStep(50);
     };
 
+    if (driveMode || focusedSite) wake();
     window.addEventListener('keydown', wake);
     window.addEventListener('keyup', wake);
     window.addEventListener('pointerdown', wake);
@@ -325,7 +335,7 @@ function CameraRig({
       window.removeEventListener('pointerdown', wake);
       window.removeEventListener('pointerup', wake);
     };
-  }, [isSoftwareGl, driveMode, paused, invalidate, driveInputRef, combatRef]);
+  }, [isSoftwareGl, driveMode, focusedSite, paused, invalidate, driveInputRef, combatRef]);
 
   // Handle entering/exiting Drive Mode vs Sector Overview fly-to
   useEffect(() => {
@@ -382,6 +392,12 @@ function CameraRig({
     const sector = SECTORS[activeSector];
     _goalPos.set(...sector.cameraPos);
     _goalTarget.set(...sector.cameraTarget);
+    if (focusedSite && camera instanceof THREE.PerspectiveCamera) {
+      const view = frameInfantryEncounter(combatRef.current.infantry.soldiers,
+        INFANTRY_SITES.indexOf(focusedSite), focusAspect, camera.fov, sunPos);
+      _goalTarget.copy(view.target);
+      _goalPos.copy(view.position);
+    }
 
     if (firstMountRef.current || isSoftwareGl) {
       firstMountRef.current = false;
@@ -405,6 +421,8 @@ function CameraRig({
   }, [
     driveMode,
     activeSector,
+    focusedSite,
+    focusAspect,
     transitionNonce,
     resetNonce,
     camera,
@@ -419,6 +437,10 @@ function CameraRig({
   useFrame((_, delta) => {
     if (paused) return;
     if (driveMode) return; // CombatCamera exclusively owns battle view.
+    const status = combatRef.current.missionStatus;
+    if (focusedSite && (status === 'idle' || status === 'playing')) {
+      stepInfantrySkirmishes(combatRef.current.infantry, delta);
+    }
     const controls = controlsRef.current;
     if (!controls) return;
 
@@ -593,7 +615,7 @@ function CameraRig({
       enabled={!paused && !driveMode}
       enableDamping={!isSoftwareGl}
       dampingFactor={0.07}
-      minDistance={driveMode ? 6.5 : 18}
+      minDistance={driveMode || focusedSite ? 6.5 : 18}
       maxDistance={driveMode ? 48 : 660}
       minPolarAngle={0.22}
       maxPolarAngle={Math.PI / 2 - 0.12}
@@ -689,6 +711,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 }
 
 export interface MapSceneProps {
+  focusedSite: InfantrySite | null;
   world: WorldAssets;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -713,6 +736,7 @@ export interface MapSceneProps {
 }
 
 export function MapScene({
+  focusedSite,
   world,
   onTerrainReady,
   activeSector,
@@ -801,7 +825,9 @@ export function MapScene({
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 0.92,
         }}
-        onCreated={({ gl }) => {
+        onCreated={({ gl, camera, raycaster }) => {
+          camera.layers.enable(PLAYER_MODEL_LAYER);
+          raycaster.layers.enable(PLAYER_MODEL_LAYER);
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.domElement.addEventListener('webglcontextlost', (e) => {
             e.preventDefault();
@@ -835,7 +861,7 @@ export function MapScene({
           shadow-mapSize-width={shadowMapSize}
           shadow-mapSize-height={shadowMapSize}
           shadow-camera-near={20}
-          shadow-camera-layers-mask={1 | (1 << BRIDGE_SHADOW_LAYER)}
+          shadow-camera-layers-mask={1 | (1 << BRIDGE_SHADOW_LAYER) | (1 << PLAYER_MODEL_LAYER)}
           shadow-camera-far={680}
           shadow-camera-left={-210}
           shadow-camera-right={210}
@@ -859,6 +885,7 @@ export function MapScene({
         )}
 
         <CameraRig
+          focusedSite={focusedSite}
           activeSector={activeSector}
           transitionNonce={transitionNonce}
           resetNonce={resetNonce}
@@ -922,21 +949,14 @@ export function MapScene({
           missileRibbonPoolRef={missileRibbonPoolRef}
           casingsPoolRef={casingsPoolRef}
           tracerPoolRef={tracerPoolRef}
+          onShadowFocus={(focus, cam) => syncShadowFrustum(
+            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
           heatShimmerPoolRef={heatShimmerPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
         </group>
 
-        <CombatCamera
-          active={driveMode}
-          paused={paused}
-          resetNonce={resetNonce}
-          aimRef={aimRef}
-          mechPoseRef={mechPoseRef}
-          onShadowFocus={(focus, cam) => syncShadowFrustum(
-            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
-        />
         {halfRateShadows && quality.shadowEnabled && (
           <BalancedShadowCadence
             key={graphics.shadows}
@@ -951,7 +971,9 @@ export function MapScene({
           />
         )}
         <group name="perf:combat">
-          {driveMode && <InfantryCrowd combatRef={combatRef}/>}
+          {driveMode || focusedSite
+            ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+            : showUnits && <InfantryCrowd combatRef={combatRef} />}
           <CombatActors
             combatRef={combatRef}
             driveMode={driveMode}
@@ -1038,7 +1060,7 @@ export function MapScene({
         </group>
 
         <TacticalMarkers
-          visible={showMarkers && !driveMode}
+          visible={showMarkers && !driveMode && !focusedSite}
           activeSector={activeSector}
           onSelectSector={onSelectSector}
         />

@@ -21,6 +21,7 @@ import {
   queryCollidersAlongSegment,
 } from './worldColliders';
 import { getTitanWreckDeckYAt } from './titanWrecks';
+import { Raycaster, Vector3, type Intersection, type Mesh } from 'three';
 
 export type RayHitKind = 'terrain' | 'bridge' | 'obstacle';
 
@@ -41,6 +42,19 @@ interface RayPrimitiveHit {
   nx: number;
   ny: number;
   nz: number;
+}
+
+const surfaceRay = new Raycaster();
+const surfaceHits: Intersection[] = [];
+const surfaceNormal = new Vector3();
+
+function intersectShotMesh(mesh: Mesh, limit: number): RayPrimitiveHit | null {
+  surfaceRay.far = limit;
+  surfaceHits.length = 0;
+  const hit = surfaceRay.intersectObject(mesh, false, surfaceHits)[0];
+  if (!hit?.face) return null;
+  const n = surfaceNormal.copy(hit.face.normal).transformDirection(mesh.matrixWorld);
+  return { t: hit.distance, nx: n.x, ny: n.y, nz: n.z };
 }
 
 const AIRFIELD_PAD_Y = getTerrainHeight(AIRFIELD_CENTER_X, AIRFIELD_CENTER_Z) + 0.35;
@@ -314,12 +328,14 @@ function traceCombatRay(
   const endX = ox + ndx * maxDist;
   const endZ = oz + ndz * maxDist;
   const candidates = queryCollidersAlongSegment(ox, oz, endX, endZ);
+  surfaceRay.ray.origin.set(ox, oy, oz);
+  surfaceRay.ray.direction.set(ndx, ndy, ndz);
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
-    const hit =
-      c.kind === 'circle'
-        ? intersectRayCircleColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c)
-        : intersectRayBoxColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c);
+    let hit: RayPrimitiveHit | null;
+    if (c.kind === 'box') hit = intersectRayBoxColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c);
+    else if (c.shotMesh) hit = intersectShotMesh(c.shotMesh, bestDist);
+    else hit = intersectRayCircleColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c);
     if (hit !== null && hit.t < bestDist) {
       if (anyHit) return true;
       bestDist = hit.t;

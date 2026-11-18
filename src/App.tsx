@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLazyRef } from './utils/useLazyRef';
 import { LightingPreset, SectorId } from './map/sectors';
+import type { InfantrySite } from './map/infantryEncounters';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import type { WorldAssets } from './map/worldAssets';
@@ -68,6 +69,7 @@ export default function App({ world }: { world: WorldAssets }) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
+  const [focusedSite, setFocusedSite] = useState<InfantrySite | null>(null);
   const [transitionNonce, setTransitionNonce] = useState(0);
   const [resetNonce, setResetNonce] = useState(0);
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
@@ -192,12 +194,14 @@ export default function App({ world }: { world: WorldAssets }) {
   }, [paused]);
 
   const handleSelectSector = useCallback(
-    (id: SectorId) => {
+    (id: SectorId, site?: InfantrySite) => {
       clearDriveInput();
       if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
       setDriveMode(false);
       setPaused(false);
       setActiveSector(id);
+      setFocusedSite(site ?? null);
+      if (site) setShowUnits(true);
       setTransitionNonce((n) => n + 1);
     },
     [clearDriveInput],
@@ -209,6 +213,7 @@ export default function App({ world }: { world: WorldAssets }) {
     setDriveMode(false);
     setPaused(false);
     setActiveSector('overview');
+    setFocusedSite(null);
     setTransitionNonce((n) => n + 1);
   }, [clearDriveInput]);
 
@@ -289,6 +294,7 @@ export default function App({ world }: { world: WorldAssets }) {
     clearDriveInput();
     driveInputRef.current.crouch = false;
     resetCombatState(combatRef.current, 'playing');
+    setFocusedSite(null);
     mechPoseRef.current = createSpawnPose();
     setMissionOutcome(null);
     setPaused(false);
@@ -486,6 +492,7 @@ export default function App({ world }: { world: WorldAssets }) {
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-[#091016]">
       <MapScene
+        focusedSite={focusedSite}
         world={world}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
@@ -511,6 +518,7 @@ export default function App({ world }: { world: WorldAssets }) {
       {terrainReady ? (
         <>
           <TacticalHUD
+            focusedSite={focusedSite}
             activeSector={activeSector}
             lightingPreset={lightingPreset}
             driveMode={driveMode}

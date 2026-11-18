@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { chooseLod, projectedPixels, readWorldLod } from '../lod/worldLod';
-import { SQUAD_SIZE, type Soldier } from './population';
+import type { InfantrySoldier } from '../game/infantrySkirmishes';
+import { INFANTRY_PER_SITE, INFANTRY_SITES } from '../map/infantryEncounters';
+
+const SITE_CAPACITY = INFANTRY_PER_SITE.friendly + INFANTRY_PER_SITE.enemy;
 
 interface Motion {
   name: string;
   offset: number;
   frames: number;
+  duration: number;
 }
 interface Atlas {
   width: number;
@@ -85,13 +89,13 @@ function batch(
   const geometry = new THREE.BufferGeometry();
   geometry.setIndex(source.geometry.index);
   for (const [name, attr] of Object.entries(source.geometry.attributes)) geometry.setAttribute(name, attr);
-  const pose = new THREE.InstancedBufferAttribute(new Float32Array(SQUAD_SIZE * 4), 4).setUsage(
+  const pose = new THREE.InstancedBufferAttribute(new Float32Array(SITE_CAPACITY * 4), 4).setUsage(
     THREE.DynamicDrawUsage,
   );
   geometry.setAttribute('aCrowdPose', pose);
   const material = source.material as THREE.MeshStandardMaterial;
   bindAtlas(material, poseTexture, true);
-  const mesh = new THREE.InstancedMesh(geometry, material, SQUAD_SIZE);
+  const mesh = new THREE.InstancedMesh(geometry, material, SITE_CAPACITY);
   mesh.customDepthMaterial = shadowMaterial;
   mesh.receiveShadow = level <= 1;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -175,7 +179,7 @@ export async function loadCrowdRenderer() {
     geometries.add(contacts);
     const group = new THREE.Group();
     group.name = 'perf:infantry';
-    const squads = Array.from({ length: 8 }, (_, index) => {
+    const squads = INFANTRY_SITES.map((_, index) => {
       const levels = sources.map((source, lod) => batch(source, lod, poseTexture, depth));
       const shadow = batch(sources[3], 3, poseTexture, depth);
       delete shadow.mesh.userData.lodLevel;
@@ -183,7 +187,7 @@ export async function loadCrowdRenderer() {
       shadow.mesh.castShadow = true;
       shadow.mesh.receiveShadow = false;
       shadow.mesh.name = 'infantry-shadow-' + index;
-      const contact = new THREE.InstancedMesh(contacts, contactMat, SQUAD_SIZE);
+      const contact = new THREE.InstancedMesh(contacts, contactMat, SITE_CAPACITY);
       contact.count = 0;
       contact.name = 'infantry-contact-' + index;
       contact.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -199,13 +203,13 @@ export async function loadCrowdRenderer() {
       return { levels, shadow, contact };
     });
     const motions = new Map(atlas.clips.map((c) => [c.name, c]));
-    const previous = new Int8Array(SQUAD_SIZE * squads.length).fill(-1);
+    const previous = new Int8Array(SITE_CAPACITY * squads.length).fill(-1);
     const shadowLevels = new Int8Array(previous.length).fill(-1);
     const transform = new THREE.Object3D(),
       point = new THREE.Vector3();
-    let lastPopulation: Soldier[] | undefined;
+    let lastPopulation: InfantrySoldier[] | undefined;
     let nextClassification = -Infinity;
-    function update(population: Soldier[], camera: THREE.Camera, time: number, shadows: boolean) {
+    function update(population: InfantrySoldier[], camera: THREE.Camera, time: number, shadows: boolean) {
       const reset = population !== lastPopulation;
       if (reset) {
         lastPopulation = population;
@@ -213,12 +217,9 @@ export async function loadCrowdRenderer() {
         shadowLevels.fill(-1);
         const bounds = squads.map(() => new THREE.Box3());
         for (const actor of population) {
-          const lane = actor.lane;
-          for (let i = 0; i < lane.heights.length; i++) {
-            bounds[actor.squad].expandByPoint(
-              point.set(lane.x + lane.dx * i * 0.5, lane.heights[i], lane.z + lane.dz * i * 0.5),
-            );
-          }
+          const box = bounds[actor.siteIndex];
+          for (const p of actor.route) box.expandByPoint(point.set(p.x, p.y, p.z));
+          box.expandByPoint(point.set(actor.cover.x, actor.cover.y, actor.cover.z));
         }
         for (let i = 0; i < squads.length; i++) {
           const sphere = bounds[i].expandByScalar(0.75).getBoundingSphere(new THREE.Sphere());
@@ -253,18 +254,20 @@ export async function loadCrowdRenderer() {
             [24, 8],
           );
         }
-        const squad = squads[actor.squad];
-        const clip = motions.get(actor.clip)!;
-        const frame = actor.phase * (clip.frames - 1),
+        const squad = squads[actor.siteIndex];
+        const friendly = actor.side === 'friendly';
+        const clip = motions.get(actor.moving ? 'run' : actor.inCover ? 'crouch' : 'idle')!;
+        const phase = (actor.id * 0.618033989 + time / clip.duration) % 1;
+        const frame = phase * (clip.frames - 1),
           local = Math.floor(frame);
         const a = clip.offset + local,
           b = clip.offset + Math.min(local + 1, clip.frames - 1);
         transform.position.set(actor.x, actor.y, actor.z);
         transform.rotation.y = actor.yaw;
         transform.updateMatrix();
-        submit(squad.levels[previous[actor.id]], a, b, frame - local, actor.friendly);
+        submit(squad.levels[previous[actor.id]], a, b, frame - local, friendly);
         if (shadows && shadowLevels[actor.id] === 0)
-          submit(squad.shadow, a, b, frame - local, actor.friendly);
+          submit(squad.shadow, a, b, frame - local, friendly);
         if (shadows && shadowLevels[actor.id] === 1) {
           transform.matrix.elements[13] += 0.013;
           squad.contact.setMatrixAt(squad.contact.count++, transform.matrix);

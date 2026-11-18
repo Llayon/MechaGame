@@ -31,21 +31,21 @@ test('the mission owns 50 friendly and 150 hostile infantry independently of ren
   const state = createCombatState(true);
   const { x, y, z } = MECH_SPAWN;
   stepCombatSimulation(state, x, y, z, false, 0.05);
-  assert.equal(state.infantry.length, 200);
-  assert.equal(state.infantry.filter((a) => a.friendly).length, 50);
-  const actor = state.infantry[88];
-  const phase = actor.phase;
+  assert.equal(state.infantry.soldiers.length, 200);
+  assert.equal(state.infantry.soldiers.filter((a) => a.side === 'friendly').length, 50);
+  const actor = state.infantry.soldiers[88];
+  const elapsed = state.infantry.elapsed;
   state.missionStatus = 'paused';
   stepCombatSimulation(state, x, y, z, false, 0.05);
-  assert.equal(actor.phase, phase);
+  assert.equal(state.infantry.elapsed, elapsed);
   state.missionStatus = 'playing';
   stepCombatSimulation(state, x, y, z, false, 0.05);
-  assert.notEqual(actor.phase, phase);
+  assert.ok(state.infantry.elapsed > elapsed);
   actor.hp = 0;
   resetCombatState(state);
   stepCombatSimulation(state, x, y, z, false, 0.05);
-  assert.equal(state.infantry[88].id, actor.id);
-  assert.ok(state.infantry[88].hp > 0);
+  assert.equal(state.infantry.soldiers[88].id, actor.id);
+  assert.ok(state.infantry.soldiers[88].hp > 0);
 });
 
 test('infantry ray hits respect the nearest occluder, team, range, and dead slots', () => {

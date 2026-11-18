@@ -90,6 +90,20 @@ test('castCombatRay returns outward unit surface normals for terrain and vertica
   assert.ok(Math.abs(wallHit.ny) < 0.25, `Expected near-horizontal wall normal, got ny=${wallHit.ny}`);
 });
 
+test('a shot can graze the airfield ridge and reach a covered soldier beside it', () => {
+  const ox = -96.47372, oy = 7.64054, oz = 46.5;
+  // This sightline clips the circular movement footprint, between its visible rocks.
+  const dx = -103.56765 - ox, dy = 5.01419 - oy, dz = 57.37 - oz;
+  assert.equal(castCombatRay(ox, oy, oz, dx, dy, dz, Math.hypot(dx, dy, dz)), null);
+
+  // From the same firing position, the flanking monolith actually protrudes beyond
+  // that footprint. Its sloping face must stop the shot and supply a decal normal.
+  const rock = castCombatRay(ox, oy, oz, -106 - ox, getTerrainHeight(-106, 52) + 1 - oy, 52 - oz, 15);
+  assert.equal(rock?.tag, 'rock');
+  assert.ok(rock.distance > 4.9 && rock.distance < 5.2);
+  assert.ok(Math.abs(Math.hypot(rock.nx, rock.ny, rock.nz) - 1) < 1e-6);
+});
+
 test('any-hit line of sight agrees with the closest hit at bridge edges and sampling cutoffs', () => {
   const points = BRIDGE_SPECS.flatMap((bridge) => {
     const dx = bridge.end[0] - bridge.start[0];

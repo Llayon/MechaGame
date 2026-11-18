@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Group } from 'three';
 import type { CombatSimulationState } from '../game/combatTypes';
 import { useSceneSimulation } from '../scene/SceneSimulation';
@@ -8,7 +8,8 @@ import { loadCrowdRenderer } from './crowdRenderer';
 export function InfantryCrowd({ combatRef }: { combatRef: MutableRefObject<CombatSimulationState> }) {
   const container = useRef<Group>(null);
   const runtime = useRef<Awaited<ReturnType<typeof loadCrowdRenderer>> | null>(null);
-  const { paused } = useSceneSimulation();
+  const { paused, clockRef } = useSceneSimulation();
+  const { camera, gl, invalidate } = useThree();
   useEffect(() => {
     const group = container.current!;
     let cancelled = false;
@@ -20,6 +21,8 @@ export function InfantryCrowd({ combatRef }: { combatRef: MutableRefObject<Comba
         }
         group.add(renderer.group);
         runtime.current = renderer;
+        renderer.update(combatRef.current.infantry.soldiers, camera, clockRef.current.elapsed, gl.shadowMap.enabled);
+        invalidate();
       })
       .catch((error) => console.warn('Infantry visuals could not be loaded.', error));
     return () => {
@@ -30,11 +33,10 @@ export function InfantryCrowd({ combatRef }: { combatRef: MutableRefObject<Comba
         runtime.current = null;
       }
     };
-  }, []);
-  useFrame(({ camera, gl }) => {
+  }, [camera, clockRef, combatRef, gl, invalidate]);
+  useFrame(() => {
     if (paused) return;
-    const combat = combatRef.current;
-    runtime.current?.update(combat.infantry, camera, combat.elapsedSec, gl.shadowMap.enabled);
+    runtime.current?.update(combatRef.current.infantry.soldiers, camera, clockRef.current.elapsed, gl.shadowMap.enabled);
   });
   return <group ref={container} />;
 }

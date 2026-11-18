@@ -3,8 +3,13 @@
 Browser-based 3D mech combat arena, using React 19, React Three Fiber, Three.js and Vite.
 
 Current features include the procedural 3D terrain and structures, the walking Object 316
-mech with IK and environmental effects, aim assist, three enemy archetypes, player/enemy
+mech with IK and environmental effects, aim assist, three armored enemy archetypes, assault infantry, player/enemy
 combat, heavy cannon, overheating, dash, repair, mission victory/defeat, and touch controls.
+
+Five skirmishes each deploy 10 allied and 30 hostile soldiers. Select a numbered contact in the
+overview to watch one, or enter the mech to support the allies. Enemy patrols raise a local alarm
+and move to cover when they see the mech. A spotter with visual contact helps nearby APCs and
+turrets turn and prepare shots faster. The mech's primary mission objective is to destroy the armored targets.
 
 ## Development
 

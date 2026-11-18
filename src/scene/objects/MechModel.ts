@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { MECH_L1, MECH_L2, MECH_L3, MECH_SCALE, MECH_SOLE_HEIGHT, MECH_SPAWN, getWalkableSurfaceY } from '../../map/mechKinematics';
 import type { createMechMaterials } from './mechMaterials';
 import { KICKUP_POOL_SIZE } from './TerrainKickup';
+import { PLAYER_MODEL_LAYER } from '../playerModelLayer';
 
 export type MechMaterials = ReturnType<typeof createMechMaterials>;
 export interface LegRig {
@@ -1158,6 +1159,14 @@ export function buildMechModel(mats: MechMaterials) {
         footRoll: 0,
       });
     });
+
+    // Feet and hydraulic pistons are world-space siblings of the hull. World FX
+    // are added later and stay on their ordinary rendering layer.
+    const markPlayerMesh = (part: THREE.Object3D) => {
+      if (part instanceof THREE.Mesh) part.layers.set(PLAYER_MODEL_LAYER);
+    };
+    root.traverse(markPlayerMesh);
+    worldFeetGroup.traverse(markPlayerMesh);
 
     // Shared particle geometries
     const dustGeom = trackG(new THREE.SphereGeometry(0.18, 6, 6));

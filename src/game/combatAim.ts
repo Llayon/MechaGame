@@ -1,3 +1,5 @@
+import type { InfantryRole } from './infantrySkirmishes';
+
 /**
  * Independent camera-view intention versus delayed physical turret direction.
  * Angles are world-relative radians: positive yaw looks right (+X), positive
@@ -11,13 +13,14 @@ export interface CombatAimState {
   reticleX: number;
   reticleY: number;
   reticleVisible: boolean;
-  /** Unit direction of the physical muzzle. Reticle projection is independent of hit distance. */
-  muzzleDirectionX: number;
-  muzzleDirectionY: number;
-  muzzleDirectionZ: number;
-  muzzleDirectionValid: boolean;
+  /** World point on the guns' combined line of fire, at the sighted range or closer cover. */
+  gunSightX: number;
+  gunSightY: number;
+  gunSightZ: number;
+  gunSightValid: boolean;
   reticleHit: 'enemy' | 'barrel' | 'cover' | 'range';
   reticleTargetId: string | null;
+  infantryRole?: InfantryRole;
 }
 
 export const AIM_ELEVATION_MIN = -0.34;
@@ -45,8 +48,8 @@ export function createCombatAimState(yaw: number): CombatAimState {
   return {
     yaw, elevation: -0.025, initialized: false, precise: false,
     reticleX: 0, reticleY: 0, reticleVisible: false,
-    muzzleDirectionX: 0, muzzleDirectionY: 0, muzzleDirectionZ: 1,
-    muzzleDirectionValid: false,
+    gunSightX: 0, gunSightY: 0, gunSightZ: 0,
+    gunSightValid: false,
     reticleHit: 'range', reticleTargetId: null,
   };
 }
@@ -59,12 +62,13 @@ export function resetCombatAim(aim: CombatAimState, hullYaw: number): void {
   aim.reticleX = 0;
   aim.reticleY = 0;
   aim.reticleVisible = false;
-  aim.muzzleDirectionValid = false;
-  aim.muzzleDirectionX = 0;
-  aim.muzzleDirectionY = 0;
-  aim.muzzleDirectionZ = 1;
+  aim.gunSightValid = false;
+  aim.gunSightX = 0;
+  aim.gunSightY = 0;
+  aim.gunSightZ = 0;
   aim.reticleHit = 'range';
   aim.reticleTargetId = null;
+  aim.infantryRole = undefined;
 }
 
 export function updateCombatAim(
@@ -72,10 +76,11 @@ export function updateCombatAim(
   yawDelta: number,
   elevationDelta: number,
 ): void {
-  if (Number.isFinite(yawDelta)) aim.yaw += Math.max(-0.75, Math.min(0.75, yawDelta));
+  const sensitivity = aim.precise ? 0.4 : 1;
+  if (Number.isFinite(yawDelta)) aim.yaw += Math.max(-0.75, Math.min(0.75, yawDelta * sensitivity));
   if (Number.isFinite(elevationDelta)) {
     aim.elevation = Math.max(AIM_ELEVATION_MIN,
-      Math.min(AIM_ELEVATION_MAX, aim.elevation + Math.max(-0.75, Math.min(0.75, elevationDelta))));
+      Math.min(AIM_ELEVATION_MAX, aim.elevation + Math.max(-0.75, Math.min(0.75, elevationDelta * sensitivity))));
   }
 }
 

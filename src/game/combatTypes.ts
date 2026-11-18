@@ -1,4 +1,4 @@
-import type { Soldier } from '../infantry/population';
+import type { InfantrySkirmishes } from './infantrySkirmishes';
 
 export type EnemyArchetype = 'scout-apc' | 'denial-turret' | 'charger-walker';
 
@@ -253,7 +253,7 @@ export interface CombatTelemetrySnapshot {
 }
 
 export interface CombatSimulationState {
-  infantry: Soldier[];
+  infantry: InfantrySkirmishes;
   missionStatus: MissionStatus;
   combatPhase: CombatPhase;
   reinforcementsDeployed: boolean;

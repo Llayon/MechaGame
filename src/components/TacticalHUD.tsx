@@ -40,6 +40,8 @@ import type { MechTelemetrySnapshot } from '../map/mechKinematics';
 import type { MechDriveInput } from '../scene/objects/SovietMech';
 import type { CombatSimulationState } from '../game/combatTypes';
 import { buildCombatTelemetry } from '../game/combatSimulation';
+import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
+import { InfantryContacts } from './InfantryContacts';
 import type { DeviceLayoutMode, InputControlPreference } from '../utils/touchControls';
 import { MobileControls } from './MobileControls';
 import { projectedReticlePercent } from '../game/combatAim';
@@ -53,6 +55,7 @@ function readCombatHud(combat: CombatSimulationState, pose: MechTelemetrySnapsho
 }
 
 interface TacticalHUDProps {
+  focusedSite: InfantrySite | null;
   activeSector: SectorId;
   lightingPreset: LightingPreset;
   driveMode: boolean;
@@ -71,7 +74,7 @@ interface TacticalHUDProps {
   showMist: boolean;
   showWireframeGrid: boolean;
   hudHidden: boolean;
-  onSelectSector: (id: SectorId) => void;
+  onSelectSector: (id: SectorId, site?: InfantrySite) => void;
   onResetOverview: () => void;
   onChangeLighting: (preset: LightingPreset) => void;
   onToggleDriveMode: () => void;
@@ -108,6 +111,7 @@ function formatClock(sec: number): string {
 }
 
 export function TacticalHUD({
+  focusedSite,
   activeSector,
   lightingPreset,
   driveMode,
@@ -141,6 +145,8 @@ export function TacticalHUD({
   onToggleHud,
 }: TacticalHUDProps) {
   const sector = SECTORS[activeSector];
+  const infantryContacts = <InfantryContacts combatRef={combatRef} focusedSite={driveMode ? null : focusedSite}
+    onFocus={driveMode ? undefined : site => onSelectSector(site.sectorId, site)} />;
   const muzzleIndicatorRef = useRef<HTMLDivElement>(null);
   const sightLabelRef = useRef<HTMLDivElement>(null);
 
@@ -170,7 +176,8 @@ export function TacticalHUD({
       }
       if (sightLabelRef.current) {
         sightLabelRef.current.textContent = aim.reticleHit === 'enemy'
-          ? 'СТВОЛ · ЦЕЛЬ'
+          ? aim.infantryRole === 'spotter' ? 'КОРРЕКТИРОВЩИК'
+            : aim.infantryRole ? 'ШТУРМОВАЯ ПЕХОТА' : 'СТВОЛ · ЦЕЛЬ'
           : aim.reticleHit === 'cover' ? 'СТВОЛ · УКРЫТИЕ'
           : aim.precise ? 'ТОЧНЫЙ ПРИЦЕЛ · ПКМ' : 'НАВЕДЕНИЕ';
       }
@@ -388,6 +395,24 @@ export function TacticalHUD({
         );
       })}
 
+      {showMarkers && INFANTRY_SITES.map((site, i) => {
+        const { mx, my } = worldToMinimap(site.x, site.z);
+        return <g key={site.id} transform={`translate(${mx} ${my})`}
+          pointerEvents={driveMode ? 'none' : 'auto'} className={driveMode ? undefined : 'cursor-pointer'}
+          role={driveMode ? undefined : 'button'} tabIndex={driveMode ? undefined : 0}
+          aria-label={`Приблизить столкновение · ${site.label}`}
+          onClick={driveMode ? undefined : () => onSelectSector(site.sectorId, site)}
+          onKeyDown={event => {
+            if (!driveMode && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              onSelectSector(site.sectorId, site);
+            }
+          }}>
+          <title>{site.label}</title>
+          <rect x="-3.6" y="-3.6" width="7.2" height="7.2" rx="1" fill="#193744" stroke="#8ed9e7" strokeWidth=".7" />
+          <text y="2.2" textAnchor="middle" fontSize="6" fill="white">{i + 1}</text>
+        </g>;
+      })}
       {/* Live Mech position, hull heading chevron & turret view cone */}
       <g transform={`translate(${minimapMech.mx.toFixed(1)}, ${minimapMech.my.toFixed(1)})`}>
         <g transform={`rotate(${turretSvgDeg.toFixed(1)})`}>
@@ -1159,6 +1184,7 @@ export function TacticalHUD({
                   </span>
                 </div>
                 {renderMinimapSvg()}
+                {infantryContacts}
               </section>
             )}
           </div>
@@ -1304,6 +1330,7 @@ export function TacticalHUD({
             data-testid="mobile-overview-dock"
             className="pointer-events-auto relative z-10 flex flex-col gap-2 pb-[max(4px,env(safe-area-inset-bottom))]"
           >
+            <div className="rounded border border-slate-700 bg-[#0b131b]/95 px-2 pb-1.5">{infantryContacts}</div>
             {mobileLayersOpen && (
               <div className="flex flex-col gap-2 rounded border border-[#5f86a1]/40 bg-[#0b131b]/95 p-2.5 shadow-2xl">
                 <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Слои карты">
@@ -1331,7 +1358,7 @@ export function TacticalHUD({
                     }`}
                   >
                     <Truck className="h-3.5 w-3.5" />
-                    <span>Техника</span>
+                    <span>Отряды</span>
                   </button>
                   <button
                     type="button"
@@ -1509,6 +1536,7 @@ export function TacticalHUD({
                 </span>
               </div>
               {renderMinimapSvg()}
+              {infantryContacts}
             </section>
           </div>
         )}
@@ -1523,7 +1551,7 @@ export function TacticalHUD({
               onToggleHud();
             }}
             aria-label={hudHidden ? 'Показать панель управления' : 'Скрыть панель управления'}
-            className="pointer-events-auto flex items-center gap-1.5 rounded border border-[#5f86a1]/35 bg-[#0b131b]/95 px-3 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-amber-400/60 hover:text-amber-200 focus-visible:outline-2 focus-visible:outline-amber-400 cursor-pointer"
+            className={`pointer-events-auto flex items-center gap-1.5 rounded border border-[#5f86a1]/35 bg-[#0b131b]/95 px-3 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-amber-400/60 hover:text-amber-200 focus-visible:outline-2 focus-visible:outline-amber-400 cursor-pointer ${driveMode ? 'self-end' : ''}`}
           >
             {hudHidden ? (
               <>
@@ -1907,7 +1935,7 @@ export function TacticalHUD({
                     type="button"
                     onClick={onToggleUnits}
                     aria-pressed={showUnits}
-                    aria-label="Переключить патрульную технику"
+                    aria-label="Показать или скрыть пехоту и патрульную технику"
                     className={`flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       showUnits
                         ? 'bg-sky-500/18 text-sky-200 border border-sky-400/40'
@@ -1915,7 +1943,7 @@ export function TacticalHUD({
                     }`}
                   >
                     <Truck className="h-3.5 w-3.5" />
-                    <span>Техника</span>
+                    <span>Отряды</span>
                   </button>
                   <button
                     type="button"

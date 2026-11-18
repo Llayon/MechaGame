@@ -38,6 +38,17 @@ test('mouse LEFT turns view left and mouse RIGHT turns view right in +Z scene', 
   assert.deepEqual(mouseMovementToAimDelta(Number.NaN, Infinity), { yaw: 0, elevation: 0 });
 });
 
+test('a single mouse count in precision mode can resolve infantry at full gun range', () => {
+  const aim = createCombatAimState(0);
+  aim.precise = true;
+  const input = mouseMovementToAimDelta(1, -1);
+  const elevation = aim.elevation;
+  updateCombatAim(aim, input.yaw, input.elevation);
+  // At 115 units, the step should be smaller than the approximate 0.15u helmet width.
+  assert.ok(aim.yaw < 0 && 115 * Math.abs(aim.yaw) < 0.15);
+  assert.ok(aim.elevation > elevation && 115 * (aim.elevation - elevation) < 0.15);
+});
+
 test('mechanical turret tracks shortest path across pi boundary without jumping', () => {
   assert.ok(Math.abs(shortestAngleDelta(Math.PI - 0.01, -Math.PI + 0.01) - 0.02) < 1e-6);
   const next = approachTurretWorldYaw(Math.PI - 0.01, 0, -Math.PI + 0.4, 0.05);

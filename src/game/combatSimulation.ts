@@ -8,9 +8,11 @@ import {
   clamp,
 } from '../map/terrainMath';
 import { MECH_SPAWN, getWalkableSurfaceY } from '../map/mechKinematics';
-import { createInfantryPopulation, stepInfantry, traceHostileInfantry, splashHostileInfantry } from '../infantry/population';
 import { resolveWorldObstacles } from '../map/worldColliders';
 import { castCombatRay, hasLineOfSight } from '../map/worldRaycaster';
+import { INFANTRY_SITES } from '../map/infantryEncounters';
+import { createInfantrySkirmishes, damageInfantrySoldier, getInfantrySupport, stepInfantrySkirmishes } from './infantrySkirmishes';
+import { damageInfantryInBlast, traceHostileInfantry } from './infantryHits';
 import { findWaterSurfaceCrossing } from '../scene/objects/waterVfxPool';
 import type {
   ActiveBeamVisual,
@@ -388,7 +390,7 @@ function createEnemyFromSpec(spec: EnemySpawnSpec, index: number): EnemyUnitStat
 
 export function createCombatState(startPlaying = false): CombatSimulationState {
   return {
-    infantry: [],
+    infantry: createInfantrySkirmishes(),
     missionStatus: startPlaying ? 'playing' : 'idle',
     combatPhase: 1,
     reinforcementsDeployed: false,
@@ -439,7 +441,7 @@ export function resetCombatState(
   missionStatus: CombatSimulationState['missionStatus'] = 'playing',
 ): void {
   state.missionStatus = missionStatus;
-  state.infantry = [];
+  state.infantry = createInfantrySkirmishes();
   state.combatPhase = 1;
   state.reinforcementsDeployed = false;
   state.alertMessage = null;
@@ -801,13 +803,15 @@ export function processPlayerShots(
     const infantryHit = traceHostileInfantry(state.infantry, shot.muzzleX, shot.muzzleY, shot.muzzleZ,
       dx, dy, dz, Math.min(hitBarrelDist, hitEnemyDist));
     if (infantryHit) {
-      const distance = infantryHit.distance;
-      const hitX = shot.muzzleX + dx*distance, hitY = shot.muzzleY + dy*distance, hitZ = shot.muzzleZ + dz*distance;
-      infantryHit.actor.hp = Math.max(0, infantryHit.actor.hp - PLAYER_SHELL_DAMAGE);
+      const { distance, soldier } = infantryHit;
+      const hitX = shot.muzzleX + dx * distance;
+      const hitY = shot.muzzleY + dy * distance;
+      const hitZ = shot.muzzleZ + dz * distance;
+      damageInfantrySoldier(state.infantry, soldier, PLAYER_SHELL_DAMAGE);
       state.shotsHit++;
       state.hitMarkerTimer = 0.14;
-      state.pendingImpacts.push({kind:'armor-hit', x:hitX, y:hitY, z:hitZ, heavy:false});
-      resolutions.push({hitKind:'enemy', hitX, hitY, hitZ, distance});
+      state.pendingImpacts.push({ kind: 'armor-hit', x: hitX, y: hitY, z: hitZ, heavy: false });
+      resolutions.push({ hitKind: 'enemy', hitX, hitY, hitZ, distance });
     } else if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
       const hx = shot.muzzleX + dx * hitBarrelDist;
       const hy = shot.muzzleY + dy * hitBarrelDist;
@@ -1043,17 +1047,21 @@ export function triggerHeavyCannonShot(
     }
   }
 
-  const infantryHit = traceHostileInfantry(state.infantry, muzzleX,muzzleY,muzzleZ,dx,dy,dz,
-    Math.min(hitBarrelDist,hitEnemyDist));
+  const infantryHit = traceHostileInfantry(state.infantry, muzzleX, muzzleY, muzzleZ,
+    dx, dy, dz, Math.min(hitBarrelDist, hitEnemyDist));
   if (infantryHit) {
-    const distance = infantryHit.distance;
-    const hitX=muzzleX+dx*distance, hitY=muzzleY+dy*distance, hitZ=muzzleZ+dz*distance;
-    infantryHit.actor.hp = Math.max(0, infantryHit.actor.hp - HEAVY_CANNON_DAMAGE);
-    state.heavyBeams.push({ x0:muzzleX,y0:muzzleY,z0:muzzleZ,x1:hitX,y1:hitY,z1:hitZ,life:.26,maxLife:.26 });
-    state.pendingImpacts.push({kind:'heavy-hit',x:hitX,y:hitY,z:hitZ,heavy:true});
+    const { distance, soldier } = infantryHit;
+    const hitX = muzzleX + dx * distance;
+    const hitY = muzzleY + dy * distance;
+    const hitZ = muzzleZ + dz * distance;
+    damageInfantrySoldier(state.infantry, soldier, HEAVY_CANNON_DAMAGE);
     state.shotsHit++;
-    state.hitMarkerTimer = .22;
-    return {hitKind:'enemy',hitX,hitY,hitZ,distance};
+    state.hitMarkerTimer = 0.22;
+    state.heavyBeams.push({
+      x0: muzzleX, y0: muzzleY, z0: muzzleZ, x1: hitX, y1: hitY, z1: hitZ, life: 0.26, maxLife: 0.26,
+    });
+    state.pendingImpacts.push({ kind: 'heavy-hit', x: hitX, y: hitY, z: hitZ, heavy: true });
+    return { hitKind: 'enemy', hitX, hitY, hitZ, distance };
   }
   if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
     const hx = muzzleX + dx * hitBarrelDist;
@@ -1453,7 +1461,7 @@ function detonateMissileImpact(
   });
   state.trauma = clamp(state.trauma + 0.08, 0, 1);
 
-  let hitAnyEnemy = splashHostileInfantry(state.infantry,hx,hy,hz,MISSILE_SPLASH_RADIUS,damage) > 0;
+  let hitAnyEnemy = damageInfantryInBlast(state.infantry, hx, hy, hz, MISSILE_SPLASH_RADIUS, damage);
   for (let i = 0; i < state.enemies.length; i++) {
     const e = state.enemies[i];
     if (!isEnemyAlive(e)) continue;
@@ -1520,7 +1528,6 @@ export function detonateHazardBarrel(
   if (barrel.destroyed) return;
   barrel.destroyed = true;
   barrel.hp = 0;
-  splashHostileInfantry(state.infantry, barrel.x, barrel.y+1.1, barrel.z, BARREL_BLAST_RADIUS,BARREL_BLAST_DAMAGE);
 
   state.score += BARREL_BONUS_SCORE;
   if (state.score > state.bestScore) {
@@ -1540,6 +1547,7 @@ export function detonateHazardBarrel(
   });
 
   // Splash damage to nearby enemies
+  damageInfantryInBlast(state.infantry, barrel.x, barrel.y + 1.1, barrel.z, BARREL_BLAST_RADIUS, BARREL_BLAST_DAMAGE);
   for (let i = 0; i < state.enemies.length; i++) {
     const e = state.enemies[i];
     if (!isEnemyAlive(e)) continue;
@@ -1585,9 +1593,17 @@ export function detonateHazardBarrel(
   }
 }
 
-/**
- * Advances hitstop, trauma decay, weapon heat, enemy AI policies, projectiles, and win/loss state.
- */
+function hitPlayer(state: CombatSimulationState, damage: number, x: number, y: number, z: number): void {
+  if (state.playerHp <= 0) return;
+  const applied = state.dashTimer > 0 ? Math.max(1, Math.round(damage * DASH_DAMAGE_MULT)) : damage;
+  state.playerHp = Math.max(0, state.playerHp - applied);
+  state.playerHitFlash = 0.28;
+  state.trauma = clamp(state.trauma + (applied <= 1 ? 0.035 : 0.28), 0, 1);
+  state.pendingImpacts.push({ kind: 'player-hit', x, y, z, heavy: applied >= 12 });
+  if (state.playerHp === 0) state.defeatDelayTimer = DEFEAT_DELAY_SEC;
+}
+
+/** Advances timers, targeting, both forces, projectiles and the mission outcome. */
 export function stepCombatSimulation(
   state: CombatSimulationState,
   playerX: number,
@@ -1646,8 +1662,6 @@ export function stepCombatSimulation(
 
   const simDt = dt;
   state.elapsedSec += simDt;
-  if (!state.infantry.length) state.infantry = createInfantryPopulation();
-  stepInfantry(state.infantry,simDt,playerX,playerZ,state.hasPlayerEngaged);
   state.heavyCooldownTimer = Math.max(0, state.heavyCooldownTimer - simDt);
   state.missileCooldownTimer = Math.max(0, state.missileCooldownTimer - simDt);
   state.repairCooldownTimer = Math.max(0, state.repairCooldownTimer - simDt);
@@ -1671,6 +1685,13 @@ export function stepCombatSimulation(
   }
 
   const playerAimY = playerY + 1.9;
+  const alarmSite = stepInfantrySkirmishes(state.infantry, simDt,
+    state.hasPlayerEngaged ? { x: playerX, y: playerY, z: playerZ } : undefined,
+    damage => hitPlayer(state, damage, playerX, playerAimY, playerZ));
+  if (alarmSite !== null) {
+    state.alertMessage = `ТРЕВОГА · ${INFANTRY_SITES[alarmSite].label}`;
+    state.alertTimer = 2.5;
+  }
   let activeTokens = 0;
   for (let i = 0; i < state.enemies.length; i++) {
     if (state.enemies[i].hasAttackToken && isEnemyAlive(state.enemies[i])) {
@@ -1728,8 +1749,10 @@ export function stepCombatSimulation(
 
     e.fireCooldownTimer = Math.max(0, e.fireCooldownTimer - simDt);
 
-    const canEngage =
-      state.hasPlayerEngaged && dist <= cfg.aggroRange && e.hasLineOfSight;
+    const support = getInfantrySupport(state.infantry, e.x, e.z);
+    const guided = support.spotterContact && e.archetype !== 'charger-walker';
+    const canEngage = state.hasPlayerEngaged && dist <= cfg.aggroRange &&
+      (e.hasLineOfSight || support.alarmRaised);
 
     if (e.aiState === 'patrol') {
       e.hasAttackToken = false;
@@ -1764,7 +1787,8 @@ export function stepCombatSimulation(
 
     // Track player yaw/aim when engaged
     const toPlayerYaw = Math.atan2(dx, dz);
-    e.turretYaw += wrapAngleDiff(toPlayerYaw, e.turretYaw) * Math.min(1, simDt * 6.0);
+    const trackingSpeed = guided ? 9 : 6;
+    e.turretYaw += wrapAngleDiff(toPlayerYaw, e.turretYaw) * Math.min(1, simDt * trackingSpeed);
     e.aimTargetX = playerX;
     e.aimTargetY = playerAimY;
     e.aimTargetZ = playerZ;
@@ -1826,7 +1850,7 @@ export function stepCombatSimulation(
         }
       }
     } else if (e.aiState === 'windup') {
-      e.stateTimer -= simDt;
+      e.stateTimer -= simDt * (guided ? 1.5 : 1);
       if (!e.hasLineOfSight) {
         e.aiState = 'alert';
         e.hasAttackToken = false;
@@ -1893,24 +1917,8 @@ export function stepCombatSimulation(
 
     const xzDist = Math.hypot(sampleX - playerX, sampleZ - playerZ);
     if (xzDist <= 1.45 && sampleY >= playerY + 0.15 && sampleY <= playerY + 3.45) {
-      const dmg =
-        state.dashTimer > 0
-          ? Math.max(1, Math.round(p.damage * DASH_DAMAGE_MULT))
-          : p.damage;
-      state.playerHp = Math.max(0, state.playerHp - dmg);
-      state.playerHitFlash = 0.28;
-      state.trauma = clamp(state.trauma + 0.28, 0, 1);
-      state.pendingImpacts.push({
-        kind: 'player-hit',
-        x: sampleX,
-        y: sampleY,
-        z: sampleZ,
-        heavy: dmg >= 12,
-      });
+      hitPlayer(state, p.damage, sampleX, sampleY, sampleZ);
       state.projectiles.splice(i, 1);
-      if (state.playerHp <= 0) {
-        state.defeatDelayTimer = DEFEAT_DELAY_SEC;
-      }
       continue;
     }
 
@@ -2018,6 +2026,13 @@ export function stepCombatSimulation(
       }
     }
 
+    const infantryHit = stepLen > 0
+      ? traceHostileInfantry(state.infantry, m.x, m.y, m.z, dirX, dirY, dirZ, Math.min(maxStep, hitEnemyDist))
+      : null;
+    if (infantryHit) {
+      const { distance } = infantryHit;
+      hitEnemyPos = { x: m.x + dirX * distance, y: m.y + dirY * distance, z: m.z + dirZ * distance };
+    }
     if (hitEnemyPos) {
       detonateMissileImpact(state, hitEnemyPos.x, hitEnemyPos.y, hitEnemyPos.z, m.damage, false);
       state.playerMissiles.splice(i, 1);
@@ -2105,7 +2120,7 @@ export function stepCombatSimulation(
   }
 
   // Victory triggers once all enemies have finished KO explosion
-  if (aliveCount === 0 && koActiveCount === 0) {
+  if (state.playerHp > 0 && aliveCount === 0 && koActiveCount === 0) {
     state.missionStatus = 'victory';
     justEnded = 'victory';
     if (state.score > state.bestScore) {
@@ -2239,7 +2254,17 @@ export function stepCuttingLaser(
 
   const continuousDmg = config.dps * dt;
 
-  if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
+  const infantryHit = traceHostileInfantry(state.infantry, muzzleX, muzzleY, muzzleZ,
+    dx, dy, dz, Math.min(hitBarrelDist, hitEnemyDist));
+  if (infantryHit) {
+    hx = muzzleX + dx * infantryHit.distance;
+    hy = muzzleY + dy * infantryHit.distance;
+    hz = muzzleZ + dz * infantryHit.distance;
+    hasImpact = true;
+    onEnemy = true;
+    state.hitMarkerTimer = Math.max(state.hitMarkerTimer, 0.08);
+    damageInfantrySoldier(state.infantry, infantryHit.soldier, continuousDmg);
+  } else if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
     hx = muzzleX + dx * hitBarrelDist;
     hy = muzzleY + dy * hitBarrelDist;
     hz = muzzleZ + dz * hitBarrelDist;
