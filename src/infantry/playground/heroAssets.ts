@@ -11,10 +11,16 @@ export const SKINS = [
 ] as const;
 export type SkinId = typeof SKINS[number]['id'];
 export const LOD_TRIANGLES = [3999, 1999, 999] as const;
-export const HERO_ASSET_DIRECTORY = 'assets/infantry-candidate/mixamo-demo/';
+export const RIG_VARIANTS = [
+  { id: 'rigify', name: 'Rigify · стандартный', directory: 'assets/infantry-candidate/rigify-demo/', bones: 18 },
+  { id: 'rigifyTwist', name: 'Rigify · сохранённый поворот', directory: 'assets/infantry-candidate/rigify-twist-demo/', bones: 18 },
+  { id: 'mixamo', name: 'Прежний риг · 14 костей', directory: 'assets/infantry-candidate/mixamo-demo/', bones: 14 },
+] as const;
+export type RigVariant = typeof RIG_VARIANTS[number]['id'];
+export const HERO_ASSET_DIRECTORY = RIG_VARIANTS[0].directory;
 export interface DemoManifest { clips: Array<{ name: HeroAnimation; duration: number; movementSpeed: number; loop: boolean; source?: 'mixamo' | 'prototype'; sourceClip?: string }> }
-export async function loadHeroAssets() {
-  const base = import.meta.env.BASE_URL + HERO_ASSET_DIRECTORY;
+export async function loadHeroAssets(variant: RigVariant = 'rigify') {
+  const base = import.meta.env.BASE_URL + RIG_VARIANTS.find(r => r.id === variant)!.directory;
   const response = await fetch(base + 'manifest.json');
   if (!response.ok) throw Error('Не удалось загрузить описание анимаций');
   const manifest = await response.json() as DemoManifest;
@@ -58,7 +64,7 @@ export async function loadHeroAssets() {
     return { ...gltf, mesh, mixer, actions };
   });
   let disposed = false;
-  return { root, models, manifest,
+  return { root, models, manifest, variant,
     setSkin(id: SkinId) {
       const skin = SKINS.find(s => s.id === id) ?? SKINS[0];
       uniforms.demoSkinBlend.value = skin.id === 'original' ? 0 : 1;

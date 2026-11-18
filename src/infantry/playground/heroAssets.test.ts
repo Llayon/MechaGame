@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SKINS, HERO_ASSET_DIRECTORY } from './heroAssets';
+import { SKINS, HERO_ASSET_DIRECTORY, RIG_VARIANTS } from './heroAssets';
 function readGlb(path: string) {
   const bytes = readFileSync(path), length = bytes.readUInt32LE(12), json = JSON.parse(bytes.subarray(20,20+length).toString());
   assert.equal(bytes.readUInt32LE(8),bytes.length);
@@ -23,10 +23,10 @@ function readGlb(path: string) {
   return {json,accessor,maps};
 }
 test('playable LODs preserve source maps and faces, and contain finite normalized rig data',()=>{
-  for(const level of [0,1,2]) {
+  for(const variant of RIG_VARIANTS) for(const level of [0,1,2]) {
     const source=readGlb(`public/assets/infantry-candidate/infantry-candidate-lod${level}.glb`);
-    const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod${level}.glb`),p=rig.json.meshes[0].primitives[0];
-    assert.equal(rig.json.meshes.length,1);assert.equal(rig.json.skins[0].joints.length,14);
+    const rig=readGlb(`public/${variant.directory}infantry-demo-lod${level}.glb`),p=rig.json.meshes[0].primitives[0];
+    assert.equal(rig.json.meshes.length,1);assert.equal(rig.json.skins[0].joints.length,variant.bones);
     assert.equal(rig.json.accessors[p.indices].count/3,[3999,1999,999][level]);assert.deepEqual(rig.maps(),source.maps());
     assert.deepEqual(new Set(rig.json.animations.map((a:{name:string})=>a.name)),new Set(['idle','walk','run','crouch','crouchWalk','jump']));
     for(const name of ['POSITION','NORMAL','TANGENT','TEXCOORD_0','JOINTS_0','WEIGHTS_0']) assert.ok(rig.accessor(p.attributes[name]).every(Number.isFinite));
@@ -36,6 +36,25 @@ test('playable LODs preserve source maps and faces, and contain finite normalize
       assert.ok(weights.slice(i,i+4).filter(w=>w>1e-6).length<=2);
     }
   }
+});
+test('Rigify comparisons share motion timing and bind poses, but retain distinct axial rotations',()=>{
+  const variants=RIG_VARIANTS.filter(r=>r.id!=='mixamo');
+  const manifests=variants.map(r=>JSON.parse(readFileSync(`public/${r.directory}manifest.json`,'utf8')));
+  assert.equal(manifests[0].rigifyVariant,'standard');assert.equal(manifests[1].rigifyVariant,'preserved-twist');
+  assert.deepEqual(manifests[0].clips,manifests[1].clips);
+  const models=variants.map(r=>readGlb(`public/${r.directory}infantry-demo-lod2.glb`));
+  assert.deepEqual(models[0].accessor(models[0].json.skins[0].inverseBindMatrices),models[1].accessor(models[1].json.skins[0].inverseBindMatrices));
+  for(const model of models) {
+    const names=model.json.skins[0].joints.map((i:number)=>model.json.nodes[i].name);
+    assert.ok(names.includes('hand_L')&&names.includes('hand_R')&&names.includes('toe_L')&&names.includes('toe_R'));
+    assert.ok(names.every((n:string)=>!n.startsWith('MCH-')&&!n.startsWith('ORG-')&&!n.includes('_fk')));
+  }
+  const rotations=models.map(model=>{
+    const clip=model.json.animations.find((a:{name:string})=>a.name==='run');
+    const channel=clip.channels.find((c:{target:{node:number;path:string}})=>model.json.nodes[c.target.node].name==='upperarm_L'&&c.target.path==='rotation');
+    return model.accessor(clip.samplers[channel.sampler].output);
+  });
+  assert.ok(rotations[0].some((v,i)=>Math.abs(v-rotations[1][i])>.01));
 });
 test('locomotion loops close and skin palettes have stable unique identifiers',()=>{
   const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod2.glb`);
