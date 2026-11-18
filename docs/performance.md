@@ -46,23 +46,28 @@ Open **F8 → Цвета LOD** to inspect the active visual levels. Green, yello
 and purple correspond to levels 0 through 3. The JSON capture includes the
 settings, per-frame main and shadow pass counters, and a scene inventory at the
 end of the recording. Per-group `lodInstances` counts are taken before frustum
-culling. For the infantry group, the four visual counts sum to the live
-population. Shadow and contact representations have their own draw calls.
+culling. In the infantry group the sum of the body counts equals the living
+population. The overview uses four mesh levels. Driving or selecting a
+skirmish uses two levels: animated armed bodies and distant silhouettes.
+Rifles, tracers, spotter markers and shadow meshes have separate draw calls.
 
 Ground and mountain tiles cache vertex data and select an index range at run
-time. Trees keep their simulation ID when the mesh level changes. Patrol squads
+time. Trees keep their simulation ID when the mesh level changes. Overview squads
 use one 157,248-byte bone matrix atlas for all four infantry meshes. Each
 of the 364 sampled poses stores three RGBA16F texels for each of 18 bones.
 A position-only vertex animation texture at the same precision and sample rate
 would use 21,796,320 bytes across 3,857 + 2,263 + 1,365 vertices. The last two
 levels share vertex IDs and could share a VAT. A second RGBA16F texel per vertex
 for animated normals would double that estimate. These figures compare animation
-storage. Frame times below measure the shipped bone-matrix implementation.
+storage. The historical frame times below measure the four-level crowd renderer
+in the World LOD reference build.
 
 `scripts/infantry/bake-crowd.mjs` rebuilds the assets from the Git revision
 recorded in `public/assets/crowd/atlas.json`. The source revision must be present
-in the local Git object database. Regenerate the patrol lanes with
-`bun scripts/infantry/bake-patrols.ts` after changing the walkable map.
+in the local Git object database. The five live skirmishes use the routes
+and cover positions in `src/map/infantryEncounters.ts`. The separate
+`bun scripts/infantry/bake-patrols.ts` command rebuilds the original patrol
+lane fixture for its terrain regression test.
 
 ## Local desktop GPU comparison
 

@@ -147,6 +147,7 @@ export async function loadInfantryRig(capacity: number) {
       return batch;
     }
     const bodies = batch(body);
+    bodies.userData.lodLevel = 0;
     const rifles = batch(gun, hand);
     rifles.instanceMatrix = bodies.instanceMatrix;
     const root = new THREE.Group();

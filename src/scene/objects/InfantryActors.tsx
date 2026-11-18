@@ -38,6 +38,7 @@ function createCrowd(capacity: number) {
   const group = new THREE.Group();
   const proxyMaterial = new THREE.MeshLambertMaterial();
   const proxies = new THREE.InstancedMesh(silhouetteGeometry(), proxyMaterial, capacity);
+  proxies.userData.lodLevel = 1;
   proxies.name = 'Infantry · distant formations';
   proxies.count = 0;
   proxies.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
