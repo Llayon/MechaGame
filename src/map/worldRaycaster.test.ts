@@ -90,3 +90,35 @@ test('castCombatRay returns outward unit surface normals for terrain and vertica
   assert.ok(Math.abs(wallHit.ny) < 0.25, `Expected near-horizontal wall normal, got ny=${wallHit.ny}`);
 });
 
+test('any-hit line of sight agrees with the closest hit at bridge edges and sampling cutoffs', () => {
+  const points = BRIDGE_SPECS.flatMap((bridge) => {
+    const dx = bridge.end[0] - bridge.start[0];
+    const dz = bridge.end[1] - bridge.start[1];
+    const length = Math.hypot(dx, dz);
+    return [0.02, 0.5, 0.98].flatMap((u) =>
+      [0, -bridge.width / 2, bridge.width / 2].map((edge) => ({
+        x: bridge.start[0] + dx * u - dz / length * edge,
+        y: bridge.deckY,
+        z: bridge.start[1] + dz * u + dx / length * edge,
+      })),
+    );
+  });
+  for (const [x, z] of [[-115, 93], [-58, -40], [125, -50], [0, 0]]) {
+    points.push({ x, z, y: getTerrainHeight(x, z) });
+  }
+
+  for (const { x, y, z } of points) {
+    for (const offset of [-0.6, -0.14, 0, 0.14, 0.6]) {
+      for (const length of [0.24, 0.25, 0.35, 0.5, 0.85, 2.1, 3.35, 14]) {
+        for (const [dx, dy, dz] of [[1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, -1], [0.8, -0.6, 0]]) {
+          const ay = y + offset;
+          const bx = x + dx * length, by = ay + dy * length, bz = z + dz * length;
+          const sx = bx - x, sy = by - ay, sz = bz - z;
+          const cutoff = Math.hypot(sx, sy, sz) - 0.35;
+          assert.equal(hasLineOfSight(x, ay, z, bx, by, bz),
+            castCombatRay(x, ay, z, sx, sy, sz, cutoff) === null);
+        }
+      }
+    }
+  }
+});

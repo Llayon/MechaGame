@@ -286,8 +286,23 @@ export function castCombatRay(
   dz: number,
   maxDist: number,
 ): CombatRayHit | null {
+  return traceCombatRay(ox, oy, oz, dx, dy, dz, maxDist, false);
+}
+
+function traceCombatRay(
+  ox: number, oy: number, oz: number, dx: number, dy: number, dz: number,
+  maxDist: number, anyHit: false,
+): CombatRayHit | null;
+function traceCombatRay(
+  ox: number, oy: number, oz: number, dx: number, dy: number, dz: number,
+  maxDist: number, anyHit: true,
+): boolean;
+function traceCombatRay(
+  ox: number, oy: number, oz: number, dx: number, dy: number, dz: number,
+  maxDist: number, anyHit: boolean,
+): CombatRayHit | boolean | null {
   const len = Math.hypot(dx, dy, dz);
-  if (len < 1e-9 || maxDist <= 0) return null;
+  if (len < 1e-9 || maxDist <= 0) return anyHit ? false : null;
   const ndx = dx / len;
   const ndy = dy / len;
   const ndz = dz / len;
@@ -306,6 +321,7 @@ export function castCombatRay(
         ? intersectRayCircleColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c)
         : intersectRayBoxColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c);
     if (hit !== null && hit.t < bestDist) {
+      if (anyHit) return true;
       bestDist = hit.t;
       bestHit = {
         distance: hit.t,
@@ -330,6 +346,7 @@ export function castCombatRay(
     const pz = oz + ndz * t;
 
     if (sampleBridgeDeckHit(px, py, pz)) {
+      if (anyHit && t < bestDist) return true;
       let lo = prevT;
       let hi = t;
       for (let r = 0; r < 4; r++) {
@@ -341,6 +358,7 @@ export function castCombatRay(
         }
       }
       if (hi < bestDist) {
+        if (anyHit) return true;
         return {
           distance: hi,
           x: ox + ndx * hi,
@@ -357,6 +375,7 @@ export function castCombatRay(
 
     const groundY = getSolidGroundY(px, pz);
     if (py <= groundY) {
+      if (anyHit && t < bestDist) return true;
       let lo = prevT;
       let hi = t;
       for (let r = 0; r < 4; r++) {
@@ -371,6 +390,7 @@ export function castCombatRay(
         }
       }
       if (hi < bestDist) {
+        if (anyHit) return true;
         const hx = ox + ndx * hi;
         const hy = oy + ndy * hi;
         const hz = oz + ndz * hi;
@@ -391,7 +411,7 @@ export function castCombatRay(
     prevT = t;
   }
 
-  return bestHit;
+  return anyHit ? false : bestHit;
 }
 
 /**
@@ -410,6 +430,5 @@ export function hasLineOfSight(
   const dz = bz - az;
   const dist = Math.hypot(dx, dy, dz);
   if (dist < 0.25) return true;
-  const hit = castCombatRay(ax, ay, az, dx, dy, dz, dist - 0.35);
-  return hit === null;
+  return !traceCombatRay(ax, ay, az, dx, dy, dz, dist - 0.35, true);
 }
