@@ -1,24 +1,25 @@
 {
-  "createdAt": "2026-11-18T07:00:26.279Z",
-  "codeCommit": "06e407dea27e4e162fed56e10fae9f87d358c2c4",
+  "createdAt": "2026-11-18T08:03:29.476Z",
+  "codeCommit": "14d4782356c93dd39c5b184290b1477236420abc",
   "typescript": "PASS",
   "productionBuild": "PASS",
   "unitTests": {
-    "passed": 151,
+    "passed": 152,
     "failed": 0,
     "files": 39
   },
   "desktopSmoke": "PASS",
   "touchViewportSmoke": "PASS (emulated only)",
-  "originalGpuLabRegression": "PASS (200 original Tripo instances)",
+  "originalGpuLabRegression": "Retained earlier PASS (200 original Tripo instances); lab source/assets unchanged",
   "video": {
     "seconds": 8,
     "bytes": 760849,
     "captureFps": 15,
-    "notPerformanceBenchmark": true
+    "notPerformanceBenchmark": true,
+    "asset": "retained previous-rig gameplay capture"
   },
   "physicalMobileVerified": false,
-  "animationArtStatus": "Mixamo core retarget verified; remaining states explicitly use prototypes pending real FBXs",
+  "animationArtStatus": "PARTIAL: Rigify variants ready for comparison; artist choice and GPU atlas pending. Crouch/crouchWalk/jump remain prototypes.",
   "mixamo": {
     "activeClips": [
       "idle",
@@ -31,5 +32,26 @@
       "jump"
     ],
     "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5"
+  },
+  "rigify": {
+    "defaultVariant": "standard",
+    "variants": [
+      "standard",
+      "preserved-twist",
+      "previous-14-joint-rig"
+    ],
+    "exportJoints": 18,
+    "authoringBones": 146,
+    "chrome": "PASS (54 rig/LOD/state poses)",
+    "edge": "PASS (54 rig/LOD/state poses)",
+    "samePhasePause": "PASS",
+    "resourceReplacementCycles": "PASS (equal LOD warmup)",
+    "comparisonVideo": {
+      "asset": "rigify/rigify-comparison.mp4",
+      "seconds": 6,
+      "captureFps": 15,
+      "bytes": 455845
+    },
+    "gpuAtlasBaked": false
   }
 }
