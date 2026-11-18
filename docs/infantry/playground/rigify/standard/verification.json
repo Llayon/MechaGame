@@ -1,7 +1,7 @@
 {
   "passed": true,
   "variant": "standard",
-  "roundtripMaximumMatrixError": 3.1948089599609375e-05,
+  "roundtripMaximumMatrixError": 3.6656856536865234e-05,
   "ikPlantedFootMaximumErrorUnits": 1.3651243899163327e-05,
   "ikPlantedFootMaximumErrorMeters": 5.1192164621862475e-05,
   "ikBoneLengthMaximumErrorUnits": 0.0020774268370441634,

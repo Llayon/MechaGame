@@ -38,7 +38,21 @@
       "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
       "retargetScale": 0.24135231793128742,
       "groundMinBeforeCorrection": -0.023774927482008934,
-      "groundMaxBeforeCorrection": 0.014124143868684769
+      "groundMaxBeforeCorrection": 0.014124143868684769,
+      "motionPolish": {
+        "method": "circular-support-lift-and-forearm-loop-closure-v1",
+        "fps": 30,
+        "lod0": {
+          "rootPeakVerticalAccelerationBefore": 22.726971795782447,
+          "rootPeakVerticalAccelerationAfter": 0.0,
+          "pelvisPeakVerticalAccelerationBefore": 25.510074198246002,
+          "pelvisPeakVerticalAccelerationAfter": 7.242017984390259,
+          "maximumForearmSeamBeforeDegrees": 5.143840494215243,
+          "maximumForearmSeamAfterDegrees": 0.0,
+          "maxBootOriginChangeAt120HzUnits": 0.0017416504496645055,
+          "maximumExportTransformDifference": 1.817941665649414e-05
+        }
+      }
     },
     {
       "name": "crouch",
@@ -129,19 +143,19 @@
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2815816,
+      "bytes": 2820940,
       "repairedTangents": 0
     },
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1055004,
+      "bytes": 1060120,
       "repairedTangents": 1
     },
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 481152,
+      "bytes": 486264,
       "repairedTangents": 0
     }
   ],

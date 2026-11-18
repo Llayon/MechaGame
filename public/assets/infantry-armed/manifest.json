@@ -51,6 +51,18 @@
       "retargetScale": 0.24135231793128742,
       "groundMinBeforeCorrection": -0.023774927482008934,
       "groundMaxBeforeCorrection": 0.014124143868684769,
+      "motionPolish": {
+        "method": "circular-support-lift-and-locked-boot-targets-v1",
+        "fps": 30,
+        "lod0": {
+          "rootPeakVerticalAccelerationBefore": 22.726971795782447,
+          "rootPeakVerticalAccelerationAfter": 0.0,
+          "pelvisPeakVerticalAccelerationBefore": 25.510074198246002,
+          "pelvisPeakVerticalAccelerationAfter": 7.242017984390259,
+          "maxBootOriginChangeAt120HzUnits": 0.0017416504496645055,
+          "maximumExportTransformDifference": 7.37607479095459e-06
+        }
+      },
       "upperBodySource": "Authored two-handed carry"
     },
     {
@@ -165,7 +177,7 @@
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2872588,
+      "bytes": 2872204,
       "triangles": 3999,
       "bones": 18,
       "repairedTangents": 0
@@ -173,7 +185,7 @@
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1111704,
+      "bytes": 1111320,
       "triangles": 1999,
       "bones": 18,
       "repairedTangents": 0
@@ -181,7 +193,7 @@
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 537784,
+      "bytes": 537400,
       "triangles": 999,
       "bones": 18,
       "repairedTangents": 0

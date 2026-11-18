@@ -3,7 +3,7 @@
 Run with Blender 5.2 --background --factory-startup --python-exit-code 1 --python ...
 No automatic heat weights: preserve the candidate's deliberate armor bindings.
 """
-import bpy, addon_utils, json, math, sys, hashlib
+import bpy, addon_utils, json, math, sys, hashlib, os
 from pathlib import Path
 from mathutils import Vector, Matrix
 
@@ -11,11 +11,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from candidate_gltf_utils import repair_export_tangents
 
-BASE = ROOT / 'public/assets/infantry-candidate/mixamo-demo'
+BASE = Path(os.environ.get('INFANTRY_MIXAMO_SOURCE', ROOT / 'public/assets/infantry-candidate/mixamo-demo'))
 RESTORE_TWIST = '--restore-twist' in sys.argv
 VARIANT = 'preserved-twist' if RESTORE_TWIST else 'standard'
-OUT = ROOT / ('public/assets/infantry-candidate/rigify-twist-demo' if RESTORE_TWIST else 'public/assets/infantry-candidate/rigify-demo')
-DOC = ROOT / 'docs/infantry/playground/rigify' / VARIANT
+default_output = ROOT / ('public/assets/infantry-candidate/rigify-twist-demo' if RESTORE_TWIST else 'public/assets/infantry-candidate/rigify-demo')
+OUT = Path(os.environ.get('INFANTRY_RIG_OUT', default_output))
+DOC = Path(os.environ.get('INFANTRY_RIG_DOC', ROOT / 'docs/infantry/playground/rigify' / VARIANT))
 OUT.mkdir(parents=True, exist_ok=True)
 DOC.mkdir(parents=True, exist_ok=True)
 addon_utils.enable('rigify', default_set=True, persistent=False)

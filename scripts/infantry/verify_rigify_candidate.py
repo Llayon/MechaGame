@@ -1,13 +1,13 @@
 """Check generated Rigify controls, compact export and save a planted-foot IK study."""
-import bpy, addon_utils, json, math, sys, struct
+import bpy, addon_utils, json, math, os, sys, struct
 from pathlib import Path
 from mathutils import Matrix, Vector, Quaternion
 
 ROOT = Path(__file__).resolve().parents[2]
 variant = 'preserved-twist' if '--restore-twist' in sys.argv else 'standard'
 directory = 'rigify-twist-demo' if '--restore-twist' in sys.argv else 'rigify-demo'
-BASE = ROOT / 'public/assets/infantry-candidate' / directory
-DOC = ROOT / 'docs/infantry/playground/rigify' / variant
+BASE = Path(os.environ.get('INFANTRY_RIG_OUT', ROOT / 'public/assets/infantry-candidate' / directory))
+DOC = Path(os.environ.get('INFANTRY_RIG_DOC', ROOT / 'docs/infantry/playground/rigify' / variant))
 addon_utils.enable('rigify', default_set=True, persistent=False)
 bpy.ops.wm.open_mainfile(filepath=str(BASE / 'infantry-rigify.blend'))
 scene = bpy.context.scene

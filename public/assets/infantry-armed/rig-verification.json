@@ -11,9 +11,9 @@
       "maxReachCorrection": 0.00026974129901997696
     },
     "run": {
-      "maxRightMountMatrixError": 6.258487701416016e-07,
-      "maxSupportPalmDistance": 1.962515463042673e-07,
-      "maxReachCorrection": 0.010826946327999513
+      "maxRightMountMatrixError": 7.152557373046875e-07,
+      "maxSupportPalmDistance": 1.8396155286117136e-07,
+      "maxReachCorrection": 0.010826962624546481
     },
     "crouch": {
       "maxRightMountMatrixError": 5.364418029785156e-07,
@@ -52,7 +52,7 @@
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2872588,
+      "bytes": 2872204,
       "triangles": 3999,
       "bones": 18,
       "repairedTangents": 0
@@ -60,7 +60,7 @@
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1111704,
+      "bytes": 1111320,
       "triangles": 1999,
       "bones": 18,
       "repairedTangents": 0
@@ -68,7 +68,7 @@
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 537784,
+      "bytes": 537400,
       "triangles": 999,
       "bones": 18,
       "repairedTangents": 0

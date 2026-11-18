@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from candidate_gltf_utils import repair_export_tangents
 
-SOURCE = ROOT / "public/assets/infantry-candidate/rigify-demo"
+SOURCE = Path(os.environ.get("VPULSE_RIG_SOURCE", ROOT / "public/assets/infantry-candidate/rigify-demo"))
 RIFLE = ROOT / "public/assets/infantry-vpulse"
 OUT = Path(os.environ.get("VPULSE_RIG_OUT", ROOT / "public/assets/infantry-armed"))
 CATALOG = ROOT / "docs/infantry/motion-library/catalog.json"

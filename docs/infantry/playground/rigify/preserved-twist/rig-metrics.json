@@ -24,8 +24,8 @@
     },
     {
       "clip": "run",
-      "maximumDeformationMatrixError": 1.6808509826660156e-05,
-      "maximumJointPositionError": 1.0513505805946966e-06
+      "maximumDeformationMatrixError": 4.553794860839844e-05,
+      "maximumJointPositionError": 1.075964189327735e-06
     },
     {
       "clip": "crouch",
@@ -48,12 +48,12 @@
       "maximumJointPositionError": 3.033996811620495e-07
     }
   ],
-  "compactExportMatrixError": 1.239776611328125e-05,
+  "compactExportMatrixError": 1.2248754501342773e-05,
   "lods": [
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2837576,
+      "bytes": 2837192,
       "triangles": 3999,
       "bones": 18,
       "repairedTangents": 0
@@ -61,7 +61,7 @@
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1076680,
+      "bytes": 1076300,
       "triangles": 1999,
       "bones": 18,
       "repairedTangents": 0
@@ -69,13 +69,13 @@
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 502824,
+      "bytes": 502440,
       "triangles": 999,
       "bones": 18,
       "repairedTangents": 0
     }
   ],
-  "sourceAssetSha256": "fa72e107f293ee5466beac4b1d68c1090149e4c8f3dc364755705120532da942",
+  "sourceAssetSha256": "67a8b222335b6b84fc80f9e65abda65ad60400b98dda4e36e12ef35bedd85e40",
   "notes": [
     "Armor retains deliberate weights; no automatic heat weighting",
     "Gloves receive separate hand bones; rigid boots retain foot weights (toe controls are reserved)",

@@ -124,18 +124,30 @@
       "retargetScale": 0.24135231793128742,
       "groundMinBeforeCorrection": -0.023774927482008934,
       "groundMaxBeforeCorrection": 0.014124143868684769,
+      "motionPolish": {
+        "method": "circular-support-lift-and-locked-boot-targets-v1",
+        "fps": 30,
+        "lod0": {
+          "rootPeakVerticalAccelerationBefore": 22.726971795782447,
+          "rootPeakVerticalAccelerationAfter": 0.0,
+          "pelvisPeakVerticalAccelerationBefore": 25.510074198246002,
+          "pelvisPeakVerticalAccelerationAfter": 7.242017984390259,
+          "maxBootOriginChangeAt120HzUnits": 0.0017416504496645055,
+          "maximumExportTransformDifference": 7.37607479095459e-06
+        }
+      },
       "upperBodySource": "Authored two-handed carry",
       "frames": 22,
       "offset": 134,
       "bounds": {
         "min": [
-          -0.1324131041765213,
-          -1.4788592750392127e-07,
-          -0.16165661811828613
+          -0.13241305947303772,
+          -1.3671005660853552e-07,
+          -0.16165658831596375
         ],
         "max": [
           0.11137651652097702,
-          0.4769696891307831,
+          0.4675922095775604,
           0.1676071584224701
         ]
       }
@@ -319,5 +331,5 @@
     }
   ],
   "byteLength": 123264,
-  "sourceSha256": "4751eddd603d73f2f68f57bb83aaff9ec547ed84c92d9a2d262b1aad971d76f7"
+  "sourceSha256": "aabcb9a102204af9f967026fd263a261dd4651d2053c4bc0269e63ffa78490cb"
 }
