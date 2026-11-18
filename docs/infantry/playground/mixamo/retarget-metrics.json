@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "height": 0.48,
+  "metersPerUnit": 3.75,
+  "forward": "+Z",
+  "clips": [
+    {
+      "name": "idle",
+      "duration": 2.5,
+      "loop": true,
+      "movementSpeed": 0,
+      "source": "mixamo",
+      "sourceClip": "idle",
+      "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": 0.0006415062816813588,
+      "groundMaxBeforeCorrection": 0.0006544765783473849
+    },
+    {
+      "name": "walk",
+      "duration": 0.9666666666666667,
+      "loop": true,
+      "movementSpeed": 0.37351319566369057,
+      "source": "mixamo",
+      "sourceClip": "walk",
+      "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": -0.02139885351061821,
+      "groundMaxBeforeCorrection": 0.0004305932088755071
+    },
+    {
+      "name": "run",
+      "duration": 0.7,
+      "loop": true,
+      "movementSpeed": 0.7936568325385451,
+      "source": "mixamo",
+      "sourceClip": "run",
+      "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
+      "retargetScale": 0.24135231793128742,
+      "groundMinBeforeCorrection": -0.023774927482008934,
+      "groundMaxBeforeCorrection": 0.014124143868684769
+    },
+    {
+      "name": "crouch",
+      "duration": 2.0,
+      "loop": true,
+      "movementSpeed": 0,
+      "source": "prototype",
+      "pendingMixamo": true
+    },
+    {
+      "name": "crouchWalk",
+      "duration": 1.2,
+      "loop": true,
+      "movementSpeed": 0.21333333333333335,
+      "source": "prototype",
+      "pendingMixamo": true
+    },
+    {
+      "name": "jump",
+      "duration": 0.7,
+      "loop": false,
+      "movementSpeed": 0,
+      "source": "prototype",
+      "pendingMixamo": true
+    }
+  ],
+  "lods": [
+    {
+      "level": 0,
+      "glb": "infantry-demo-lod0.glb",
+      "bytes": 2768224,
+      "repairedTangents": 0
+    },
+    {
+      "level": 1,
+      "glb": "infantry-demo-lod1.glb",
+      "bytes": 1007472,
+      "repairedTangents": 1
+    },
+    {
+      "level": 2,
+      "glb": "infantry-demo-lod2.glb",
+      "bytes": 433616,
+      "repairedTangents": 0
+    }
+  ],
+  "notes": [
+    "Only idle/walk/run currently use real Mixamo data; other clips are explicitly labelled prototypes",
+    "Only donor animation and bone transforms are used; donor character geometry is removed"
+  ],
+  "animationSource": "mixamo-retargeted-core",
+  "mixamoSource": {
+    "url": "https://raw.githubusercontent.com/mrdoob/three.js/r187/examples/models/gltf/Xbot.glb",
+    "sha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5",
+    "bytes": 2930032,
+    "animations": [
+      "agree",
+      "headShake",
+      "idle",
+      "run",
+      "sad_pose",
+      "sneak_pose",
+      "walk"
+    ],
+    "attribution": "Mixamo animation source used by the official Three.js r187 skeletal animation example. Donor geometry is not exported into the game.",
+    "example": "https://threejs.org/examples/webgl_animation_skinning_additive_blending.html",
+    "terms": "https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html"
+  },
+  "pendingMixamoClips": [
+    "crouch",
+    "crouchWalk",
+    "jump"
+  ]
+}
