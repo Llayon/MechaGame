@@ -19,6 +19,9 @@ import {
   HEAVY_CANNON_DAMAGE,
   KO_DURATION_SEC,
   MAX_CONCURRENT_ATTACKERS,
+  MISSILE_DAMAGE,
+  MISSILE_SALVO_COOLDOWN,
+  MISSILE_SALVO_COUNT,
   PLAYER_MAX_HP,
   PLAYER_SHELL_DAMAGE,
   REPAIR_COOL_AMOUNT,
@@ -39,6 +42,7 @@ import {
   triggerEmergencyRepair,
   triggerHeavyCannonShot,
   triggerJetDash,
+  triggerMissileSalvo,
 } from './combatSimulation';
 
 test('computeGunPitchToTarget aligns Three.js +Z barrel rotated around +X directly onto target elevation', () => {
@@ -492,4 +496,81 @@ test('water immersion doubles weapon cooling rate (2x) and reports inWaterCoolin
   assert.equal(wetHud.inWaterCooling, true);
   assert.equal(dryHud.inWaterCooling, false);
 });
+
+test('triggerMissileSalvo launches 8 fanning rockets that lock on, curve into enemy, deal splash damage, and respect cooldown', () => {
+  const state = createCombatState(true);
+  const target = state.enemies[0];
+  assert.ok(target, 'Expected initial enemy');
+  state.enemies = [target];
+
+  // Position enemy cleanly 22 units ahead (+X, open airfield apron) of Mech spawn with clear LOS
+  target.x = MECH_SPAWN.x + 22;
+  target.z = MECH_SPAWN.z;
+  target.y = getTerrainHeight(target.x, target.z);
+  target.aiState = 'alert';
+  const hpBefore = target.hp;
+
+  const leftPod = { x: MECH_SPAWN.x + 0.4, y: MECH_SPAWN.y + 3.6, z: MECH_SPAWN.z - 1.1 };
+  const rightPod = { x: MECH_SPAWN.x + 0.4, y: MECH_SPAWN.y + 3.6, z: MECH_SPAWN.z + 1.1 };
+
+  const launched = triggerMissileSalvo(
+    state,
+    leftPod,
+    rightPod,
+    1,
+    0,
+    0,
+    MECH_SPAWN.x,
+    MECH_SPAWN.y,
+    MECH_SPAWN.z,
+    Math.PI / 2,
+  );
+  assert.ok(launched && launched.length === MISSILE_SALVO_COUNT, 'Expected 8 missiles launched');
+  assert.equal(state.playerMissiles.length, MISSILE_SALVO_COUNT);
+  assert.equal(state.missileCooldownTimer, MISSILE_SALVO_COOLDOWN);
+  assert.ok(
+    launched.every((m) => m.targetEnemyId === target.id && m.vy > 0),
+    'Missiles should lock onto forward target and flare upward initially',
+  );
+
+  // Cooldown blocks immediate re-trigger
+  const blocked = triggerMissileSalvo(
+    state,
+    leftPod,
+    rightPod,
+    1,
+    0,
+    0,
+    MECH_SPAWN.x,
+    MECH_SPAWN.y,
+    MECH_SPAWN.z,
+    Math.PI / 2,
+  );
+  assert.equal(blocked, null);
+
+  const hud = buildCombatTelemetry(state, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, 0);
+  assert.equal(hud.missileMaxCooldown, MISSILE_SALVO_COOLDOWN);
+  assert.ok(hud.missileCooldown > MISSILE_SALVO_COOLDOWN - 0.1);
+
+  // Step simulation until salvo finishes homing & detonates
+  let sawMissileImpact = false;
+  for (let i = 0; i < 65; i++) {
+    stepCombatSimulation(state, MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z, false, 0.033);
+    if (state.pendingImpacts.some((ev) => ev.kind === 'missile-impact')) {
+      sawMissileImpact = true;
+    }
+    state.pendingImpacts.length = 0;
+  }
+
+  assert.ok(sawMissileImpact, 'Expected at least one missile-impact event');
+  assert.ok(
+    target.hp <= hpBefore - MISSILE_DAMAGE,
+    `Expected splash damage from missiles: hpBefore=${hpBefore}, hpAfter=${target.hp}`,
+  );
+
+  resetCombatState(state, 'playing');
+  assert.equal(state.playerMissiles.length, 0);
+  assert.equal(state.missileCooldownTimer, 0);
+});
+
 

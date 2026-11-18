@@ -110,6 +110,24 @@ export interface HazardBarrel {
   destroyed: boolean;
 }
 
+export interface PlayerMissile {
+  id: number;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  targetEnemyId: string | null;
+  fallbackX: number;
+  fallbackY: number;
+  fallbackZ: number;
+  life: number;
+  maxLife: number;
+  damage: number;
+  active: boolean;
+}
+
 export interface CombatImpactEvent {
   kind:
     | 'armor-hit'
@@ -120,7 +138,8 @@ export interface CombatImpactEvent {
     | 'telegraph'
     | 'pickup'
     | 'heavy-hit'
-    | 'dash';
+    | 'dash'
+    | 'missile-impact';
   x: number;
   y: number;
   z: number;
@@ -166,6 +185,8 @@ export interface CombatTelemetrySnapshot {
   inWaterCooling: boolean;
   heavyCooldown: number;
   heavyMaxCooldown: number;
+  missileCooldown: number;
+  missileMaxCooldown: number;
   repairCharges: number;
   repairCooldown: number;
   dashCooldown: number;
@@ -209,6 +230,7 @@ export interface CombatSimulationState {
   weaponHeat: number;
   weaponOverheated: boolean;
   heavyCooldownTimer: number;
+  missileCooldownTimer: number;
   repairCharges: number;
   repairCooldownTimer: number;
   dashTimer: number;
@@ -221,11 +243,13 @@ export interface CombatSimulationState {
   shotsHit: number;
   hitMarkerTimer: number;
   nextProjectileId: number;
+  nextMissileId: number;
   nextPickupId: number;
   enemies: EnemyUnitState[];
   barrels: HazardBarrel[];
   pickups: SupplyPickup[];
   projectiles: EnemyProjectile[];
+  playerMissiles: PlayerMissile[];
   heavyBeams: HeavyBeamEvent[];
   pendingImpacts: CombatImpactEvent[];
 }

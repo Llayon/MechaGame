@@ -21,10 +21,15 @@ import { CombatActors } from './objects/CombatActors';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
+import { StormFront } from './objects/StormFront';
 import { WaterEffects } from './objects/WaterEffects';
 import { createWaterVfxPool, type WaterVfxPoolState } from './objects/waterVfxPool';
 import { GroundTrails } from './objects/GroundTrails';
 import { createGroundTrailsPool, type GroundTrailsPoolState } from './objects/groundTrailsPool';
+import { MuzzleFlashes } from './objects/MuzzleFlashes';
+import { createMuzzleFlashPool, type MuzzleFlashPoolState } from './objects/muzzleFlashPool';
+import { MissileRibbons } from './objects/MissileRibbons';
+import { createMissileRibbonPool, type MissileRibbonPoolState } from './objects/missileRibbonPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
@@ -639,6 +644,8 @@ export function MapScene({
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useRef<WaterVfxPoolState>(createWaterVfxPool());
   const groundTrailsPoolRef = useRef<GroundTrailsPoolState>(createGroundTrailsPool());
+  const muzzleFlashPoolRef = useRef<MuzzleFlashPoolState>(createMuzzleFlashPool());
+  const missileRibbonPoolRef = useRef<MissileRibbonPoolState>(createMissileRibbonPool());
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -792,6 +799,8 @@ export function MapScene({
           combatTelemetryRef={combatTelemetryRef}
           waterVfxPoolRef={waterVfxPoolRef}
           groundTrailsPoolRef={groundTrailsPoolRef}
+          muzzleFlashPoolRef={muzzleFlashPoolRef}
+          missileRibbonPoolRef={missileRibbonPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
@@ -813,6 +822,8 @@ export function MapScene({
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             waterVfxPoolRef={waterVfxPoolRef}
             groundTrailsPoolRef={groundTrailsPoolRef}
+            muzzleFlashPoolRef={muzzleFlashPoolRef}
+            missileRibbonPoolRef={missileRibbonPoolRef}
           />
           <WaterEffects
             poolRef={waterVfxPoolRef}
@@ -823,6 +834,15 @@ export function MapScene({
           <GroundTrails
             poolRef={groundTrailsPoolRef}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+            resetNonce={resetNonce}
+          />
+          <MuzzleFlashes
+            poolRef={muzzleFlashPoolRef}
+            resetNonce={resetNonce}
+          />
+          <MissileRibbons
+            poolRef={missileRibbonPoolRef}
+            lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
         </group>
@@ -848,6 +868,12 @@ export function MapScene({
           sunPos={lightCfg.keyPos}
           visible={showMist && quality.fullAtmosphere}
           isSoftwareGl={isSoftwareGl}
+        />
+        <StormFront
+          lightingPreset={lightingPreset}
+          atmosphere={graphics.atmosphere}
+          isSoftwareGl={isSoftwareGl}
+          resetNonce={resetNonce}
         />
         </group>
 

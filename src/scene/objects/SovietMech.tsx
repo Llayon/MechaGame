@@ -21,12 +21,18 @@ import { stepMechEffects } from './MechEffects';
 import type { WaterVfxPoolState } from './waterVfxPool';
 import type { GroundTrailsPoolState } from './groundTrailsPool';
 import {
+  spawnMuzzleFlash,
+  type MuzzleFlashPoolState,
+} from './muzzleFlashPool';
+import type { MissileRibbonPoolState } from './missileRibbonPool';
+import {
   buildCombatTelemetry,
   processPlayerShots,
   stepCombatSimulation,
   triggerEmergencyRepair,
   triggerHeavyCannonShot,
   triggerJetDash,
+  triggerMissileSalvo,
 } from '../../game/combatSimulation';
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
@@ -58,6 +64,8 @@ export interface SovietMechProps {
   combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
   groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
+  muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
+  missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
   onSelectMech?: () => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
@@ -76,6 +84,8 @@ export function SovietMech({
   combatTelemetryRef,
   waterVfxPoolRef,
   groundTrailsPoolRef,
+  muzzleFlashPoolRef,
+  missileRibbonPoolRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
@@ -376,6 +386,74 @@ export function SovietMech({
           if (heavyRes) {
             combatAudio.playHeavyCannonShot();
             sim.springSurgeZ.v -= 1.8;
+            if (muzzleFlashPoolRef?.current) {
+              spawnMuzzleFlash(muzzleFlashPoolRef.current, {
+                x: _heavyOrigin.x,
+                y: _heavyOrigin.y,
+                z: _heavyOrigin.z,
+                dx: _heavyDir.x,
+                dy: _heavyDir.y,
+                dz: _heavyDir.z,
+                scaleXZ: 1.95,
+                scaleZ: 2.15,
+                duration: 0.095,
+                r: 0.42,
+                g: 0.90,
+                b: 1.0,
+                intensity: 1.75,
+              });
+            }
+          }
+        }
+      }
+
+      if (driveInputRef.current.missileSalvo) {
+        driveInputRef.current.missileSalvo = false;
+        const barrels = rig.gunBarrels;
+        const podL = rig.missilePodAnchors?.[1] ?? barrels[2]?.muzzleAnchor ?? barrels[0]?.muzzleAnchor;
+        const podR = rig.missilePodAnchors?.[0] ?? barrels[0]?.muzzleAnchor;
+        if (podL && podR && barrels.length > 0) {
+          podL.getWorldPosition(_heavyMuzzleL);
+          podR.getWorldPosition(_heavyMuzzleR);
+          barrels[0].muzzleAnchor.getWorldQuaternion(_heavyQuat);
+          _heavyDir.set(0, 0, 1).applyQuaternion(_heavyQuat).normalize();
+          const launched = triggerMissileSalvo(
+            combat,
+            { x: _heavyMuzzleL.x, y: _heavyMuzzleL.y, z: _heavyMuzzleL.z },
+            { x: _heavyMuzzleR.x, y: _heavyMuzzleR.y, z: _heavyMuzzleR.z },
+            _heavyDir.x,
+            _heavyDir.y,
+            _heavyDir.z,
+            sim.x,
+            sim.y,
+            sim.z,
+            turretWorldYaw,
+          );
+          if (launched && launched.length > 0) {
+            combatAudio.playMissileSalvo();
+            sim.springPelvisPitch.v += 0.16;
+            sim.springSurgeZ.v -= 0.65;
+            const flashPool = muzzleFlashPoolRef?.current;
+            if (flashPool) {
+              for (let mi = 0; mi < launched.length; mi++) {
+                const m = launched[mi];
+                spawnMuzzleFlash(flashPool, {
+                  x: m.x,
+                  y: m.y,
+                  z: m.z,
+                  dx: m.vx,
+                  dy: m.vy,
+                  dz: m.vz,
+                  scaleXZ: 0.78,
+                  scaleZ: 1.05,
+                  duration: 0.08,
+                  r: 1.0,
+                  g: 0.54,
+                  b: 0.14,
+                  intensity: 1.45,
+                });
+              }
+            }
           }
         }
       }
@@ -388,6 +466,7 @@ export function SovietMech({
       }
     } else {
       driveInputRef.current.heavyFire = false;
+      driveInputRef.current.missileSalvo = false;
       driveInputRef.current.repair = false;
     }
 
@@ -417,6 +496,7 @@ export function SovietMech({
       for (let i = 0; i < combat.pendingImpacts.length; i++) {
         const ev = combat.pendingImpacts[i];
         if (ev.kind === 'explosion') combatAudio.playExplosion();
+        else if (ev.kind === 'missile-impact') combatAudio.playMissileImpact();
         else if (ev.kind === 'barrel-explosion') combatAudio.playBarrelExplosion();
         else if (ev.kind === 'heavy-hit') combatAudio.playArmorHit(true);
         else if (ev.kind === 'armor-hit') combatAudio.playArmorHit(false);
@@ -446,6 +526,7 @@ export function SovietMech({
       shotDistances,
       waterVfxPoolRef?.current,
       groundTrailsPoolRef?.current,
+      muzzleFlashPoolRef?.current,
     );
 
     // Publish lightweight telemetry snapshot for camera rig, minimap & combat HUD

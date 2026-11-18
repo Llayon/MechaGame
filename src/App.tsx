@@ -123,6 +123,7 @@ export default function App() {
     precisionAim: false,
     fire: false,
     heavyFire: false,
+    missileSalvo: false,
     repair: false,
     dash: false,
     centerTurret: false,
@@ -417,6 +418,10 @@ export default function App() {
           }
           if (code === 'KeyF' && !e.repeat) {
             driveInputRef.current.heavyFire = true;
+            return;
+          }
+          if (code === 'KeyZ' && !e.repeat) {
+            driveInputRef.current.missileSalvo = true;
             return;
           }
           if (code === 'KeyV' && !e.repeat) {

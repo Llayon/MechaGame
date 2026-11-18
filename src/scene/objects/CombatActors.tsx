@@ -21,6 +21,16 @@ import {
   stampApcTrack,
   type GroundTrailsPoolState,
 } from './groundTrailsPool';
+import {
+  spawnMuzzleFlash,
+  type MuzzleFlashPoolState,
+} from './muzzleFlashPool';
+import {
+  releaseMissileRibbon,
+  spawnMissileRibbon,
+  updateMissileRibbonHead,
+  type MissileRibbonPoolState,
+} from './missileRibbonPool';
 
 const MAX_PROJECTILE_INSTANCES = 40;
 const MAX_SPARK_PARTICLES = 96;
@@ -72,6 +82,8 @@ export interface CombatActorsProps {
   isSoftwareGl: boolean;
   waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
   groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
+  muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
+  missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
 }
 
 export function CombatActors({
@@ -80,6 +92,8 @@ export function CombatActors({
   isSoftwareGl,
   waterVfxPoolRef,
   groundTrailsPoolRef,
+  muzzleFlashPoolRef,
+  missileRibbonPoolRef,
 }: CombatActorsProps) {
   const enemiesGroupRef = useRef<THREE.Group>(null);
   const projectileMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -115,6 +129,8 @@ export function CombatActors({
   const craterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
   const craterDirtyRef = useRef(true);
   const prevElapsedRef = useRef(0);
+  const lastSeenProjectileIdRef = useRef(0);
+  const activeMissileRibbonIdsRef = useRef<Map<number, number>>(new Map());
   const apcTrailPosRef = useRef<Map<string, { x: number; z: number }>>(new Map());
 
   const sharedGeoms = useMemo(() => {
@@ -556,10 +572,12 @@ export function CombatActors({
       }
     }
 
-    if (combat.elapsedSec < prevElapsedRef.current - 0.1) {
+    if (combat.elapsedSec < prevElapsedRef.current - 0.1 || combat.nextProjectileId - 1 < lastSeenProjectileIdRef.current) {
       resetCraterPool(craterPoolRef.current);
       craterDirtyRef.current = true;
       apcTrailPosRef.current.clear();
+      lastSeenProjectileIdRef.current = 0;
+      activeMissileRibbonIdsRef.current.clear();
     }
     prevElapsedRef.current = combat.elapsedSec;
 
@@ -608,6 +626,16 @@ export function CombatActors({
         }
       } else if (ev.kind === 'player-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.5, 0.75, 1.0, 0.32, 0.16, 0.32);
+      } else if (ev.kind === 'missile-impact') {
+        if (waterPool && (ev.inWater || isRiverWaterImpact(ev.x, ev.y - 0.4, ev.z))) {
+          spawnWaterImpact(waterPool, ev.x, ev.z, 1.45, { countScale: isSoftwareGl ? 0.55 : 0.9 });
+        } else {
+          spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 7.2, 1.05, 1.0, 0.56, 0.16, 0.44);
+          spawnBurst(ev.x, ev.y + 0.25, ev.z, isSoftwareGl ? 3 : 6, 3.8, 1.35, 0.32, 0.32, 0.34, 0.58);
+          if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.65, 0.85, ev.x * 0.5 + ev.z * 0.8)) {
+            craterDirtyRef.current = true;
+          }
+        }
       }
     }
 
@@ -740,26 +768,89 @@ export function CombatActors({
       }
     }
 
-    // Update enemy projectiles InstancedMesh (zero allocations)
+    // Update enemy projectiles InstancedMesh (zero allocations) & emit muzzle flashes for new shots
     const projInst = projectileMeshRef.current;
+    const flashPool = muzzleFlashPoolRef?.current;
     if (projInst) {
       let count = 0;
+      let maxSeenId = lastSeenProjectileIdRef.current;
       const projs = combat.projectiles;
-      for (let i = 0; i < projs.length && count < MAX_PROJECTILE_INSTANCES; i++) {
+      for (let i = 0; i < projs.length; i++) {
         const p = projs[i];
         if (!p.active) continue;
-        _dummy.position.set(p.x, p.y, p.z);
-        _vDir.set(p.vx, p.vy, p.vz).normalize();
-        _qRot.setFromUnitVectors(_upAxis, _vDir);
-        _dummy.quaternion.copy(_qRot);
-        const s = p.archetype === 'denial-turret' ? 1.45 : 1.05;
-        _dummy.scale.set(s, s * 1.4, s);
-        _dummy.updateMatrix();
-        projInst.setMatrixAt(count, _dummy.matrix);
-        count++;
+
+        if (flashPool && p.id > lastSeenProjectileIdRef.current) {
+          const isTurret = p.archetype === 'denial-turret';
+          const isCharger = p.archetype === 'charger-walker';
+          spawnMuzzleFlash(flashPool, {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            dx: p.vx,
+            dy: p.vy,
+            dz: p.vz,
+            scaleXZ: isTurret ? 1.15 : isCharger ? 1.25 : 0.72,
+            scaleZ: isTurret ? 1.35 : isCharger ? 1.4 : 0.85,
+            duration: isTurret || isCharger ? 0.075 : 0.06,
+            r: 1.0,
+            g: isCharger ? 0.42 : isTurret ? 0.56 : 0.66,
+            b: isCharger ? 0.16 : 0.18,
+            intensity: isTurret || isCharger ? 1.45 : 1.15,
+          });
+          if (p.id > maxSeenId) maxSeenId = p.id;
+        }
+
+        if (count < MAX_PROJECTILE_INSTANCES) {
+          _dummy.position.set(p.x, p.y, p.z);
+          _vDir.set(p.vx, p.vy, p.vz).normalize();
+          _qRot.setFromUnitVectors(_upAxis, _vDir);
+          _dummy.quaternion.copy(_qRot);
+          const s = p.archetype === 'denial-turret' ? 1.45 : 1.05;
+          _dummy.scale.set(s, s * 1.4, s);
+          _dummy.updateMatrix();
+          projInst.setMatrixAt(count, _dummy.matrix);
+          count++;
+        }
       }
+      lastSeenProjectileIdRef.current = maxSeenId;
       projInst.count = count;
       projInst.instanceMatrix.needsUpdate = true;
+    }
+
+    // Sync player micro-missiles to unified Ribbon Trails pool
+    const ribbonPool = missileRibbonPoolRef?.current;
+    if (ribbonPool) {
+      const ribbonMap = activeMissileRibbonIdsRef.current;
+      const missiles = combat.playerMissiles;
+      for (let i = 0; i < missiles.length; i++) {
+        const m = missiles[i];
+        if (!m.active) continue;
+        const existingId = ribbonMap.get(m.id);
+        if (existingId === undefined) {
+          const ribbonId = spawnMissileRibbon(ribbonPool, m.x, m.y, m.z);
+          if (ribbonId >= 0) {
+            ribbonMap.set(m.id, ribbonId);
+          }
+        } else {
+          updateMissileRibbonHead(ribbonPool, existingId, m.x, m.y, m.z);
+        }
+      }
+
+      if (ribbonMap.size > 0) {
+        ribbonMap.forEach((ribbonId, missileId) => {
+          let stillActive = false;
+          for (let i = 0; i < missiles.length; i++) {
+            if (missiles[i].id === missileId && missiles[i].active) {
+              stillActive = true;
+              break;
+            }
+          }
+          if (!stillActive) {
+            releaseMissileRibbon(ribbonPool, ribbonId);
+            ribbonMap.delete(missileId);
+          }
+        });
+      }
     }
 
     // Update pooled spark particles InstancedMesh

@@ -14,6 +14,7 @@ export interface MechDriveInput {
   /** Separate mouse button state; keyboard event sync must never clear held LMB. */
   pointerFire?: boolean;
   heavyFire?: boolean;
+  missileSalvo?: boolean;
   repair?: boolean;
   dash?: boolean;
   centerTurret?: boolean;

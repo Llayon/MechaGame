@@ -80,6 +80,7 @@ export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
   input.fire = false;
   input.pointerFire = false;
   input.heavyFire = false;
+  input.missileSalvo = false;
   input.repair = false;
   input.dash = false;
   input.centerTurret = false;
@@ -99,6 +100,7 @@ const KEY_TO_CODE_FALLBACK: Record<string, string> = {
   f: 'KeyF', а: 'KeyF',
   v: 'KeyV', м: 'KeyV',
   x: 'KeyX', ч: 'KeyX',
+  z: 'KeyZ', я: 'KeyZ',
   t: 'KeyT', е: 'KeyT',
   h: 'KeyH', р: 'KeyH',
   g: 'KeyG', п: 'KeyG',

@@ -23,6 +23,7 @@ import type {
   HazardBarrel,
   LockedTargetSnapshot,
   MissionRank,
+  PlayerMissile,
   SupplyPickup,
 } from './combatTypes';
 
@@ -35,6 +36,13 @@ export const KO_DURATION_SEC = 0.42;
 
 export const HEAVY_CANNON_COOLDOWN = 3.2;
 export const HEAVY_CANNON_DAMAGE = 68;
+export const MISSILE_SALVO_COUNT = 8;
+export const MISSILE_SALVO_COOLDOWN = 6.5;
+export const MISSILE_DAMAGE = 26;
+export const MISSILE_SPLASH_RADIUS = 3.4;
+export const MISSILE_SPEED = 42;
+export const MISSILE_FAN_DURATION = 0.22;
+export const MISSILE_MAX_LIFE = 2.8;
 export const REPAIR_HEAL_AMOUNT = 45;
 export const REPAIR_COOL_AMOUNT = 0.35;
 export const REPAIR_COOLDOWN = 12.0;
@@ -380,6 +388,7 @@ export function createCombatState(startPlaying = false): CombatSimulationState {
     weaponHeat: 0,
     weaponOverheated: false,
     heavyCooldownTimer: 0,
+    missileCooldownTimer: 0,
     repairCharges: REPAIR_INITIAL_CHARGES,
     repairCooldownTimer: 0,
     dashTimer: 0,
@@ -392,11 +401,13 @@ export function createCombatState(startPlaying = false): CombatSimulationState {
     shotsHit: 0,
     hitMarkerTimer: 0,
     nextProjectileId: 1,
+    nextMissileId: 1,
     nextPickupId: 3,
     enemies: ENEMY_SPAWN_SPECS.map(createEnemyFromSpec),
     barrels: createInitialBarrels(),
     pickups: createInitialPickups(),
     projectiles: [],
+    playerMissiles: [],
     heavyBeams: [],
     pendingImpacts: [],
   };
@@ -421,6 +432,7 @@ export function resetCombatState(
   state.weaponHeat = 0;
   state.weaponOverheated = false;
   state.heavyCooldownTimer = 0;
+  state.missileCooldownTimer = 0;
   state.repairCharges = REPAIR_INITIAL_CHARGES;
   state.repairCooldownTimer = 0;
   state.dashTimer = 0;
@@ -433,11 +445,13 @@ export function resetCombatState(
   state.shotsHit = 0;
   state.hitMarkerTimer = 0;
   state.nextProjectileId = 1;
+  state.nextMissileId = 1;
   state.nextPickupId = 3;
   state.enemies = ENEMY_SPAWN_SPECS.map(createEnemyFromSpec);
   state.barrels = createInitialBarrels();
   state.pickups = createInitialPickups();
   state.projectiles = [];
+  state.playerMissiles = [];
   state.heavyBeams = [];
   state.pendingImpacts = [];
 }
@@ -1210,6 +1224,210 @@ export function triggerJetDash(
   return true;
 }
 
+export interface MissileSalvoOrigin {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * Launches a fanning 8-rocket micro-missile salvo (KeyZ) from the Mech shoulder pods.
+ * Rockets flare outward/upward briefly, then curve smoothly toward locked targets or aim point.
+ */
+export function triggerMissileSalvo(
+  state: CombatSimulationState,
+  leftPod: MissileSalvoOrigin,
+  rightPod: MissileSalvoOrigin,
+  aimDirX: number,
+  aimDirY: number,
+  aimDirZ: number,
+  playerX: number,
+  playerY: number,
+  playerZ: number,
+  turretWorldYaw: number,
+): PlayerMissile[] | null {
+  if (state.missionStatus !== 'playing' || state.playerHp <= 0) return null;
+  if (state.missileCooldownTimer > 0) return null;
+
+  state.missileCooldownTimer = MISSILE_SALVO_COOLDOWN;
+  state.hasPlayerEngaged = true;
+
+  const aimLen = Math.max(1e-6, Math.hypot(aimDirX, aimDirY, aimDirZ));
+  const fx = aimDirX / aimLen;
+  const fy = aimDirY / aimLen;
+  const fz = aimDirZ / aimLen;
+
+  // Orthonormal right & up basis around aim direction (right = fwd × worldUp, up = right × fwd)
+  let rx = -fz;
+  let ry = 0;
+  let rz = fx;
+  const rLen = Math.hypot(rx, rz);
+  if (rLen > 1e-4) {
+    rx /= rLen;
+    rz /= rLen;
+  } else {
+    rx = 1;
+    ry = 0;
+    rz = 0;
+  }
+  const ux = ry * fz - rz * fy;
+  const uy = rz * fx - rx * fz;
+  const uz = rx * fy - ry * fx;
+
+  // Collect up to 3 alive enemies inside the forward turret cone
+  const candidates: Array<{ enemy: EnemyUnitState; score: number }> = [];
+  for (let i = 0; i < state.enemies.length; i++) {
+    const e = state.enemies[i];
+    if (!isEnemyAlive(e)) continue;
+    const dx = e.x - playerX;
+    const dz = e.z - playerZ;
+    const dist = Math.hypot(dx, dz);
+    if (dist < 2 || dist > PLAYER_MAX_RANGE * 1.08) continue;
+    const angleToEnemy = Math.atan2(dx, dz);
+    let err = angleToEnemy - turretWorldYaw;
+    while (err > Math.PI) err -= Math.PI * 2;
+    while (err < -Math.PI) err += Math.PI * 2;
+    if (Math.abs(err) > 0.48) continue;
+    const cfg = ENEMY_CONFIGS[e.archetype];
+    if (!hasLineOfSight(playerX, playerY + 2.2, playerZ, e.x, e.y + cfg.hitCenterYOffset, e.z)) {
+      continue;
+    }
+    candidates.push({ enemy: e, score: Math.abs(err) * 60 + dist * 0.25 });
+  }
+  candidates.sort((a, b) => a.score - b.score);
+  const lockList = candidates.slice(0, 3).map((c) => c.enemy);
+
+  const midX = (leftPod.x + rightPod.x) * 0.5;
+  const midY = (leftPod.y + rightPod.y) * 0.5;
+  const midZ = (leftPod.z + rightPod.z) * 0.5;
+  const aimCoverHit = castCombatRay(midX, midY, midZ, fx, fy, fz, PLAYER_MAX_RANGE);
+  const fallbackDist = aimCoverHit ? aimCoverHit.distance : 75;
+  const fallbackX = aimCoverHit ? aimCoverHit.x : midX + fx * fallbackDist;
+  const fallbackY = aimCoverHit ? aimCoverHit.y : midY + fy * fallbackDist;
+  const fallbackZ = aimCoverHit ? aimCoverHit.z : midZ + fz * fallbackDist;
+
+  const launched: PlayerMissile[] = [];
+  const initSpeed = 30;
+  for (let i = 0; i < MISSILE_SALVO_COUNT; i++) {
+    const isLeft = i % 2 === 0;
+    const pod = isLeft ? leftPod : rightPod;
+    const sideSign = isLeft ? -1 : 1;
+    const pairIdx = Math.floor(i / 2); // 0..3
+
+    const lateralFan = sideSign * (0.42 + pairIdx * 0.22);
+    const upFan = 0.52 + (pairIdx % 2) * 0.26;
+    const fwdBias = 0.85;
+
+    let vx = fx * fwdBias + rx * lateralFan + ux * upFan;
+    let vy = fy * fwdBias + ry * lateralFan + uy * upFan;
+    let vz = fz * fwdBias + rz * lateralFan + uz * upFan;
+    const vLen = Math.max(1e-6, Math.hypot(vx, vy, vz));
+    vx = (vx / vLen) * initSpeed;
+    vy = (vy / vLen) * initSpeed;
+    vz = (vz / vLen) * initSpeed;
+
+    const target = lockList.length > 0 ? lockList[i % lockList.length] : null;
+    const missile: PlayerMissile = {
+      id: state.nextMissileId++,
+      x: pod.x,
+      y: pod.y,
+      z: pod.z,
+      vx,
+      vy,
+      vz,
+      targetEnemyId: target ? target.id : null,
+      fallbackX: fallbackX + (pairIdx - 1.5) * 0.45 * rx,
+      fallbackY,
+      fallbackZ: fallbackZ + (pairIdx - 1.5) * 0.45 * rz,
+      life: 0,
+      maxLife: MISSILE_MAX_LIFE,
+      damage: MISSILE_DAMAGE,
+      active: true,
+    };
+    state.playerMissiles.push(missile);
+    launched.push(missile);
+    state.shotsFired += 1;
+  }
+
+  state.trauma = clamp(state.trauma + 0.14, 0, 1);
+  return launched;
+}
+
+function detonateMissileImpact(
+  state: CombatSimulationState,
+  hx: number,
+  hy: number,
+  hz: number,
+  damage: number,
+  inWater: boolean,
+): void {
+  state.pendingImpacts.push({
+    kind: 'missile-impact',
+    x: hx,
+    y: hy,
+    z: hz,
+    heavy: !inWater,
+    inWater,
+  });
+  state.trauma = clamp(state.trauma + 0.08, 0, 1);
+
+  let hitAnyEnemy = false;
+  for (let i = 0; i < state.enemies.length; i++) {
+    const e = state.enemies[i];
+    if (!isEnemyAlive(e)) continue;
+    const cfg = ENEMY_CONFIGS[e.archetype];
+    const dist = Math.hypot(e.x - hx, e.y + cfg.hitCenterYOffset - hy, e.z - hz);
+    if (dist > MISSILE_SPLASH_RADIUS + cfg.hitRadius * 0.65) continue;
+
+    hitAnyEnemy = true;
+    const falloff = clamp(1 - 0.5 * (dist / MISSILE_SPLASH_RADIUS), 0.45, 1);
+    const dmg = Math.max(1, Math.round(damage * falloff));
+    e.hp = Math.max(0, e.hp - dmg);
+    e.hitFlashTimer = 0.14;
+    if (e.aiState === 'patrol' || e.aiState === 'windup') {
+      e.aiState = 'alert';
+      e.hasAttackToken = false;
+    }
+
+    if (e.hp <= 0) {
+      e.aiState = 'ko';
+      e.koTimer = KO_DURATION_SEC;
+      e.hasAttackToken = false;
+      state.score += cfg.scoreValue;
+      if (state.score > state.bestScore) {
+        state.bestScore = state.score;
+        saveBestCombatRecord(state.bestScore);
+      }
+      state.hitstopTimer = Math.max(state.hitstopTimer, 0.04);
+      state.pendingImpacts.push({
+        kind: 'explosion',
+        x: e.x,
+        y: e.y + cfg.hitCenterYOffset,
+        z: e.z,
+        heavy: true,
+      });
+    }
+  }
+
+  for (let i = 0; i < state.barrels.length; i++) {
+    const b = state.barrels[i];
+    if (b.destroyed) continue;
+    const dist = Math.hypot(b.x - hx, b.y + 0.9 - hy, b.z - hz);
+    if (dist <= 3.0) {
+      b.hp = Math.max(0, b.hp - damage);
+      b.hitFlashTimer = 0.14;
+      if (b.hp <= 0) {
+        detonateHazardBarrel(state, b);
+      }
+    }
+  }
+
+  if (hitAnyEnemy) {
+    state.shotsHit += 1;
+    state.hitMarkerTimer = 0.14;
+  }
+}
+
 /**
  * Detonates a volatile energy canister with splash damage against nearby enemies and chain reactions.
  */
@@ -1346,6 +1564,7 @@ export function stepCombatSimulation(
   const simDt = dt;
   state.elapsedSec += simDt;
   state.heavyCooldownTimer = Math.max(0, state.heavyCooldownTimer - simDt);
+  state.missileCooldownTimer = Math.max(0, state.missileCooldownTimer - simDt);
   state.repairCooldownTimer = Math.max(0, state.repairCooldownTimer - simDt);
   state.dashTimer = Math.max(0, state.dashTimer - simDt);
   state.dashCooldownTimer = Math.max(0, state.dashCooldownTimer - simDt);
@@ -1632,6 +1851,111 @@ export function stepCombatSimulation(
     p.z += stepZ;
   }
 
+  // Advance player homing micro-missiles
+  for (let i = state.playerMissiles.length - 1; i >= 0; i--) {
+    const m = state.playerMissiles[i];
+    m.life += simDt;
+    if (!m.active || m.life >= m.maxLife) {
+      state.playerMissiles.splice(i, 1);
+      continue;
+    }
+
+    // Brief fan-out phase, then smooth Macross-style curve toward locked target / aim point
+    if (m.life >= MISSILE_FAN_DURATION) {
+      let tx = m.fallbackX;
+      let ty = m.fallbackY;
+      let tz = m.fallbackZ;
+      if (m.targetEnemyId) {
+        const tgt = state.enemies.find((e) => e.id === m.targetEnemyId && isEnemyAlive(e));
+        if (tgt) {
+          const cfg = ENEMY_CONFIGS[tgt.archetype];
+          tx = tgt.x;
+          ty = tgt.y + cfg.hitCenterYOffset;
+          tz = tgt.z;
+        }
+      }
+      const dx = tx - m.x;
+      const dy = ty - m.y;
+      const dz = tz - m.z;
+      const dist = Math.hypot(dx, dy, dz);
+      if (dist > 0.1) {
+        const steer = Math.min(1, simDt * (m.life < 0.45 ? 5.6 : 10.5));
+        const curSpeed = Math.hypot(m.vx, m.vy, m.vz);
+        const targetSpeed = Math.min(MISSILE_SPEED, curSpeed + simDt * 36);
+        const dvx = (dx / dist) * targetSpeed;
+        const dvy = (dy / dist) * targetSpeed;
+        const dvz = (dz / dist) * targetSpeed;
+        const nvx = m.vx + (dvx - m.vx) * steer;
+        const nvy = m.vy + (dvy - m.vy) * steer;
+        const nvz = m.vz + (dvz - m.vz) * steer;
+        const nLen = Math.max(1e-5, Math.hypot(nvx, nvy, nvz));
+        m.vx = (nvx / nLen) * targetSpeed;
+        m.vy = (nvy / nLen) * targetSpeed;
+        m.vz = (nvz / nLen) * targetSpeed;
+      }
+    }
+
+    const stepX = m.vx * simDt;
+    const stepY = m.vy * simDt;
+    const stepZ = m.vz * simDt;
+    const stepLen = Math.hypot(stepX, stepY, stepZ);
+    const dirX = stepLen > 1e-5 ? stepX / stepLen : 0;
+    const dirY = stepLen > 1e-5 ? stepY / stepLen : 0;
+    const dirZ = stepLen > 1e-5 ? stepZ / stepLen : 1;
+
+    const coverHit =
+      stepLen > 1e-4 ? castCombatRay(m.x, m.y, m.z, dirX, dirY, dirZ, stepLen + 0.15) : null;
+    const maxStep = coverHit ? coverHit.distance : stepLen;
+
+    let hitEnemyDist = maxStep + 1;
+    let hitEnemyPos: { x: number; y: number; z: number } | null = null;
+    for (let j = 0; j < state.enemies.length; j++) {
+      const e = state.enemies[j];
+      if (!isEnemyAlive(e)) continue;
+      const cfg = ENEMY_CONFIGS[e.archetype];
+      const radius = cfg.hitRadius + 0.72;
+      const ex = e.x - m.x;
+      const ey = e.y + cfg.hitCenterYOffset - m.y;
+      const ez = e.z - m.z;
+      const proj = clamp(ex * dirX + ey * dirY + ez * dirZ, 0, maxStep);
+      const sx = m.x + dirX * proj;
+      const sy = m.y + dirY * proj;
+      const sz = m.z + dirZ * proj;
+      const dSq = (e.x - sx) ** 2 + (e.y + cfg.hitCenterYOffset - sy) ** 2 + (e.z - sz) ** 2;
+      if (dSq <= radius * radius && proj < hitEnemyDist) {
+        hitEnemyDist = proj;
+        hitEnemyPos = { x: sx, y: sy, z: sz };
+      }
+    }
+
+    if (hitEnemyPos) {
+      detonateMissileImpact(state, hitEnemyPos.x, hitEnemyPos.y, hitEnemyPos.z, m.damage, false);
+      state.playerMissiles.splice(i, 1);
+      continue;
+    }
+
+    if (coverHit) {
+      const waterHit =
+        coverHit.kind === 'terrain' && coverHit.y < WATER_LEVEL - 0.04
+          ? findWaterSurfaceCrossing(m.x, m.y, m.z, coverHit.x, coverHit.y, coverHit.z)
+          : null;
+      detonateMissileImpact(
+        state,
+        waterHit ? waterHit.x : coverHit.x,
+        waterHit ? waterHit.y : coverHit.y,
+        waterHit ? waterHit.z : coverHit.z,
+        m.damage,
+        waterHit !== null,
+      );
+      state.playerMissiles.splice(i, 1);
+      continue;
+    }
+
+    m.x += stepX;
+    m.y += stepY;
+    m.z += stepZ;
+  }
+
   // Collect field supply crates within radius
   for (let i = 0; i < state.pickups.length; i++) {
     const pk = state.pickups[i];
@@ -1763,6 +2087,8 @@ export function buildCombatTelemetry(
     inWaterCooling: inWater,
     heavyCooldown: state.heavyCooldownTimer,
     heavyMaxCooldown: HEAVY_CANNON_COOLDOWN,
+    missileCooldown: state.missileCooldownTimer,
+    missileMaxCooldown: MISSILE_SALVO_COOLDOWN,
     repairCharges: state.repairCharges,
     repairCooldown: state.repairCooldownTimer,
     dashCooldown: state.dashCooldownTimer,

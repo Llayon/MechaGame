@@ -36,12 +36,9 @@ export interface GunBarrelRig {
   elevPivot: THREE.Group;
   mesh: THREE.Group;
   baseZ: number;
-  flashMesh: THREE.Mesh;
-  flashMat: THREE.MeshBasicMaterial;
   muzzleAnchor: THREE.Object3D;
   rateHz: number;
   fireAccum: number;
-  flashTimer: number;
   recoilOffset: number;
 }
 
@@ -660,9 +657,9 @@ export function buildMechModel(mats: MechMaterials) {
 
     // Shoulder weapon pods (4 x 37-mm AA autocannons + 22-link brass belts)
     const gunBarrels: GunBarrelRig[] = [];
+    const missilePodAnchors: THREE.Object3D[] = [];
     const dynamicAmmoBelts: AmmoBeltRig[] = [];
     const linkGeom = trackG(new THREE.BoxGeometry(0.22, 0.048, 0.075));
-    const flashGeom = trackG(new THREE.ConeGeometry(0.24, 0.68, 8));
 
     ([-1, 1] as const).forEach((side) => {
       const podRoot = new THREE.Group();
@@ -692,6 +689,11 @@ export function buildMechModel(mats: MechMaterials) {
       topShoulder.position.set(0, 0.34, -0.06);
       topShoulder.castShadow = true;
       podRoot.add(topShoulder);
+
+      const missilePodAnchor = new THREE.Object3D();
+      missilePodAnchor.position.set(0, 0.56, 0.34);
+      podRoot.add(missilePodAnchor);
+      missilePodAnchors.push(missilePodAnchor);
 
       const frontAmberLamp = new THREE.Mesh(
         trackG(new THREE.SphereGeometry(0.06, 8, 8)),
@@ -789,18 +791,6 @@ export function buildMechModel(mats: MechMaterials) {
         muzzle.position.z = 1.36;
         barrelGrp.add(muzzle);
 
-        const flashMat = new THREE.MeshBasicMaterial({
-          color: 0xffd269,
-          transparent: true,
-          opacity: 0,
-          depthWrite: false,
-        });
-        disposableMats.push(flashMat);
-        const flashMesh = new THREE.Mesh(flashGeom, flashMat);
-        flashMesh.position.set(0, 0, 1.54);
-        flashMesh.rotation.x = Math.PI / 2;
-        barrelGrp.add(flashMesh);
-
         const muzzleAnchor = new THREE.Object3D();
         muzzleAnchor.position.set(0, 0, 1.52);
         barrelGrp.add(muzzleAnchor);
@@ -810,12 +800,9 @@ export function buildMechModel(mats: MechMaterials) {
           elevPivot: gunElevPivot,
           mesh: barrelGrp,
           baseZ: 0.32,
-          flashMesh,
-          flashMat,
           muzzleAnchor,
           rateHz: 4.4 + (side > 0 ? 0 : 0.25) + bIdx * 0.15,
           fireAccum: 0.94 - (side > 0 ? 0 : 0.25) - bIdx * 0.5,
-          flashTimer: 0,
           recoilOffset: 0,
         });
       });
@@ -1222,6 +1209,7 @@ export function buildMechModel(mats: MechMaterials) {
       grabRails,
       antennaSegments,
       gunBarrels,
+      missilePodAnchors,
       dynamicAmmoBelts,
       legs,
       dustGeom,

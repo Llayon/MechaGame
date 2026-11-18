@@ -573,6 +573,114 @@ class CombatAudioEngine {
     turbine.stop(now + 2.45);
     sub.stop(now + 2.45);
   }
+
+  /**
+   * Subtle, deep rolling thunder rumble delayed after a horizon lightning strike.
+   * Respects mute/pause and never initializes or wakes a suspended AudioContext on its own.
+   */
+  playDistantThunder(): void {
+    if (this.muted || this.paused || !this.ctx || this.ctx.state !== 'running') return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(145, now);
+    filter.frequency.exponentialRampToValueAtTime(58, now + 1.85);
+    filter.Q.setValueAtTime(0.75, now);
+
+    const rumbleA = ctx.createOscillator();
+    const rumbleB = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    const jitter = 0.86 + Math.random() * 0.28;
+    rumbleA.type = 'sawtooth';
+    rumbleA.frequency.setValueAtTime(52 * jitter, now);
+    rumbleA.frequency.exponentialRampToValueAtTime(24, now + 1.75);
+
+    rumbleB.type = 'triangle';
+    rumbleB.frequency.setValueAtTime(36 * jitter, now);
+    rumbleB.frequency.linearRampToValueAtTime(42 * jitter, now + 0.35);
+    rumbleB.frequency.exponentialRampToValueAtTime(20, now + 1.85);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.036, now + 0.16);
+    gain.gain.linearRampToValueAtTime(0.022, now + 0.68);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.9);
+
+    rumbleA.connect(filter);
+    rumbleB.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    rumbleA.start(now);
+    rumbleB.start(now);
+    rumbleA.stop(now + 1.95);
+    rumbleB.stop(now + 1.95);
+  }
+
+  /**
+   * Rapid staggered ignition whooshes for the 8-rocket shoulder salvo.
+   */
+  playMissileSalvo(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    for (let i = 0; i < 4; i++) {
+      const t0 = now + i * 0.036;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(620 + i * 95, t0);
+      filter.frequency.exponentialRampToValueAtTime(190, t0 + 0.22);
+      filter.Q.setValueAtTime(1.4, t0);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(280 + i * 28, t0);
+      osc.frequency.exponentialRampToValueAtTime(75, t0 + 0.22);
+
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(0.095, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.25);
+    }
+  }
+
+  private lastMissileImpactAt = 0;
+
+  /**
+   * Punchy, lightly throttled micro-warhead explosion so simultaneous salvo hits blend cleanly.
+   */
+  playMissileImpact(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    if (now - this.lastMissileImpactAt < 0.06) return;
+    this.lastMissileImpactAt = now;
+
+    if (this.samples.play('explosion_debris', { gain: 0.28, rate: 1.12 })) {
+      return;
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(135, now);
+    osc.frequency.exponentialRampToValueAtTime(32, now + 0.24);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.27);
+  }
 }
 
 export const combatAudio = new CombatAudioEngine();

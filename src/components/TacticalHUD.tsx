@@ -17,6 +17,7 @@ import {
   Navigation,
   Pause,
   Play,
+  Rocket,
   RotateCcw,
   RotateCw,
   ShieldPlus,
@@ -1663,6 +1664,30 @@ export function TacticalHUD({
                       {combatHud.heavyCooldown <= 0.05
                         ? 'ГОТОВ'
                         : `${combatHud.heavyCooldown.toFixed(1)}с`}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    data-testid="missile-salvo-btn"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      driveInputRef.current.missileSalvo = true;
+                    }}
+                    disabled={combatHud.missileCooldown > 0.05}
+                    className={`flex items-center gap-1 rounded border px-2.5 py-1.5 text-xs font-bold font-mono-tabular transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      combatHud.missileCooldown <= 0.05
+                        ? 'border-orange-400/70 bg-orange-500/20 text-orange-100 hover:bg-orange-500/35'
+                        : 'border-slate-700 bg-slate-900/80 text-slate-400 cursor-not-allowed'
+                    }`}
+                    aria-label="Веерный ракетный залп (Z)"
+                  >
+                    <Rocket className="h-3.5 w-3.5 text-orange-300" />
+                    <span>
+                      Залп (Z) ·{' '}
+                      {combatHud.missileCooldown <= 0.05
+                        ? 'ГОТОВ'
+                        : `${combatHud.missileCooldown.toFixed(1)}с`}
                     </span>
                   </button>
                   <button

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Crosshair, Flame, ShieldPlus, Wind, Zap } from 'lucide-react';
+import { Crosshair, Flame, Rocket, ShieldPlus, Wind, Zap } from 'lucide-react';
 import type { CombatTelemetrySnapshot } from '../game/combatTypes';
 import type { MechDriveInput } from '../scene/objects/MechState';
 import { computeJoystickAxes, computeTouchAimDelta, computeTouchAimPitchDelta } from '../utils/touchControls';
@@ -245,6 +245,30 @@ export function MobileControls({
           {/* Abilities Grid + Primary Fire Trigger */}
           <div className="flex items-end gap-2">
             <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                tabIndex={-1}
+                data-testid="missile-salvo-btn"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  driveInputRef.current.missileSalvo = true;
+                }}
+                disabled={combatHud.missileCooldown > 0.05}
+                className={`col-span-2 flex h-10 items-center justify-center gap-1.5 rounded border px-2 font-mono-tabular text-[11px] font-bold leading-tight ${
+                  combatHud.missileCooldown <= 0.05
+                    ? 'border-orange-400/70 bg-[#0b131b]/90 text-orange-100 active:bg-orange-500/35'
+                    : 'border-slate-700/80 bg-[#0b131b]/75 text-slate-400'
+                }`}
+                aria-label="Ракетный залп"
+              >
+                <Rocket className="h-3.5 w-3.5 text-orange-300" />
+                <span>
+                  Залп ·{' '}
+                  {combatHud.missileCooldown <= 0.05
+                    ? 'ГОТОВ'
+                    : `${combatHud.missileCooldown.toFixed(1)}с`}
+                </span>
+              </button>
               <button
                 type="button"
                 tabIndex={-1}

@@ -31,6 +31,10 @@ import {
   stampMechSkidTrail,
   type GroundTrailsPoolState,
 } from './groundTrailsPool';
+import {
+  spawnMuzzleFlash,
+  type MuzzleFlashPoolState,
+} from './muzzleFlashPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -79,6 +83,7 @@ export function stepMechEffects(
   shotDistances?: readonly number[],
   waterVfxPool?: WaterVfxPoolState,
   groundTrailsPool?: GroundTrailsPoolState,
+  muzzleFlashPool?: MuzzleFlashPoolState,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -304,12 +309,29 @@ export function stepMechEffects(
   // Gunfire events are simulated by WeaponSystem, rendered here.
   shots.forEach((shot, shotIdx) => {
     const b = rig.gunBarrels[shot.barrelIndex];
-    b.flashTimer = 0.095;
     b.recoilOffset = 0.17;
     sim.springTurretYaw.v += -b.side * (0.36 + Math.random() * 0.14);
     sim.springPelvisPitch.v -= 0.14;
     sim.springSurgeZ.v -= 0.24;
     sim.springBounceY.v -= 0.12;
+
+    if (muzzleFlashPool) {
+      spawnMuzzleFlash(muzzleFlashPool, {
+        x: shot.muzzlePosition.x,
+        y: shot.muzzlePosition.y,
+        z: shot.muzzlePosition.z,
+        dx: shot.direction.x,
+        dy: shot.direction.y,
+        dz: shot.direction.z,
+        scaleXZ: 0.92,
+        scaleZ: 1.05,
+        duration: 0.065,
+        r: 1.0,
+        g: 0.68,
+        b: 0.22,
+        intensity: 1.32,
+      });
+    }
 
     if (!fxParent || sim.particles.length >= 85) return;
     const tracerMat = new THREE.MeshBasicMaterial({
@@ -350,14 +372,7 @@ export function stepMechEffects(
     }
   });
 
-  rig.gunBarrels.forEach((b, bIndex) => {
-    if (b.flashTimer > 0) {
-      b.flashTimer = Math.max(0, b.flashTimer - dt);
-      b.flashMat.opacity = 0.92;
-      b.flashMesh.rotation.z = elapsed * 31 + bIndex * 1.7;
-    } else {
-      b.flashMat.opacity = 0;
-    }
+  rig.gunBarrels.forEach((b) => {
     b.recoilOffset = THREE.MathUtils.lerp(b.recoilOffset, 0, dt * 16);
     b.mesh.position.z = b.baseZ - b.recoilOffset;
   });
