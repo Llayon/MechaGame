@@ -366,7 +366,7 @@ bpy.context.view_layer.objects.active = rig
 bpy.ops.object.mode_set(mode='POSE')
 scene.frame_start, scene.frame_end = 0, 75
 rig['authoring_note'] = f'Rigify {VARIANT}; FK Mixamo clips. Use generated IK/FK snap before switching modes. IK Stretch disabled for armor.'
-rig['animation_provenance'] = 'idle/walk/run: Mixamo; crouch/crouchWalk/jump: explicit prototypes, pending actual Mixamo FBXs'
+rig['animation_provenance'] = '; '.join(f'{c["name"]}: {c.get("source", "unknown")} ({c.get("sourceClip", "authored prototype")})' for c in clips)
 for screen in bpy.data.screens:
     for area in screen.areas:
         if area.type == 'VIEW_3D':

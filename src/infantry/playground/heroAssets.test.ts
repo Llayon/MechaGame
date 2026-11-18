@@ -28,7 +28,16 @@ test('playable LODs preserve source maps and faces, and contain finite normalize
     const rig=readGlb(`public/${variant.directory}infantry-demo-lod${level}.glb`),p=rig.json.meshes[0].primitives[0];
     assert.equal(rig.json.meshes.length,1);assert.equal(rig.json.skins[0].joints.length,variant.bones);
     assert.equal(rig.json.accessors[p.indices].count/3,[3999,1999,999][level]);assert.deepEqual(rig.maps(),source.maps());
-    assert.deepEqual(new Set(rig.json.animations.map((a:{name:string})=>a.name)),new Set(['idle','walk','run','crouch','crouchWalk','jump']));
+    assert.deepEqual(new Set(rig.json.animations.map((a:{name:string})=>a.name)),new Set(['idle','walk','run','crouch','crouchWalk','jump','kneel']));
+    const manifest=JSON.parse(readFileSync(`public/${variant.directory}manifest.json`,'utf8'));
+    for(const clip of rig.json.animations) {
+      const duration=manifest.clips.find((c:{name:string})=>c.name===clip.name).duration;
+      for(const sampler of clip.samplers) {
+        const times=rig.accessor(sampler.input);
+        assert.equal(times[0],0,`${variant.id}/${clip.name}: leading unanimated frame`);
+        assert.ok(Math.abs(times.at(-1)!-duration)<1e-5,`${variant.id}/${clip.name}: timing mismatch`);
+      }
+    }
     for(const name of ['POSITION','NORMAL','TANGENT','TEXCOORD_0','JOINTS_0','WEIGHTS_0']) assert.ok(rig.accessor(p.attributes[name]).every(Number.isFinite));
     const weights=rig.accessor(p.attributes.WEIGHTS_0);
     for(let i=0;i<weights.length;i+=4) {
@@ -69,7 +78,7 @@ test('locomotion loops close and skin palettes have stable unique identifiers',(
   assert.equal(SKINS.length,5);assert.equal(new Set(SKINS.map(s=>s.id)).size,5);
   assert.ok(SKINS.every(s=>/^#[a-f0-9]{6}$/i.test(s.color)&&/^#[a-f0-9]{6}$/i.test(s.accent)));
 });
-test('runtime core motions come from real Mixamo channels and prototypes remain explicitly attributed',()=>{
+test('runtime motions preserve verified Mixamo provenance and selected FBX sources',()=>{
   const manifest=JSON.parse(readFileSync(`public/${HERO_ASSET_DIRECTORY}manifest.json`,'utf8'));
   assert.equal(manifest.animationSource,'mixamo-retargeted-core');
   assert.equal(manifest.mixamoSource.sha256,'002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5');
@@ -78,7 +87,18 @@ test('runtime core motions come from real Mixamo channels and prototypes remain 
     assert.equal(clip.source,'mixamo');assert.equal(clip.sourceClip,name);assert.equal(clip.sourceSha256,manifest.mixamoSource.sha256);
     if(name!=='idle')assert.ok(clip.movementSpeed>.1&&clip.movementSpeed<1.5);
   }
-  for(const name of ['crouch','crouchWalk','jump'])assert.equal(manifest.clips.find((c:{name:string})=>c.name===name).source,'prototype');
+  assert.deepEqual(manifest.pendingMixamoClips,[]);
+  for(const name of ['crouch','crouchWalk','jump','kneel']) {
+    const clip=manifest.clips.find((c:{name:string})=>c.name===name);
+    assert.equal(clip.source,'mixamo');assert.ok(clip.sourceClip.endsWith('.fbx'));
+    const source=manifest.userMotionSources.find((s:{originalSha256:string})=>s.originalSha256===clip.sourceSha256);
+    const bytes=readFileSync(source.asset);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'),source.animationOnlySha256);
+    assert.ok(bytes.length<source.originalBytes/3,'Donor mesh/textures must be stripped');
+  }
+  const jump=manifest.clips.find((c:{name:string})=>c.name==='jump');
+  assert.equal(jump.verticalRootMotion,'controller');assert.ok(jump.maximumLiftRemovedUnits>.05);
+  assert.ok(Math.abs(jump.duration-2*.88/(9.81/3.75))<1/30,'Jump track must match controller airtime');
   const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod2.glb`),old=readGlb('public/assets/infantry-candidate/demo/infantry-demo-lod2.glb');
   for(const name of ['idle','walk','run']) {
     const a=rig.json.animations.find((a:{name:string})=>a.name===name),b=old.json.animations.find((a:{name:string})=>a.name===name);

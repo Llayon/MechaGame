@@ -18,8 +18,8 @@ assert len([b for b in rig.data.bones if b.use_deform]) == 17
 assert bpy.data.objects.get('Infantry_Metarig') is not None
 assert bpy.data.objects.get('Mixamo_Reference') is None
 assert all(b.bbone_segments == 1 for b in rig.data.bones if b.use_deform)
-actions = {n: bpy.data.actions['Rigify_' + n] for n in ['idle', 'walk', 'run', 'crouch', 'crouchWalk', 'jump']}
 manifest = json.loads((BASE / 'manifest.json').read_text())
+actions = {c['name']: bpy.data.actions['Rigify_' + c['name']] for c in manifest['clips']}
 
 def sample(frame):
     scene.frame_set(math.floor(frame), subframe=frame - math.floor(frame))

@@ -14,13 +14,14 @@ import './playground.css';
 
 interface DemoOptions { skin: SkinId; lod: 0 | 1 | 2; quality: Exclude<GraphicsPreset, 'custom'>; normals: boolean; shadows: boolean; rig: RigVariant; previewAnimation: 'gameplay' | HeroAnimation; paused: boolean; phase: number }
 interface DemoView { ready: boolean; position: number[]; speedMeters: number; grounded: boolean; animation: HeroAnimation; animationSource: 'mixamo' | 'prototype'; rig: RigVariant; phase: number; lod: number; skin: SkinId; triangles: number; bones: number; time: number; geometries: number; textures: number; missionMounted: false }
-interface DemoApi { inspect(): DemoView | null; configure(settings: Partial<DemoOptions>): void; reset(): void; pose(): number[] }
+interface DemoApi { inspect(): DemoView | null; configure(settings: Partial<DemoOptions>): void; reset(): void; pose(): number[]; bindPose(): number[]; skeleton(): Array<{ name: string; matrix: number[] }> }
 declare global { interface Window { __infantryDemo?: DemoApi } }
 interface InputStore { keys: Set<string>; stick: { x: number; z: number }; crouch: boolean; jump: boolean; reset: boolean; inspect: boolean }
 const DEFAULT: DemoOptions = { skin: 'original', lod: 2, quality: 'balanced', normals: true, shadows: true, rig: 'rigify', previewAnimation: 'gameplay', paused: false, phase: 0 };
 const PREVIEW_ANIMATIONS = [
   ['gameplay', 'Игровое управление'], ['idle', 'Idle · ожидание'], ['walk', 'Walk · ходьба'], ['run', 'Run · бег'],
-  ['crouch', 'Присед · демо-клип'], ['crouchWalk', 'Шаг в приседе · демо-клип'], ['jump', 'Прыжок · демо-клип'],
+  ['crouch', 'Присед · Mixamo'], ['crouchWalk', 'Шаг в приседе · Mixamo'], ['jump', 'Прыжок · Mixamo'],
+  ['kneel', 'На одном колене · Mixamo'],
 ] as const;
 
 function World({ assets, options, input, view }: { assets: HeroAssets; options: DemoOptions; input: React.RefObject<InputStore>; view: React.RefObject<DemoView | null> }) {
@@ -171,6 +172,18 @@ export default function InfantryDemo() {
   useEffect(() => {
     const timer = setInterval(() => setStatus(view.current ? { ...view.current } : null), 150);
     window.__infantryDemo = { inspect: () => view.current, configure: patch => setOptions(s => ({ ...s, ...patch })), reset: () => { input.current.reset = true; },
+      bindPose: () => {
+        const loaded = currentAssets.current, state = view.current;
+        return loaded && state ? Array.from(loaded.models[state.lod].mesh.geometry.getAttribute('position').array) : [];
+      },
+      skeleton: () => {
+        const loaded = currentAssets.current, state = view.current;
+        if (!loaded || !state) return [];
+        const skeleton = loaded.models[state.lod].mesh.skeleton;
+        skeleton.update();
+        const matrices = skeleton.boneMatrices;
+        return matrices ? skeleton.bones.map((bone, i) => ({ name: bone.name, matrix: Array.from(matrices.slice(i * 16, i * 16 + 16)) })) : [];
+      },
       pose: () => {
         const loaded = currentAssets.current, state = view.current;
         if (!loaded || !state) return [];
@@ -205,6 +218,8 @@ export default function InfantryDemo() {
         {PREVIEW_ANIMATIONS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
       </select></label>
       {options.previewAnimation !== 'gameplay' && <div className="play-animation-review">
+        <span>Источник: {assets?.manifest.clips.find(c => c.name === options.previewAnimation)?.sourceClip ?? '…'}</span>
+        {options.previewAnimation === 'jump' && <span>Здесь — поза прыжка. Прыжок с движением — в игре по Пробелу.</span>}
         <label><input data-testid="demo-pause" type="checkbox" checked={options.paused} onChange={e => { setOptions(s => ({ ...s, paused: e.target.checked, phase: view.current?.phase ?? s.phase })); }} /> Пауза</label>
         <label>Фаза цикла · {Math.round((status?.phase ?? 0) * 100)}%<input data-testid="demo-phase" aria-label="Фаза анимации" type="range" min="0" max="0.999" step="0.001" value={options.paused ? options.phase : status?.phase ?? 0} onChange={e => setOptions(s => ({ ...s, paused: true, phase: +e.target.value }))} /></label>
       </div>}

@@ -15,7 +15,7 @@ export interface HeroState {
   heading: number; speed: number; grounded: boolean;
 }
 export interface HeroInput { x: number; z: number; sprint: boolean; walk: boolean; crouch: boolean; jump: boolean }
-export type HeroAnimation = 'idle' | 'walk' | 'run' | 'crouch' | 'crouchWalk' | 'jump';
+export type HeroAnimation = 'idle' | 'walk' | 'run' | 'crouch' | 'crouchWalk' | 'jump' | 'kneel';
 export const createHeroState = (): HeroState => ({ x: 0, y: 0, z: 0, vx: 0, vz: 0, vy: 0, heading: 0, speed: 0, grounded: true });
 export function groundHeight(x: number, z: number, obstacles: readonly Obstacle[] = YARD_OBSTACLES) {
   return obstacles.reduce((height, o) => Math.abs(x - o.x) < o.width / 2 && Math.abs(z - o.z) < o.depth / 2 ? Math.max(height, o.height) : height, 0);

@@ -14,41 +14,46 @@
   "fidelity": [
     {
       "clip": "idle",
-      "maximumDeformationMatrixError": 5.304813385009766e-06,
-      "maximumJointPositionError": 2.1932597198881135e-07
+      "maximumDeformationMatrixError": 1.2516975402832031e-05,
+      "maximumJointPositionError": 3.42491581739625e-07
     },
     {
       "clip": "walk",
-      "maximumDeformationMatrixError": 7.150229066610336e-06,
-      "maximumJointPositionError": 3.302927337336222e-07
+      "maximumDeformationMatrixError": 1.6868114471435547e-05,
+      "maximumJointPositionError": 9.352853034716031e-07
     },
     {
       "clip": "run",
-      "maximumDeformationMatrixError": 9.231269359588623e-06,
-      "maximumJointPositionError": 5.134012308456418e-07
+      "maximumDeformationMatrixError": 1.6808509826660156e-05,
+      "maximumJointPositionError": 1.0513505805946966e-06
     },
     {
       "clip": "crouch",
-      "maximumDeformationMatrixError": 5.185604095458984e-06,
-      "maximumJointPositionError": 2.3182450398415495e-07
+      "maximumDeformationMatrixError": 8.440185808922251e-06,
+      "maximumJointPositionError": 4.945664870497493e-07
     },
     {
       "clip": "crouchWalk",
-      "maximumDeformationMatrixError": 1.16794776658935e-05,
-      "maximumJointPositionError": 5.557179249289113e-07
+      "maximumDeformationMatrixError": 1.0594725608825684e-05,
+      "maximumJointPositionError": 4.691056184576282e-07
     },
     {
       "clip": "jump",
-      "maximumDeformationMatrixError": 9.208917390424176e-06,
-      "maximumJointPositionError": 4.1560889464940546e-07
+      "maximumDeformationMatrixError": 1.1026859283447266e-05,
+      "maximumJointPositionError": 5.903027816861557e-07
+    },
+    {
+      "clip": "kneel",
+      "maximumDeformationMatrixError": 5.5283308029174805e-06,
+      "maximumJointPositionError": 3.033996811620495e-07
     }
   ],
-  "compactExportMatrixError": 7.867813110351562e-06,
+  "compactExportMatrixError": 1.239776611328125e-05,
   "lods": [
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2787344,
+      "bytes": 2837576,
       "triangles": 3999,
       "bones": 18,
       "repairedTangents": 0
@@ -56,7 +61,7 @@
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1026516,
+      "bytes": 1076680,
       "triangles": 1999,
       "bones": 18,
       "repairedTangents": 0
@@ -64,13 +69,13 @@
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 452660,
+      "bytes": 502824,
       "triangles": 999,
       "bones": 18,
       "repairedTangents": 0
     }
   ],
-  "sourceAssetSha256": "cec92afb010d4be9978fd41fa8d0d7ef73c8fe3899ec45bf7a1a7e6ba94abc32",
+  "sourceAssetSha256": "fa72e107f293ee5466beac4b1d68c1090149e4c8f3dc364755705120532da942",
   "notes": [
     "Armor retains deliberate weights; no automatic heat weighting",
     "Gloves receive separate hand bones; rigid boots retain foot weights (toe controls are reserved)",

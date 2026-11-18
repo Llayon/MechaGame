@@ -42,34 +42,94 @@
     },
     {
       "name": "crouch",
-      "duration": 2.0,
+      "duration": 2.1,
       "loop": true,
       "movementSpeed": 0,
-      "source": "prototype",
-      "pendingMixamo": true
+      "source": "mixamo",
+      "sourceClip": "Idle Crouching.fbx",
+      "sourceSha256": "4dbf5eacbde7a7b9bfe17f19235eae9aaf45707e8d1dbec55e3c7a758caeb316",
+      "sourceAsset": "sources/infantry-motions/Idle Crouching.fbx",
+      "sourceFrames": [
+        1,
+        64
+      ],
+      "displayName": "\u041f\u0440\u0438\u0441\u0435\u0434 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 0.0003410950303077698,
+      "groundMinBeforeCorrection": -0.020450182259082794
     },
     {
       "name": "crouchWalk",
-      "duration": 1.2,
+      "duration": 1.1666666666666667,
       "loop": true,
-      "movementSpeed": 0.21333333333333335,
-      "source": "prototype",
-      "pendingMixamo": true
+      "movementSpeed": 0.3068478605902705,
+      "source": "mixamo",
+      "sourceClip": "Crouch Walking.fbx",
+      "sourceSha256": "e7ccc71c42c876c1569cc8caf9ad8e0669770a66a5477deeb292bbfd02ea11ef",
+      "sourceAsset": "sources/infantry-motions/Crouch Walking.fbx",
+      "sourceFrames": [
+        1,
+        36
+      ],
+      "displayName": "\u0428\u0430\u0433 \u0432 \u043f\u0440\u0438\u0441\u0435\u0434\u0435 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 9.834766387939453e-07,
+      "groundMinBeforeCorrection": -0.03505098074674606
     },
     {
       "name": "jump",
-      "duration": 0.7,
+      "duration": 0.6666666666666666,
       "loop": false,
       "movementSpeed": 0,
-      "source": "prototype",
-      "pendingMixamo": true
+      "source": "mixamo",
+      "sourceClip": "Pistol Jump.fbx",
+      "sourceSha256": "e27dd3e48f393d9a7cf9608b4cbd9c2b60e09490674323899353fad5910781e9",
+      "sourceAsset": "sources/infantry-motions/Pistol Jump.fbx",
+      "sourceFrames": [
+        1,
+        19
+      ],
+      "displayName": "\u041f\u0440\u044b\u0436\u043e\u043a \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "controller",
+      "maximumLiftRemovedUnits": 0.10331166056652827,
+      "maximumLoopSeamMatrixAdjustment": 0,
+      "groundMinBeforeCorrection": -0.05364353209733963
+    },
+    {
+      "name": "kneel",
+      "duration": 3.8,
+      "loop": true,
+      "movementSpeed": 0,
+      "source": "mixamo",
+      "sourceClip": "Pistol Kneeling Idle.fbx",
+      "sourceSha256": "273945b7e8e900c384610844c557a1a551c85075ff89e3d4b0d01e8325697f18",
+      "sourceAsset": "sources/infantry-motions/Pistol Kneeling Idle.fbx",
+      "sourceFrames": [
+        1,
+        115
+      ],
+      "displayName": "\u041d\u0430 \u043e\u0434\u043d\u043e\u043c \u043a\u043e\u043b\u0435\u043d\u0435 \u00b7 Mixamo",
+      "retargetScale": 0.24421256091545887,
+      "horizontalRootMotion": "removed",
+      "verticalRootMotion": "retain",
+      "maximumLiftRemovedUnits": 0,
+      "maximumLoopSeamMatrixAdjustment": 1.296401023864746e-06,
+      "groundMinBeforeCorrection": -0.028583047911524773
     }
   ],
   "lods": [
     {
       "level": 0,
       "glb": "infantry-demo-lod0.glb",
-      "bytes": 2787344,
+      "bytes": 2837576,
       "triangles": 3999,
       "bones": 18,
       "repairedTangents": 0
@@ -77,7 +137,7 @@
     {
       "level": 1,
       "glb": "infantry-demo-lod1.glb",
-      "bytes": 1026516,
+      "bytes": 1076680,
       "triangles": 1999,
       "bones": 18,
       "repairedTangents": 0
@@ -85,15 +145,17 @@
     {
       "level": 2,
       "glb": "infantry-demo-lod2.glb",
-      "bytes": 452660,
+      "bytes": 502824,
       "triangles": 999,
       "bones": 18,
       "repairedTangents": 0
     }
   ],
   "notes": [
-    "Only idle/walk/run currently use real Mixamo data; other clips are explicitly labelled prototypes",
-    "Only donor animation and bone transforms are used; donor character geometry is removed"
+    "Idle/Walk/Run retain the verified Three.js Mixamo source",
+    "Crouch/CrouchWalk/Jump/Kneel use user-provided Mixamo FBXs; donor geometry is stripped",
+    "Kneel is explicitly separate from crouch",
+    "Jump horizontal movement and positive root lift are removed; controller supplies movement and gravity"
   ],
   "animationSource": "mixamo-retargeted-core",
   "mixamoSource": {
@@ -113,10 +175,44 @@
     "example": "https://threejs.org/examples/webgl_animation_skinning_additive_blending.html",
     "terms": "https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html"
   },
-  "pendingMixamoClips": [
-    "crouch",
-    "crouchWalk",
-    "jump"
+  "pendingMixamoClips": [],
+  "userMotionSources": [
+    {
+      "file": "Idle Crouching.fbx",
+      "originalSha256": "4dbf5eacbde7a7b9bfe17f19235eae9aaf45707e8d1dbec55e3c7a758caeb316",
+      "originalBytes": 11555760,
+      "animationOnlySha256": "4c858868b2173fd17d14f5ba9f046210f18286032a4609466cd687ef76827d5b",
+      "animationOnlyBytes": 436956,
+      "stack": "mixamo.com",
+      "asset": "sources/infantry-motions/Idle Crouching.fbx"
+    },
+    {
+      "file": "Crouch Walking.fbx",
+      "originalSha256": "e7ccc71c42c876c1569cc8caf9ad8e0669770a66a5477deeb292bbfd02ea11ef",
+      "originalBytes": 11484688,
+      "animationOnlySha256": "6e9587070fa15d9415858d1b3934a8f143a65d67afc387bd2fcde82a713dbf53",
+      "animationOnlyBytes": 387292,
+      "stack": "mixamo.com",
+      "asset": "sources/infantry-motions/Crouch Walking.fbx"
+    },
+    {
+      "file": "Pistol Jump.fbx",
+      "originalSha256": "e27dd3e48f393d9a7cf9608b4cbd9c2b60e09490674323899353fad5910781e9",
+      "originalBytes": 11454992,
+      "animationOnlySha256": "26c42f0a8d39738211f3c0bb9a47b9db22ea6ef5676749aa2754cd03917268ef",
+      "animationOnlyBytes": 365692,
+      "stack": "mixamo.com",
+      "asset": "sources/infantry-motions/Pistol Jump.fbx"
+    },
+    {
+      "file": "Pistol Kneeling Idle.fbx",
+      "originalSha256": "273945b7e8e900c384610844c557a1a551c85075ff89e3d4b0d01e8325697f18",
+      "originalBytes": 11693888,
+      "animationOnlySha256": "a7698d24ced889047c4851293a89d00f41d1beb95201ebffa711c70ece9a8fce",
+      "animationOnlyBytes": 526556,
+      "stack": "mixamo.com",
+      "asset": "sources/infantry-motions/Pistol Kneeling Idle.fbx"
+    }
   ],
   "authoringRig": "Rigify modular humanoid",
   "authoringFile": "infantry-rigify.blend",

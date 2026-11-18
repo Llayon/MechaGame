@@ -6,7 +6,8 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[2]
 variant = 'preserved-twist' if '--restore-twist' in sys.argv else 'standard'
 directory = 'rigify-twist-demo' if '--restore-twist' in sys.argv else 'rigify-demo'
-OUT = ROOT / 'docs/infantry/playground/rigify' / variant / 'images'
+motion_review = '--motions' in sys.argv
+OUT = ROOT / ('docs/infantry/motion-library/images' if motion_review else 'docs/infantry/playground/rigify') / variant / 'images'
 OUT.mkdir(parents=True, exist_ok=True)
 bpy.ops.wm.open_mainfile(filepath=str(ROOT / 'public/assets/infantry-candidate' / directory / 'infantry-rigify.blend'))
 scene = bpy.context.scene
@@ -34,7 +35,8 @@ scene.camera = camera
 data.type, data.ortho_scale = 'ORTHO', .55
 camera.location = (.65, -1.2, .43)
 camera.rotation_euler = (Vector((0, 0, .24)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
-for name, frame in [('idle', 0), ('run', 4), ('run', 10), ('walk', 7), ('QA_IK_PlantedFeet', 12)]:
+poses = [('crouch', 0), ('crouchWalk', 8), ('jump', 4), ('jump', 10), ('jump', 18), ('kneel', 0)] if motion_review else [('idle', 0), ('run', 4), ('run', 10), ('walk', 7), ('QA_IK_PlantedFeet', 12)]
+for name, frame in poses:
     for side in ['L', 'R']:
         rig.pose.bones['thigh_parent.' + side]['IK_FK'] = 1.0
     rig.animation_data.action = bpy.data.actions[name if name.startswith('QA_') else 'Rigify_' + name]

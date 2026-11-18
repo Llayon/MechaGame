@@ -1,12 +1,12 @@
 {
   "passed": true,
   "variant": "standard",
-  "roundtripMaximumMatrixError": 1.2695789337158203e-05,
-  "ikPlantedFootMaximumErrorUnits": 1.3584039581584593e-05,
-  "ikPlantedFootMaximumErrorMeters": 5.0940148430942223e-05,
-  "ikBoneLengthMaximumErrorUnits": 0.002077410890544709,
-  "independentGloveMotionUnits": 0.014092049229843997,
-  "stockIkMaximumRelativeCompression": 0.020158765768291172,
+  "roundtripMaximumMatrixError": 3.1948089599609375e-05,
+  "ikPlantedFootMaximumErrorUnits": 1.3651243899163327e-05,
+  "ikPlantedFootMaximumErrorMeters": 5.1192164621862475e-05,
+  "ikBoneLengthMaximumErrorUnits": 0.0020774268370441634,
+  "independentGloveMotionUnits": 0.014091990240559774,
+  "stockIkMaximumRelativeCompression": 0.020159166607909316,
   "qaAction": "QA_IK_PlantedFeet",
   "clips": [
     "idle",
@@ -14,7 +14,8 @@
     "run",
     "crouch",
     "crouchWalk",
-    "jump"
+    "jump",
+    "kneel"
   ],
   "lods": [
     3999,
