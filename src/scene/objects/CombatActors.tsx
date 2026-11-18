@@ -10,6 +10,7 @@ import {
   createCraterPool,
   resetCraterPool,
   spawnCraterDecal,
+  stepCraterPool,
   type CraterPoolState,
 } from './craterPool';
 import {
@@ -90,6 +91,7 @@ export interface CombatActorsProps {
   muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
   debrisPoolRef?: React.MutableRefObject<BallisticPropPool>;
+  craterPoolRef?: React.MutableRefObject<CraterPoolState>;
 }
 
 export function CombatActors({
@@ -101,6 +103,7 @@ export function CombatActors({
   muzzleFlashPoolRef,
   missileRibbonPoolRef,
   debrisPoolRef,
+  craterPoolRef: externalCraterPoolRef,
 }: CombatActorsProps) {
   const enemiesGroupRef = useRef<THREE.Group>(null);
   const projectileMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -133,7 +136,8 @@ export function CombatActors({
     })),
   );
   const sparkCursorRef = useRef(0);
-  const craterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
+  const internalCraterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
+  const craterPoolRef = externalCraterPoolRef ?? internalCraterPoolRef;
   const craterDirtyRef = useRef(true);
   const prevElapsedRef = useRef(0);
   const lastSeenProjectileIdRef = useRef(0);
@@ -212,6 +216,17 @@ export function CombatActors({
       craterGeom,
     };
   }, []);
+
+  const craterDecalState = useMemo(() => {
+    const data = new Float32Array(MAX_CRATER_DECALS * 4);
+    const attr = new THREE.InstancedBufferAttribute(data, 4);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    return { data, attr };
+  }, []);
+
+  useEffect(() => {
+    sharedGeoms.craterGeom.setAttribute('aDecalState', craterDecalState.attr);
+  }, [sharedGeoms, craterDecalState]);
 
   const sharedMats = useMemo(() => {
     const darkSteel = new THREE.MeshStandardMaterial({
@@ -641,8 +656,29 @@ export function CombatActors({
           });
         } else {
           spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 2 : 5, 4.0, 0.55, 0.85, 0.78, 0.64, 0.25);
-          if (ev.heavy && spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.85, 0.92, ev.x * 0.4 + ev.z * 0.9)) {
-            craterDirtyRef.current = true;
+          if (ev.heavy || ev.decalKind === 'bullet') {
+            const radius = ev.decalRadius ?? (ev.heavy ? 1.85 : 0.42);
+            const intensity = ev.heavy ? 0.95 : 0.85;
+            const kind = ev.decalKind === 'bullet' ? 1 : 0;
+            if (
+              spawnCraterDecal(
+                craterPoolRef.current,
+                ev.x,
+                ev.y,
+                ev.z,
+                radius,
+                intensity,
+                ev.x * 0.4 + ev.z * 0.9,
+                {
+                  nx: ev.nx,
+                  ny: ev.ny,
+                  nz: ev.nz,
+                  kind,
+                },
+              )
+            ) {
+              craterDirtyRef.current = true;
+            }
           }
         }
       } else if (ev.kind === 'player-hit') {
@@ -656,7 +692,18 @@ export function CombatActors({
           if (debrisPool) {
             spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y + 0.15, z: ev.z, count: isSoftwareGl ? 2 : 3, speedScale: 0.92, scale: 0.85 });
           }
-          if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.65, 0.85, ev.x * 0.5 + ev.z * 0.8)) {
+          if (
+            spawnCraterDecal(
+              craterPoolRef.current,
+              ev.x,
+              ev.y,
+              ev.z,
+              1.65,
+              0.85,
+              ev.x * 0.5 + ev.z * 0.8,
+              ev.nx !== undefined ? { nx: ev.nx, ny: ev.ny, nz: ev.nz, kind: 0 } : undefined,
+            )
+          ) {
             craterDirtyRef.current = true;
           }
         }
@@ -993,9 +1040,10 @@ export function CombatActors({
       bBandInst.instanceMatrix.needsUpdate = true;
     }
 
-    // Update persistent ground blast crater decals (InstancedMesh, only when dirty)
+    // Step thermal cooling timers and upload active surface decals (1 Draw Call)
+    stepCraterPool(craterPoolRef.current, dt);
     const craterInst = craterMeshRef.current;
-    if (craterInst && craterDirtyRef.current) {
+    if (craterInst && (craterPoolRef.current.dirty || craterDirtyRef.current)) {
       let count = 0;
       const decals = craterPoolRef.current.decals;
       for (let i = 0; i < decals.length; i++) {
@@ -1009,10 +1057,18 @@ export function CombatActors({
         _dummy.scale.set(d.radius, 1, d.radius);
         _dummy.updateMatrix();
         craterInst.setMatrixAt(count, _dummy.matrix);
+
+        const base = count * 4;
+        craterDecalState.data[base] = Math.min(1, d.age / Math.max(0.1, d.maxAge));
+        craterDecalState.data[base + 1] = d.seed;
+        craterDecalState.data[base + 2] = d.kind;
+        craterDecalState.data[base + 3] = d.intensity;
         count++;
       }
       craterInst.count = count;
       craterInst.instanceMatrix.needsUpdate = true;
+      craterDecalState.attr.needsUpdate = true;
+      craterPoolRef.current.dirty = false;
       craterDirtyRef.current = false;
     }
   });

@@ -11,6 +11,7 @@ import { MECH_SPAWN } from '../map/mechKinematics';
 import {
   BARREL_BLAST_DAMAGE,
   BARREL_BONUS_SCORE,
+  CUTTING_LASER_CONFIG,
   DASH_COOLDOWN,
   DASH_DAMAGE_MULT,
   DASH_DURATION,
@@ -39,6 +40,7 @@ import {
   processPlayerShots,
   resetCombatState,
   stepCombatSimulation,
+  stepCuttingLaser,
   triggerEmergencyRepair,
   triggerHeavyCannonShot,
   triggerJetDash,
@@ -159,6 +161,9 @@ test('solid walls block player shots from hitting enemies behind cover', () => {
   );
 
   assert.equal(res[0].hitKind, 'cover');
+  assert.ok((res[0].nx ?? 0) > 0.5, 'Wall cover-hit resolution must carry outward normal');
+  const coverEvent = state.pendingImpacts.find((ev) => ev.kind === 'cover-hit');
+  assert.ok(coverEvent && coverEvent.decalKind === 'bullet' && (coverEvent.nx ?? 0) > 0.5);
   assert.equal(enemy.hp, startHp, 'Enemy behind curtain wall must take zero damage');
 });
 
@@ -572,5 +577,51 @@ test('triggerMissileSalvo launches 8 fanning rockets that lock on, curve into en
   assert.equal(state.playerMissiles.length, 0);
   assert.equal(state.missileCooldownTimer, 0);
 });
+
+test('stepCuttingLaser ("Луч-7") deals continuous DPS, drains capacitor, locks on overheat, and cools 2x in water', () => {
+  const state = createCombatState(true);
+  const target = state.enemies[0];
+  state.enemies = [target];
+  target.x = MECH_SPAWN.x;
+  target.z = MECH_SPAWN.z + 18;
+  target.y = MECH_SPAWN.y;
+  target.hp = 120;
+
+  const startHp = target.hp;
+  const stepDt = 0.05;
+  const beam = stepCuttingLaser(
+    state,
+    MECH_SPAWN.x,
+    MECH_SPAWN.y + 1.1,
+    MECH_SPAWN.z + 1.5,
+    0,
+    0,
+    1,
+    true,
+    stepDt,
+    false,
+  );
+  assert.ok(beam !== null && beam.onEnemy && beam.hasImpact);
+  assert.ok(
+    Math.abs(target.hp - (startHp - CUTTING_LASER_CONFIG.dps * stepDt)) < 0.01,
+    `Expected continuous DPS subtraction: got hp=${target.hp}`,
+  );
+  assert.ok(state.laserEnergy < 1.0 && state.laserActive);
+
+  // Drain capacitor completely to trigger overheat lock
+  for (let i = 0; i < 80; i++) {
+    stepCuttingLaser(state, MECH_SPAWN.x, MECH_SPAWN.y + 1.1, MECH_SPAWN.z + 1.5, 0, 0, 1, true, stepDt, false);
+  }
+  assert.equal(state.laserOverheated, true);
+  assert.equal(state.laserBeam, null);
+
+  // While cooling in water, capacitor recharges 2x faster and clears overheat once threshold is met
+  for (let i = 0; i < 40; i++) {
+    stepCuttingLaser(state, MECH_SPAWN.x, MECH_SPAWN.y + 1.1, MECH_SPAWN.z + 1.5, 0, 0, 1, false, stepDt, true);
+  }
+  assert.equal(state.laserOverheated, false);
+  assert.ok(state.laserEnergy >= CUTTING_LASER_CONFIG.overheatResumeThreshold);
+});
+
 
 

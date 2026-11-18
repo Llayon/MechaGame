@@ -13,6 +13,8 @@ export interface MechDriveInput {
   fire: boolean;
   /** Separate mouse button state; keyboard event sync must never clear held LMB. */
   pointerFire?: boolean;
+  laserFire?: boolean;
+  pointerLaserFire?: boolean;
   heavyFire?: boolean;
   missileSalvo?: boolean;
   repair?: boolean;
@@ -22,7 +24,7 @@ export interface MechDriveInput {
   crouch: boolean;
 }
 export interface ParticleItem {
-  type: 'dust' | 'splash' | 'smoke' | 'tracer';
+  type: 'dust' | 'splash' | 'smoke';
   mesh: THREE.Mesh;
   mat: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
   vel: THREE.Vector3;

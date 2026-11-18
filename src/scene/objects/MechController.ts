@@ -17,6 +17,7 @@ export function resolveMechControl(
   const isCrouched = driveMode && input.crouch && !isDashing;
   const isSprinting = driveMode && !isDashing && input.sprint && !isCrouched && Math.abs(fwd) > 0.1;
   const isFiring = driveMode && (input.fire || !!input.pointerFire);
+  const isLaserFiring = driveMode && (!!input.laserFire || !!input.pointerLaserFire);
 
   // Calibrated heavy Mech speeds (world units/sec):
   // 1.35 (~18.2 km/h crouch), 2.35 (~31.7 km/h walk), 3.45 (~46.6 km/h sprint), 6.2 (~83.7 km/h dash)
@@ -44,6 +45,7 @@ export function resolveMechControl(
     inWater,
     waterSpeedScale,
     isFiring,
+    isLaserFiring,
     maxSpeed,
     targetSpeed,
     targetTurnRate,
@@ -67,6 +69,7 @@ export function syncMechInputFromKeys(keys: ReadonlySet<string>, input: MechDriv
     (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0);
   input.turretTurn = (keys.has('KeyQ') ? 1 : 0) - (keys.has('KeyE') ? 1 : 0);
   input.fire = keys.has('Space');
+  input.laserFire = keys.has('KeyB') || keys.has('KeyL');
   input.sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
 }
 export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
@@ -79,6 +82,8 @@ export function clearMechInput(keys: Set<string>, input: MechDriveInput): void {
   input.precisionAim = false;
   input.fire = false;
   input.pointerFire = false;
+  input.laserFire = false;
+  input.pointerLaserFire = false;
   input.heavyFire = false;
   input.missileSalvo = false;
   input.repair = false;
@@ -107,6 +112,8 @@ const KEY_TO_CODE_FALLBACK: Record<string, string> = {
   p: 'KeyP', з: 'KeyP',
   r: 'KeyR', к: 'KeyR',
   u: 'KeyU', г: 'KeyU',
+  b: 'KeyB', и: 'KeyB',
+  l: 'KeyL', д: 'KeyL',
   ' ': 'Space',
   spacebar: 'Space',
   arrowup: 'ArrowUp',

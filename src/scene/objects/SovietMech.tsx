@@ -30,13 +30,19 @@ import {
   type BallisticPropPool,
 } from './debrisBallisticsPool';
 import {
+  resetTracerPool,
+  type TracerPoolState,
+} from './tracerPool';
+import {
   buildCombatTelemetry,
   processPlayerShots,
   stepCombatSimulation,
+  stepCuttingLaser,
   triggerEmergencyRepair,
   triggerHeavyCannonShot,
   triggerJetDash,
   triggerMissileSalvo,
+  type ShotResolution,
 } from '../../game/combatSimulation';
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
@@ -71,6 +77,7 @@ export interface SovietMechProps {
   muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
   casingsPoolRef?: React.MutableRefObject<BallisticPropPool>;
+  tracerPoolRef?: React.MutableRefObject<TracerPoolState>;
   onSelectMech?: () => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
@@ -92,6 +99,7 @@ export function SovietMech({
   muzzleFlashPoolRef,
   missileRibbonPoolRef,
   casingsPoolRef,
+  tracerPoolRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
@@ -157,6 +165,7 @@ export function SovietMech({
       rig.kickupMesh.setMatrixAt(i, zeroMat);
     }
     rig.kickupMesh.instanceMatrix.needsUpdate = true;
+    if (tracerPoolRef?.current) resetTracerPool(tracerPoolRef.current);
 
     rig.root.position.set(MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z);
     rig.root.rotation.set(0, MECH_SPAWN.yaw, 0);
@@ -195,7 +204,7 @@ export function SovietMech({
       MECH_SPAWN.yaw,
     );
     invalidate();
-  }, [resetNonce, rig, mats, mechPoseRef, combatRef, combatTelemetryRef, invalidate]);
+  }, [resetNonce, rig, mats, mechPoseRef, combatRef, combatTelemetryRef, tracerPoolRef, invalidate]);
 
   // Never let recorded footsteps from the previous movement/session leak into overview.
   useEffect(() => {
@@ -489,10 +498,10 @@ export function SovietMech({
       driveInputRef.current.repair = false;
     }
 
-    let shotDistances: number[] | undefined;
+    let shotResolutions: ShotResolution[] | undefined;
     if (shots.length > 0 && canControl) {
       combatAudio.playAutocannonShot();
-      const resolutions = processPlayerShots(
+      shotResolutions = processPlayerShots(
         combat,
         shots.map((s) => ({
           muzzleX: s.muzzlePosition.x,
@@ -508,7 +517,36 @@ export function SovietMech({
         turretWorldYaw,
         true, // physical 37-mm aim, no hidden enemy convergence
       );
-      shotDistances = resolutions.map((r) => r.distance);
+    }
+
+    if (canControl && rig.gunBarrels.length > 0) {
+      const barrels = rig.gunBarrels;
+      barrels[0].muzzleAnchor.getWorldPosition(_heavyMuzzleL);
+      if (barrels.length > 1) {
+        barrels[1].muzzleAnchor.getWorldPosition(_heavyMuzzleR);
+        _heavyOrigin.copy(_heavyMuzzleL).add(_heavyMuzzleR).multiplyScalar(0.5);
+      } else {
+        _heavyOrigin.copy(_heavyMuzzleL);
+      }
+      barrels[0].muzzleAnchor.getWorldQuaternion(_heavyQuat);
+      _heavyDir.set(0, 0, 1).applyQuaternion(_heavyQuat).normalize();
+      const activeBeam = stepCuttingLaser(
+        combat,
+        _heavyOrigin.x,
+        _heavyOrigin.y,
+        _heavyOrigin.z,
+        _heavyDir.x,
+        _heavyDir.y,
+        _heavyDir.z,
+        control.isLaserFiring,
+        rawDt,
+        ik.inWater,
+      );
+      if (activeBeam) {
+        combatAudio.playLaserPulse(activeBeam.hasImpact);
+      }
+    } else {
+      stepCuttingLaser(combat, 0, 0, 0, 0, 0, 1, false, rawDt, ik.inWater);
     }
 
     if (canControl) {
@@ -542,11 +580,12 @@ export function SovietMech({
       ik.footLiftOffs,
       shots,
       isSoftwareGl,
-      shotDistances,
+      shotResolutions,
       waterVfxPoolRef?.current,
       groundTrailsPoolRef?.current,
       muzzleFlashPoolRef?.current,
       casingsPoolRef?.current,
+      tracerPoolRef?.current,
     );
 
     // Publish lightweight telemetry snapshot for camera rig, minimap & combat HUD

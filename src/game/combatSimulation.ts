@@ -12,10 +12,12 @@ import { resolveWorldObstacles } from '../map/worldColliders';
 import { castCombatRay, hasLineOfSight } from '../map/worldRaycaster';
 import { findWaterSurfaceCrossing } from '../scene/objects/waterVfxPool';
 import type {
+  ActiveBeamVisual,
   CombatImpactEvent,
   CombatPhase,
   CombatSimulationState,
   CombatTelemetrySnapshot,
+  CuttingLaserConfig,
   EnemyArchetype,
   EnemyArchetypeConfig,
   EnemyProjectile,
@@ -60,6 +62,18 @@ export const BARREL_HIT_RADIUS = 1.15;
 export const BARREL_BLAST_RADIUS = 11.5;
 export const BARREL_BLAST_DAMAGE = 75;
 export const BARREL_BONUS_SCORE = 150;
+
+export const CUTTING_LASER_CONFIG: CuttingLaserConfig = {
+  id: 'beam-luch7',
+  label: 'Луч-7',
+  dps: 48,
+  energyDrainPerSec: 0.28,
+  rechargePerSec: 0.22,
+  overheatResumeThreshold: 0.35,
+  maxRange: 78,
+  slagRadius: 0.44,
+  waterCoolingMult: 1.8,
+};
 
 const BEST_SCORE_STORAGE_KEY = 'sect7_best_score';
 const BEST_RANK_STORAGE_KEY = 'sect7_best_rank';
@@ -387,6 +401,11 @@ export function createCombatState(startPlaying = false): CombatSimulationState {
     trauma: 0,
     weaponHeat: 0,
     weaponOverheated: false,
+    laserEnergy: 1.0,
+    laserOverheated: false,
+    laserActive: false,
+    laserBeam: null,
+    laserTickAccum: 0,
     heavyCooldownTimer: 0,
     missileCooldownTimer: 0,
     repairCharges: REPAIR_INITIAL_CHARGES,
@@ -431,6 +450,11 @@ export function resetCombatState(
   state.trauma = 0;
   state.weaponHeat = 0;
   state.weaponOverheated = false;
+  state.laserEnergy = 1.0;
+  state.laserOverheated = false;
+  state.laserActive = false;
+  state.laserBeam = null;
+  state.laserTickAccum = 0;
   state.heavyCooldownTimer = 0;
   state.missileCooldownTimer = 0;
   state.repairCharges = REPAIR_INITIAL_CHARGES;
@@ -549,6 +573,10 @@ export interface ShotResolution {
   hitZ: number;
   distance: number;
   killedEnemyId?: string;
+  nx?: number;
+  ny?: number;
+  nz?: number;
+  graze?: boolean;
 }
 
 function wrapAngleDiff(target: number, current: number): number {
@@ -859,6 +887,9 @@ export function processPlayerShots(
       const hx = waterHit ? waterHit.x : coverHit.x;
       const hy = waterHit ? waterHit.y : coverHit.y;
       const hz = waterHit ? waterHit.z : coverHit.z;
+      const nx = waterHit ? 0 : coverHit.nx;
+      const ny = waterHit ? 1 : coverHit.ny;
+      const nz = waterHit ? 0 : coverHit.nz;
       state.pendingImpacts.push({
         kind: 'cover-hit',
         x: hx,
@@ -866,6 +897,11 @@ export function processPlayerShots(
         z: hz,
         heavy: false,
         inWater: waterHit !== null,
+        nx,
+        ny,
+        nz,
+        decalKind: 'bullet',
+        decalRadius: 0.42,
       });
       resolutions.push({
         hitKind: 'cover',
@@ -875,6 +911,10 @@ export function processPlayerShots(
         distance: waterHit
           ? Math.hypot(hx - shot.muzzleX, hy - shot.muzzleY, hz - shot.muzzleZ)
           : coverHit.distance,
+        nx,
+        ny,
+        nz,
+        graze: !waterHit,
       });
     } else {
       resolutions.push({
@@ -1121,6 +1161,9 @@ export function triggerHeavyCannonShot(
       life: 0.22,
       maxLife: 0.22,
     });
+    const nx = waterHit ? 0 : coverHit.nx;
+    const ny = waterHit ? 1 : coverHit.ny;
+    const nz = waterHit ? 0 : coverHit.nz;
     state.trauma = clamp(state.trauma + 0.08, 0, 1);
     state.pendingImpacts.push({
       kind: 'cover-hit',
@@ -1129,6 +1172,11 @@ export function triggerHeavyCannonShot(
       z: hz,
       heavy: true,
       inWater: waterHit !== null,
+      nx,
+      ny,
+      nz,
+      decalKind: 'crater',
+      decalRadius: 1.85,
     });
     return {
       hitKind: 'cover',
@@ -1138,6 +1186,9 @@ export function triggerHeavyCannonShot(
       distance: waterHit
         ? Math.hypot(hx - muzzleX, hy - muzzleY, hz - muzzleZ)
         : coverHit.distance,
+      nx,
+      ny,
+      nz,
     };
   }
 
@@ -1360,6 +1411,9 @@ function detonateMissileImpact(
   hz: number,
   damage: number,
   inWater: boolean,
+  nx?: number,
+  ny?: number,
+  nz?: number,
 ): void {
   state.pendingImpacts.push({
     kind: 'missile-impact',
@@ -1368,6 +1422,9 @@ function detonateMissileImpact(
     z: hz,
     heavy: !inWater,
     inWater,
+    nx,
+    ny,
+    nz,
   });
   state.trauma = clamp(state.trauma + 0.08, 0, 1);
 
@@ -1841,6 +1898,11 @@ export function stepCombatSimulation(
         z: waterHit ? waterHit.z : coverHit.z,
         heavy: false,
         inWater: waterHit !== null,
+        nx: waterHit ? 0 : coverHit.nx,
+        ny: waterHit ? 1 : coverHit.ny,
+        nz: waterHit ? 0 : coverHit.nz,
+        decalKind: 'bullet',
+        decalRadius: 0.36,
       });
       state.projectiles.splice(i, 1);
       continue;
@@ -1946,6 +2008,9 @@ export function stepCombatSimulation(
         waterHit ? waterHit.z : coverHit.z,
         m.damage,
         waterHit !== null,
+        waterHit ? 0 : coverHit.nx,
+        waterHit ? 1 : coverHit.ny,
+        waterHit ? 0 : coverHit.nz,
       );
       state.playerMissiles.splice(i, 1);
       continue;
@@ -2029,6 +2094,244 @@ export function stepCombatSimulation(
   return { simDt, justEnded };
 }
 
+/**
+ * Steps the continuous cutting laser ("Луч-7") simulation:
+ * handles capacitor drain/recharge/overheat, continuous DPS against enemies/barrels,
+ * surface occlusion + water crossing, and publishes ActiveBeamVisual for the renderer.
+ */
+export function stepCuttingLaser(
+  state: CombatSimulationState,
+  muzzleX: number,
+  muzzleY: number,
+  muzzleZ: number,
+  dirX: number,
+  dirY: number,
+  dirZ: number,
+  activeInput: boolean,
+  rawDt: number,
+  inWater = false,
+  config: Readonly<CuttingLaserConfig> = CUTTING_LASER_CONFIG,
+): ActiveBeamVisual | null {
+  const dt = Math.min(Math.max(rawDt, 0), 0.05);
+
+  if (state.missionStatus !== 'playing' || state.playerHp <= 0) {
+    state.laserActive = false;
+    state.laserBeam = null;
+    return null;
+  }
+
+  const wantsFire = activeInput && !state.laserOverheated && state.laserEnergy > 0.001;
+  if (!wantsFire) {
+    state.laserActive = false;
+    state.laserBeam = null;
+    state.laserTickAccum = 0;
+    const coolMult = inWater ? config.waterCoolingMult : 1.0;
+    state.laserEnergy = clamp(state.laserEnergy + config.rechargePerSec * coolMult * dt, 0, 1);
+    if (state.laserOverheated && state.laserEnergy >= config.overheatResumeThreshold) {
+      state.laserOverheated = false;
+    }
+    return null;
+  }
+
+  state.laserActive = true;
+  state.hasPlayerEngaged = true;
+  state.laserEnergy = Math.max(0, state.laserEnergy - config.energyDrainPerSec * dt);
+  if (state.laserEnergy <= 0.0001) {
+    state.laserEnergy = 0;
+    state.laserOverheated = true;
+    state.laserActive = false;
+    state.laserBeam = null;
+    state.laserTickAccum = 0;
+    return null;
+  }
+
+  const dirLen = Math.max(1e-6, Math.hypot(dirX, dirY, dirZ));
+  const dx = dirX / dirLen;
+  const dy = dirY / dirLen;
+  const dz = dirZ / dirLen;
+
+  const coverHit = castCombatRay(muzzleX, muzzleY, muzzleZ, dx, dy, dz, config.maxRange);
+  const maxTraceDist = coverHit ? coverHit.distance : config.maxRange;
+
+  let hitEnemy: EnemyUnitState | null = null;
+  let hitEnemyDist = maxTraceDist;
+  let hitBarrel: HazardBarrel | null = null;
+  let hitBarrelDist = maxTraceDist;
+
+  for (let i = 0; i < state.enemies.length; i++) {
+    const e = state.enemies[i];
+    if (!isEnemyAlive(e)) continue;
+    const cfg = ENEMY_CONFIGS[e.archetype];
+    const ex = e.x - muzzleX;
+    const ey = e.y + cfg.hitCenterYOffset - muzzleY;
+    const ez = e.z - muzzleZ;
+    const proj = ex * dx + ey * dy + ez * dz;
+    if (proj < -cfg.hitRadius || proj > hitEnemyDist + cfg.hitRadius) continue;
+
+    const distSq = ex * ex + ey * ey + ez * ez;
+    const perpSq = distSq - proj * proj;
+    if (perpSq > cfg.hitRadius * cfg.hitRadius) continue;
+
+    const entryDist = Math.max(0, proj - Math.sqrt(cfg.hitRadius * cfg.hitRadius - perpSq));
+    if (entryDist <= hitEnemyDist) {
+      hitEnemyDist = entryDist;
+      hitEnemy = e;
+    }
+  }
+
+  for (let i = 0; i < state.barrels.length; i++) {
+    const b = state.barrels[i];
+    if (b.destroyed) continue;
+    const bx = b.x - muzzleX;
+    const by = b.y + 0.95 - muzzleY;
+    const bz = b.z - muzzleZ;
+    const proj = bx * dx + by * dy + bz * dz;
+    if (proj < -BARREL_HIT_RADIUS || proj > hitBarrelDist + BARREL_HIT_RADIUS) continue;
+
+    const distSq = bx * bx + by * by + bz * bz;
+    const perpSq = distSq - proj * proj;
+    if (perpSq > BARREL_HIT_RADIUS * BARREL_HIT_RADIUS) continue;
+
+    const entryDist = Math.max(0, proj - Math.sqrt(BARREL_HIT_RADIUS * BARREL_HIT_RADIUS - perpSq));
+    if (entryDist < hitBarrelDist) {
+      hitBarrelDist = entryDist;
+      hitBarrel = b;
+    }
+  }
+
+  let hx = muzzleX + dx * config.maxRange;
+  let hy = muzzleY + dy * config.maxRange;
+  let hz = muzzleZ + dz * config.maxRange;
+  let nx = -dx;
+  let ny = -dy;
+  let nz = -dz;
+  let hasImpact = false;
+  let onEnemy = false;
+  let hitWater = false;
+
+  const continuousDmg = config.dps * dt;
+
+  if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
+    hx = muzzleX + dx * hitBarrelDist;
+    hy = muzzleY + dy * hitBarrelDist;
+    hz = muzzleZ + dz * hitBarrelDist;
+    const bnx = hx - hitBarrel.x;
+    const bny = hy - (hitBarrel.y + 0.95);
+    const bnz = hz - hitBarrel.z;
+    const bnLen = Math.max(1e-5, Math.hypot(bnx, bny, bnz));
+    nx = bnx / bnLen;
+    ny = bny / bnLen;
+    nz = bnz / bnLen;
+    hasImpact = true;
+    onEnemy = true;
+    state.hitMarkerTimer = Math.max(state.hitMarkerTimer, 0.08);
+    hitBarrel.hp = Math.max(0, hitBarrel.hp - continuousDmg);
+    hitBarrel.hitFlashTimer = 0.08;
+    if (hitBarrel.hp <= 0) {
+      detonateHazardBarrel(state, hitBarrel);
+    }
+  } else if (hitEnemy) {
+    const cfg = ENEMY_CONFIGS[hitEnemy.archetype];
+    hx = muzzleX + dx * hitEnemyDist;
+    hy = muzzleY + dy * hitEnemyDist;
+    hz = muzzleZ + dz * hitEnemyDist;
+    const enx = hx - hitEnemy.x;
+    const eny = hy - (hitEnemy.y + cfg.hitCenterYOffset);
+    const enz = hz - hitEnemy.z;
+    const enLen = Math.max(1e-5, Math.hypot(enx, eny, enz));
+    nx = enx / enLen;
+    ny = eny / enLen;
+    nz = enz / enLen;
+    hasImpact = true;
+    onEnemy = true;
+    state.hitMarkerTimer = Math.max(state.hitMarkerTimer, 0.08);
+    hitEnemy.hp = Math.max(0, hitEnemy.hp - continuousDmg);
+    hitEnemy.hitFlashTimer = 0.08;
+    if (hitEnemy.aiState === 'patrol') {
+      hitEnemy.aiState = 'alert';
+    }
+    if (hitEnemy.hp <= 0) {
+      hitEnemy.aiState = 'ko';
+      hitEnemy.koTimer = KO_DURATION_SEC;
+      hitEnemy.hasAttackToken = false;
+      state.score += cfg.scoreValue;
+      if (state.score > state.bestScore) {
+        state.bestScore = state.score;
+        saveBestCombatRecord(state.bestScore);
+      }
+      state.hitstopTimer = Math.max(state.hitstopTimer, 0.045);
+      state.trauma = clamp(state.trauma + 0.36, 0, 1);
+      state.pendingImpacts.push({
+        kind: 'explosion',
+        x: hitEnemy.x,
+        y: hitEnemy.y + cfg.hitCenterYOffset,
+        z: hitEnemy.z,
+        heavy: true,
+      });
+    }
+  } else if (coverHit) {
+    const waterHit =
+      coverHit.kind === 'terrain' && coverHit.y < WATER_LEVEL - 0.04
+        ? findWaterSurfaceCrossing(muzzleX, muzzleY, muzzleZ, coverHit.x, coverHit.y, coverHit.z)
+        : null;
+    hx = waterHit ? waterHit.x : coverHit.x;
+    hy = waterHit ? waterHit.y : coverHit.y;
+    hz = waterHit ? waterHit.z : coverHit.z;
+    nx = waterHit ? 0 : coverHit.nx;
+    ny = waterHit ? 1 : coverHit.ny;
+    nz = waterHit ? 0 : coverHit.nz;
+    hasImpact = true;
+    hitWater = waterHit !== null;
+  }
+
+  state.laserTickAccum += dt;
+  if (state.laserTickAccum >= 0.085) {
+    state.laserTickAccum %= 0.085;
+    if (onEnemy) {
+      state.pendingImpacts.push({ kind: 'armor-hit', x: hx, y: hy, z: hz, heavy: false });
+    } else if (hasImpact && hitWater) {
+      state.pendingImpacts.push({
+        kind: 'cover-hit',
+        x: hx,
+        y: hy,
+        z: hz,
+        heavy: false,
+        inWater: true,
+      });
+    } else if (hasImpact) {
+      state.pendingImpacts.push({
+        kind: 'cover-hit',
+        x: hx,
+        y: hy,
+        z: hz,
+        heavy: false,
+        inWater: false,
+        nx,
+        ny,
+        nz,
+      });
+    }
+  }
+
+  const beam: ActiveBeamVisual = {
+    x0: muzzleX,
+    y0: muzzleY,
+    z0: muzzleZ,
+    x1: hx,
+    y1: hy,
+    z1: hz,
+    nx,
+    ny,
+    nz,
+    hasImpact,
+    onEnemy,
+    inWater: hitWater,
+    intensity: 0.78 + 0.22 * state.laserEnergy,
+  };
+  state.laserBeam = beam;
+  return beam;
+}
+
 export function buildCombatTelemetry(
   state: Readonly<CombatSimulationState>,
   playerX: number,
@@ -2084,6 +2387,9 @@ export function buildCombatTelemetry(
     playerMaxHp: state.playerMaxHp,
     weaponHeat: state.weaponHeat,
     weaponOverheated: state.weaponOverheated,
+    laserEnergy: state.laserEnergy,
+    laserOverheated: state.laserOverheated,
+    laserActive: state.laserActive,
     inWaterCooling: inWater,
     heavyCooldown: state.heavyCooldownTimer,
     heavyMaxCooldown: HEAVY_CANNON_COOLDOWN,

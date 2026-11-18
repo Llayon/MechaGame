@@ -9,6 +9,7 @@ import {
   ISLAND_CENTER_X,
   ISLAND_CENTER_Z,
   ISLAND_DECK_RADIUS,
+  getAnalyticalTerrainNormal,
   getBridgeDeckYAt,
   getTerrainHeight,
 } from './terrainMath';
@@ -28,8 +29,18 @@ export interface CombatRayHit {
   x: number;
   y: number;
   z: number;
+  nx: number;
+  ny: number;
+  nz: number;
   kind: RayHitKind;
   tag?: ColliderTag;
+}
+
+interface RayPrimitiveHit {
+  t: number;
+  nx: number;
+  ny: number;
+  nz: number;
 }
 
 const AIRFIELD_PAD_Y = getTerrainHeight(AIRFIELD_CENTER_X, AIRFIELD_CENTER_Z) + 0.35;
@@ -97,7 +108,7 @@ function intersectRayCircleColumn(
   dz: number,
   maxDist: number,
   c: CircleCollider,
-): number | null {
+): RayPrimitiveHit | null {
   const [minY, maxY] = getColliderVerticalBounds(c);
   const relX = ox - c.cx;
   const relZ = oz - c.cz;
@@ -105,6 +116,7 @@ function intersectRayCircleColumn(
 
   let tEnter = 0;
   let tExit = maxDist;
+  let hitSource: 'side' | 'yMin' | 'yMax' = 'side';
 
   if (a > 1e-9) {
     const b = 2 * (relX * dx + relZ * dz);
@@ -114,23 +126,46 @@ function intersectRayCircleColumn(
     const sqrtD = Math.sqrt(disc);
     const t0 = (-b - sqrtD) / (2 * a);
     const t1 = (-b + sqrtD) / (2 * a);
-    tEnter = Math.max(tEnter, t0);
+    if (t0 > tEnter) {
+      tEnter = t0;
+      hitSource = 'side';
+    }
     tExit = Math.min(tExit, t1);
   } else {
     if (relX * relX + relZ * relZ > c.r * c.r) return null;
   }
 
   if (Math.abs(dy) > 1e-9) {
-    const ty0 = (minY - oy) / dy;
-    const ty1 = (maxY - oy) / dy;
-    tEnter = Math.max(tEnter, Math.min(ty0, ty1));
-    tExit = Math.min(tExit, Math.max(ty0, ty1));
+    const raw0 = (minY - oy) / dy;
+    const raw1 = (maxY - oy) / dy;
+    const tyEnter = Math.min(raw0, raw1);
+    const tyExit = Math.max(raw0, raw1);
+    if (tyEnter > tEnter) {
+      tEnter = tyEnter;
+      hitSource = raw0 < raw1 ? 'yMin' : 'yMax';
+    }
+    tExit = Math.min(tExit, tyExit);
   } else if (oy < minY || oy > maxY) {
     return null;
   }
 
   if (tEnter > tExit || tExit < 0 || tEnter > maxDist) return null;
-  return Math.max(0, tEnter);
+  const t = Math.max(0, tEnter);
+
+  if (hitSource === 'yMax') {
+    return { t, nx: 0, ny: 1, nz: 0 };
+  }
+  if (hitSource === 'yMin') {
+    return { t, nx: 0, ny: -1, nz: 0 };
+  }
+
+  const hx = ox + dx * t - c.cx;
+  const hz = oz + dz * t - c.cz;
+  const hLen = Math.hypot(hx, hz);
+  if (hLen > 1e-5) {
+    return { t, nx: hx / hLen, ny: 0, nz: hz / hLen };
+  }
+  return { t, nx: -dx, ny: 0, nz: -dz };
 }
 
 function intersectRayBoxColumn(
@@ -142,7 +177,7 @@ function intersectRayBoxColumn(
   dz: number,
   maxDist: number,
   b: BoxCollider,
-): number | null {
+): RayPrimitiveHit | null {
   const [minY, maxY] = getColliderVerticalBounds(b);
   const relX = ox - b.cx;
   const relZ = oz - b.cz;
@@ -155,39 +190,68 @@ function intersectRayBoxColumn(
 
   let tEnter = 0;
   let tExit = maxDist;
+  let lnx = 0;
+  let lny = 1;
+  let lnz = 0;
 
   // X slab
   if (Math.abs(ldx) > 1e-9) {
-    const tx0 = (-b.halfW - lox) / ldx;
-    const tx1 = (b.halfW - lox) / ldx;
-    tEnter = Math.max(tEnter, Math.min(tx0, tx1));
-    tExit = Math.min(tExit, Math.max(tx0, tx1));
+    const raw0 = (-b.halfW - lox) / ldx;
+    const raw1 = (b.halfW - lox) / ldx;
+    const txEnter = Math.min(raw0, raw1);
+    const txExit = Math.max(raw0, raw1);
+    if (txEnter > tEnter) {
+      tEnter = txEnter;
+      lnx = raw0 < raw1 ? -1 : 1;
+      lny = 0;
+      lnz = 0;
+    }
+    tExit = Math.min(tExit, txExit);
   } else if (lox < -b.halfW || lox > b.halfW) {
     return null;
   }
 
   // Z slab
   if (Math.abs(ldz) > 1e-9) {
-    const tz0 = (-b.halfD - loz) / ldz;
-    const tz1 = (b.halfD - loz) / ldz;
-    tEnter = Math.max(tEnter, Math.min(tz0, tz1));
-    tExit = Math.min(tExit, Math.max(tz0, tz1));
+    const raw0 = (-b.halfD - loz) / ldz;
+    const raw1 = (b.halfD - loz) / ldz;
+    const tzEnter = Math.min(raw0, raw1);
+    const tzExit = Math.max(raw0, raw1);
+    if (tzEnter > tEnter) {
+      tEnter = tzEnter;
+      lnx = 0;
+      lny = 0;
+      lnz = raw0 < raw1 ? -1 : 1;
+    }
+    tExit = Math.min(tExit, tzExit);
   } else if (loz < -b.halfD || loz > b.halfD) {
     return null;
   }
 
   // Y slab
   if (Math.abs(dy) > 1e-9) {
-    const ty0 = (minY - oy) / dy;
-    const ty1 = (maxY - oy) / dy;
-    tEnter = Math.max(tEnter, Math.min(ty0, ty1));
-    tExit = Math.min(tExit, Math.max(ty0, ty1));
+    const raw0 = (minY - oy) / dy;
+    const raw1 = (maxY - oy) / dy;
+    const tyEnter = Math.min(raw0, raw1);
+    const tyExit = Math.max(raw0, raw1);
+    if (tyEnter > tEnter) {
+      tEnter = tyEnter;
+      lnx = 0;
+      lny = raw0 < raw1 ? -1 : 1;
+      lnz = 0;
+    }
+    tExit = Math.min(tExit, tyExit);
   } else if (oy < minY || oy > maxY) {
     return null;
   }
 
   if (tEnter > tExit || tExit < 0 || tEnter > maxDist) return null;
-  return Math.max(0, tEnter);
+  const t = Math.max(0, tEnter);
+
+  // Rotate local box normal back to world XZ coordinates
+  const nx = lnx * b.cosY + lnz * b.sinY;
+  const nz = -lnx * b.sinY + lnz * b.cosY;
+  return { t, nx, ny: lny, nz };
 }
 
 function sampleBridgeDeckHit(px: number, py: number, pz: number): boolean {
@@ -206,7 +270,7 @@ function sampleBridgeDeckHit(px: number, py: number, pz: number): boolean {
 
 /**
  * Casts a 3D combat ray against terrain heightfield, bridge decks, and static world obstacles.
- * Returns the closest hit within maxDist, or null if unobstructed.
+ * Returns the closest hit within maxDist with outward surface normal, or null if unobstructed.
  */
 export function castCombatRay(
   ox: number,
@@ -232,17 +296,20 @@ export function castCombatRay(
   const candidates = queryCollidersAlongSegment(ox, oz, endX, endZ);
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
-    const t =
+    const hit =
       c.kind === 'circle'
         ? intersectRayCircleColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c)
         : intersectRayBoxColumn(ox, oy, oz, ndx, ndy, ndz, bestDist, c);
-    if (t !== null && t < bestDist) {
-      bestDist = t;
+    if (hit !== null && hit.t < bestDist) {
+      bestDist = hit.t;
       bestHit = {
-        distance: t,
-        x: ox + ndx * t,
-        y: oy + ndy * t,
-        z: oz + ndz * t,
+        distance: hit.t,
+        x: ox + ndx * hit.t,
+        y: oy + ndy * hit.t,
+        z: oz + ndz * hit.t,
+        nx: hit.nx,
+        ny: hit.ny,
+        nz: hit.nz,
         kind: 'obstacle',
         tag: c.tag,
       };
@@ -274,6 +341,9 @@ export function castCombatRay(
           x: ox + ndx * hi,
           y: oy + ndy * hi,
           z: oz + ndz * hi,
+          nx: 0,
+          ny: 1,
+          nz: 0,
           kind: 'bridge',
         };
       }
@@ -296,11 +366,18 @@ export function castCombatRay(
         }
       }
       if (hi < bestDist) {
+        const hx = ox + ndx * hi;
+        const hy = oy + ndy * hi;
+        const hz = oz + ndz * hi;
+        const n = getAnalyticalTerrainNormal(hx, hz, 1.5, false);
         return {
           distance: hi,
-          x: ox + ndx * hi,
-          y: oy + ndy * hi,
-          z: oz + ndz * hi,
+          x: hx,
+          y: hy,
+          z: hz,
+          nx: n.nx,
+          ny: n.ny,
+          nz: n.nz,
           kind: 'terrain',
         };
       }

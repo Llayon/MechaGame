@@ -731,6 +731,90 @@ class CombatAudioEngine {
     oscA.stop(now + dur + 0.01);
     oscB.stop(now + dur + 0.01);
   }
+
+  private lastRicochetAt = 0;
+
+  /**
+   * High-velocity metallic ricochet whine when a shell skips off armor/stone/steel.
+   */
+  playRicochet(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    if (now - this.lastRicochetAt < 0.09) return;
+    this.lastRicochetAt = now;
+
+    const jitter = 0.88 + Math.random() * 0.28;
+    const startFreq = 2650 * jitter;
+    const endFreq = 920 * jitter;
+    const dur = 0.14;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(startFreq * 0.85, now);
+    filter.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+    filter.Q.setValueAtTime(4.5, now);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.048, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + dur + 0.015);
+  }
+
+  private lastLaserPulseAt = 0;
+
+  /**
+   * Throttled continuous-wave plasma hum + sizzling cut hiss for «Луч-7».
+   */
+  playLaserPulse(hitSurface = false): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    if (now - this.lastLaserPulseAt < 0.075) return;
+    this.lastLaserPulseAt = now;
+
+    const dur = 0.1;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(hitSurface ? 720 : 480, now);
+    filter.Q.setValueAtTime(hitSurface ? 2.2 : 1.6, now);
+
+    const osc = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(145 + Math.random() * 16, now);
+    osc.frequency.linearRampToValueAtTime(hitSurface ? 168 : 138, now + dur);
+
+    sub.type = 'triangle';
+    sub.frequency.setValueAtTime(74, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(hitSurface ? 0.055 : 0.036, now + 0.014);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+    osc.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    sub.start(now);
+    osc.stop(now + dur + 0.01);
+    sub.stop(now + dur + 0.01);
+  }
 }
 
 export const combatAudio = new CombatAudioEngine();
+

@@ -128,6 +128,34 @@ export interface PlayerMissile {
   active: boolean;
 }
 
+export interface ActiveBeamVisual {
+  x0: number;
+  y0: number;
+  z0: number;
+  x1: number;
+  y1: number;
+  z1: number;
+  nx: number;
+  ny: number;
+  nz: number;
+  hasImpact: boolean;
+  onEnemy: boolean;
+  inWater: boolean;
+  intensity: number;
+}
+
+export interface CuttingLaserConfig {
+  id: string;
+  label: string;
+  dps: number;
+  energyDrainPerSec: number;
+  rechargePerSec: number;
+  overheatResumeThreshold: number;
+  maxRange: number;
+  slagRadius: number;
+  waterCoolingMult: number;
+}
+
 export interface CombatImpactEvent {
   kind:
     | 'armor-hit'
@@ -145,6 +173,11 @@ export interface CombatImpactEvent {
   z: number;
   heavy: boolean;
   inWater?: boolean;
+  nx?: number;
+  ny?: number;
+  nz?: number;
+  decalKind?: 'crater' | 'bullet';
+  decalRadius?: number;
 }
 
 export interface LockedTargetSnapshot {
@@ -182,6 +215,9 @@ export interface CombatTelemetrySnapshot {
   playerMaxHp: number;
   weaponHeat: number;
   weaponOverheated: boolean;
+  laserEnergy: number;
+  laserOverheated: boolean;
+  laserActive: boolean;
   inWaterCooling: boolean;
   heavyCooldown: number;
   heavyMaxCooldown: number;
@@ -229,6 +265,11 @@ export interface CombatSimulationState {
   trauma: number;
   weaponHeat: number;
   weaponOverheated: boolean;
+  laserEnergy: number;
+  laserOverheated: boolean;
+  laserActive: boolean;
+  laserBeam: ActiveBeamVisual | null;
+  laserTickAccum: number;
   heavyCooldownTimer: number;
   missileCooldownTimer: number;
   repairCharges: number;

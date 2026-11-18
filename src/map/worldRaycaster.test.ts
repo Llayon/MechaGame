@@ -70,3 +70,23 @@ test('ray passes cleanly underneath center bridge deck without false collision',
   const underClear = hasLineOfSight(mx - ux, 1.6, mz - uz, mx + ux, 1.6, mz + uz);
   assert.equal(underClear, true, 'Expected ray underneath center bridge deck to remain clear');
 });
+
+test('castCombatRay returns outward unit surface normals for terrain and vertical walls', () => {
+  const gx = -115;
+  const gz = 93;
+  const groundY = getTerrainHeight(gx, gz) + 0.35;
+  const groundHit = castCombatRay(gx, groundY + 5, gz, 0, -1, 0, 20);
+  assert.ok(groundHit !== null);
+  assert.ok(groundHit.ny > 0.7, `Expected upward terrain normal, got ${groundHit.ny}`);
+  const gLen = Math.hypot(groundHit.nx, groundHit.ny, groundHit.nz);
+  assert.ok(Math.abs(gLen - 1) < 1e-4, `Expected unit normal length, got ${gLen}`);
+
+  const citGround = getTerrainHeight(CITADEL_CENTER_X, CITADEL_CENTER_Z) + 0.55;
+  const wallX = CITADEL_CENTER_X + CITADEL_WALL_RX * Math.cos(Math.PI / 8);
+  const wallHit = castCombatRay(wallX + 12, citGround + 2.0, CITADEL_CENTER_Z, -1, 0, 0, 30);
+  assert.ok(wallHit !== null);
+  assert.equal(wallHit.kind, 'obstacle');
+  assert.ok(wallHit.nx > 0.5, `Expected outward +X normal facing shooter, got nx=${wallHit.nx}`);
+  assert.ok(Math.abs(wallHit.ny) < 0.25, `Expected near-horizontal wall normal, got ny=${wallHit.ny}`);
+});
+
