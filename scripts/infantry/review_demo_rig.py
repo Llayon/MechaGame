@@ -17,4 +17,5 @@ data=bpy.data.cameras.new('Preview');camera=bpy.data.objects.new('Preview',data)
 data.type='ORTHO';data.ortho_scale=.55;camera.location=(.65,-1.2,.43);camera.rotation_euler=(Vector((0,0,.24))-camera.location).to_track_quat('-Z','Y').to_euler()
 for name,frame in [('idle',0),('run',4),('run',10),('walk',7),('crouch',0),('jump',10)]:
  rig.animation_data.action=next(t.strips[0].action for t in rig.animation_data.nla_tracks if t.name==name);scene.frame_set(frame)
- scene.render.filepath=str(OUT/f'{name}-{frame}.png');bpy.ops.render.render(write_still=True)
+ prefix='prototype-' if mixamo and name not in ['idle','walk','run'] else ''
+ scene.render.filepath=str(OUT/f'{prefix}{name}-{frame}.png');bpy.ops.render.render(write_still=True)

@@ -13,7 +13,7 @@
   "originalGpuLabRegression": "PASS (200 original Tripo instances)",
   "video": {
     "seconds": 8,
-    "bytes": 728695,
+    "bytes": 760849,
     "captureFps": 15,
     "notPerformanceBenchmark": true
   },
