@@ -46,6 +46,10 @@ import {
   spawnTracer,
   type TracerPoolState,
 } from './tracerPool';
+import {
+  spawnHeatShimmer,
+  type HeatShimmerPoolState,
+} from './heatShimmerPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -96,6 +100,8 @@ export function stepMechEffects(
   muzzleFlashPool?: MuzzleFlashPoolState,
   casingsPool?: BallisticPropPool,
   tracerPool?: TracerPoolState,
+  heatShimmerPool?: HeatShimmerPoolState,
+  thermalLoad = 0,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -506,6 +512,34 @@ export function stepMechEffects(
         maxLife: 1.05,
         initialOpacity: 0.34,
       });
+    }
+
+    // Convective heat shimmer rising from rear MTO exhausts (stronger under sprint, overheat, or Jet-Dash)
+    if (heatShimmerPool && driveMode && dt > 0) {
+      const shimmerInterval = control.isDashing
+        ? (isSoftwareGl ? 0.14 : 0.075)
+        : (isSoftwareGl ? 0.34 : 0.18);
+      if (elapsed - sim.lastHeatShimmerTime >= shimmerInterval) {
+        sim.lastHeatShimmerTime = elapsed;
+        const tip = rig.exhaustTips[Math.floor(elapsed * 7) % rig.exhaustTips.length];
+        tip.getWorldPosition(_tmpExhaustPos);
+        const dashBoost = control.isDashing ? 1 : 0;
+        const heatBoost = Math.min(1, Math.max(0, thermalLoad));
+        spawnHeatShimmer(heatShimmerPool, {
+          x: _tmpExhaustPos.x - sinY * 0.15,
+          y: _tmpExhaustPos.y + 0.05,
+          z: _tmpExhaustPos.z - cosY * 0.15,
+          vx: -sinY * (0.45 + dashBoost * 1.1),
+          vy: 1.45 + dashBoost * 1.35 + (isMoving ? 0.35 : 0),
+          vz: -cosY * (0.45 + dashBoost * 1.1),
+          width: 0.95 + dashBoost * 0.55 + heatBoost * 0.25,
+          height: 1.65 + dashBoost * 0.9 + heatBoost * 0.45,
+          intensity: 0.58 + dashBoost * 0.42 + heatBoost * 0.28,
+          maxAge: control.isDashing ? 0.95 : 1.25,
+          riseSpeed: 1.05 + dashBoost * 0.65,
+          warmTint: 0.48 + dashBoost * 0.42 + heatBoost * 0.32,
+        });
+      }
     }
 
     // Update & recycle active world particles
