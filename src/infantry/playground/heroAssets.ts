@@ -11,9 +11,10 @@ export const SKINS = [
 ] as const;
 export type SkinId = typeof SKINS[number]['id'];
 export const LOD_TRIANGLES = [3999, 1999, 999] as const;
-export interface DemoManifest { clips: Array<{ name: HeroAnimation; duration: number; movementSpeed: number; loop: boolean }> }
+export const HERO_ASSET_DIRECTORY = 'assets/infantry-candidate/mixamo-demo/';
+export interface DemoManifest { clips: Array<{ name: HeroAnimation; duration: number; movementSpeed: number; loop: boolean; source?: 'mixamo' | 'prototype'; sourceClip?: string }> }
 export async function loadHeroAssets() {
-  const base = import.meta.env.BASE_URL + 'assets/infantry-candidate/demo/';
+  const base = import.meta.env.BASE_URL + HERO_ASSET_DIRECTORY;
   const response = await fetch(base + 'manifest.json');
   if (!response.ok) throw Error('Не удалось загрузить описание анимаций');
   const manifest = await response.json() as DemoManifest;

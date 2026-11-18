@@ -12,9 +12,9 @@ try {
  else {
  const inspect=()=>app.evaluate('window.__infantryDemo.inspect()');
  const key=(code,type='keyDown')=>app.send('Input.dispatchKeyEvent',{type,code,key:({Space:' ',ShiftLeft:'Shift',AltLeft:'Alt'})[code]||code.replace('Key','').toLowerCase()});
- const start=await inspect();assert.equal(start.lod,2);assert.equal(start.triangles,999);assert.equal(start.missionMounted,false);
+ const start=await inspect();assert.equal(start.lod,2);assert.equal(start.triangles,999);assert.equal(start.missionMounted,false);assert.equal(start.animationSource,'mixamo');
  await app.screenshot(dest+'/images/demo-original.png');
- await key('KeyW');await sleep(1300);const run=await inspect();assert.equal(run.animation,'run');assert.ok(Math.hypot(run.position[0]-start.position[0],run.position[2]-start.position[2])>.5);
+ await key('KeyW');await sleep(1300);const run=await inspect();assert.equal(run.animation,'run');assert.equal(run.animationSource,'mixamo');assert.ok(Math.hypot(run.position[0]-start.position[0],run.position[2]-start.position[2])>.5);
  await app.screenshot(dest+'/images/demo-run.png');
  await key('ShiftLeft');await sleep(400);const sprint=await inspect();assert.ok(sprint.speedMeters>3.8);await key('ShiftLeft','keyUp');
  await key('KeyW','keyUp');await sleep(600);assert.equal((await inspect()).animation,'idle');

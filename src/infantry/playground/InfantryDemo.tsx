@@ -13,7 +13,7 @@ import { TrainingYard } from './TrainingYard';
 import './playground.css';
 
 interface DemoOptions { skin: SkinId; lod: 0 | 1 | 2; quality: Exclude<GraphicsPreset, 'custom'>; normals: boolean; shadows: boolean }
-interface DemoView { ready: boolean; position: number[]; speedMeters: number; grounded: boolean; animation: HeroAnimation; lod: number; skin: SkinId; triangles: number; bones: number; time: number; geometries: number; textures: number; missionMounted: false }
+interface DemoView { ready: boolean; position: number[]; speedMeters: number; grounded: boolean; animation: HeroAnimation; animationSource: 'mixamo' | 'prototype'; lod: number; skin: SkinId; triangles: number; bones: number; time: number; geometries: number; textures: number; missionMounted: false }
 interface DemoApi { inspect(): DemoView | null; configure(settings: Partial<DemoOptions>): void; reset(): void }
 declare global { interface Window { __infantryDemo?: DemoApi } }
 interface InputStore { keys: Set<string>; stick: { x: number; z: number }; crouch: boolean; jump: boolean; reset: boolean; inspect: boolean }
@@ -30,7 +30,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
   useEffect(() => { assets.setNormals(options.normals); }, [assets, options.normals]);
   useEffect(() => { sunlight.current?.shadow.camera.updateProjectionMatrix(); }, []);
   useEffect(() => {
-    view.current = { ready: true, position: [0, 0, 0], speedMeters: 0, grounded: true, animation: 'idle', lod: options.lod, skin: options.skin,
+    view.current = { ready: true, position: [0, 0, 0], speedMeters: 0, grounded: true, animation: 'idle', animationSource: assets.manifest.clips.find(c => c.name === 'idle')?.source ?? 'prototype', lod: options.lod, skin: options.skin,
       triangles: LOD_TRIANGLES[options.lod], bones: 14, time: 0, geometries: 0, textures: 0, missionMounted: false };
     return () => { view.current = null; assets.models.forEach(m => m.mixer.stopAllAction()); };
   }, [assets, view]);
@@ -81,7 +81,7 @@ function World({ assets, options, input, view }: { assets: HeroAssets; options: 
       controls.current.target.set(state.x, .24 + state.y * .4, state.z); controls.current.update();
     }
     if (view.current) Object.assign(view.current, { position: [state.x, state.y, state.z], speedMeters: state.speed * 3.75, grounded: state.grounded,
-      animation, lod: options.lod, skin: options.skin, triangles: LOD_TRIANGLES[options.lod], time: model.mixer.time,
+      animation, animationSource: authored.source ?? 'prototype', lod: options.lod, skin: options.skin, triangles: LOD_TRIANGLES[options.lod], time: model.mixer.time,
       geometries: gl.info.memory.geometries, textures: gl.info.memory.textures });
   });
   const shadows = options.shadows && runtime.shadowEnabled;
@@ -170,7 +170,7 @@ export default function InfantryDemo() {
       <button className="play-reset" onClick={() => { input.current.reset = true; }}>Вернуться на старт <kbd>R</kbd></button>
       <a href="?lab=infantry">Лаборатория массовой анимации ↗</a>
     </aside>
-    <div className="play-telemetry"><span className="play-live-dot" /><span>{status?.grounded === false ? 'В ВОЗДУХЕ' : (status?.speedMeters ?? 0) > .1 ? 'ДВИЖЕНИЕ' : 'ГОТОВНОСТЬ'}</span><b>{(status?.speedMeters ?? 0).toFixed(1)} <small>м/с</small></b><span>{LOD_TRIANGLES[options.lod].toLocaleString('ru-RU')} треугольников</span></div>
+    <div className="play-telemetry"><span className="play-live-dot" /><span>{status?.grounded === false ? 'В ВОЗДУХЕ' : (status?.speedMeters ?? 0) > .1 ? 'ДВИЖЕНИЕ' : 'ГОТОВНОСТЬ'}</span><b>{(status?.speedMeters ?? 0).toFixed(1)} <small>м/с</small></b><span>{LOD_TRIANGLES[options.lod].toLocaleString('ru-RU')} треугольников · {status?.animationSource === 'mixamo' ? 'MIXAMO' : 'ДЕМО-КЛИП'}</span></div>
     <footer className="play-help"><div><kbd>W A S D</kbd> движение <kbd>Shift</kbd> ускорение <kbd>Alt</kbd> шаг <kbd>Пробел</kbd> прыжок <kbd>C</kbd> присесть</div><div>Перетаскивание — камера · колесо — масштаб · <kbd>Q / E</kbd> или <kbd>1–5</kbd> — расцветка</div></footer>
     <div className="play-touch"><TouchStick input={input} /><div className="play-touch-buttons"><button onClick={() => { input.current.crouch = !input.current.crouch; }}>Присесть</button><button onClick={() => { input.current.jump = true; }}>Прыжок</button></div></div>
   </div>;

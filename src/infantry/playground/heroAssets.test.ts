@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { SKINS } from './heroAssets';
+import { SKINS, HERO_ASSET_DIRECTORY } from './heroAssets';
 function readGlb(path: string) {
   const bytes = readFileSync(path), length = bytes.readUInt32LE(12), json = JSON.parse(bytes.subarray(20,20+length).toString());
   assert.equal(bytes.readUInt32LE(8),bytes.length);
@@ -25,7 +25,7 @@ function readGlb(path: string) {
 test('playable LODs preserve source maps and faces, and contain finite normalized rig data',()=>{
   for(const level of [0,1,2]) {
     const source=readGlb(`public/assets/infantry-candidate/infantry-candidate-lod${level}.glb`);
-    const rig=readGlb(`public/assets/infantry-candidate/demo/infantry-demo-lod${level}.glb`),p=rig.json.meshes[0].primitives[0];
+    const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod${level}.glb`),p=rig.json.meshes[0].primitives[0];
     assert.equal(rig.json.meshes.length,1);assert.equal(rig.json.skins[0].joints.length,14);
     assert.equal(rig.json.accessors[p.indices].count/3,[3999,1999,999][level]);assert.deepEqual(rig.maps(),source.maps());
     assert.deepEqual(new Set(rig.json.animations.map((a:{name:string})=>a.name)),new Set(['idle','walk','run','crouch','crouchWalk','jump']));
@@ -38,7 +38,7 @@ test('playable LODs preserve source maps and faces, and contain finite normalize
   }
 });
 test('locomotion loops close and skin palettes have stable unique identifiers',()=>{
-  const rig=readGlb('public/assets/infantry-candidate/demo/infantry-demo-lod2.glb');
+  const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod2.glb`);
   for(const animation of rig.json.animations.filter((a:{name:string})=>a.name!=='jump')) {
     for(const channel of animation.channels) {
       const sampler=animation.samplers[channel.sampler],a=rig.json.accessors[sampler.output],width=a.type==='VEC4'?4:3,values=rig.accessor(sampler.output);
@@ -49,4 +49,23 @@ test('locomotion loops close and skin palettes have stable unique identifiers',(
   }
   assert.equal(SKINS.length,5);assert.equal(new Set(SKINS.map(s=>s.id)).size,5);
   assert.ok(SKINS.every(s=>/^#[a-f0-9]{6}$/i.test(s.color)&&/^#[a-f0-9]{6}$/i.test(s.accent)));
+});
+test('runtime core motions come from real Mixamo channels and prototypes remain explicitly attributed',()=>{
+  const manifest=JSON.parse(readFileSync(`public/${HERO_ASSET_DIRECTORY}manifest.json`,'utf8'));
+  assert.equal(manifest.animationSource,'mixamo-retargeted-core');
+  assert.equal(manifest.mixamoSource.sha256,'002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5');
+  for(const name of ['idle','walk','run']) {
+    const clip=manifest.clips.find((c:{name:string})=>c.name===name);
+    assert.equal(clip.source,'mixamo');assert.equal(clip.sourceClip,name);assert.equal(clip.sourceSha256,manifest.mixamoSource.sha256);
+    if(name!=='idle')assert.ok(clip.movementSpeed>.1&&clip.movementSpeed<1.5);
+  }
+  for(const name of ['crouch','crouchWalk','jump'])assert.equal(manifest.clips.find((c:{name:string})=>c.name===name).source,'prototype');
+  const rig=readGlb(`public/${HERO_ASSET_DIRECTORY}infantry-demo-lod2.glb`),old=readGlb('public/assets/infantry-candidate/demo/infantry-demo-lod2.glb');
+  for(const name of ['idle','walk','run']) {
+    const a=rig.json.animations.find((a:{name:string})=>a.name===name),b=old.json.animations.find((a:{name:string})=>a.name===name);
+    const tracks=(model:ReturnType<typeof readGlb>,animation:typeof a)=>animation.channels.map((c:{target:{node:number;path:string};sampler:number})=>({
+      node:model.json.nodes[c.target.node].name,path:c.target.path,values:model.accessor(animation.samplers[c.sampler].output),
+    }));
+    assert.notEqual(JSON.stringify(tracks(rig,a)),JSON.stringify(tracks(old,b)));
+  }
 });
