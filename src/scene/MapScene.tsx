@@ -54,7 +54,7 @@ import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
 } from '../map/mechKinematics';
-import type { CombatSimulationState, CombatTelemetrySnapshot } from '../game/combatTypes';
+import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
 
@@ -626,7 +626,6 @@ export interface MapSceneProps {
   driveInputRef: React.MutableRefObject<MechDriveInput>;
   aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
-  combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   showMarkers: boolean;
   showUnits: boolean;
   showMist: boolean;
@@ -649,7 +648,6 @@ export function MapScene({
   driveInputRef,
   aimRef,
   combatRef,
-  combatTelemetryRef,
   showMarkers,
   showUnits,
   showMist,
@@ -835,7 +833,6 @@ export function MapScene({
           mechPoseRef={mechPoseRef}
           driveInputRef={driveInputRef}
           combatRef={combatRef}
-          combatTelemetryRef={combatTelemetryRef}
           waterVfxPoolRef={waterVfxPoolRef}
           groundTrailsPoolRef={groundTrailsPoolRef}
           muzzleFlashPoolRef={muzzleFlashPoolRef}

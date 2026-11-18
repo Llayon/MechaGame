@@ -20,7 +20,6 @@ import {
 import { DesktopCombatInput } from './components/DesktopCombatInput';
 import { createCombatAimState } from './game/combatAim';
 import {
-  buildCombatTelemetry,
   createCombatState,
   resetCombatState,
 } from './game/combatSimulation';
@@ -45,6 +44,23 @@ declare global {
       pointerFire: boolean; keyboardFire: boolean; pointerLocked: boolean;
     };
   }
+}
+
+function createSpawnPose(): MechTelemetrySnapshot {
+  return {
+    x: MECH_SPAWN.x,
+    y: MECH_SPAWN.y,
+    z: MECH_SPAWN.z,
+    yaw: MECH_SPAWN.yaw,
+    turretYaw: 0,
+    speedKmh: 0,
+    elevationM: Math.round(MECH_SPAWN.y * METERS_PER_UNIT),
+    isFiring: false,
+    isBraced: false,
+    isCrouched: false,
+    inWater: false,
+    onBridge: false,
+  };
 }
 
 export default function App() {
@@ -100,20 +116,7 @@ export default function App() {
     };
   }, [inputPref]);
 
-  const mechPoseRef = useRef<MechTelemetrySnapshot>({
-    x: MECH_SPAWN.x,
-    y: MECH_SPAWN.y,
-    z: MECH_SPAWN.z,
-    yaw: MECH_SPAWN.yaw,
-    turretYaw: 0,
-    speedKmh: 0,
-    elevationM: Math.round(MECH_SPAWN.y * METERS_PER_UNIT),
-    isFiring: false,
-    isBraced: false,
-    isCrouched: false,
-    inWater: false,
-    onBridge: false,
-  });
+  const mechPoseRef = useLazyRef(createSpawnPose);
 
   const driveInputRef = useRef<MechDriveInput>({
     forward: 0,
@@ -136,15 +139,6 @@ export default function App() {
 
   const aimRef = useLazyRef(() => createCombatAimState(MECH_SPAWN.yaw));
   const combatRef = useLazyRef(() => createCombatState(autostart));
-  const combatTelemetryRef = useLazyRef(() =>
-    buildCombatTelemetry(
-      combatRef.current,
-      MECH_SPAWN.x,
-      MECH_SPAWN.y,
-      MECH_SPAWN.z,
-      MECH_SPAWN.yaw,
-    ),
-  );
 
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
@@ -291,6 +285,7 @@ export default function App() {
     clearDriveInput();
     driveInputRef.current.crouch = false;
     resetCombatState(combatRef.current, 'playing');
+    mechPoseRef.current = createSpawnPose();
     setMissionOutcome(null);
     setPaused(false);
     setDriveMode(true);
@@ -499,7 +494,6 @@ export default function App() {
         driveInputRef={driveInputRef}
         aimRef={aimRef}
         combatRef={combatRef}
-        combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
         showUnits={showUnits}
         showMist={showMist}
@@ -520,7 +514,8 @@ export default function App() {
         mechPoseRef={mechPoseRef}
         driveInputRef={driveInputRef}
         aimRef={aimRef}
-        combatTelemetryRef={combatTelemetryRef}
+        combatRef={combatRef}
+        resetNonce={resetNonce}
         showMarkers={showMarkers}
         showUnits={showUnits}
         showMist={showMist}

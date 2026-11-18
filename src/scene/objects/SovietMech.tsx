@@ -35,7 +35,6 @@ import {
   type TracerPoolState,
 } from './tracerPool';
 import {
-  buildCombatTelemetry,
   processPlayerShots,
   stepCombatSimulation,
   stepCuttingLaser,
@@ -45,7 +44,7 @@ import {
   triggerMissileSalvo,
   type ShotResolution,
 } from '../../game/combatSimulation';
-import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
+import type { CombatSimulationState } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
 import { predictPhysicalShotEndpoint } from '../../game/weaponReticle';
 
@@ -72,7 +71,6 @@ export interface SovietMechProps {
   driveInputRef: React.MutableRefObject<MechDriveInput>;
   aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
-  combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
   groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
   muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
@@ -94,7 +92,6 @@ export function SovietMech({
   driveInputRef,
   aimRef,
   combatRef,
-  combatTelemetryRef,
   waterVfxPoolRef,
   groundTrailsPoolRef,
   muzzleFlashPoolRef,
@@ -185,27 +182,8 @@ export function SovietMech({
       leg.wasSwing = false;
     });
 
-    mechPoseRef.current.x = MECH_SPAWN.x;
-    mechPoseRef.current.y = MECH_SPAWN.y;
-    mechPoseRef.current.z = MECH_SPAWN.z;
-    mechPoseRef.current.yaw = MECH_SPAWN.yaw;
-    mechPoseRef.current.turretYaw = 0;
-    mechPoseRef.current.speedKmh = 0;
-    mechPoseRef.current.elevationM = Math.round(MECH_SPAWN.y * METERS_PER_UNIT);
-    mechPoseRef.current.isFiring = false;
-    mechPoseRef.current.isCrouched = false;
-    mechPoseRef.current.inWater = false;
-    mechPoseRef.current.onBridge = false;
-
-    combatTelemetryRef.current = buildCombatTelemetry(
-      combatRef.current,
-      MECH_SPAWN.x,
-      MECH_SPAWN.y,
-      MECH_SPAWN.z,
-      MECH_SPAWN.yaw,
-    );
     invalidate();
-  }, [resetNonce, rig, mats, mechPoseRef, combatRef, combatTelemetryRef, tracerPoolRef, invalidate]);
+  }, [resetNonce, rig, mats, tracerPoolRef, invalidate]);
 
   // Never let recorded footsteps from the previous movement/session leak into overview.
   useEffect(() => {
@@ -589,12 +567,13 @@ export function SovietMech({
       tracerPoolRef?.current,
     );
 
-    // Publish lightweight telemetry snapshot for camera rig, minimap & combat HUD
+    // Publish live pose for the camera and HUD sampling.
     mechPoseRef.current.x = sim.x;
     mechPoseRef.current.y = sim.y;
     mechPoseRef.current.z = sim.z;
     mechPoseRef.current.yaw = sim.yaw;
     mechPoseRef.current.turretYaw = motion.tYaw;
+    mechPoseRef.current.aimTurretYaw = sim.turretYaw;
     mechPoseRef.current.speedKmh = worldSpeedToKmh(Math.abs(control.targetSpeed) * sim.gaitBlend);
     mechPoseRef.current.elevationM = Math.round(sim.y * METERS_PER_UNIT);
     mechPoseRef.current.isFiring = activeFire;
@@ -609,16 +588,6 @@ export function SovietMech({
       mechPoseRef.current.footRZ = rig.legs[1].currentAnkleWorld.z;
     }
 
-    if (driveMode) {
-      combatTelemetryRef.current = buildCombatTelemetry(
-        combat,
-        sim.x,
-        sim.y,
-        sim.z,
-        sim.yaw + sim.turretYaw,
-        ik.inWater,
-      );
-    }
   });
 
   return (
