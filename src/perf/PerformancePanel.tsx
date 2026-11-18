@@ -27,6 +27,7 @@ function download(name: string, type: string, content: string): void {
 
 /** Enabled with ?profile=1 or F8; never requires React renders on every frame. */
 export function PerformancePanel() {
+  const [debug, setDebug] = useState(false);
   const [open, setOpen] = useState(
     () => new URLSearchParams(window.location.search).get('profile') === '1',
   );
@@ -83,6 +84,9 @@ export function PerformancePanel() {
     frameProfiler.startCapture(20_000);
     refresh();
   };
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mecha-lod-debug', { detail: open && debug }));
+  }, [open, debug]);
 
   const saveSceneInventory = () => {
     const inventory = window.__mechaSceneAudit?.();
@@ -100,7 +104,7 @@ export function PerformancePanel() {
       download(basename + '.json', 'application/json', JSON.stringify(data, null, 2));
       return;
     }
-    const keys = ['atMs', 'frameMs', 'calls', 'triangles', 'points', 'lines', 'geometries', 'textures'] as const;
+    const keys = ['atMs', 'frameMs', 'calls', 'triangles', 'mainCalls', 'mainTriangles', 'shadowCalls', 'shadowTriangles', 'points', 'lines', 'geometries', 'textures'] as const;
     download(basename + '.csv', 'text/csv',
       [keys.join(','), ...data.frames.map(f => keys.map(k => f[k]).join(','))].join('\n'));
   };
@@ -121,6 +125,7 @@ export function PerformancePanel() {
         {view.environment.scenario === 'combat' ? 'Бой' : 'Обзор'} · {view.environment.lighting} ·
         {view.environment.softwareMode ? ' Software WebGL' : ' WebGL'} ·
         {view.environment.graphicsPreset ?? 'неизвестно'} · DPR {view.environment.renderDpr ?? '—'} · rAF-интервалы
+        {view.environment.autoQuality && ' · Авто ' + view.environment.targetFps + ' FPS · ступень ' + view.environment.adaptiveStep}
       </p>
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded bg-slate-800/80 p-2">
@@ -140,6 +145,8 @@ export function PerformancePanel() {
         <span>Кадры: {count(stats.sampleCount)}</span>
         <span>Медленные &gt;33мс: {stats.slowOver33Ms}</span>
         <span>Draw calls: {count(counters.calls)}</span>
+        <span>Основной проход: {count(counters.mainCalls ?? 0)}</span>
+        <span>Теневой проход: {count(counters.shadowCalls ?? 0)}</span>
         <span>Треугольники: {count(counters.triangles)}</span>
         <span>Геометрии: {count(counters.geometries)}</span>
         <span>Текстуры: {count(counters.textures)}</span>
@@ -159,6 +166,9 @@ export function PerformancePanel() {
           className="rounded border border-sky-500/70 px-2.5 py-2 text-xs text-sky-200 hover:bg-sky-500/10">
           Структура сцены · JSON
         </button>
+        <button type="button" aria-pressed={debug} data-testid="perf-lod-debug" onClick={()=>setDebug(!debug)}
+          className="rounded border border-slate-500 px-2 py-1 text-xs">Цвета LOD</button>
+        {debug && <span className="text-xs">0 зелёный · 1 жёлтый · 2 красный · 3 фиолетовый</span>}
       </div>
       <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
         Замеряйте при движении. Структура сцены — это учёт мешей по категориям, не реальные GPU draw calls.

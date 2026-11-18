@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { WorldLodDriver } from '../lod/WorldLodDriver';
+import { effectiveGraphics } from '../lod/adaptiveQuality';
+import { InfantryCrowd } from '../infantry/InfantryCrowd';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -23,19 +26,19 @@ import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import { StormFront } from './objects/StormFront';
 import { WaterEffects } from './objects/WaterEffects';
-import { createWaterVfxPool, type WaterVfxPoolState } from './objects/waterVfxPool';
+import { useLazyRef } from '../utils/useLazyRef';
+import { createWaterVfxPool } from './objects/waterVfxPool';
 import { GroundTrails } from './objects/GroundTrails';
-import { createGroundTrailsPool, type GroundTrailsPoolState } from './objects/groundTrailsPool';
+import { createGroundTrailsPool } from './objects/groundTrailsPool';
 import { MuzzleFlashes } from './objects/MuzzleFlashes';
-import { createMuzzleFlashPool, type MuzzleFlashPoolState } from './objects/muzzleFlashPool';
+import { createMuzzleFlashPool } from './objects/muzzleFlashPool';
 import { MissileRibbons } from './objects/MissileRibbons';
-import { createMissileRibbonPool, type MissileRibbonPoolState } from './objects/missileRibbonPool';
+import { createMissileRibbonPool } from './objects/missileRibbonPool';
 import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
 import {
   MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
-  type BallisticPropPool,
 } from './objects/debrisBallisticsPool';
 import {
   MechTelemetrySnapshot,
@@ -623,7 +626,7 @@ export function MapScene({
   transitionNonce,
   resetNonce,
   lightingPreset,
-  graphics,
+  graphics: preferences,
   driveMode,
   useTouchControls = false,
   paused,
@@ -640,6 +643,9 @@ export function MapScene({
   onEnterDriveMode,
   onMissionEnded,
 }: MapSceneProps) {
+  const [adaptation, setAdaptation] = useState({ settings: preferences, step: 0 });
+  const step = preferences.autoQuality && adaptation.settings === preferences ? adaptation.step : 0;
+  const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const benchmarkContinuousFrames = useMemo(
@@ -649,12 +655,12 @@ export function MapScene({
   );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const waterVfxPoolRef = useRef<WaterVfxPoolState>(createWaterVfxPool());
-  const groundTrailsPoolRef = useRef<GroundTrailsPoolState>(createGroundTrailsPool());
-  const muzzleFlashPoolRef = useRef<MuzzleFlashPoolState>(createMuzzleFlashPool());
-  const missileRibbonPoolRef = useRef<MissileRibbonPoolState>(createMissileRibbonPool());
-  const casingsPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_CASING_INSTANCES));
-  const debrisPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_DEBRIS_INSTANCES));
+  const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
+  const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);
+  const muzzleFlashPoolRef = useLazyRef(createMuzzleFlashPool);
+  const missileRibbonPoolRef = useLazyRef(createMissileRibbonPool);
+  const casingsPoolRef = useLazyRef(() => createBallisticPropPool(MAX_CASING_INSTANCES));
+  const debrisPoolRef = useLazyRef(() => createBallisticPropPool(MAX_DEBRIS_INSTANCES));
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -668,6 +674,10 @@ export function MapScene({
       data-lighting={lightingPreset}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
+      data-adaptive-step={step}
+      data-object-detail={graphics.objectDetail}
+      data-auto-quality={preferences.autoQuality}
+      data-target-fps={preferences.targetFps}
       data-render-dpr={quality.dpr}
       data-shadows={quality.shadowEnabled ? 'on' : 'off'}
       data-shadow-map-size={quality.shadowMapSize}
@@ -703,6 +713,8 @@ export function MapScene({
         }}
       >
         <SceneSimulationProvider paused={paused}>
+        <WorldLodDriver settings={preferences} paused={paused} step={step}
+          changeStep={next => setAdaptation({settings: preferences, step: next})}/>
         <color attach="background" args={[lightCfg.bg]} />
         <fogExp2 attach="fog" args={[lightCfg.fogColor, lightCfg.fogDensity]} />
 
@@ -726,6 +738,7 @@ export function MapScene({
           shadow-mapSize-width={shadowMapSize}
           shadow-mapSize-height={shadowMapSize}
           shadow-camera-near={20}
+          shadow-camera-layers-mask={3}
           shadow-camera-far={680}
           shadow-camera-left={-210}
           shadow-camera-right={210}
@@ -826,6 +839,7 @@ export function MapScene({
             sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
         />
         <group name="perf:combat">
+          {driveMode && <InfantryCrowd combatRef={combatRef}/>}
           <CombatActors
             combatRef={combatRef}
             driveMode={driveMode}
@@ -900,6 +914,7 @@ export function MapScene({
           onSelectSector={onSelectSector}
         />
         <ScenePerformanceProbe
+          adaptiveStep={step}
           paused={paused}
           driveMode={driveMode}
           lightingPreset={lightingPreset}

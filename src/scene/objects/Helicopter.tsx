@@ -170,7 +170,7 @@ export function Helicopter({
           <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
           <meshStandardMaterial color={darkMetal} roughness={0.5} metalness={0.6} />
         </mesh>
-        <group ref={tailRotorRef}>
+        <group userData={{ lodDynamic: true }} ref={tailRotorRef}>
           <mesh>
             <boxGeometry args={[0.12, 0.34, 0.03]} />
             <meshStandardMaterial color={yellowArmor} roughness={0.4} metalness={0.5} />
@@ -183,7 +183,7 @@ export function Helicopter({
       </group>
 
       {/* === 4-ЛОПАСТНОЙ НЕСУЩИЙ ВИНТ === */}
-      <group ref={mainRotorRef} position={[0, 1.18, -0.15]} rotation={[0, 0.45, 0]}>
+      <group userData={{ lodDynamic: true }} ref={mainRotorRef} position={[0, 1.18, -0.15]} rotation={[0, 0.45, 0]}>
         {/* Бронированная втулка винта */}
         <mesh castShadow>
           <cylinderGeometry args={[0.14, 0.18, 0.16, 12]} />

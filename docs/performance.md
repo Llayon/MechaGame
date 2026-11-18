@@ -34,6 +34,39 @@ disabled check in the R3F frame loop.
 - Compare **like-for-like scenarios** on physical hardware, same quality settings,
   same battle route, same device orientation and warm-up.
 
+## World detail and profiling
+
+Open the graphics menu with **G** to set object detail or enable adaptive quality
+at 30, 45 or 60 FPS. Adaptive quality is opt-in. It lowers render resolution,
+shadow detail, object detail, grass density and particle quality in that order.
+It takes several slow sampling windows to lower quality and a longer sustained
+recovery to raise it. Changing the saved settings starts a fresh evaluation.
+
+Open **F8 → Цвета LOD** to inspect the active visual levels. Green, yellow, red
+and purple correspond to levels 0 through 3. The JSON capture includes the
+settings, per-frame main and shadow pass counters, and a scene inventory at the
+end of the recording. Per-group `lodInstances` counts are taken before frustum
+culling. For the infantry group, the four visual counts sum to the live
+population. Shadow and contact representations have their own draw calls.
+
+Ground and mountain tiles cache vertex data and select an index range at run
+time. Trees keep their simulation ID when the mesh level changes. Patrol squads
+use one 157,248-byte bone matrix atlas for all four infantry meshes. A vertex
+animation texture would need a separate mapping for each mesh topology.
+`scripts/infantry/bake-crowd.mjs` rebuilds the assets from the Git revision
+recorded in `public/assets/crowd/atlas.json`. The source revision must be present
+in the local Git object database. Regenerate the patrol lanes with
+`bun scripts/infantry/bake-patrols.ts` after changing the walkable map.
+
+## Local desktop GPU comparison
+
+Build and start a production preview, then run
+`node scripts/perf-benchmark.mjs --hardware` with the preview URL in
+`BENCH_ORIGIN` and the Chrome executable in `CHROME`. The script starts at the
+combat spawn, warms the scene for five seconds and captures twenty seconds at
+1365 × 768, DPR 1. It checks the renderer and records its name in the JSON report.
+Use `BENCH_OUTPUT` to keep separate results for two revisions.
+
 ## Reproducible CI smoke/relative benchmark
 
 The \`MechaGame performance benchmark\` GitHub Actions workflow runs Chrome on

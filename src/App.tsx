@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLazyRef } from './utils/useLazyRef';
 import { LightingPreset, SectorId } from './map/sectors';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
@@ -131,9 +132,9 @@ export default function App() {
     crouch: false,
   });
 
-  const aimRef = useRef(createCombatAimState(MECH_SPAWN.yaw));
-  const combatRef = useRef(createCombatState(autostart));
-  const combatTelemetryRef = useRef(
+  const aimRef = useLazyRef(() => createCombatAimState(MECH_SPAWN.yaw));
+  const combatRef = useLazyRef(() => createCombatState(autostart));
+  const combatTelemetryRef = useLazyRef(() =>
     buildCombatTelemetry(
       combatRef.current,
       MECH_SPAWN.x,

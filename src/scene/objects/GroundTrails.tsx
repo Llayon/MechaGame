@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
 import {
@@ -244,7 +245,7 @@ export function GroundTrails({
     hadActiveRef.current = true;
   }, [resetNonce, poolRef]);
 
-  useFrame((_, delta) => {
+  useFrame(({camera}, delta) => {
     if (paused) return;
 
     const dt = Math.min(delta, 0.05);
@@ -267,11 +268,11 @@ export function GroundTrails({
 
     const capacity = pool.slots.length;
     const totalSpawned = pool.totalSpawned;
-    const updateMatrices = pool.dirtyMatrices || nowActive === 0;
+    let rendered = 0;
 
     for (let i = 0; i < capacity; i++) {
       if (computeGroundTrailTransform(pool.slots[i], totalSpawned, capacity, _trailTf)) {
-        if (updateMatrices) {
+        if (effectVisible(camera, _trailTf.x, _trailTf.y, _trailTf.z, Math.max(_trailTf.width, _trailTf.length), isSoftwareGl ? 3 : 1)) {
           _pos.set(_trailTf.x, _trailTf.y, _trailTf.z);
           _normal.set(_trailTf.nx, _trailTf.ny, _trailTf.nz).normalize();
           _fwd.set(Math.sin(_trailTf.yaw), 0, Math.cos(_trailTf.yaw));
@@ -282,23 +283,18 @@ export function GroundTrails({
           _scale.set(_trailTf.width, 1, _trailTf.length);
           _mat.copy(_basis).scale(_scale);
           _mat.setPosition(_pos);
-          mesh.setMatrixAt(i, _mat);
+          mesh.setMatrixAt(rendered, _mat);
+          const base = rendered++ * 3;
+          setup.trailData[base] = _trailTf.alpha;
+          setup.trailData[base + 1] = _trailTf.kindId;
+          setup.trailData[base + 2] = _trailTf.wetness;
         }
-        setup.trailData[i * 3] = _trailTf.alpha;
-        setup.trailData[i * 3 + 1] = _trailTf.kindId;
-        setup.trailData[i * 3 + 2] = _trailTf.wetness;
-      } else {
-        if (updateMatrices) {
-          mesh.setMatrixAt(i, _zeroMat4);
-        }
-        setup.trailData[i * 3] = 0;
       }
     }
 
-    if (updateMatrices) {
-      mesh.instanceMatrix.needsUpdate = true;
-      pool.dirtyMatrices = false;
-    }
+    mesh.count = rendered;
+    mesh.instanceMatrix.needsUpdate = true;
+    pool.dirtyMatrices = false;
     setup.trailDataAttr.needsUpdate = true;
     hadActiveRef.current = nowActive > 0;
   });
@@ -307,6 +303,7 @@ export function GroundTrails({
     <instancedMesh
       ref={meshRef}
       name="ground-splat-trails"
+      count={0}
       args={[setup.geom, setup.mat, MAX_GROUND_TRAILS]}
       frustumCulled={false}
       receiveShadow

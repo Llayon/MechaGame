@@ -1,4 +1,10 @@
+import type { SceneComplexityReport } from './sceneComplexity';
+
 export interface RenderCounters {
+  shadowCalls?: number;
+  shadowTriangles?: number;
+  mainCalls?: number;
+  mainTriangles?: number;
   calls: number;
   triangles: number;
   points: number;
@@ -36,6 +42,10 @@ export interface ProfilerEnvironment {
   scenario: 'combat' | 'overview';
   lighting: string;
   graphicsPreset?: string;
+  objectDetail?: string;
+  autoQuality?: boolean;
+  targetFps?: number;
+  adaptiveStep?: number;
   renderDpr?: number;
   shadowMapSize?: number;
   vegetation?: string;
@@ -53,6 +63,7 @@ export interface DeviceMetadata {
 }
 
 export interface CaptureReport {
+  sceneInventory?: SceneComplexityReport;
   schemaVersion: 1;
   createdAt: string;
   requestedDurationMs: number;
@@ -117,6 +128,7 @@ interface CaptureSession {
 }
 
 export class FrameProfiler {
+  inventoryAtCaptureEnd?: () => SceneComplexityReport;
   enabled = false;
   private previousFrameTime: number | null = null;
   private rolling: FrameSample[] = [];
@@ -199,6 +211,7 @@ export class FrameProfiler {
     this.capture = null;
     this.completed = {
       schemaVersion: 1,
+      sceneInventory: this.inventoryAtCaptureEnd?.(),
       createdAt: new Date().toISOString(),
       requestedDurationMs: cap.requestedDurationMs,
       observedDurationMs: now - cap.startedAt,

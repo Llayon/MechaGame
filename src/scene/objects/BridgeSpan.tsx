@@ -1,3 +1,4 @@
+import { StaticStructure } from './StaticStructure';
 import { useMemo } from 'react';
 import {
   BridgeSpec,
@@ -134,7 +135,7 @@ export function BridgeSpan({
   }, [sectionOffsets]);
 
   return (
-    <group position={[midX, midY, midZ]} rotation={[0, yaw, 0]}>
+    <StaticStructure revision={lightingPreset + isSoftwareGl} name={spec.id} position={[midX, midY, midZ]} rotation={[0, yaw, 0]}>
       {/* PITCHED SPAN ASSEMBLY (deck, rails, girders, trusses, open tunnel gallery) */}
       <group rotation={[pitch, 0, 0]}>
         {/* Main structural concrete deck (1.0 unit thick -> top at +0.50) */}
@@ -413,6 +414,6 @@ export function BridgeSpan({
           ))}
         </group>
       ))}
-    </group>
+    </StaticStructure>
   );
 }

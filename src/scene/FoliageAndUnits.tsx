@@ -47,6 +47,7 @@ export function FoliageAndUnits({
   return (
     <group>
       <PineForest
+        sunPos={sunPos}
         isSoftwareGl={simplified}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}

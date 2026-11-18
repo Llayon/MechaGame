@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
+import { useLazyRef } from '../../utils/useLazyRef';
 import type { LightingPreset } from '../../map/sectors';
 import { METERS_PER_UNIT } from '../../map/terrainMath';
 import {
@@ -120,7 +121,7 @@ export function SovietMech({
   }, [lightingPreset, mats, invalidate]);
 
   const rig = useMemo(() => buildMechModel(mats), [mats]);
-  const simRef = useRef(createMechState());
+  const simRef = useLazyRef(createMechState);
   const prevResetNonceRef = useRef(resetNonce);
   const wasLocomotingRef = useRef(false);
   const reticleTickRef = useRef(0);

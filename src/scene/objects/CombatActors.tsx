@@ -1,3 +1,4 @@
+import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -62,6 +63,11 @@ interface SparkParticle {
 interface EnemyVisualNode {
   root: THREE.Group;
   hullGroup: THREE.Group;
+  lodParts: Array<{ mesh: THREE.Mesh; maxLevel: number; majorCaster: boolean;
+    originalCaster: boolean; geometry: THREE.BufferGeometry; coarse?: THREE.BufferGeometry }>;
+  lodLevel: number;
+  shadowLevel: number;
+  wheels?: THREE.InstancedMesh;
   turretGroup: THREE.Group;
   leftLeg?: THREE.Group;
   rightLeg?: THREE.Group;
@@ -72,6 +78,9 @@ interface EnemyVisualNode {
   baseEmissive: THREE.Color;
 }
 
+const VEHICLE_LOD_PIXELS = [75, 24];
+const VEHICLE_SHADOW_PIXELS = [36, 12];
+const _vehicleCenter = new THREE.Vector3();
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
 const _vFrom = new THREE.Vector3();
@@ -113,6 +122,7 @@ export function CombatActors({
   const craterMeshRef = useRef<THREE.InstancedMesh>(null);
   const lockRingRef = useRef<THREE.Mesh>(null);
 
+  const lodTimer = useRef(0);
   const visualNodesRef = useRef<Map<string, EnemyVisualNode>>(new Map());
   const createEnemyNodeRef = useRef<((enemy: EnemyUnitState) => EnemyVisualNode) | null>(null);
   const sparksRef = useRef<SparkParticle[]>(
@@ -148,6 +158,12 @@ export function CombatActors({
     const apcGlacis = new THREE.BoxGeometry(1.18, 0.34, 0.65);
     const apcWheel = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 10);
     apcWheel.rotateZ(Math.PI / 2);
+    const coarseWheel = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 5);
+    coarseWheel.rotateZ(Math.PI / 2);
+    const coarseBase = new THREE.CylinderGeometry(1.45, 1.72, 1.15, 5);
+    const coarseDome = new THREE.CylinderGeometry(0.45, 0.56, 0.34, 5);
+    const coarseBarrel = new THREE.CylinderGeometry(0.09, 0.12, 1.85, 4);
+    coarseBarrel.rotateX(Math.PI / 2);
     const apcTurret = new THREE.CylinderGeometry(0.45, 0.56, 0.34, 8);
     const apcBarrel = new THREE.CylinderGeometry(0.055, 0.075, 1.35, 6);
     apcBarrel.rotateX(Math.PI / 2);
@@ -183,6 +199,7 @@ export function CombatActors({
 
     return {
       shadowDisc,
+      coarseWheel, coarseBase, coarseDome, coarseBarrel,
       apcHull,
       apcGlacis,
       apcWheel,
@@ -348,6 +365,7 @@ export function CombatActors({
       shadowMesh.scale.setScalar(shadowScale);
       root.add(shadowMesh);
 
+      let wheels: THREE.InstancedMesh | undefined;
       let leftLeg: THREE.Group | undefined;
       let rightLeg: THREE.Group | undefined;
       let laserBeam: THREE.Mesh | undefined;
@@ -364,14 +382,16 @@ export function CombatActors({
         glacis.castShadow = true;
         hullGroup.add(glacis);
 
-        for (let sx = -1; sx <= 1; sx += 2) {
-          for (let wz = -0.82; wz <= 0.85; wz += 0.82) {
-            const w = new THREE.Mesh(sharedGeoms.apcWheel, sharedMats.darkSteel);
-            w.position.set(sx * 0.68, 0.32, wz);
-            w.castShadow = true;
-            hullGroup.add(w);
+        wheels = new THREE.InstancedMesh(sharedGeoms.apcWheel, sharedMats.darkSteel, 6);
+        const placement = new THREE.Matrix4();
+        let index = 0;
+        for (const x of [-0.68, 0.68]) {
+          for (const z of [-0.82, 0, 0.82]) {
+            wheels.setMatrixAt(index++, placement.makeTranslation(x, 0.32, z));
           }
         }
+        wheels.castShadow = true;
+        hullGroup.add(wheels);
 
         turretGroup.position.set(0, 0.96, 0.05);
         const dome = new THREE.Mesh(sharedGeoms.apcTurret, armorMat);
@@ -477,9 +497,24 @@ export function CombatActors({
         hullGroup.add(turretGroup);
       }
 
+      const lodParts: EnemyVisualNode['lodParts'] = [];
+      hullGroup.traverse(object => {
+        if (!(object instanceof THREE.Mesh)) return;
+        const geometry = object.geometry;
+        const trim = geometry === sharedGeoms.walkerShield || geometry === sharedGeoms.turretCollar;
+        const secondary = geometry === sharedGeoms.apcGlacis || geometry === sharedGeoms.walkerFoot;
+        let coarse: THREE.BufferGeometry | undefined;
+        if (geometry === sharedGeoms.apcWheel) coarse = sharedGeoms.coarseWheel;
+        if (geometry === sharedGeoms.apcTurret) coarse = sharedGeoms.coarseDome;
+        if (geometry === sharedGeoms.turretBase) coarse = sharedGeoms.coarseBase;
+        if (geometry === sharedGeoms.turretBarrel) coarse = sharedGeoms.coarseBarrel;
+        lodParts.push({ mesh: object, geometry, coarse, maxLevel: trim ? 0 : secondary ? 1 : 2,
+          originalCaster: object.castShadow, majorCaster: !trim && !secondary && geometry !== sharedGeoms.apcWheel });
+      });
       container.add(root);
       return {
         root,
+        lodParts, lodLevel: -1, shadowLevel: -1, wheels,
         hullGroup,
         turretGroup,
         leftLeg,
@@ -503,6 +538,7 @@ export function CombatActors({
       nodes.forEach((n) => {
         container.remove(n.root);
         if (n.laserBeam) container.remove(n.laserBeam);
+        n.wheels?.dispose();
         n.armorMat.dispose();
         n.eyeMat.dispose();
       });
@@ -548,7 +584,7 @@ export function CombatActors({
 
   const { paused } = useSceneSimulation();
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (paused) return;
     const dt = Math.min(delta, 0.05);
     const combat = combatRef.current;
@@ -570,6 +606,7 @@ export function CombatActors({
             if (!validIds.has(id)) {
               container.remove(n.root);
               if (n.laserBeam) container.remove(n.laserBeam);
+              n.wheels?.dispose();
               n.armorMat.dispose();
               n.eyeMat.dispose();
               nodes.delete(id);
@@ -668,12 +705,36 @@ export function CombatActors({
     let bestLockedDist = Infinity;
 
     const trailsPool = groundTrailsPoolRef?.current;
+    lodTimer.current -= delta;
+    const evaluateLod = lodTimer.current <= 0;
+    if (evaluateLod) lodTimer.current = 0.12;
+    const lodView = readWorldLod(camera);
     for (let i = 0; i < combat.enemies.length; i++) {
       const e = combat.enemies[i];
       const node = nodes.get(e.id);
       if (!node) continue;
 
       node.root.position.set(e.x, e.y, e.z);
+      if (evaluateLod || node.lodLevel < 0) {
+        _vehicleCenter.set(e.x, e.y + 1, e.z);
+        const radius = e.archetype === 'charger-walker' ? 1.85 : 1.7;
+        const distance = _vehicleCenter.distanceTo(camera.position);
+        const depth = -_vehicleCenter.applyMatrix4(camera.matrixWorldInverse).z;
+        const pixels = projectedPixels(radius, Math.max(radius, depth), lodView);
+        const level = chooseLod(pixels, node.lodLevel, VEHICLE_LOD_PIXELS);
+        const shadowPixels = lodView.shadowScale * lodView.focalPixels * radius * 2 / Math.max(radius, distance - 25);
+        const shadow = chooseLod(shadowPixels, node.shadowLevel, VEHICLE_SHADOW_PIXELS);
+        if (level !== node.lodLevel || shadow !== node.shadowLevel) {
+          node.lodLevel = level;
+          node.shadowLevel = shadow;
+          node.root.userData.lodLevel = level;
+          for (const part of node.lodParts) {
+            part.mesh.visible = level <= part.maxLevel;
+            part.mesh.geometry = level > 0 && part.coarse ? part.coarse : part.geometry;
+            part.mesh.castShadow = part.originalCaster && (shadow === 0 || (shadow === 1 && part.majorCaster));
+          }
+        }
+      }
       node.hullGroup.rotation.y = e.yaw;
       node.turretGroup.rotation.y = e.turretYaw - e.yaw;
 

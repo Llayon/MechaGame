@@ -1,3 +1,4 @@
+import { StaticStructure } from './StaticStructure';
 import { useMemo } from 'react';
 import {
   BridgeSpec,
@@ -167,7 +168,7 @@ export function SteppedViaductSpan({
   const tunnelClearH = 5.4;
 
   return (
-    <group>
+    <StaticStructure revision={lightingPreset + isSoftwareGl} name={spec.id}>
       {/* FLIGHT 1 & FLIGHT 2 ANGLED SERPENTINE SPANS */}
       {[flights.flight1, flights.flight2].map((fl) => {
         const trussLen = fl.slopeLen * 0.88;
@@ -550,6 +551,6 @@ export function SteppedViaductSpan({
           ))}
         </group>
       ))}
-    </group>
+    </StaticStructure>
   );
 }

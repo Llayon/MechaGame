@@ -398,21 +398,25 @@ export function stepMechEffects(
           ? Math.sin(elapsed * 32) * 0.025
           : Math.sin(sim.gaitPhase * 2) * 0.015 * sim.gaitBlend) +
         dieselVib * 2.2;
-      _tmpP1Dyn.copy(belt.p1).add(new THREE.Vector3(belt.side * vib, -Math.abs(vib) * 0.6, vib));
-      _tmpP2Dyn.copy(belt.p2).add(new THREE.Vector3(belt.side * vib * 0.7, 0, -vib));
-      belt.links.forEach((lk) => {
-        cubicBezier(belt.p0, _tmpP1Dyn, _tmpP2Dyn, belt.p3, lk.t, _tmpPt);
+      _tmpP1Dyn.set(belt.side * vib, -Math.abs(vib) * 0.6, vib).add(belt.p1);
+      _tmpP2Dyn.set(belt.side * vib * 0.7, 0, -vib).add(belt.p2);
+      for (let i = 0; i < belt.instances.count; i++) {
+        const t = i / (belt.instances.count - 1);
+        cubicBezier(belt.p0, _tmpP1Dyn, _tmpP2Dyn, belt.p3, t, _tmpPt);
         cubicBezier(
           belt.p0,
           _tmpP1Dyn,
           _tmpP2Dyn,
           belt.p3,
-          Math.min(1, lk.t + 0.04),
+          Math.min(1, t + 0.04),
           _tmpNextPt,
         );
-        lk.mesh.position.copy(_tmpPt);
-        lk.mesh.lookAt(_tmpNextPt);
-      });
+        belt.linkTransform.position.copy(_tmpPt);
+        belt.linkTransform.lookAt(_tmpNextPt);
+        belt.linkTransform.updateMatrix();
+        belt.instances.setMatrixAt(i, belt.linkTransform.matrix);
+      }
+      belt.instances.instanceMatrix.needsUpdate = true;
     });
 
     // Whip antenna spring sway

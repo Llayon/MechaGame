@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { useSceneSimulation } from '../SceneSimulation';
+import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import * as THREE from 'three';
 import { generateRockOutcropsData } from '../../map/worldStructures';
 import { createChiseledRockGeometry } from './rockGeometry';
@@ -11,12 +14,12 @@ function seededRand(seed: number): number {
 }
 
 export function RockOutcrops() {
-  const rockRef = useRef<THREE.InstancedMesh>(null);
+  const lodElapsed = useRef(1);
+  const { paused } = useSceneSimulation();
 
   const rocks = useMemo(() => generateRockOutcropsData(), []);
 
-  const { geometry, material } = useMemo(() => {
-    const geo = createChiseledRockGeometry(1);
+  const material = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.88,
@@ -98,12 +101,21 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
         );
     };
 
-    return { geometry: geo, material: mat };
+    return mat;
   }, []);
 
-  useEffect(() => {
-    const rMesh = rockRef.current;
-    if (!rMesh) return;
+  const batches = useMemo(() => {
+    const meshes = [1, 0].map((detail, level) => {
+      const mesh = new THREE.InstancedMesh(createChiseledRockGeometry(1, detail), material, rocks.length);
+      mesh.count = 0;
+      mesh.userData.lodLevel = level;
+      mesh.castShadow = mesh.receiveShadow = true;
+      return mesh;
+    });
+    const transforms = new Float32Array(rocks.length * 16);
+    const colors = new Float32Array(rocks.length * 3);
+    const selection = new Int8Array(rocks.length).fill(-1);
+    const radius = new Float32Array(rocks.length);
     const c1 = new THREE.Color('#47505a');
     const c2 = new THREE.Color('#636d78');
     const cWarm = new THREE.Color('#5c5952');
@@ -115,33 +127,58 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
       _dummy.rotation.set(r.rotX, r.rotY, r.rotZ);
       _dummy.scale.set(r.sx, r.sy, r.sz);
       _dummy.updateMatrix();
-      rMesh.setMatrixAt(i, _dummy.matrix);
+      _dummy.matrix.toArray(transforms, i * 16);
+      radius[i] = Math.max(r.sx, r.sy, r.sz) * 1.2;
 
       const t = seededRand(i + 500);
       tmp.copy(c1).lerp(c2, t);
       if (seededRand(i + 777) > 0.65) {
         tmp.lerp(cWarm, 0.45);
       }
-      rMesh.setColorAt(i, tmp);
+      tmp.toArray(colors, i * 3);
     });
-    rMesh.instanceMatrix.needsUpdate = true;
-    if (rMesh.instanceColor) rMesh.instanceColor.needsUpdate = true;
-    rMesh.computeBoundingSphere();
-  }, [rocks]);
-
-  useEffect(() => {
-    return () => {
-      geometry.dispose();
-      material.dispose();
+    const matrix = new THREE.Matrix4();
+    const thresholds = [45];
+    return {
+      meshes,
+      select(camera: THREE.Camera) {
+        const view = readWorldLod(camera);
+        const m = camera.matrixWorldInverse.elements;
+        let dirty = false;
+        for (let i = 0; i < rocks.length; i++) {
+          const r = rocks[i];
+          const depth = -(m[2]*r.x + m[6]*r.y + m[10]*r.z + m[14]);
+          const level = depth < -radius[i] ? 1 :
+            chooseLod(projectedPixels(radius[i], depth - radius[i], view), selection[i], thresholds);
+          if (selection[i] !== level) { dirty = true; selection[i] = level; }
+        }
+        if (!dirty) return;
+        for (const mesh of meshes) mesh.count = 0;
+        for (let i = 0; i < rocks.length; i++) {
+          const mesh = meshes[selection[i]];
+          const slot = mesh.count++;
+          mesh.setMatrixAt(slot, matrix.fromArray(transforms, i * 16));
+          mesh.setColorAt(slot, tmp.fromArray(colors, i * 3));
+        }
+        for (const mesh of meshes) {
+          mesh.instanceMatrix.needsUpdate = true;
+          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+          mesh.computeBoundingSphere();
+        }
+      },
     };
-  }, [geometry, material]);
+  }, [rocks, material]);
 
-  return (
-    <instancedMesh
-      ref={rockRef}
-      args={[geometry, material, rocks.length]}
-      castShadow
-      receiveShadow
-    />
-  );
+  useFrame(({ camera }, dt) => {
+    if (paused) return;
+    lodElapsed.current += dt;
+    if (lodElapsed.current < .15) return;
+    lodElapsed.current = 0;
+    batches.select(camera);
+  });
+  useEffect(() => () => {
+    for (const mesh of batches.meshes) { mesh.dispose(); mesh.geometry.dispose(); }
+    material.dispose();
+  }, [batches, material]);
+  return <group>{batches.meshes.map((mesh, i) => <primitive key={i} object={mesh} />)}</group>;
 }

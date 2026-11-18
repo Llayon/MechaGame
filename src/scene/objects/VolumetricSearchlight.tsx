@@ -264,7 +264,7 @@ export function VolumetricSearchlight({
   if (!active) return null;
 
   return (
-    <group position={position}>
+    <group userData={{ lodDynamic: true }} position={position}>
       {/* Armored turret base pedestal */}
       <mesh position={[0, 0.14 * housingScale, 0]} castShadow>
         <cylinderGeometry args={[0.3 * housingScale, 0.36 * housingScale, 0.28 * housingScale, 10]} />
