@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "blender": "5.2.0 LTS",
+  "sources": [
+    {
+      "file": "Idle Crouching.fbx",
+      "originalMeshes": 2,
+      "animationOnlyMeshes": 0,
+      "bones": 65,
+      "maximumRestMatrixDifference": 1.1920928955078125e-07,
+      "maximumSampledPoseMatrixDifference": 1.7881393432617188e-07,
+      "sampledSourceFrames": [
+        1,
+        32.5,
+        64
+      ]
+    },
+    {
+      "file": "Crouch Walking.fbx",
+      "originalMeshes": 2,
+      "animationOnlyMeshes": 0,
+      "bones": 65,
+      "maximumRestMatrixDifference": 1.1920928955078125e-07,
+      "maximumSampledPoseMatrixDifference": 4.76837158203125e-07,
+      "sampledSourceFrames": [
+        1,
+        18.5,
+        36
+      ]
+    },
+    {
+      "file": "Pistol Jump.fbx",
+      "originalMeshes": 2,
+      "animationOnlyMeshes": 0,
+      "bones": 65,
+      "maximumRestMatrixDifference": 1.1920928955078125e-07,
+      "maximumSampledPoseMatrixDifference": 4.76837158203125e-07,
+      "sampledSourceFrames": [
+        1,
+        10.0,
+        19
+      ]
+    },
+    {
+      "file": "Pistol Kneeling Idle.fbx",
+      "originalMeshes": 2,
+      "animationOnlyMeshes": 0,
+      "bones": 65,
+      "maximumRestMatrixDifference": 1.1920928955078125e-07,
+      "maximumSampledPoseMatrixDifference": 2.2165477275848389e-07,
+      "sampledSourceFrames": [
+        1,
+        58.0,
+        115
+      ]
+    }
+  ],
+  "scope": "Neutral skeleton matrices and three sampled frames per source, not exhaustive visual certification"
+}
