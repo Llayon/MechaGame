@@ -219,7 +219,7 @@ export default function InfantryLab() {
   const stats = frameProfiler.getLive().stats;
   return <div className="infantry-lab">
     <header><span className="lab-kicker">GAUNTLET / OBJECT 316</span><h1>INFANTRY GPU ANIMATION LAB</h1>
-      <p>Original Tripo mesh · 1.8 m / 0.48 units · baked bone texture · isolated from the mission</p></header>
+      <p>Original Tripo mesh · 1.8 m / 0.48 units · baked bone texture · isolated from the mission</p><a href="?demo=infantry" style={{ color: '#e4bd68', fontSize: 12 }}>Полигон: побегать и примерить экипировку ↗</a></header>
     <main>{data ? <Canvas shadows camera={{ position: [2.5, 2, 4], fov: 42, near: .01, far: 150 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <Stage data={data} settings={settings} view={view} samples={samples} frozen={frozen} audit={audit} />
