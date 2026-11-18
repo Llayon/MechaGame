@@ -1,0 +1,929 @@
+{
+  "passed": true,
+  "browser": "Chrome",
+  "software": false,
+  "sampled": [
+    {
+      "name": "idle",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 1.359597282592799e-7,
+      "gripToMuzzle": 0.12749544750169
+    },
+    {
+      "name": "idle",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 1.359597282592799e-7,
+      "gripToMuzzle": 0.12749544750169
+    },
+    {
+      "name": "idle",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 1.359597282592799e-7,
+      "gripToMuzzle": 0.12749544750169
+    },
+    {
+      "name": "idle",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 8.418409431390177e-7,
+      "gripToMuzzle": 0.1274954472529497
+    },
+    {
+      "name": "idle",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 8.418409431390177e-7,
+      "gripToMuzzle": 0.1274954472529497
+    },
+    {
+      "name": "idle",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 8.418409431390177e-7,
+      "gripToMuzzle": 0.1274954472529497
+    },
+    {
+      "name": "idle",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 1.3176429169321707e-7,
+      "gripToMuzzle": 0.12749544735978108
+    },
+    {
+      "name": "idle",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 1.3176429169321707e-7,
+      "gripToMuzzle": 0.12749544735978108
+    },
+    {
+      "name": "idle",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 1.3176429169321707e-7,
+      "gripToMuzzle": 0.12749544735978108
+    },
+    {
+      "name": "idle",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 5.3996643636078954e-8,
+      "gripToMuzzle": 0.12749544776150168
+    },
+    {
+      "name": "idle",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 5.3996643636078954e-8,
+      "gripToMuzzle": 0.12749544776150168
+    },
+    {
+      "name": "idle",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 5.3996643636078954e-8,
+      "gripToMuzzle": 0.12749544776150168
+    },
+    {
+      "name": "idle",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 2.790980657084677e-7,
+      "gripToMuzzle": 0.12749544756091213
+    },
+    {
+      "name": "idle",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 2.790980657084677e-7,
+      "gripToMuzzle": 0.12749544756091213
+    },
+    {
+      "name": "idle",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 2.790980657084677e-7,
+      "gripToMuzzle": 0.12749544756091213
+    },
+    {
+      "name": "walk",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 9.664262157961929e-8,
+      "gripToMuzzle": 0.1274955448471053
+    },
+    {
+      "name": "walk",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 9.664262157961929e-8,
+      "gripToMuzzle": 0.1274955448471053
+    },
+    {
+      "name": "walk",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 9.664262157961929e-8,
+      "gripToMuzzle": 0.1274955448471053
+    },
+    {
+      "name": "walk",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 0.000001459334711264701,
+      "gripToMuzzle": 0.1274955504651064
+    },
+    {
+      "name": "walk",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 0.000001459334711264701,
+      "gripToMuzzle": 0.1274955504651064
+    },
+    {
+      "name": "walk",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 0.000001459334711264701,
+      "gripToMuzzle": 0.1274955504651064
+    },
+    {
+      "name": "walk",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 0.0000013630078694122395,
+      "gripToMuzzle": 0.12749554013302136
+    },
+    {
+      "name": "walk",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 0.0000013630078694122395,
+      "gripToMuzzle": 0.12749554013302136
+    },
+    {
+      "name": "walk",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 0.0000013630078694122395,
+      "gripToMuzzle": 0.12749554013302136
+    },
+    {
+      "name": "walk",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 0.0000012191970864318063,
+      "gripToMuzzle": 0.12749553192400456
+    },
+    {
+      "name": "walk",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 0.0000012191970864318063,
+      "gripToMuzzle": 0.12749553192400456
+    },
+    {
+      "name": "walk",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 0.0000012191970864318063,
+      "gripToMuzzle": 0.12749553192400456
+    },
+    {
+      "name": "walk",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 4.1003351472584245e-7,
+      "gripToMuzzle": 0.1274955435716486
+    },
+    {
+      "name": "walk",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 4.1003351472584245e-7,
+      "gripToMuzzle": 0.1274955435716486
+    },
+    {
+      "name": "walk",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 4.1003351472584245e-7,
+      "gripToMuzzle": 0.1274955435716486
+    },
+    {
+      "name": "run",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 2.3189188112775106e-7,
+      "gripToMuzzle": 0.12749554240106678
+    },
+    {
+      "name": "run",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 2.3189188112775106e-7,
+      "gripToMuzzle": 0.12749554240106678
+    },
+    {
+      "name": "run",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 2.3189188112775106e-7,
+      "gripToMuzzle": 0.12749554240106678
+    },
+    {
+      "name": "run",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 0.0000065566215106976675,
+      "gripToMuzzle": 0.1274955470255735
+    },
+    {
+      "name": "run",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 0.0000065566215106976675,
+      "gripToMuzzle": 0.1274955470255735
+    },
+    {
+      "name": "run",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 0.0000065566215106976675,
+      "gripToMuzzle": 0.1274955470255735
+    },
+    {
+      "name": "run",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 0.000009205525872766291,
+      "gripToMuzzle": 0.12749553840824768
+    },
+    {
+      "name": "run",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 0.000009205525872766291,
+      "gripToMuzzle": 0.12749553840824768
+    },
+    {
+      "name": "run",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 0.000009205525872766291,
+      "gripToMuzzle": 0.12749553840824768
+    },
+    {
+      "name": "run",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 0.000007157854238322434,
+      "gripToMuzzle": 0.1274955296779942
+    },
+    {
+      "name": "run",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 0.000007157854238322434,
+      "gripToMuzzle": 0.1274955296779942
+    },
+    {
+      "name": "run",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 0.000007157854238322434,
+      "gripToMuzzle": 0.1274955296779942
+    },
+    {
+      "name": "run",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 0.000008792304700736547,
+      "gripToMuzzle": 0.1274955348511953
+    },
+    {
+      "name": "run",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 0.000008792304700736547,
+      "gripToMuzzle": 0.1274955348511953
+    },
+    {
+      "name": "run",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 0.000008792304700736547,
+      "gripToMuzzle": 0.1274955348511953
+    },
+    {
+      "name": "crouch",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 9.236213182675382e-8,
+      "gripToMuzzle": 0.12749551084523858
+    },
+    {
+      "name": "crouch",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 9.236213182675382e-8,
+      "gripToMuzzle": 0.12749551084523858
+    },
+    {
+      "name": "crouch",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 9.236213182675382e-8,
+      "gripToMuzzle": 0.12749551084523858
+    },
+    {
+      "name": "crouch",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 3.0539904000930045e-7,
+      "gripToMuzzle": 0.12749551283524604
+    },
+    {
+      "name": "crouch",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 3.0539904000930045e-7,
+      "gripToMuzzle": 0.12749551283524604
+    },
+    {
+      "name": "crouch",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 3.0539904000930045e-7,
+      "gripToMuzzle": 0.12749551283524604
+    },
+    {
+      "name": "crouch",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 3.406094074266791e-7,
+      "gripToMuzzle": 0.12749551206913343
+    },
+    {
+      "name": "crouch",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 3.406094074266791e-7,
+      "gripToMuzzle": 0.12749551206913343
+    },
+    {
+      "name": "crouch",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 3.406094074266791e-7,
+      "gripToMuzzle": 0.12749551206913343
+    },
+    {
+      "name": "crouch",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 3.2900041232177824e-7,
+      "gripToMuzzle": 0.12749551055519193
+    },
+    {
+      "name": "crouch",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 3.2900041232177824e-7,
+      "gripToMuzzle": 0.12749551055519193
+    },
+    {
+      "name": "crouch",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 3.2900041232177824e-7,
+      "gripToMuzzle": 0.12749551055519193
+    },
+    {
+      "name": "crouch",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 1.4752538432875832e-7,
+      "gripToMuzzle": 0.12749551108260196
+    },
+    {
+      "name": "crouch",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 1.4752538432875832e-7,
+      "gripToMuzzle": 0.12749551108260196
+    },
+    {
+      "name": "crouch",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 1.4752538432875832e-7,
+      "gripToMuzzle": 0.12749551108260196
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 1.4293649812113718e-7,
+      "gripToMuzzle": 0.12749553540929806
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 1.4293649812113718e-7,
+      "gripToMuzzle": 0.12749553540929806
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 1.4293649812113718e-7,
+      "gripToMuzzle": 0.12749553540929806
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 8.88483386030021e-7,
+      "gripToMuzzle": 0.12749553984087422
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 8.88483386030021e-7,
+      "gripToMuzzle": 0.12749553984087422
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 8.88483386030021e-7,
+      "gripToMuzzle": 0.12749553984087422
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 0.0000010777435602869842,
+      "gripToMuzzle": 0.1274955365537433
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 0.0000010777435602869842,
+      "gripToMuzzle": 0.1274955365537433
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 0.0000010777435602869842,
+      "gripToMuzzle": 0.1274955365537433
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 0.0000010817695832889533,
+      "gripToMuzzle": 0.12749553264005523
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 0.0000010817695832889533,
+      "gripToMuzzle": 0.12749553264005523
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 0.0000010817695832889533,
+      "gripToMuzzle": 0.12749553264005523
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 3.577293349281776e-7,
+      "gripToMuzzle": 0.1274955347544124
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 3.577293349281776e-7,
+      "gripToMuzzle": 0.1274955347544124
+    },
+    {
+      "name": "crouchWalk",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 3.577293349281776e-7,
+      "gripToMuzzle": 0.1274955347544124
+    },
+    {
+      "name": "jump",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 1.7167743856508504e-7,
+      "gripToMuzzle": 0.1274955092648178
+    },
+    {
+      "name": "jump",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 1.7167743856508504e-7,
+      "gripToMuzzle": 0.1274955092648178
+    },
+    {
+      "name": "jump",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 1.7167743856508504e-7,
+      "gripToMuzzle": 0.1274955092648178
+    },
+    {
+      "name": "jump",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 1.707211313977146e-7,
+      "gripToMuzzle": 0.12749551903401934
+    },
+    {
+      "name": "jump",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 1.707211313977146e-7,
+      "gripToMuzzle": 0.12749551903401934
+    },
+    {
+      "name": "jump",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 1.707211313977146e-7,
+      "gripToMuzzle": 0.12749551903401934
+    },
+    {
+      "name": "jump",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 1.2914163092963268e-7,
+      "gripToMuzzle": 0.127495515180102
+    },
+    {
+      "name": "jump",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 1.2914163092963268e-7,
+      "gripToMuzzle": 0.127495515180102
+    },
+    {
+      "name": "jump",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 1.2914163092963268e-7,
+      "gripToMuzzle": 0.127495515180102
+    },
+    {
+      "name": "jump",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 1.1579429481041572e-7,
+      "gripToMuzzle": 0.12749550999832318
+    },
+    {
+      "name": "jump",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 1.1579429481041572e-7,
+      "gripToMuzzle": 0.12749550999832318
+    },
+    {
+      "name": "jump",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 1.1579429481041572e-7,
+      "gripToMuzzle": 0.12749550999832318
+    },
+    {
+      "name": "jump",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 0.0000030185926522753046,
+      "gripToMuzzle": 0.1274955115916007
+    },
+    {
+      "name": "jump",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 0.0000030185926522753046,
+      "gripToMuzzle": 0.1274955115916007
+    },
+    {
+      "name": "jump",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 0.0000030185926522753046,
+      "gripToMuzzle": 0.1274955115916007
+    },
+    {
+      "name": "kneel",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 1.3746938116443718e-7,
+      "gripToMuzzle": 0.12749547252354984
+    },
+    {
+      "name": "kneel",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 1.3746938116443718e-7,
+      "gripToMuzzle": 0.12749547252354984
+    },
+    {
+      "name": "kneel",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 1.3746938116443718e-7,
+      "gripToMuzzle": 0.12749547252354984
+    },
+    {
+      "name": "kneel",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 1.0920911553013856e-7,
+      "gripToMuzzle": 0.1274954713701742
+    },
+    {
+      "name": "kneel",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 1.0920911553013856e-7,
+      "gripToMuzzle": 0.1274954713701742
+    },
+    {
+      "name": "kneel",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 1.0920911553013856e-7,
+      "gripToMuzzle": 0.1274954713701742
+    },
+    {
+      "name": "kneel",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 2.3658771222711398e-7,
+      "gripToMuzzle": 0.12749547261542588
+    },
+    {
+      "name": "kneel",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 2.3658771222711398e-7,
+      "gripToMuzzle": 0.12749547261542588
+    },
+    {
+      "name": "kneel",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 2.3658771222711398e-7,
+      "gripToMuzzle": 0.12749547261542588
+    },
+    {
+      "name": "kneel",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 1.1581813231319802e-7,
+      "gripToMuzzle": 0.12749547388122243
+    },
+    {
+      "name": "kneel",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 1.1581813231319802e-7,
+      "gripToMuzzle": 0.12749547388122243
+    },
+    {
+      "name": "kneel",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 1.1581813231319802e-7,
+      "gripToMuzzle": 0.12749547388122243
+    },
+    {
+      "name": "kneel",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 1.7085193551490344e-7,
+      "gripToMuzzle": 0.12749547240995462
+    },
+    {
+      "name": "kneel",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 1.7085193551490344e-7,
+      "gripToMuzzle": 0.12749547240995462
+    },
+    {
+      "name": "kneel",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 1.7085193551490344e-7,
+      "gripToMuzzle": 0.12749547240995462
+    },
+    {
+      "name": "fire",
+      "phase": 0,
+      "lod": 0,
+      "supportDistance": 7.763130557895602e-8,
+      "gripToMuzzle": 0.1274955193735849
+    },
+    {
+      "name": "fire",
+      "phase": 0,
+      "lod": 1,
+      "supportDistance": 7.763130557895602e-8,
+      "gripToMuzzle": 0.1274955193735849
+    },
+    {
+      "name": "fire",
+      "phase": 0,
+      "lod": 2,
+      "supportDistance": 7.763130557895602e-8,
+      "gripToMuzzle": 0.1274955193735849
+    },
+    {
+      "name": "fire",
+      "phase": 0.25,
+      "lod": 0,
+      "supportDistance": 0.000001844178788922869,
+      "gripToMuzzle": 0.12749555704380905
+    },
+    {
+      "name": "fire",
+      "phase": 0.25,
+      "lod": 1,
+      "supportDistance": 0.000001844178788922869,
+      "gripToMuzzle": 0.12749555704380905
+    },
+    {
+      "name": "fire",
+      "phase": 0.25,
+      "lod": 2,
+      "supportDistance": 0.000001844178788922869,
+      "gripToMuzzle": 0.12749555704380905
+    },
+    {
+      "name": "fire",
+      "phase": 0.5,
+      "lod": 0,
+      "supportDistance": 1.1117394081874332e-7,
+      "gripToMuzzle": 0.12749555637190385
+    },
+    {
+      "name": "fire",
+      "phase": 0.5,
+      "lod": 1,
+      "supportDistance": 1.1117394081874332e-7,
+      "gripToMuzzle": 0.12749555637190385
+    },
+    {
+      "name": "fire",
+      "phase": 0.5,
+      "lod": 2,
+      "supportDistance": 1.1117394081874332e-7,
+      "gripToMuzzle": 0.12749555637190385
+    },
+    {
+      "name": "fire",
+      "phase": 0.75,
+      "lod": 0,
+      "supportDistance": 0.00001203353456281849,
+      "gripToMuzzle": 0.12749553963291999
+    },
+    {
+      "name": "fire",
+      "phase": 0.75,
+      "lod": 1,
+      "supportDistance": 0.00001203353456281849,
+      "gripToMuzzle": 0.12749553963291999
+    },
+    {
+      "name": "fire",
+      "phase": 0.75,
+      "lod": 2,
+      "supportDistance": 0.00001203353456281849,
+      "gripToMuzzle": 0.12749553963291999
+    },
+    {
+      "name": "fire",
+      "phase": 0.97,
+      "lod": 0,
+      "supportDistance": 3.2958418554917715e-7,
+      "gripToMuzzle": 0.12749551361640762
+    },
+    {
+      "name": "fire",
+      "phase": 0.97,
+      "lod": 1,
+      "supportDistance": 3.2958418554917715e-7,
+      "gripToMuzzle": 0.12749551361640762
+    },
+    {
+      "name": "fire",
+      "phase": 0.97,
+      "lod": 2,
+      "supportDistance": 3.2958418554917715e-7,
+      "gripToMuzzle": 0.12749551361640762
+    }
+  ],
+  "run": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      -0.4256158879471617
+    ],
+    "speedMeters": 3.1980020811000434,
+    "grounded": true,
+    "animation": "run",
+    "animationSource": "mixamo",
+    "lod": 2,
+    "skin": "original",
+    "rig": "rigify",
+    "kit": "vpulse",
+    "phase": 0.7661027820766723,
+    "triangles": 999,
+    "weaponTriangles": 458,
+    "bones": 18,
+    "time": 2.5551999999992554,
+    "shots": 1,
+    "flashVisible": false,
+    "geometries": 45,
+    "textures": 20,
+    "missionMounted": false
+  },
+  "idleToRunGripDrift": 0.004269010536415391,
+  "largestSupportDistanceByClip": {
+    "idle": 8.418409431390177e-7,
+    "walk": 0.000001459334711264701,
+    "run": 0.000009205525872766291,
+    "crouch": 3.406094074266791e-7,
+    "crouchWalk": 0.0000010817695832889533,
+    "jump": 0.0000030185926522753046,
+    "kneel": 2.3658771222711398e-7,
+    "fire": 0.00001203353456281849
+  },
+  "fire": {
+    "name": "fire",
+    "duration": 1.1666666666666667,
+    "loop": false,
+    "movementSpeed": 0,
+    "source": "mixamo",
+    "sourceClip": "Firing Rifle.fbx",
+    "sourceSha256": "8b0386c145bce93e1ba05414dfb2f472f482de4e8166ec6097d28656fca15f65",
+    "retargetScale": 0.24135231793128742,
+    "groundMinBeforeCorrection": 0.0006415062816813588,
+    "groundMaxBeforeCorrection": 0.0006544765783473849,
+    "sourceFrames": [
+      1,
+      36
+    ],
+    "lowerBodySource": "idle",
+    "upperBodySource": "Firing Rifle.fbx",
+    "muzzleTime": 0.13333333333333333
+  },
+  "final": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      -0.4921584934323342
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "idle",
+    "animationSource": "mixamo",
+    "lod": 2,
+    "skin": "original",
+    "rig": "rigify",
+    "kit": "vpulse",
+    "phase": 0.13142857142857142,
+    "triangles": 999,
+    "weaponTriangles": 458,
+    "bones": 18,
+    "time": 0,
+    "shots": 1,
+    "flashVisible": false,
+    "geometries": 40,
+    "textures": 8,
+    "missionMounted": false
+  }
+}
