@@ -1,5 +1,5 @@
 {
-  "createdAt": "2026-11-18T05:59:04.208Z",
+  "createdAt": "2026-11-18T06:56:48.546Z",
   "passed": true,
   "emulatedViewportOnly": true,
   "physicalDeviceVerified": false,
@@ -19,11 +19,12 @@
     "speedMeters": 0,
     "grounded": true,
     "animation": "idle",
+    "animationSource": "mixamo",
     "lod": 2,
     "skin": "original",
     "triangles": 999,
     "bones": 14,
-    "time": 0.7958000000119209,
+    "time": 0.8090000000596046,
     "geometries": 22,
     "textures": 8,
     "missionMounted": false
@@ -31,18 +32,19 @@
   "moving": {
     "ready": true,
     "position": [
-      -7.587923814615397e-17,
+      -5.761950803742695e-17,
       0,
-      0.6196010000514766
+      0.470498988586292
     ],
-    "speedMeters": 2.7428386661532724,
+    "speedMeters": 2.7425954397486265,
     "grounded": true,
     "animation": "run",
+    "animationSource": "mixamo",
     "lod": 2,
     "skin": "original",
     "triangles": 999,
     "bones": 14,
-    "time": 1.7956999999880767,
+    "time": 1.5861000000834453,
     "geometries": 22,
     "textures": 8,
     "missionMounted": false

@@ -3,6 +3,11 @@
 Open **`?demo=infantry`**, e.g. `http://localhost:3000/?demo=infantry`.
 The benchmark lab also links to the playground. The main mission is not mounted.
 
+Current motion migration: [Mixamo Idle/Walk/Run](mixamo/README.md) are now active
+on all LODs. Jump/Crouch/CrouchWalk remain explicitly labelled prototype clips
+until their Mixamo FBXs are supplied. The asset/authoring description below also
+documents the retained original demo exports.
+
 ## Play
 
 * WASD / arrows: camera-relative running, 3.2 m/s; Shift: 4.5 m/s sprint.

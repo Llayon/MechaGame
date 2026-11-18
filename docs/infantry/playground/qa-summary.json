@@ -1,10 +1,10 @@
 {
-  "createdAt": "2026-11-18T06:06:03.179Z",
-  "codeCommit": "30516449627c34ed5f4f4823c6d27bc9bc39a372",
+  "createdAt": "2026-11-18T07:00:26.279Z",
+  "codeCommit": "06e407dea27e4e162fed56e10fae9f87d358c2c4",
   "typescript": "PASS",
   "productionBuild": "PASS",
   "unitTests": {
-    "passed": 150,
+    "passed": 151,
     "failed": 0,
     "files": 39
   },
@@ -18,5 +18,18 @@
     "notPerformanceBenchmark": true
   },
   "physicalMobileVerified": false,
-  "animationArtStatus": "Playable prototype; final combat art acceptance pending"
+  "animationArtStatus": "Mixamo core retarget verified; remaining states explicitly use prototypes pending real FBXs",
+  "mixamo": {
+    "activeClips": [
+      "idle",
+      "walk",
+      "run"
+    ],
+    "pendingClips": [
+      "crouch",
+      "crouchWalk",
+      "jump"
+    ],
+    "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5"
+  }
 }
