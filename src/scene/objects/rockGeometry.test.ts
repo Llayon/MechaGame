@@ -52,6 +52,15 @@ test('createChiseledRockGeometry produces 80 flat-shaded triangles with finite n
   geo.dispose();
 });
 
+test('distant rock silhouette uses one quarter of the faces and remains grounded', () => {
+  const geometry = createChiseledRockGeometry(1, 0);
+  assert.equal(geometry.getAttribute('position').count / 3, 20);
+  geometry.computeBoundingBox();
+  assert.ok(geometry.boundingBox!.min.y < -.35 && geometry.boundingBox!.max.y > .6);
+  assert.ok(geometry.boundingSphere!.radius > .75);
+  geometry.dispose();
+});
+
 test('generateRockOutcropsData produces hero + satellite clusters clear of spawn and roads with 3-axis rotations', () => {
   const rocks = generateRockOutcropsData();
   assert.ok(rocks.length >= 400 && rocks.length <= 860, `Expected 400..860 rocks, got ${rocks.length}`);

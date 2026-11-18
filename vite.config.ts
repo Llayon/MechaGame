@@ -2,15 +2,16 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import { worldAssetsPlugin } from './scripts/worldAssetsPlugin';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), worldAssetsPlugin()],
     // Keep the original root URL for local/AI Studio builds; GitHub Pages is a project site.
     base: process.env.GITHUB_PAGES === 'true' ? '/MechaGame/' : '/',
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     server: {

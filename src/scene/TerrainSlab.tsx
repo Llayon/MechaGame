@@ -7,14 +7,17 @@ import { TerrainSurface } from './terrain/TerrainSurface';
 import { OuterMountainRing } from './terrain/OuterMountainRing';
 import { CutawaySkirt } from './terrain/CutawaySkirt';
 import { RoadNetwork } from './terrain/RoadNetwork';
+import type { TerrainTiles } from './terrain/terrainTileCodec';
 import { RiverWater } from './terrain/RiverWater';
 
 interface TerrainSlabProps {
+  tiles: TerrainTiles;
+  waterDepth: Uint8Array<ArrayBuffer>;
   showWireframeGrid: boolean;
   isSoftwareGl: boolean;
 }
 
-export function TerrainSlab({ showWireframeGrid, isSoftwareGl }: TerrainSlabProps) {
+export function TerrainSlab({ showWireframeGrid, isSoftwareGl, waterDepth, tiles }: TerrainSlabProps) {
   const { gl } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const terrainBump = useMemo(() => createTerrainBumpTexture(maxAniso), [maxAniso]);
@@ -36,14 +39,15 @@ export function TerrainSlab({ showWireframeGrid, isSoftwareGl }: TerrainSlabProp
     <group>
       <BlueprintTabletop />
       <TerrainSurface
+        tiles={tiles.ground}
         terrainBump={terrainBump}
         showWireframeGrid={showWireframeGrid}
         puddleTimeUniform={puddleTimeUniform}
       />
-      <OuterMountainRing terrainBump={terrainBump} puddleTimeUniform={puddleTimeUniform} />
+      <OuterMountainRing tiles={tiles.mountains} terrainBump={terrainBump} puddleTimeUniform={puddleTimeUniform} />
       <CutawaySkirt terrainBump={terrainBump} />
       <RoadNetwork puddleTimeUniform={puddleTimeUniform} />
-      <RiverWater isSoftwareGl={isSoftwareGl} />
+      <RiverWater isSoftwareGl={isSoftwareGl} data={waterDepth} />
     </group>
   );
 }

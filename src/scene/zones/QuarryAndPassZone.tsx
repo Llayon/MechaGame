@@ -1,3 +1,4 @@
+import { StaticStructure } from '../objects/StaticStructure';
 import { useMemo } from 'react';
 import {
   BRIDGE_SPECS,
@@ -14,12 +15,14 @@ import { FloodedRuins } from '../objects/FloodedRuins';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
 
 export interface QuarryAndPassZoneProps {
+  splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   isSoftwareGl: boolean;
   onSelectSector: (id: SectorId) => void;
 }
 
 export function QuarryAndPassZone({
+  splitBridgeBatches,
   lightingPreset,
   isSoftwareGl,
   onSelectSector,
@@ -46,6 +49,7 @@ export function QuarryAndPassZone({
       {/* Bridges & Elevated Viaduct */}
       {BRIDGE_SPECS.map((spec) => (
         <BridgeSpan
+          splitBridgeBatches={splitBridgeBatches}
           key={spec.id}
           spec={spec}
           lightingPreset={lightingPreset}
@@ -57,7 +61,7 @@ export function QuarryAndPassZone({
       <FloodedRuins lightingPreset={lightingPreset} />
 
       {/* Northern Canyon Pass (Point B Excavator kept small 1.35x + Powerline Poles) */}
-      <group
+      <StaticStructure
         onClick={(e) => {
           e.stopPropagation();
           onSelectSector('crossing');
@@ -67,10 +71,10 @@ export function QuarryAndPassZone({
           <Excavator position={[0, 0, 0]} rotationY={2.4} />
         </group>
         <PowerlineNetwork />
-      </group>
+      </StaticStructure>
 
       {/* East Quarry Excavator (1.35x small scale) & Site Shed */}
-      <group
+      <StaticStructure
         onClick={(e) => {
           e.stopPropagation();
           onSelectSector('quarry');
@@ -83,7 +87,7 @@ export function QuarryAndPassZone({
           <boxGeometry args={[5.2, 2.8, 4.2]} />
           <meshStandardMaterial color="#8F5642" roughness={0.65} metalness={0.18} />
         </mesh>
-      </group>
+      </StaticStructure>
     </group>
   );
 }

@@ -3,7 +3,7 @@ import {
   MECH_PELVIS_BASE_Y, MECH_SCALE,
   sampleMechFootSupport, solveReverseJointIKAngles,
 } from '../../map/mechKinematics';
-import type { MechRig } from './MechModel';
+import type { LegRig, MechRig } from './MechModel';
 import type { MechState } from './MechState';
 import type { MechControl } from './MechController';
 import type { MechMotion } from './MechMovementSystem';
@@ -16,6 +16,36 @@ const _tmpUp = new THREE.Vector3(0, 1, 0);
 const _tmpQuat = new THREE.Quaternion();
 
 export interface MechFootImpact { index: number; position: THREE.Vector3 }
+
+interface PlantedSupport {
+  x: number;
+  z: number;
+  yaw: number;
+  referenceY: number;
+  sample: ReturnType<typeof sampleMechFootSupport>;
+}
+
+const plantedSupports = new WeakMap<Pick<LegRig, 'plantedWorld'>, PlantedSupport>();
+
+/** Terrain and decks are static. Reference height distinguishes a bridge from its riverbed. */
+export function plantedFootSupport(leg: Pick<LegRig, 'plantedWorld'>, yaw: number, referenceY: number) {
+  const { x, z } = leg.plantedWorld;
+  const entry = plantedSupports.get(leg);
+  if (entry && entry.x === x && entry.z === z && entry.yaw === yaw && entry.referenceY === referenceY) {
+    return entry.sample;
+  }
+  const sample = sampleMechFootSupport(x, z, yaw, MECH_SCALE, referenceY);
+  if (entry) {
+    entry.x = x;
+    entry.z = z;
+    entry.yaw = yaw;
+    entry.referenceY = referenceY;
+    entry.sample = sample;
+  } else {
+    plantedSupports.set(leg, { x, z, yaw, referenceY, sample });
+  }
+  return sample;
+}
 
 /** Grounded/swinging feet, three-joint IK, toe articulation and hydraulic rods. */
 export function stepMechIK(
@@ -101,13 +131,7 @@ export function stepMechIK(
           leg.plantedWorld.z = THREE.MathUtils.lerp(leg.plantedWorld.z, hipWorldZ, dt * 8);
         }
 
-        const support = sampleMechFootSupport(
-          leg.plantedWorld.x,
-          leg.plantedWorld.z,
-          sim.yaw,
-          MECH_SCALE,
-          sim.y,
-        );
+        const support = plantedFootSupport(leg, sim.yaw, sim.y);
         if (support.inWater) anyInWater = true;
         leg.plantedWorld.y = support.ankleY;
         leg.currentAnkleWorld.copy(leg.plantedWorld);
@@ -124,11 +148,10 @@ export function stepMechIK(
     const targetPelvisWorldY =
       lowestFootAnkleY + (MECH_PELVIS_BASE_Y + crouchOffset + bounceY) * MECH_SCALE;
     rig.pelvisGroup.position.y = (targetPelvisWorldY - sim.y) / MECH_SCALE;
-    rig.root.updateMatrixWorld(true);
 
     // Solve 3-joint reverse IK and sync hydraulic cylinders + toes
     rig.legs.forEach((leg, idx) => {
-      leg.hipAnchor.updateMatrixWorld(true);
+      // worldToLocal/getWorldPosition update their ancestor chains, including the new pelvis pose.
       _tmpLocalTarget.copy(leg.currentAnkleWorld);
       leg.hipAnchor.worldToLocal(_tmpLocalTarget);
 
@@ -141,7 +164,6 @@ export function stepMechIK(
       leg.hipJoint.rotation.x = ik.hipRotX;
       leg.kneeJoint.rotation.x = ik.kneeBend;
       leg.hockJoint.rotation.x = -ik.hockBend;
-      leg.hipJoint.updateMatrixWorld(true);
 
       leg.ankleAnchor.getWorldPosition(leg.currentAnkleWorld);
       leg.footGroup.position.copy(leg.currentAnkleWorld);

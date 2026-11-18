@@ -1,7 +1,6 @@
 /**
  * Real-time Chrome DevTools Protocol benchmark for the ACTUAL Vite/R3F game.
- * Runs desktop viewport and mobile *emulation* on GitHub's software GPU.
- * Do not compare the results to physical desktop/iPhone GPU performance.
+ * The CI default uses SwiftShader. Pass --hardware for the local desktop GPU.
  */
 import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -12,13 +11,16 @@ const ORIGIN = process.env.BENCH_ORIGIN || 'http://127.0.0.1:4173';
 const CHROME = process.env.CHROME || 'google-chrome';
 const DEST = process.env.BENCH_OUTPUT || 'benchmarks/results';
 const DURATION_MS = Number(process.env.BENCH_DURATION_MS || 20000);
+const hardware = process.argv.includes('--hardware');
 const GRAPHICS_PRESET = process.env.BENCH_GRAPHICS_PRESET || 'high';
 if (!['low', 'balanced', 'high', 'ultra'].includes(GRAPHICS_PRESET)) {
   throw Error('Invalid BENCH_GRAPHICS_PRESET: ' + GRAPHICS_PRESET);
 }
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const scenarios = [
+const scenarios = hardware ? [
+  { id: 'desktop-hardware', width: 1365, height: 768, dpr: 1, mobile: false },
+] : [
   { id: 'desktop-swiftshader', width: 1365, height: 768, dpr: 1, mobile: false },
   { id: 'mobile-emulated-swiftshader', width: 390, height: 844, dpr: 2, mobile: true },
 ];
@@ -91,12 +93,12 @@ async function measure(scenario) {
     '--headless=new', '--no-sandbox', '--disable-dev-shm-usage',
     '--disable-background-networking', '--disable-background-timer-throttling',
     '--disable-renderer-backgrounding', '--no-first-run', '--no-default-browser-check',
-    '--enable-unsafe-swiftshader', '--use-angle=swiftshader-webgl',
+    ...(hardware ? [] : ['--enable-unsafe-swiftshader', '--use-angle=swiftshader-webgl']),
     '--remote-debugging-port=0', '--user-data-dir=' + userData,
     '--window-size=' + scenario.width + ',' + scenario.height,
     'about:blank',
   ];
-  const chrome = spawn(CHROME, args, { stdio: 'ignore' });
+  const chrome = spawn(CHROME, args, { stdio: 'ignore', windowsHide: true });
   let cdp;
   try {
     const portFile = join(userData, 'DevToolsActivePort');
@@ -132,10 +134,10 @@ async function measure(scenario) {
       url: ORIGIN + '/?autostart=1&profile=1&benchmark=1&graphics=' + GRAPHICS_PRESET,
     });
     await waitFor(async () => {
-      const ok = await cdp.evaluate('Boolean(window.__mechaPerf && document.querySelector("canvas"))');
+      const ok = await cdp.evaluate('Boolean(window.__mechaPerf?.getLive().environment.scenario === "combat" && document.querySelector("canvas"))');
       return ok;
     }, 35000, 'Game/Canvas/profiler not ready');
-    await wait(2500); // Warm up shader compilation and scene mounting.
+    await wait(hardware ? 5000 : 2500);
     console.log('Warmup:', JSON.stringify(await cdp.evaluate(
       '({ visibility: document.visibilityState, state: document.body.dataset.state, profile: window.__mechaPerf?.getLive(), errors: window.__perfPageErrors })'
     )).slice(0, 2400));
@@ -157,6 +159,9 @@ async function measure(scenario) {
     if (report.environment.scenario !== 'combat') {
       throw Error('Benchmark did not enter the active combat scene');
     }
+    if (hardware && (report.environment.softwareMode || /swiftshader|llvmpipe|software|unavailable/i.test(report.environment.renderer))) {
+      throw Error('Hardware renderer unavailable: ' + report.environment.renderer);
+    }
     if (report.environment.graphicsPreset !== GRAPHICS_PRESET) {
       throw Error('Captured graphics preset mismatch: ' + report.environment.graphicsPreset);
     }
@@ -165,17 +170,17 @@ async function measure(scenario) {
     }
     if (report.rendererStats.sampleCount < 10) {
       console.warn('LOW-CONFIDENCE BENCHMARK: only ' + report.rendererStats.sampleCount +
-        ' frame intervals; numbers reflect very slow software GPU rendering.');
+        ' frame intervals.');
     }
     report.automation = {
       scenario: scenario.id,
       graphicsPreset: GRAPHICS_PRESET,
-      host: 'GitHub-hosted ubuntu-latest VM',
-      rendererMode: 'Chrome headless + SwiftShader software WebGL',
+      host: process.env.GITHUB_ACTIONS ? 'GitHub Actions ' + process.platform : process.platform,
+      rendererMode: hardware ? 'Chrome headless + desktop GPU' : 'Chrome headless + SwiftShader software WebGL',
       mobileEmulation: scenario.mobile,
       physicalPhoneMeasurement: false,
       viewportRequested: scenario,
-      note: 'Relative CI software-rendering diagnostic only; not hardware desktop/mobile FPS.',
+      note: hardware ? 'Timed at the combat spawn with a fixed camera.' : 'Relative software-rendering diagnostic.',
     };
     return report;
   } finally {
@@ -206,7 +211,7 @@ for (const scenario of scenarios) {
     trianglesMean: report.rendererStats.trianglesMean,
     frames: report.rendererStats.sampleCount,
     renderer: report.environment.renderer,
-    device: 'CI Chrome SwiftShader, ' + (scenario.mobile ? 'mobile emulation' : 'desktop viewport'),
+    device: hardware ? 'Local desktop GPU' : 'Chrome SwiftShader, ' + (scenario.mobile ? 'mobile emulation' : 'desktop viewport'),
   });
   console.log(JSON.stringify(output[output.length - 1], null, 2));
 }
@@ -217,4 +222,4 @@ writeFileSync(join(DEST, 'summary.csv'), [
   cells.join(','),
   ...output.map(row => cells.map(k => JSON.stringify(row[k])).join(',')),
 ].join('\n'));
-console.log('BENCHMARK COMPLETE: ' + output.length + ' measured software-renderer scenarios.');
+console.log('BENCHMARK COMPLETE: ' + output.length + ' measured scenarios.');

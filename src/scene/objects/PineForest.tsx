@@ -9,10 +9,8 @@ import type { MechTelemetrySnapshot } from '../../map/mechKinematics';
 import type { CombatSimulationState } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
 import { createContactShadowTexture } from '../textures';
-import {
-  PINE_TREE_TOTAL_HEIGHT,
-  createUnifiedPineTreeGeometry,
-} from './pineGeometry';
+import { PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
+import { createPineBatches } from './pineBatches';
 import {
   checkFallingTreeCollisions,
   createFallingTreesState,
@@ -25,6 +23,7 @@ import {
 
 export interface PineForestProps {
   isSoftwareGl?: boolean;
+  sunPos: readonly [number, number, number];
   driveMode?: boolean;
   mechPoseRef?: React.MutableRefObject<MechTelemetrySnapshot>;
   combatRef?: React.MutableRefObject<CombatSimulationState>;
@@ -114,11 +113,12 @@ function injectTreeWindSway(
 
 export function PineForest({
   isSoftwareGl = false,
+  sunPos,
   driveMode = false,
   mechPoseRef,
   combatRef,
 }: PineForestProps) {
-  const treeRef = useRef<THREE.InstancedMesh>(null);
+  const lodElapsed = useRef(1);
   const contactShadowRef = useRef<THREE.InstancedMesh>(null);
   const shrubRef = useRef<THREE.InstancedMesh>(null);
   const logRef = useRef<THREE.InstancedMesh>(null);
@@ -129,7 +129,7 @@ export function PineForest({
   const prevElapsedRef = useRef(0);
 
   const { trees, shrubs, logs, rootRocks } = useMemo(() => generatePineForestData(), []);
-  const fallingStateRef = useRef(createFallingTreesState(trees));
+  const fallingState = useMemo(() => createFallingTreesState(trees), [trees]);
   const hitEventsRef = useRef<TreeFallStartEvent[]>([]);
   const dirtyItemsRef = useRef<FallingTreeItem[]>([]);
   const impactEventsRef = useRef<TreeGroundImpactEvent[]>([]);
@@ -155,8 +155,6 @@ export function PineForest({
   );
 
   const {
-    treeGeo,
-    swayAttr,
     contactGeo,
     chipGeo,
     contactShadowTex,
@@ -166,13 +164,6 @@ export function PineForest({
     contactShadowMaterial,
     chipMaterial,
   } = useMemo(() => {
-    const uGeo = createUnifiedPineTreeGeometry();
-    const swayArray = new Float32Array(trees.length);
-    swayArray.fill(1.0);
-    const swayAttribute = new THREE.InstancedBufferAttribute(swayArray, 1);
-    swayAttribute.setUsage(THREE.DynamicDrawUsage);
-    uGeo.setAttribute('aTreeSway', swayAttribute);
-
     const csGeo = new THREE.PlaneGeometry(1, 1);
     csGeo.rotateX(-Math.PI / 2);
 
@@ -268,8 +259,6 @@ export function PineForest({
     });
 
     return {
-      treeGeo: uGeo,
-      swayAttr: swayAttribute,
       contactGeo: csGeo,
       chipGeo: cGeo,
       contactShadowTex: csTex,
@@ -279,11 +268,13 @@ export function PineForest({
       contactShadowMaterial: csMat,
       chipMaterial: cMat,
     };
-  }, [trees.length]);
+  }, []);
+
+  const treeBatches = useMemo(() => createPineBatches(trees, treeMaterial, treeDepthMaterial), [trees, treeMaterial, treeDepthMaterial]);
+  useEffect(() => () => treeBatches.dispose(), [treeBatches]);
 
   useEffect(() => {
     return () => {
-      treeGeo.dispose();
       contactGeo.dispose();
       chipGeo.dispose();
       contactShadowTex.dispose();
@@ -294,7 +285,6 @@ export function PineForest({
       chipMaterial.dispose();
     };
   }, [
-    treeGeo,
     contactGeo,
     chipGeo,
     contactShadowTex,
@@ -347,14 +337,13 @@ export function PineForest({
   };
 
   useEffect(() => {
-    const tMesh = treeRef.current;
+    const tMesh = treeBatches;
     const csMesh = contactShadowRef.current;
     const sMesh = shrubRef.current;
     const lMesh = logRef.current;
     const rMesh = rootRockRef.current;
-    if (!tMesh || !csMesh || !sMesh || !lMesh || !rMesh) return;
+    if (!csMesh || !sMesh || !lMesh || !rMesh) return;
 
-    tMesh.customDepthMaterial = treeDepthMaterial;
 
     const colShrubA = new THREE.Color('#273A2C');
     const colShrubB = new THREE.Color('#3B4D36');
@@ -423,32 +412,37 @@ export function PineForest({
       rMesh.setColorAt(i, tmpCol);
     });
 
-    for (const m of [tMesh, csMesh, sMesh, lMesh, rMesh]) {
+    for (const m of [csMesh, sMesh, lMesh, rMesh]) {
       m.instanceMatrix.needsUpdate = true;
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
       m.computeBoundingSphere();
     }
-  }, [trees, shrubs, logs, rootRocks, treeDepthMaterial]);
+  }, [trees, shrubs, logs, rootRocks, treeBatches]);
 
   const { paused } = useSceneSimulation();
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (paused) return;
+    lodElapsed.current += delta;
+    if (lodElapsed.current >= .1) {
+      treeBatches.update(camera, sunPos);
+      lodElapsed.current = 0;
+    }
     const dt = Math.min(delta, 0.05);
     if (!isSoftwareGl) {
       windTimeUniform.current.value += dt;
     }
 
-    const tMesh = treeRef.current;
+    const tMesh = treeBatches;
     const csMesh = contactShadowRef.current;
-    const fState = fallingStateRef.current;
+    const fState = fallingState;
     const combat = combatRef?.current;
 
     // Restore knocked-down trees cleanly when mission is restarted
     if (combat) {
       if (combat.elapsedSec < prevElapsedRef.current - 0.1) {
         const restored = resetFallingTrees(fState);
-        if (restored.length > 0 && tMesh && csMesh) {
+        if (restored.length > 0 && csMesh) {
           for (let k = 0; k < restored.length; k++) {
             const idx = restored[k];
             const t = trees[idx];
@@ -457,7 +451,7 @@ export function PineForest({
             _dummy.scale.set(t.widthScale, t.heightScale, t.widthScale);
             _dummy.updateMatrix();
             tMesh.setMatrixAt(idx, _dummy.matrix);
-            swayAttr.setX(idx, 1.0);
+            tMesh.setSway(idx, 1.0);
 
             const n = getAnalyticalTerrainNormal(t.x, t.z, 1.6, false);
             _normalVec.set(n.nx, n.ny, n.nz).normalize();
@@ -470,9 +464,7 @@ export function PineForest({
             _dummy.updateMatrix();
             csMesh.setMatrixAt(idx, _dummy.matrix);
           }
-          tMesh.instanceMatrix.needsUpdate = true;
           csMesh.instanceMatrix.needsUpdate = true;
-          swayAttr.needsUpdate = true;
         }
       }
       prevElapsedRef.current = combat.elapsedSec;
@@ -498,10 +490,9 @@ export function PineForest({
         }
         for (let i = 0; i < hits.length; i++) {
           const ev = hits[i];
-          swayAttr.setX(ev.index, 0.0);
+          tMesh.setSway(ev.index, 0.0);
           spawnWoodChips(ev.x, ev.y + 0.8, ev.z, ev.dirX, ev.dirZ, isSoftwareGl ? 4 : 7, false);
         }
-        swayAttr.needsUpdate = true;
       }
     }
 
@@ -524,7 +515,7 @@ export function PineForest({
       }
     }
 
-    if (dirty.length > 0 && tMesh && csMesh) {
+    if (dirty.length > 0 && csMesh) {
       for (let i = 0; i < dirty.length; i++) {
         const item = dirty[i];
         const t = trees[item.index];
@@ -550,7 +541,6 @@ export function PineForest({
         _dummy.updateMatrix();
         csMesh.setMatrixAt(item.index, _dummy.matrix);
       }
-      tMesh.instanceMatrix.needsUpdate = true;
       csMesh.instanceMatrix.needsUpdate = true;
     }
 
@@ -594,12 +584,7 @@ export function PineForest({
         args={[contactGeo, contactShadowMaterial, trees.length]}
         renderOrder={1}
       />
-      <instancedMesh
-        ref={treeRef}
-        args={[treeGeo, treeMaterial, trees.length]}
-        castShadow
-        receiveShadow
-      />
+      <primitive object={treeBatches.group} />
       <instancedMesh
         ref={shrubRef}
         args={[undefined, shrubMaterial, shrubs.length]}

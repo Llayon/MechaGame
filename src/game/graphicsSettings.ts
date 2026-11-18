@@ -7,8 +7,12 @@ export type ShadowQuality = 'off' | 'low' | 'high' | 'ultra';
 export type VegetationQuality = 'minimal' | 'reduced' | 'full';
 export type ParticleQuality = 'reduced' | 'full';
 export type AtmosphereQuality = 'off' | 'reduced' | 'full';
+export type ObjectDetail = 'low' | 'balanced' | 'high' | 'ultra';
 
 export interface GraphicsSettings {
+  objectDetail: ObjectDetail;
+  autoQuality: boolean;
+  targetFps: 30 | 45 | 60;
   preset: GraphicsPreset;
   resolutionScale: number;
   shadows: ShadowQuality;
@@ -24,6 +28,7 @@ export const GRAPHICS_STORAGE_KEY = 'mech-graphics-v1';
 
 export const GRAPHICS_PRESETS: Readonly<Record<Exclude<GraphicsPreset, 'custom'>, Readonly<QualityValues>>> = {
   low: {
+    objectDetail: 'low', autoQuality: false, targetFps: 30,
     resolutionScale: 0.7,
     shadows: 'off',
     vegetation: 'minimal',
@@ -32,6 +37,7 @@ export const GRAPHICS_PRESETS: Readonly<Record<Exclude<GraphicsPreset, 'custom'>
     distantWar: false,
   },
   balanced: {
+    objectDetail: 'balanced', autoQuality: false, targetFps: 30,
     resolutionScale: 0.85,
     shadows: 'low',
     vegetation: 'reduced',
@@ -40,6 +46,7 @@ export const GRAPHICS_PRESETS: Readonly<Record<Exclude<GraphicsPreset, 'custom'>
     distantWar: true,
   },
   high: {
+    objectDetail: 'high', autoQuality: false, targetFps: 60,
     resolutionScale: 1,
     shadows: 'high',
     vegetation: 'full',
@@ -48,6 +55,7 @@ export const GRAPHICS_PRESETS: Readonly<Record<Exclude<GraphicsPreset, 'custom'>
     distantWar: true,
   },
   ultra: {
+    objectDetail: 'ultra', autoQuality: false, targetFps: 60,
     resolutionScale: 1.15,
     shadows: 'ultra',
     vegetation: 'full',
@@ -108,6 +116,10 @@ export function sanitizeGraphicsSettings(
     ? Math.round(Math.max(0.55, Math.min(1.15, v.resolutionScale)) * 20) / 20
     : fallback.resolutionScale;
   const next: GraphicsSettings = {
+    objectDetail: isOneOf(v.objectDetail, PRESETS) ? v.objectDetail : (preset === 'custom' ? fallback.objectDetail : preset),
+    autoQuality: typeof v.autoQuality === 'boolean' ? v.autoQuality : false,
+    targetFps: v.targetFps === 30 || v.targetFps === 45 || v.targetFps === 60 ? v.targetFps :
+      (preset === 'custom' ? fallback.targetFps : GRAPHICS_PRESETS[preset].targetFps),
     preset,
     resolutionScale: resolution,
     shadows: isOneOf(v.shadows, SHADOWS) ? v.shadows : fallback.shadows,

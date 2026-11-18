@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLazyRef } from './utils/useLazyRef';
 import { LightingPreset, SectorId } from './map/sectors';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
+import type { WorldAssets } from './map/worldAssets';
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
@@ -19,7 +21,6 @@ import {
 import { DesktopCombatInput } from './components/DesktopCombatInput';
 import { createCombatAimState } from './game/combatAim';
 import {
-  buildCombatTelemetry,
   createCombatState,
   resetCombatState,
 } from './game/combatSimulation';
@@ -46,14 +47,34 @@ declare global {
   }
 }
 
-export default function App() {
+function createSpawnPose(): MechTelemetrySnapshot {
+  return {
+    x: MECH_SPAWN.x,
+    y: MECH_SPAWN.y,
+    z: MECH_SPAWN.z,
+    yaw: MECH_SPAWN.yaw,
+    turretYaw: 0,
+    speedKmh: 0,
+    elevationM: Math.round(MECH_SPAWN.y * METERS_PER_UNIT),
+    isFiring: false,
+    isBraced: false,
+    isCrouched: false,
+    inWater: false,
+    onBridge: false,
+  };
+}
+
+export default function App({ world }: { world: WorldAssets }) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
   const [transitionNonce, setTransitionNonce] = useState(0);
   const [resetNonce, setResetNonce] = useState(0);
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
-  const [driveMode, setDriveMode] = useState(autostart);
+  const [requestedDriveMode, setDriveMode] = useState(autostart);
+  const [terrainReady, setTerrainReady] = useState(false);
+  const driveMode = requestedDriveMode && terrainReady;
+  const handleTerrainReady = useCallback(() => setTerrainReady(true), []);
   const [paused, setPaused] = useState(false);
   const [graphicsOpen, setGraphicsOpen] = useState(false);
   const graphicsWasRunningRef = useRef(false);
@@ -99,20 +120,7 @@ export default function App() {
     };
   }, [inputPref]);
 
-  const mechPoseRef = useRef<MechTelemetrySnapshot>({
-    x: MECH_SPAWN.x,
-    y: MECH_SPAWN.y,
-    z: MECH_SPAWN.z,
-    yaw: MECH_SPAWN.yaw,
-    turretYaw: 0,
-    speedKmh: 0,
-    elevationM: Math.round(MECH_SPAWN.y * METERS_PER_UNIT),
-    isFiring: false,
-    isBraced: false,
-    isCrouched: false,
-    inWater: false,
-    onBridge: false,
-  });
+  const mechPoseRef = useLazyRef(createSpawnPose);
 
   const driveInputRef = useRef<MechDriveInput>({
     forward: 0,
@@ -133,17 +141,8 @@ export default function App() {
     crouch: false,
   });
 
-  const aimRef = useRef(createCombatAimState(MECH_SPAWN.yaw));
-  const combatRef = useRef(createCombatState(autostart));
-  const combatTelemetryRef = useRef(
-    buildCombatTelemetry(
-      combatRef.current,
-      MECH_SPAWN.x,
-      MECH_SPAWN.y,
-      MECH_SPAWN.z,
-      MECH_SPAWN.yaw,
-    ),
-  );
+  const aimRef = useLazyRef(() => createCombatAimState(MECH_SPAWN.yaw));
+  const combatRef = useLazyRef(() => createCombatState(autostart));
 
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
@@ -290,6 +289,7 @@ export default function App() {
     clearDriveInput();
     driveInputRef.current.crouch = false;
     resetCombatState(combatRef.current, 'playing');
+    mechPoseRef.current = createSpawnPose();
     setMissionOutcome(null);
     setPaused(false);
     setDriveMode(true);
@@ -486,6 +486,8 @@ export default function App() {
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-[#091016]">
       <MapScene
+        world={world}
+        onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
         transitionNonce={transitionNonce}
         resetNonce={resetNonce}
@@ -498,7 +500,6 @@ export default function App() {
         driveInputRef={driveInputRef}
         aimRef={aimRef}
         combatRef={combatRef}
-        combatTelemetryRef={combatTelemetryRef}
         showMarkers={showMarkers}
         showUnits={showUnits}
         showMist={showMist}
@@ -507,53 +508,62 @@ export default function App() {
         onEnterDriveMode={handleEnterDriveMode}
         onMissionEnded={handleMissionEnded}
       />
-      <TacticalHUD
-        activeSector={activeSector}
-        lightingPreset={lightingPreset}
-        driveMode={driveMode}
-        paused={paused}
-        muted={muted}
-        missionOutcome={missionOutcome}
-        layoutMode={layoutMode}
-        inputPref={inputPref}
-        mechPoseRef={mechPoseRef}
-        driveInputRef={driveInputRef}
-        aimRef={aimRef}
-        combatTelemetryRef={combatTelemetryRef}
-        showMarkers={showMarkers}
-        showUnits={showUnits}
-        showMist={showMist}
-        showWireframeGrid={showWireframeGrid}
-        hudHidden={hudHidden}
-        onSelectSector={handleSelectSector}
-        onResetOverview={handleResetOverview}
-        onChangeLighting={setLightingPreset}
-        onToggleDriveMode={handleToggleDriveMode}
-        onTogglePause={handleTogglePause}
-        onRestartMission={handleRestartMission}
-        onToggleMute={handleToggleMute}
-        onCycleInputPref={handleCycleInputPref}
-        onToggleMarkers={() => setShowMarkers((v) => !v)}
-        onToggleUnits={() => setShowUnits((v) => !v)}
-        onToggleMist={() => setShowMist((v) => !v)}
-        onToggleGrid={() => setShowWireframeGrid((v) => !v)}
-        onToggleHud={() => setHudHidden((v) => !v)}
-      />
-      <DesktopCombatInput
-        driveMode={driveMode}
-        paused={paused}
-        gameOver={missionOutcome !== null}
-        useTouchControls={layoutMode.useTouchControls}
-        driveInputRef={driveInputRef}
-      />
-      <GraphicsSettingsMenu
-        open={graphicsOpen}
-        settings={graphics}
-        onChange={setGraphics}
-        onOpen={handleOpenGraphics}
-        onClose={handleCloseGraphics}
-      />
-      <PerformancePanel />
+      {terrainReady ? (
+        <>
+          <TacticalHUD
+            activeSector={activeSector}
+            lightingPreset={lightingPreset}
+            driveMode={driveMode}
+            paused={paused}
+            muted={muted}
+            missionOutcome={missionOutcome}
+            layoutMode={layoutMode}
+            inputPref={inputPref}
+            mechPoseRef={mechPoseRef}
+            driveInputRef={driveInputRef}
+            aimRef={aimRef}
+            combatRef={combatRef}
+            resetNonce={resetNonce}
+            showMarkers={showMarkers}
+            showUnits={showUnits}
+            showMist={showMist}
+            showWireframeGrid={showWireframeGrid}
+            hudHidden={hudHidden}
+            onSelectSector={handleSelectSector}
+            onResetOverview={handleResetOverview}
+            onChangeLighting={setLightingPreset}
+            onToggleDriveMode={handleToggleDriveMode}
+            onTogglePause={handleTogglePause}
+            onRestartMission={handleRestartMission}
+            onToggleMute={handleToggleMute}
+            onCycleInputPref={handleCycleInputPref}
+            onToggleMarkers={() => setShowMarkers((v) => !v)}
+            onToggleUnits={() => setShowUnits((v) => !v)}
+            onToggleMist={() => setShowMist((v) => !v)}
+            onToggleGrid={() => setShowWireframeGrid((v) => !v)}
+            onToggleHud={() => setHudHidden((v) => !v)}
+          />
+          <DesktopCombatInput
+            driveMode={driveMode}
+            paused={paused}
+            gameOver={missionOutcome !== null}
+            useTouchControls={layoutMode.useTouchControls}
+            driveInputRef={driveInputRef}
+          />
+          <GraphicsSettingsMenu
+            open={graphicsOpen}
+            settings={graphics}
+            onChange={setGraphics}
+            onOpen={handleOpenGraphics}
+            onClose={handleCloseGraphics}
+          />
+          <PerformancePanel />
+        </>
+      ) : (
+        <div className="absolute inset-0 z-50 grid place-items-center bg-[#091016] text-cyan-100" role="status">
+          ???????? ??????
+        </div>
+      )}
     </main>
   );
 }

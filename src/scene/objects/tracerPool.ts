@@ -23,7 +23,6 @@ export interface TracerPoolState {
   slots: TracerSlot[];
   cursor: number;
   activeCount: number;
-  dirty: boolean;
 }
 
 export interface SpawnTracerOptions {
@@ -71,7 +70,6 @@ export function createTracerPool(capacity = MAX_TRACER_INSTANCES): TracerPoolSta
     })),
     cursor: 0,
     activeCount: 0,
-    dirty: false,
   };
 }
 
@@ -81,7 +79,6 @@ export function resetTracerPool(pool: TracerPoolState): void {
   }
   pool.cursor = 0;
   pool.activeCount = 0;
-  pool.dirty = true;
 }
 
 /**
@@ -175,7 +172,6 @@ export function spawnTracer(
   if (!wasActive) {
     pool.activeCount += 1;
   }
-  pool.dirty = true;
   return idx;
 }
 

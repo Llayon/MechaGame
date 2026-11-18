@@ -92,6 +92,7 @@ function createMissileRibbonGeometry() {
   geom.setAttribute('aProgress', new THREE.BufferAttribute(progresses, 1));
   geom.setAttribute('aAlpha', alphaAttr);
   geom.setIndex(new THREE.BufferAttribute(indices, 1));
+  geom.setDrawRange(0, 0);
 
   return {
     geom,
@@ -245,18 +246,11 @@ export function MissileRibbons({
     const { positions, prevPositions, nextPositions, alphas } = setup;
     const vertsPerTrail = RIBBON_POINTS * 2;
 
+    let rendered = 0;
     for (let t = 0; t < pool.slots.length; t++) {
       const slot = pool.slots[t];
-      const baseVertex = t * vertsPerTrail;
-
-      if (!slot.active || slot.alpha <= 0.001) {
-        for (let p = 0; p < RIBBON_POINTS; p++) {
-          const v0 = baseVertex + p * 2;
-          alphas[v0] = 0;
-          alphas[v0 + 1] = 0;
-        }
-        continue;
-      }
+      if (!slot.active || slot.alpha <= 0.001) continue;
+      const baseVertex = rendered++ * vertsPerTrail;
 
       const hx = slot.historyX;
       const hy = slot.historyY;
@@ -297,6 +291,7 @@ export function MissileRibbons({
       }
     }
 
+    setup.geom.setDrawRange(0, rendered * RIBBON_SEGMENTS * 6);
     setup.posAttr.needsUpdate = true;
     setup.prevAttr.needsUpdate = true;
     setup.nextAttr.needsUpdate = true;

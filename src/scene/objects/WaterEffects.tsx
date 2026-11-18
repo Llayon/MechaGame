@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
+import { effectVisible } from '../../lod/worldLod';
 import type { LightingPreset } from '../../map/sectors';
 import {
   MAX_WATER_RIPPLES,
@@ -261,27 +262,26 @@ export function WaterEffects({
     const pool = poolRef.current;
     const hadRipples = hadActiveRipplesRef.current || pool.activeRipples > 0;
     const hadSplashes = hadActiveSplashesRef.current || pool.activeSplashes > 0;
-    if (isSoftwareGl && !hadRipples && !hadSplashes) return;
+    if (!hadRipples && !hadSplashes) return;
 
     const { activeRipples, activeSplashes } = stepWaterVfxPool(pool, dt);
 
     const rMesh = rippleMeshRef.current;
     if (rMesh && (activeRipples > 0 || hadRipples)) {
+      let count = 0;
       for (let i = 0; i < MAX_WATER_RIPPLES; i++) {
         if (computeRippleTransform(pool.ripples[i], _rippleTf)) {
+          if (!effectVisible(camera, _rippleTf.x, _rippleTf.y, _rippleTf.z, _rippleTf.scale, isSoftwareGl ? 3 : 1)) continue;
           _dummy.position.set(_rippleTf.x, _rippleTf.y, _rippleTf.z);
           _dummy.rotation.set(0, 0, 0);
           _dummy.scale.set(_rippleTf.scale, 1.0, _rippleTf.scale);
           _dummy.updateMatrix();
-          rMesh.setMatrixAt(i, _dummy.matrix);
-          rippleSetup.alphas[i] = _rippleTf.alpha;
-          rippleSetup.progresses[i] = _rippleTf.progress;
-        } else {
-          rMesh.setMatrixAt(i, _zeroMat4);
-          rippleSetup.alphas[i] = 0;
-          rippleSetup.progresses[i] = 0;
+          rMesh.setMatrixAt(count, _dummy.matrix);
+          rippleSetup.alphas[count] = _rippleTf.alpha;
+          rippleSetup.progresses[count++] = _rippleTf.progress;
         }
       }
+      rMesh.count = count;
       rMesh.instanceMatrix.needsUpdate = true;
       rippleSetup.alphaAttr.needsUpdate = true;
       rippleSetup.progressAttr.needsUpdate = true;
@@ -290,21 +290,20 @@ export function WaterEffects({
 
     const sMesh = splashMeshRef.current;
     if (sMesh && (activeSplashes > 0 || hadSplashes)) {
+      let count = 0;
       for (let i = 0; i < MAX_WATER_SPLASHES; i++) {
         if (computeSplashTransform(pool.splashes[i], _splashTf)) {
+          if (!effectVisible(camera, _splashTf.x, _splashTf.y, _splashTf.z, Math.max(_splashTf.scaleX, _splashTf.scaleY), isSoftwareGl ? 3 : 1)) continue;
           _dummy.position.set(_splashTf.x, _splashTf.y, _splashTf.z);
           _dummy.quaternion.copy(camera.quaternion);
           _dummy.scale.set(_splashTf.scaleX, _splashTf.scaleY, 1.0);
           _dummy.updateMatrix();
-          sMesh.setMatrixAt(i, _dummy.matrix);
-          splashSetup.alphas[i] = _splashTf.alpha;
-          splashSetup.progresses[i] = _splashTf.progress;
-        } else {
-          sMesh.setMatrixAt(i, _zeroMat4);
-          splashSetup.alphas[i] = 0;
-          splashSetup.progresses[i] = 0;
+          sMesh.setMatrixAt(count, _dummy.matrix);
+          splashSetup.alphas[count] = _splashTf.alpha;
+          splashSetup.progresses[count++] = _splashTf.progress;
         }
       }
+      sMesh.count = count;
       sMesh.instanceMatrix.needsUpdate = true;
       splashSetup.alphaAttr.needsUpdate = true;
       splashSetup.progressAttr.needsUpdate = true;
@@ -316,12 +315,14 @@ export function WaterEffects({
     <group name="water-surface-effects">
       <instancedMesh
         ref={rippleMeshRef}
+        count={0}
         args={[rippleSetup.geom, rippleSetup.mat, MAX_WATER_RIPPLES]}
         frustumCulled={false}
         renderOrder={3}
       />
       <instancedMesh
         ref={splashMeshRef}
+        count={0}
         args={[splashSetup.geom, splashSetup.mat, MAX_WATER_SPLASHES]}
         frustumCulled={false}
         renderOrder={3}

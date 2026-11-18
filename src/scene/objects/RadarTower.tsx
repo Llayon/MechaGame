@@ -27,7 +27,7 @@ export function RadarTower({ position, isSoftwareGl }: RadarTowerProps) {
         <cylinderGeometry args={[0.14, 0.28, 2.3, 6]} />
         <meshStandardMaterial color="#42484c" roughness={0.45} metalness={0.7} />
       </mesh>
-      <group ref={radarRef} position={[0, 2.45, 0]}>
+      <group userData={{ lodDynamic: true }} ref={radarRef} position={[0, 2.45, 0]}>
         <mesh rotation={[0.55, 0, 0]} castShadow>
           <cylinderGeometry args={[0.72, 0.14, 0.28, 14]} />
           <meshStandardMaterial color="#8b9296" roughness={0.35} metalness={0.6} />

@@ -1,3 +1,5 @@
+import type { Soldier } from '../infantry/population';
+
 export type EnemyArchetype = 'scout-apc' | 'denial-turret' | 'charger-walker';
 
 export type EnemyAIState =
@@ -251,6 +253,7 @@ export interface CombatTelemetrySnapshot {
 }
 
 export interface CombatSimulationState {
+  infantry: Soldier[];
   missionStatus: MissionStatus;
   combatPhase: CombatPhase;
   reinforcementsDeployed: boolean;

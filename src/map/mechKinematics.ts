@@ -379,6 +379,7 @@ export interface MechTelemetrySnapshot {
   z: number;
   yaw: number;
   turretYaw: number;
+  aimTurretYaw?: number;
   speedKmh: number;
   elevationM: number;
   isFiring: boolean;

@@ -1,0 +1,83 @@
+{
+  "revision": "24b257696d15ecd5e510d9b1090290b2eef6073e",
+  "source": "public/assets/infantry-candidate/rigify-demo/",
+  "bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "head",
+    "upperarm_L",
+    "forearm_L",
+    "hand_L",
+    "upperarm_R",
+    "forearm_R",
+    "hand_R",
+    "thigh_L",
+    "shin_L",
+    "foot_L",
+    "toe_L",
+    "thigh_R",
+    "shin_R",
+    "foot_R",
+    "toe_R"
+  ],
+  "clips": [
+    {
+      "name": "idle",
+      "offset": 0,
+      "frames": 76,
+      "duration": 2.5,
+      "loop": true
+    },
+    {
+      "name": "walk",
+      "offset": 76,
+      "frames": 30,
+      "duration": 0.9666666666666667,
+      "loop": true
+    },
+    {
+      "name": "run",
+      "offset": 106,
+      "frames": 22,
+      "duration": 0.7,
+      "loop": true
+    },
+    {
+      "name": "crouch",
+      "offset": 128,
+      "frames": 64,
+      "duration": 2.1,
+      "loop": true
+    },
+    {
+      "name": "crouchWalk",
+      "offset": 192,
+      "frames": 36,
+      "duration": 1.1666666666666667,
+      "loop": true
+    },
+    {
+      "name": "jump",
+      "offset": 228,
+      "frames": 21,
+      "duration": 0.6666666666666666,
+      "loop": false
+    },
+    {
+      "name": "kneel",
+      "offset": 249,
+      "frames": 115,
+      "duration": 3.8,
+      "loop": true
+    }
+  ],
+  "width": 54,
+  "height": 364,
+  "triangles": [
+    3999,
+    1999,
+    999,
+    298
+  ]
+}

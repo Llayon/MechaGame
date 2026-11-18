@@ -1,3 +1,4 @@
+import { StaticStructure } from '../objects/StaticStructure';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import {
@@ -34,7 +35,7 @@ export function RefineryIslandZone({
   );
 
   return (
-    <group
+    <StaticStructure
       position={[ISLAND_CENTER_X, islandY, ISLAND_CENTER_Z]}
       onClick={(e) => {
         e.stopPropagation();
@@ -113,6 +114,6 @@ export function RefineryIslandZone({
       <BlastScreen position={[-7.0, 0.68, -25.8]} rotationY={Math.PI - 0.18} width={12.0} height={4.4} />
       <BlastScreen position={[21.5, 0.68, -15.0]} rotationY={Math.PI - 0.85} width={10.5} height={4.4} />
       <BlastScreen position={[-17.5, 0.68, 21.5]} rotationY={-0.55} width={11.0} height={4.1} />
-    </group>
+    </StaticStructure>
   );
 }

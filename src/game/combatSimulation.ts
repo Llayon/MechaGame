@@ -8,6 +8,7 @@ import {
   clamp,
 } from '../map/terrainMath';
 import { MECH_SPAWN, getWalkableSurfaceY } from '../map/mechKinematics';
+import { createInfantryPopulation, stepInfantry, traceHostileInfantry, splashHostileInfantry } from '../infantry/population';
 import { resolveWorldObstacles } from '../map/worldColliders';
 import { castCombatRay, hasLineOfSight } from '../map/worldRaycaster';
 import { findWaterSurfaceCrossing } from '../scene/objects/waterVfxPool';
@@ -387,6 +388,7 @@ function createEnemyFromSpec(spec: EnemySpawnSpec, index: number): EnemyUnitStat
 
 export function createCombatState(startPlaying = false): CombatSimulationState {
   return {
+    infantry: [],
     missionStatus: startPlaying ? 'playing' : 'idle',
     combatPhase: 1,
     reinforcementsDeployed: false,
@@ -437,6 +439,7 @@ export function resetCombatState(
   missionStatus: CombatSimulationState['missionStatus'] = 'playing',
 ): void {
   state.missionStatus = missionStatus;
+  state.infantry = [];
   state.combatPhase = 1;
   state.reinforcementsDeployed = false;
   state.alertMessage = null;
@@ -795,7 +798,17 @@ export function processPlayerShots(
       }
     }
 
-    if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
+    const infantryHit = traceHostileInfantry(state.infantry, shot.muzzleX, shot.muzzleY, shot.muzzleZ,
+      dx, dy, dz, Math.min(hitBarrelDist, hitEnemyDist));
+    if (infantryHit) {
+      const distance = infantryHit.distance;
+      const hitX = shot.muzzleX + dx*distance, hitY = shot.muzzleY + dy*distance, hitZ = shot.muzzleZ + dz*distance;
+      infantryHit.actor.hp = Math.max(0, infantryHit.actor.hp - PLAYER_SHELL_DAMAGE);
+      state.shotsHit++;
+      state.hitMarkerTimer = 0.14;
+      state.pendingImpacts.push({kind:'armor-hit', x:hitX, y:hitY, z:hitZ, heavy:false});
+      resolutions.push({hitKind:'enemy', hitX, hitY, hitZ, distance});
+    } else if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
       const hx = shot.muzzleX + dx * hitBarrelDist;
       const hy = shot.muzzleY + dy * hitBarrelDist;
       const hz = shot.muzzleZ + dz * hitBarrelDist;
@@ -1030,6 +1043,18 @@ export function triggerHeavyCannonShot(
     }
   }
 
+  const infantryHit = traceHostileInfantry(state.infantry, muzzleX,muzzleY,muzzleZ,dx,dy,dz,
+    Math.min(hitBarrelDist,hitEnemyDist));
+  if (infantryHit) {
+    const distance = infantryHit.distance;
+    const hitX=muzzleX+dx*distance, hitY=muzzleY+dy*distance, hitZ=muzzleZ+dz*distance;
+    infantryHit.actor.hp = Math.max(0, infantryHit.actor.hp - HEAVY_CANNON_DAMAGE);
+    state.heavyBeams.push({ x0:muzzleX,y0:muzzleY,z0:muzzleZ,x1:hitX,y1:hitY,z1:hitZ,life:.26,maxLife:.26 });
+    state.pendingImpacts.push({kind:'heavy-hit',x:hitX,y:hitY,z:hitZ,heavy:true});
+    state.shotsHit++;
+    state.hitMarkerTimer = .22;
+    return {hitKind:'enemy',hitX,hitY,hitZ,distance};
+  }
   if (hitBarrel && (!hitEnemy || hitBarrelDist <= hitEnemyDist)) {
     const hx = muzzleX + dx * hitBarrelDist;
     const hy = muzzleY + dy * hitBarrelDist;
@@ -1428,7 +1453,7 @@ function detonateMissileImpact(
   });
   state.trauma = clamp(state.trauma + 0.08, 0, 1);
 
-  let hitAnyEnemy = false;
+  let hitAnyEnemy = splashHostileInfantry(state.infantry,hx,hy,hz,MISSILE_SPLASH_RADIUS,damage) > 0;
   for (let i = 0; i < state.enemies.length; i++) {
     const e = state.enemies[i];
     if (!isEnemyAlive(e)) continue;
@@ -1495,6 +1520,7 @@ export function detonateHazardBarrel(
   if (barrel.destroyed) return;
   barrel.destroyed = true;
   barrel.hp = 0;
+  splashHostileInfantry(state.infantry, barrel.x, barrel.y+1.1, barrel.z, BARREL_BLAST_RADIUS,BARREL_BLAST_DAMAGE);
 
   state.score += BARREL_BONUS_SCORE;
   if (state.score > state.bestScore) {
@@ -1620,6 +1646,8 @@ export function stepCombatSimulation(
 
   const simDt = dt;
   state.elapsedSec += simDt;
+  if (!state.infantry.length) state.infantry = createInfantryPopulation();
+  stepInfantry(state.infantry,simDt,playerX,playerZ,state.hasPlayerEngaged);
   state.heavyCooldownTimer = Math.max(0, state.heavyCooldownTimer - simDt);
   state.missileCooldownTimer = Math.max(0, state.missileCooldownTimer - simDt);
   state.repairCooldownTimer = Math.max(0, state.repairCooldownTimer - simDt);

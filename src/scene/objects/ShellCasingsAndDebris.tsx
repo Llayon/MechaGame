@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { useSceneSimulation } from '../SceneSimulation';
@@ -93,21 +94,17 @@ function syncPoolToInstancedMesh(
   pool: BallisticPropPool,
   mesh: THREE.InstancedMesh,
   layFlatOnRest: boolean,
+  camera: THREE.Camera,
 ): void {
   const slots = pool.slots;
+  let count = 0;
   for (let i = 0; i < slots.length; i++) {
     const s = slots[i];
-    if (!s.active) {
-      mesh.setMatrixAt(i, _zeroMat4);
-      continue;
-    }
+    if (!s.active) continue;
 
     const { coolT, shrinkScale } = getBallisticSlotVisualFactor(s);
     const effScale = s.scale * shrinkScale;
-    if (effScale <= 0.005) {
-      mesh.setMatrixAt(i, _zeroMat4);
-      continue;
-    }
+    if (effScale <= 0.005 || !effectVisible(camera, s.x, s.y, s.z, effScale, 1.5)) continue;
 
     _pos.set(s.x, s.y, s.z);
     if (s.resting) {
@@ -125,16 +122,17 @@ function syncPoolToInstancedMesh(
 
     _scaleVec.setScalar(effScale);
     _mat4.compose(_pos, _quat, _scaleVec);
-    mesh.setMatrixAt(i, _mat4);
+    mesh.setMatrixAt(count, _mat4);
 
     _color.setRGB(
       s.hotR + (s.coolR - s.hotR) * coolT,
       s.hotG + (s.coolG - s.hotG) * coolT,
       s.hotB + (s.coolB - s.hotB) * coolT,
     );
-    mesh.setColorAt(i, _color);
+    mesh.setColorAt(count++, _color);
   }
 
+  mesh.count = count;
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 }
@@ -211,7 +209,7 @@ export function ShellCasingsAndDebris({
     hadActiveDebrisRef.current = true;
   }, [resetNonce, casingsPoolRef, debrisPoolRef]);
 
-  useFrame((_, delta) => {
+  useFrame(({camera}, delta) => {
     if (paused) return;
 
     const dt = Math.min(delta, 0.05);
@@ -235,7 +233,7 @@ export function ShellCasingsAndDebris({
         );
       }
       if (cPool.dirty || remCasings > 0 || hadActiveCasingsRef.current) {
-        syncPoolToInstancedMesh(cPool, cMesh, true);
+        syncPoolToInstancedMesh(cPool, cMesh, true, camera);
         cPool.dirty = false;
       }
       hadActiveCasingsRef.current = remCasings > 0;
@@ -256,7 +254,7 @@ export function ShellCasingsAndDebris({
         );
       }
       if (dPool.dirty || remDebris > 0 || hadActiveDebrisRef.current) {
-        syncPoolToInstancedMesh(dPool, dMesh, false);
+        syncPoolToInstancedMesh(dPool, dMesh, false, camera);
         dPool.dirty = false;
       }
       hadActiveDebrisRef.current = remDebris > 0;
@@ -268,6 +266,7 @@ export function ShellCasingsAndDebris({
       <instancedMesh
         ref={casingsMeshRef}
         name="shell-casings-pool"
+        count={0}
         args={[setup.casingGeom, setup.casingMat, MAX_CASING_INSTANCES]}
         frustumCulled={false}
         castShadow={false}
@@ -276,6 +275,7 @@ export function ShellCasingsAndDebris({
       <instancedMesh
         ref={debrisMeshRef}
         name="armor-debris-pool"
+        count={0}
         args={[setup.debrisGeom, setup.debrisMat, MAX_DEBRIS_INSTANCES]}
         frustumCulled={false}
         castShadow={false}

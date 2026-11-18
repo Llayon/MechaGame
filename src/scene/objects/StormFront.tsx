@@ -333,6 +333,7 @@ export function StormFront({
       setup.layerData[i * 3 + 2] = 0.88 + idx * 0.09;
     }
     cloudMesh.count = layerIndices.length;
+    cloudMesh.computeBoundingSphere();
     cloudMesh.instanceMatrix.needsUpdate = true;
     setup.layerAttr.needsUpdate = true;
     invalidate();
@@ -410,7 +411,6 @@ export function StormFront({
         name="storm-anvil-layers"
         args={[setup.cloudGeom, setup.cloudMat, MAX_STORM_LAYERS]}
         count={layerCount}
-        frustumCulled={false}
         renderOrder={-5}
       />
       <mesh
@@ -420,7 +420,6 @@ export function StormFront({
         geometry={setup.boltGeom}
         material={setup.boltMat}
         visible={false}
-        frustumCulled={false}
         renderOrder={-4}
       />
     </group>

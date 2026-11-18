@@ -5,8 +5,8 @@ import * as THREE from 'three';
  * via planar slicing and broadened base shaping over an Icosahedron(1, 1).
  * Designed for single-draw-call InstancedMesh rendering with varied 3-axis scaling.
  */
-export function createChiseledRockGeometry(seed = 1): THREE.BufferGeometry {
-  const geom = new THREE.IcosahedronGeometry(1, 1);
+export function createChiseledRockGeometry(seed = 1, detail = 1): THREE.BufferGeometry {
+  const geom = new THREE.IcosahedronGeometry(1, detail);
   const pos = geom.attributes.position;
   const v = new THREE.Vector3();
 

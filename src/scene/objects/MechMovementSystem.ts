@@ -85,7 +85,6 @@ export function stepMechMovement(
     rig.pelvisGroup.position.set(swayX, 2.48 + crouchOffset + bounceY, surgeZ);
     rig.pelvisGroup.rotation.set(pPitch, 0, pRoll);
     rig.turretPivot.rotation.set(0, tYaw, 0);
-    rig.root.updateMatrixWorld(true);
 
     const sinY = Math.sin(sim.yaw);
     const cosY = Math.cos(sim.yaw);
