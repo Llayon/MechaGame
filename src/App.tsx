@@ -561,7 +561,7 @@ export default function App({ world }: { world: WorldAssets }) {
         </>
       ) : (
         <div className="absolute inset-0 z-50 grid place-items-center bg-[#091016] text-cyan-100" role="status">
-          ???????? ??????
+          Загрузка карты…
         </div>
       )}
     </main>
