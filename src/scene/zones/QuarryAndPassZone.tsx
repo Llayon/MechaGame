@@ -15,12 +15,14 @@ import { FloodedRuins } from '../objects/FloodedRuins';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
 
 export interface QuarryAndPassZoneProps {
+  splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   isSoftwareGl: boolean;
   onSelectSector: (id: SectorId) => void;
 }
 
 export function QuarryAndPassZone({
+  splitBridgeBatches,
   lightingPreset,
   isSoftwareGl,
   onSelectSector,
@@ -47,6 +49,7 @@ export function QuarryAndPassZone({
       {/* Bridges & Elevated Viaduct */}
       {BRIDGE_SPECS.map((spec) => (
         <BridgeSpan
+          splitBridgeBatches={splitBridgeBatches}
           key={spec.id}
           spec={spec}
           lightingPreset={lightingPreset}

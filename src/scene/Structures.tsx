@@ -12,6 +12,7 @@ import { HorizonWarSystem } from './objects/HorizonWarSystem';
 import { TitanWrecks } from './objects/TitanWrecks';
 
 interface StructuresProps {
+  splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   driveMode: boolean;
   distantWar: boolean;
@@ -20,6 +21,7 @@ interface StructuresProps {
 }
 
 export function Structures({
+  splitBridgeBatches,
   lightingPreset,
   driveMode,
   distantWar,
@@ -57,6 +59,7 @@ export function Structures({
         onSelectSector={onSelectSector}
       />
       <QuarryAndPassZone
+        splitBridgeBatches={splitBridgeBatches}
         lightingPreset={lightingPreset}
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}

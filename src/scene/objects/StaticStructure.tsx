@@ -4,22 +4,29 @@ import * as THREE from 'three';
 import { useSceneSimulation } from '../SceneSimulation';
 import { projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { batchStaticParts } from './staticBatches';
+import { batchBridgeParts } from './bridgeBatches';
 
 const center = new THREE.Vector3();
 
 /** Static children can share a draw. Animated subtrees explicitly own their transforms. */
-export function StaticStructure({ revision, ...groupProps }: ThreeElements['group'] & { revision?: string | boolean }) {
+export function StaticStructure({
+  revision,
+  splitShadowBatches = false,
+  ...groupProps
+}: ThreeElements['group'] & { revision?: string | boolean; splitShadowBatches?: boolean }) {
   const { paused } = useSceneSimulation();
   const root = useRef<THREE.Group>(null);
-  const compiled = useRef<ReturnType<typeof batchStaticParts> | null>(null);
+  const compiled = useRef<(ReturnType<typeof batchStaticParts> | ReturnType<typeof batchBridgeParts>) | null>(null);
   const timer = useRef(0);
   useLayoutEffect(() => {
     if (!root.current) return;
-    const result = batchStaticParts(root.current, { cellSize: 64 });
+    const result = splitShadowBatches
+      ? batchBridgeParts(root.current)
+      : batchStaticParts(root.current, { cellSize: 64 });
     compiled.current = result;
     timer.current = 0;
     return () => { result.dispose(); compiled.current = null; };
-  }, [revision]);
+  }, [revision, splitShadowBatches]);
 
   useFrame(({ camera }, dt) => {
     if (paused) return;
@@ -27,18 +34,26 @@ export function StaticStructure({ revision, ...groupProps }: ThreeElements['grou
     if (timer.current > 0 || !compiled.current) return;
     timer.current = 0.12;
     const view = readWorldLod(camera);
-    for (const part of compiled.current.batches) {
+    const { batches } = compiled.current;
+    const colorOnlyCasters = 'colorOnlyCasters' in compiled.current ? compiled.current.colorOnlyCasters : undefined;
+    for (const part of batches) {
       if (!part.fineShadow && !part.decorative) continue;
       center.copy(part.bounds.center).applyMatrix4(part.mesh.matrixWorld);
       const radius = part.bounds.radius * part.mesh.matrixWorld.getMaxScaleOnAxis();
       // The nearest edge and extra reach keep grazing-light shadows from popping at screen edges.
       const distance = Math.max(1, center.distanceTo(camera.position) - radius - 35);
       const extent = view.focalPixels * part.featureRadius * view.shadowScale / distance;
-      if (part.fineShadow) part.mesh.castShadow = extent > (part.mesh.castShadow ? 3.5 : 4.5);
+      const colorOnly = colorOnlyCasters?.has(part.mesh);
+      let castsShadow = colorOnlyCasters?.get(part.mesh) ?? part.mesh.castShadow;
+      if (part.fineShadow) {
+        castsShadow = extent > (castsShadow ? 3.5 : 4.5);
+        if (colorOnly) colorOnlyCasters?.set(part.mesh, castsShadow);
+        else part.mesh.castShadow = castsShadow;
+      }
       if (part.decorative) {
         const depth = -center.applyMatrix4(camera.matrixWorldInverse).z - radius;
         const pixels = projectedPixels(part.featureRadius, depth, view);
-        const retained = part.mesh.castShadow || pixels > (part.mesh.visible ? 1.6 : 2.3);
+        const retained = castsShadow || pixels > (part.mesh.visible ? 1.6 : 2.3);
         part.mesh.visible = retained;
         part.mesh.userData.lodLevel = retained ? 0 : 1;
       }

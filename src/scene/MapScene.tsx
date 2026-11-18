@@ -16,6 +16,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
 import { TerrainSlab } from './TerrainSlab';
 import { Structures } from './Structures';
+import { BRIDGE_SHADOW_LAYER } from './objects/bridgeBatches';
 import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
@@ -614,7 +615,50 @@ function CameraRig({
   );
 }
 
-export function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
+export function BalancedShadowCadence({
+  lightRef, aimRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize,
+}: {
+  lightRef: React.RefObject<THREE.DirectionalLight | null>;
+  aimRef: React.RefObject<CombatAimState>;
+  lightingPreset: LightingPreset;
+  transitionNonce: number;
+  resetNonce: number;
+  driveMode: boolean;
+  paused: boolean;
+  shadowMapSize: number;
+}) {
+  const invalidate = useThree((state) => state.invalidate);
+  const frames = useRef(0);
+  const precise = useRef(false);
+
+  useLayoutEffect(() => {
+    const shadow = lightRef.current?.shadow;
+    if (!shadow) return;
+    shadow.autoUpdate = false;
+    shadow.needsUpdate = true;
+    frames.current = 0;
+    invalidate();
+    return () => {
+      shadow.autoUpdate = true;
+      shadow.needsUpdate = true;
+    };
+  }, [lightRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize, invalidate]);
+
+  useFrame(() => {
+    const shadow = lightRef.current?.shadow;
+    if (!shadow) return;
+    const usingPrecisionCamera = driveMode && aimRef.current.precise;
+    if (usingPrecisionCamera !== precise.current) {
+      precise.current = usingPrecisionCamera;
+      frames.current = 0;
+    }
+    if (frames.current % 2 === 0) shadow.needsUpdate = true;
+    frames.current++;
+  });
+  return null;
+}
+
+function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
   const scene = useThree((state) => state.scene);
   const terrainReported = useRef(false);
   const combatReported = useRef(false);
@@ -693,11 +737,12 @@ export function MapScene({
   const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   // CI benchmarking opts into a continuous frame loop on software renderers.
-  const benchmarkContinuousFrames = useMemo(
-    () => typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('benchmark') === '1',
-    [],
-  );
+  const query = useMemo(() => new URLSearchParams(
+    typeof window === 'undefined' ? '' : window.location.search,
+  ), []);
+  const benchmarkContinuousFrames = query.get('benchmark') === '1';
+  const splitBridgeBatches = query.get('bridgeCells') === '96';
+  const halfRateShadows = preferences.preset === 'balanced' && query.get('shadowCadence') === '2';
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
@@ -786,7 +831,7 @@ export function MapScene({
           shadow-mapSize-width={shadowMapSize}
           shadow-mapSize-height={shadowMapSize}
           shadow-camera-near={20}
-          shadow-camera-layers-mask={3}
+          shadow-camera-layers-mask={1 | (1 << BRIDGE_SHADOW_LAYER)}
           shadow-camera-far={680}
           shadow-camera-left={-210}
           shadow-camera-right={210}
@@ -796,6 +841,19 @@ export function MapScene({
           shadow-bias={-0.00022}
           shadow-normalBias={0.03}
         />
+        {halfRateShadows && quality.shadowEnabled && (
+          <BalancedShadowCadence
+            key={graphics.shadows}
+            lightRef={sunLightRef}
+            aimRef={aimRef}
+            lightingPreset={lightingPreset}
+            transitionNonce={transitionNonce}
+            resetNonce={resetNonce}
+            driveMode={driveMode}
+            paused={paused}
+            shadowMapSize={shadowMapSize}
+          />
+        )}
         <directionalLight
           position={[-180, 90, 190]}
           color={lightCfg.rimColor}
@@ -832,6 +890,7 @@ export function MapScene({
 
         <group name="perf:structures">
           <Structures
+            splitBridgeBatches={splitBridgeBatches}
             lightingPreset={lightingPreset}
             driveMode={driveMode}
             distantWar={quality.distantWar}
