@@ -49,7 +49,7 @@ import { combatAudio } from '../../game/combatAudio';
 import { predictPhysicalShotEndpoint, resolveGunSightPoint } from '../../game/weaponReticle';
 import { useCombatCamera } from '../CombatCamera';
 
-import { resetCombatAim, updateCombatAim, approachTurretWorldYaw } from '../../game/combatAim';
+import { resetCombatAim, updateCombatAim, approachTurretWorldYaw, shortestAngleDelta } from '../../game/combatAim';
 import type { CombatAimState } from '../../game/combatAim';
 
 const _heavyMuzzleL = new THREE.Vector3();
@@ -324,7 +324,14 @@ export function SovietMech({
     );
     const followMech = driveMode && aimRef.current.initialized;
     if (followMech) {
-      combatCamera.position(aimRef.current, combat, sim.x, sim.y, sim.z, control.isCrouched, delta);
+      const aim = aimRef.current;
+      const inputYaw = aim.yaw, inputElevation = aim.elevation;
+      combatCamera.position(aim, combat, sim.x, sim.y, sim.z, control.isCrouched, delta);
+      // Zoom changes the angles from the camera to the same world point. Carry
+      // only that change into the rangefinder, preserving the lag from player input.
+      sim.turretYaw += shortestAngleDelta(inputYaw, aim.yaw);
+      sim.springGunPitch.x += inputElevation - aim.elevation;
+      motion.gPitch = sim.springGunPitch.x;
     }
     const sight = canControl ? resolveGunSightPoint(combat, camera.position,
       sim.yaw + sim.turretYaw, -motion.gPitch, camera.position.distanceTo(rig.root.position), _sightPoint) : undefined;
