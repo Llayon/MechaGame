@@ -30,6 +30,13 @@ import { MuzzleFlashes } from './objects/MuzzleFlashes';
 import { createMuzzleFlashPool, type MuzzleFlashPoolState } from './objects/muzzleFlashPool';
 import { MissileRibbons } from './objects/MissileRibbons';
 import { createMissileRibbonPool, type MissileRibbonPoolState } from './objects/missileRibbonPool';
+import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
+import {
+  MAX_CASING_INSTANCES,
+  MAX_DEBRIS_INSTANCES,
+  createBallisticPropPool,
+  type BallisticPropPool,
+} from './objects/debrisBallisticsPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
@@ -646,6 +653,8 @@ export function MapScene({
   const groundTrailsPoolRef = useRef<GroundTrailsPoolState>(createGroundTrailsPool());
   const muzzleFlashPoolRef = useRef<MuzzleFlashPoolState>(createMuzzleFlashPool());
   const missileRibbonPoolRef = useRef<MissileRibbonPoolState>(createMissileRibbonPool());
+  const casingsPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_CASING_INSTANCES));
+  const debrisPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_DEBRIS_INSTANCES));
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -801,6 +810,7 @@ export function MapScene({
           groundTrailsPoolRef={groundTrailsPoolRef}
           muzzleFlashPoolRef={muzzleFlashPoolRef}
           missileRibbonPoolRef={missileRibbonPoolRef}
+          casingsPoolRef={casingsPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
@@ -824,6 +834,7 @@ export function MapScene({
             groundTrailsPoolRef={groundTrailsPoolRef}
             muzzleFlashPoolRef={muzzleFlashPoolRef}
             missileRibbonPoolRef={missileRibbonPoolRef}
+            debrisPoolRef={debrisPoolRef}
           />
           <WaterEffects
             poolRef={waterVfxPoolRef}
@@ -843,6 +854,12 @@ export function MapScene({
           <MissileRibbons
             poolRef={missileRibbonPoolRef}
             lightingPreset={lightingPreset}
+            resetNonce={resetNonce}
+          />
+          <ShellCasingsAndDebris
+            casingsPoolRef={casingsPoolRef}
+            debrisPoolRef={debrisPoolRef}
+            waterVfxPoolRef={waterVfxPoolRef}
             resetNonce={resetNonce}
           />
         </group>

@@ -1160,7 +1160,6 @@ export function buildMechModel(mats: MechMaterials) {
 
     // Shared particle geometries
     const dustGeom = trackG(new THREE.SphereGeometry(0.18, 6, 6));
-    const shellGeom = trackG(new THREE.CylinderGeometry(0.022, 0.022, 0.14, 6));
     const tracerGeom = trackG(new THREE.CylinderGeometry(0.065, 0.036, 2.8, 6));
     tracerGeom.rotateX(Math.PI / 2);
 
@@ -1213,7 +1212,6 @@ export function buildMechModel(mats: MechMaterials) {
       dynamicAmmoBelts,
       legs,
       dustGeom,
-      shellGeom,
       tracerGeom,
       kickupMesh,
       dispose: () => {

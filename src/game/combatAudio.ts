@@ -681,6 +681,56 @@ class CombatAudioEngine {
     osc.start(now);
     osc.stop(now + 0.27);
   }
+
+  private lastShellClinkAt = 0;
+
+  /**
+   * Subtle metallic clink when an ejected shell casing strikes concrete/ground (throttled).
+   */
+  playShellClink(heavy = false): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const minInterval = heavy ? 0.06 : 0.115;
+    if (now - this.lastShellClinkAt < minInterval) return;
+    this.lastShellClinkAt = now;
+
+    const jitter = 0.9 + Math.random() * 0.22;
+    const baseFreq = (heavy ? 860 : 1720) * jitter;
+    const overtoneFreq = baseFreq * 1.56;
+    const dur = heavy ? 0.14 : 0.085;
+    const peakGain = heavy ? 0.062 : 0.036;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(baseFreq * 1.18, now);
+    filter.Q.setValueAtTime(3.2, now);
+
+    const oscA = ctx.createOscillator();
+    const oscB = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    oscA.type = 'triangle';
+    oscA.frequency.setValueAtTime(baseFreq, now);
+    oscA.frequency.exponentialRampToValueAtTime(baseFreq * 0.86, now + dur);
+
+    oscB.type = 'sine';
+    oscB.frequency.setValueAtTime(overtoneFreq, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(peakGain, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+
+    oscA.connect(filter);
+    oscB.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscA.start(now);
+    oscB.start(now);
+    oscA.stop(now + dur + 0.01);
+    oscB.stop(now + dur + 0.01);
+  }
 }
 
 export const combatAudio = new CombatAudioEngine();

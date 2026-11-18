@@ -31,6 +31,11 @@ import {
   updateMissileRibbonHead,
   type MissileRibbonPoolState,
 } from './missileRibbonPool';
+import {
+  resetBallisticPropPool,
+  spawnArmorDebrisBurst,
+  type BallisticPropPool,
+} from './debrisBallisticsPool';
 
 const MAX_PROJECTILE_INSTANCES = 40;
 const MAX_SPARK_PARTICLES = 96;
@@ -84,6 +89,7 @@ export interface CombatActorsProps {
   groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
   muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
+  debrisPoolRef?: React.MutableRefObject<BallisticPropPool>;
 }
 
 export function CombatActors({
@@ -94,6 +100,7 @@ export function CombatActors({
   groundTrailsPoolRef,
   muzzleFlashPoolRef,
   missileRibbonPoolRef,
+  debrisPoolRef,
 }: CombatActorsProps) {
   const enemiesGroupRef = useRef<THREE.Group>(null);
   const projectileMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -578,16 +585,21 @@ export function CombatActors({
       apcTrailPosRef.current.clear();
       lastSeenProjectileIdRef.current = 0;
       activeMissileRibbonIdsRef.current.clear();
+      if (debrisPoolRef?.current) resetBallisticPropPool(debrisPoolRef.current);
     }
     prevElapsedRef.current = combat.elapsedSec;
 
-    // Consume pending impact events into pooled sparks, ground craters, & water ripples/splashes
+    // Consume pending impact events into pooled sparks, ground craters, armor debris, & water ripples/splashes
     const waterPool = waterVfxPoolRef?.current;
+    const debrisPool = debrisPoolRef?.current;
     while (combat.pendingImpacts.length > 0) {
       const ev = combat.pendingImpacts.shift()!;
       if (ev.kind === 'explosion') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 10 : 22, 8.5, 1.35, 1.0, 0.52, 0.14, 0.55);
         spawnBurst(ev.x, ev.y + 0.3, ev.z, isSoftwareGl ? 6 : 12, 4.5, 1.85, 0.25, 0.25, 0.25, 0.75);
+        if (debrisPool) {
+          spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y + 0.2, z: ev.z, count: isSoftwareGl ? 4 : 7, speedScale: 1.15, scale: 1.15 });
+        }
         if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
           spawnWaterImpact(waterPool, ev.x, ev.z, 1.85, { countScale: isSoftwareGl ? 0.6 : 1.0 });
         }
@@ -598,6 +610,9 @@ export function CombatActors({
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 14 : 28, 11.2, 1.75, 1.0, 0.44, 0.1, 0.65);
         spawnBurst(ev.x, ev.y + 0.5, ev.z, isSoftwareGl ? 8 : 16, 6.2, 2.15, 0.98, 0.78, 0.22, 0.52);
         spawnBurst(ev.x, ev.y + 0.9, ev.z, isSoftwareGl ? 6 : 10, 3.8, 2.2, 0.22, 0.22, 0.24, 0.85);
+        if (debrisPool) {
+          spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y + 0.4, z: ev.z, count: isSoftwareGl ? 5 : 9, speedScale: 1.35, scale: 1.2 });
+        }
         if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
           spawnWaterImpact(waterPool, ev.x, ev.z, 2.25, { countScale: isSoftwareGl ? 0.65 : 1.0 });
         }
@@ -609,10 +624,16 @@ export function CombatActors({
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.2, 0.75, 1.0, 0.62, 0.18, 0.28);
       } else if (ev.kind === 'heavy-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 8 : 16, 7.6, 1.15, 0.45, 0.92, 1.0, 0.42);
+        if (debrisPool) {
+          spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y, z: ev.z, count: isSoftwareGl ? 3 : 5, speedScale: 1.05, scale: 1.0 });
+        }
       } else if (ev.kind === 'pickup') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 4.8, 0.85, 0.2, 0.96, 0.58, 0.48);
       } else if (ev.kind === 'armor-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 3 : 6, 5.2, 0.65, 1.0, 0.85, 0.35, 0.28);
+        if (debrisPool) {
+          spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y, z: ev.z, count: isSoftwareGl ? 1 : 2, speedScale: 0.78, scale: 0.75 });
+        }
       } else if (ev.kind === 'cover-hit') {
         if (waterPool && (ev.inWater || isRiverWaterImpact(ev.x, ev.y, ev.z))) {
           spawnWaterImpact(waterPool, ev.x, ev.z, ev.heavy ? 1.65 : 0.62, {
@@ -632,6 +653,9 @@ export function CombatActors({
         } else {
           spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 7.2, 1.05, 1.0, 0.56, 0.16, 0.44);
           spawnBurst(ev.x, ev.y + 0.25, ev.z, isSoftwareGl ? 3 : 6, 3.8, 1.35, 0.32, 0.32, 0.34, 0.58);
+          if (debrisPool) {
+            spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y + 0.15, z: ev.z, count: isSoftwareGl ? 2 : 3, speedScale: 0.92, scale: 0.85 });
+          }
           if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.65, 0.85, ev.x * 0.5 + ev.z * 0.8)) {
             craterDirtyRef.current = true;
           }

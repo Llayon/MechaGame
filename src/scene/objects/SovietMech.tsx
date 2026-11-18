@@ -26,6 +26,10 @@ import {
 } from './muzzleFlashPool';
 import type { MissileRibbonPoolState } from './missileRibbonPool';
 import {
+  ejectShellCasing,
+  type BallisticPropPool,
+} from './debrisBallisticsPool';
+import {
   buildCombatTelemetry,
   processPlayerShots,
   stepCombatSimulation,
@@ -66,6 +70,7 @@ export interface SovietMechProps {
   groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
   muzzleFlashPoolRef?: React.MutableRefObject<MuzzleFlashPoolState>;
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
+  casingsPoolRef?: React.MutableRefObject<BallisticPropPool>;
   onSelectMech?: () => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
@@ -86,6 +91,7 @@ export function SovietMech({
   groundTrailsPoolRef,
   muzzleFlashPoolRef,
   missileRibbonPoolRef,
+  casingsPoolRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
@@ -403,6 +409,19 @@ export function SovietMech({
                 intensity: 1.75,
               });
             }
+            if (casingsPoolRef?.current) {
+              barrels[0].mesh.getWorldPosition(_heavyMuzzleL);
+              ejectShellCasing(casingsPoolRef.current, {
+                x: _heavyMuzzleL.x,
+                y: _heavyMuzzleL.y + 0.15,
+                z: _heavyMuzzleL.z,
+                shootDirX: _heavyDir.x,
+                shootDirY: _heavyDir.y,
+                shootDirZ: _heavyDir.z,
+                outwardSide: barrels[0].side === -1 ? 1 : -1,
+                caliberScale: 1.65,
+              });
+            }
           }
         }
       }
@@ -527,6 +546,7 @@ export function SovietMech({
       waterVfxPoolRef?.current,
       groundTrailsPoolRef?.current,
       muzzleFlashPoolRef?.current,
+      casingsPoolRef?.current,
     );
 
     // Publish lightweight telemetry snapshot for camera rig, minimap & combat HUD

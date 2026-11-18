@@ -35,6 +35,10 @@ import {
   spawnMuzzleFlash,
   type MuzzleFlashPoolState,
 } from './muzzleFlashPool';
+import {
+  ejectShellCasing,
+  type BallisticPropPool,
+} from './debrisBallisticsPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -84,6 +88,7 @@ export function stepMechEffects(
   waterVfxPool?: WaterVfxPoolState,
   groundTrailsPool?: GroundTrailsPoolState,
   muzzleFlashPool?: MuzzleFlashPoolState,
+  casingsPool?: BallisticPropPool,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -333,6 +338,19 @@ export function stepMechEffects(
       });
     }
 
+    if (casingsPool) {
+      ejectShellCasing(casingsPool, {
+        x: shot.ejectPosition.x,
+        y: shot.ejectPosition.y,
+        z: shot.ejectPosition.z,
+        shootDirX: shot.direction.x,
+        shootDirY: shot.direction.y,
+        shootDirZ: shot.direction.z,
+        outwardSide: shot.side === -1 ? 1 : -1,
+        caliberScale: 0.95,
+      });
+    }
+
     if (!fxParent || sim.particles.length >= 85) return;
     const tracerMat = new THREE.MeshBasicMaterial({
       color: 0xffe57f, transparent: true, opacity: 0.96, toneMapped: false,
@@ -352,24 +370,6 @@ export function stepMechEffects(
       vel: shot.direction.clone().multiplyScalar(68),
       rotVel: new THREE.Vector3(), life: 0, maxLife: tracerLife, initialOpacity: 0.96,
     });
-    if (Math.random() < 0.55) {
-      const shellMesh = new THREE.Mesh(rig.shellGeom, mats.brassMat);
-      shellMesh.position.copy(shot.ejectPosition);
-      fxParent.add(shellMesh);
-      sim.particles.push({
-        type: 'shell', mesh: shellMesh, mat: mats.brassMat,
-        vel: new THREE.Vector3(
-          shot.side * (1.8 + Math.random() * 1.4),
-          2.4 + Math.random() * 1.2,
-          (Math.random() - 0.5) * 1.8,
-        ),
-        rotVel: new THREE.Vector3(
-          (Math.random() - 0.5) * 14,
-          (Math.random() - 0.5) * 14, 0,
-        ),
-        life: 0, maxLife: 0.9, initialOpacity: 1,
-      });
-    }
   });
 
   rig.gunBarrels.forEach((b) => {
@@ -480,12 +480,7 @@ export function stepMechEffects(
         continue;
       }
       const t = p.life / p.maxLife;
-      if (p.type === 'shell') {
-        p.vel.y -= 11.5 * dt;
-        p.mesh.position.addScaledVector(p.vel, dt);
-        p.mesh.rotation.x += p.rotVel.x * dt;
-        p.mesh.rotation.y += p.rotVel.y * dt;
-      } else if (p.type === 'tracer') {
+      if (p.type === 'tracer') {
         p.mesh.position.addScaledVector(p.vel, dt);
         (p.mat as THREE.MeshBasicMaterial).opacity = (1 - t) * p.initialOpacity;
       } else {

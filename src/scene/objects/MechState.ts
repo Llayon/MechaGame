@@ -22,7 +22,7 @@ export interface MechDriveInput {
   crouch: boolean;
 }
 export interface ParticleItem {
-  type: 'dust' | 'splash' | 'smoke' | 'shell' | 'tracer';
+  type: 'dust' | 'splash' | 'smoke' | 'tracer';
   mesh: THREE.Mesh;
   mat: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
   vel: THREE.Vector3;
