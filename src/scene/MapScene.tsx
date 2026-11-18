@@ -645,6 +645,7 @@ export function BalancedShadowCadence({
   }, [lightRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize, invalidate]);
 
   useFrame(() => {
+    if (paused) return;
     const shadow = lightRef.current?.shadow;
     if (!shadow) return;
     const usingPrecisionCamera = driveMode && aimRef.current.precise;
