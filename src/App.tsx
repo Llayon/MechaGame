@@ -123,6 +123,8 @@ export default function App() {
     gunAimDelta: 0,
     precisionAim: false,
     fire: false,
+    laserFire: false,
+    pointerLaserFire: false,
     heavyFire: false,
     missileSalvo: false,
     repair: false,

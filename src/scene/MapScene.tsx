@@ -40,6 +40,16 @@ import {
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
 } from './objects/debrisBallisticsPool';
+import { Tracers } from './objects/Tracers';
+import {
+  MAX_TRACER_INSTANCES,
+  createTracerPool,
+} from './objects/tracerPool';
+import { CuttingLaserBeam } from './objects/CuttingLaserBeam';
+import {
+  MAX_CRATER_DECALS,
+  createCraterPool,
+} from './objects/craterPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
@@ -269,11 +279,16 @@ function CameraRig({
           d.turretTurn !== 0 ||
           (driveMode &&
             (d.fire ||
+              d.laserFire ||
+              d.pointerLaserFire ||
               d.heavyFire ||
+              d.missileSalvo ||
               d.repair ||
               d.dash ||
               d.centerTurret ||
               Math.abs(d.turretAimDelta ?? 0) > 0.001 ||
+              c.laserActive ||
+              c.playerMissiles.length > 0 ||
               c.projectiles.length > 0 ||
               c.heavyBeams.length > 0 ||
               c.dashTimer > 0 ||
@@ -661,6 +676,8 @@ export function MapScene({
   const missileRibbonPoolRef = useLazyRef(createMissileRibbonPool);
   const casingsPoolRef = useLazyRef(() => createBallisticPropPool(MAX_CASING_INSTANCES));
   const debrisPoolRef = useLazyRef(() => createBallisticPropPool(MAX_DEBRIS_INSTANCES));
+  const craterPoolRef = useLazyRef(() => createCraterPool(MAX_CRATER_DECALS));
+  const tracerPoolRef = useLazyRef(() => createTracerPool(MAX_TRACER_INSTANCES));
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -824,6 +841,7 @@ export function MapScene({
           muzzleFlashPoolRef={muzzleFlashPoolRef}
           missileRibbonPoolRef={missileRibbonPoolRef}
           casingsPoolRef={casingsPoolRef}
+          tracerPoolRef={tracerPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
@@ -849,6 +867,7 @@ export function MapScene({
             muzzleFlashPoolRef={muzzleFlashPoolRef}
             missileRibbonPoolRef={missileRibbonPoolRef}
             debrisPoolRef={debrisPoolRef}
+            craterPoolRef={craterPoolRef}
           />
           <WaterEffects
             poolRef={waterVfxPoolRef}
@@ -874,6 +893,15 @@ export function MapScene({
             casingsPoolRef={casingsPoolRef}
             debrisPoolRef={debrisPoolRef}
             waterVfxPoolRef={waterVfxPoolRef}
+            resetNonce={resetNonce}
+          />
+          <Tracers
+            poolRef={tracerPoolRef}
+            resetNonce={resetNonce}
+          />
+          <CuttingLaserBeam
+            combatRef={combatRef}
+            craterPoolRef={craterPoolRef}
             resetNonce={resetNonce}
           />
         </group>

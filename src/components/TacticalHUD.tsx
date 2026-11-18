@@ -216,7 +216,11 @@ export function TacticalHUD({
           prev.playerHp === nextCombat.playerHp &&
           Math.abs(prev.weaponHeat - nextCombat.weaponHeat) < 0.015 &&
           prev.weaponOverheated === nextCombat.weaponOverheated &&
+          Math.abs(prev.laserEnergy - nextCombat.laserEnergy) < 0.015 &&
+          prev.laserOverheated === nextCombat.laserOverheated &&
+          prev.laserActive === nextCombat.laserActive &&
           Math.abs(prev.heavyCooldown - nextCombat.heavyCooldown) < 0.08 &&
+          Math.abs(prev.missileCooldown - nextCombat.missileCooldown) < 0.08 &&
           prev.repairCharges === nextCombat.repairCharges &&
           Math.abs(prev.repairCooldown - nextCombat.repairCooldown) < 0.2 &&
           Math.abs(prev.dashCooldown - nextCombat.dashCooldown) < 0.08 &&
@@ -258,7 +262,9 @@ export function TacticalHUD({
   }, [driveMode, paused, mechPoseRef, driveInputRef, combatTelemetryRef]);
 
   const setHoldInput = (
-    patch: Partial<Pick<MechDriveInput, 'forward' | 'turn' | 'turretTurn' | 'fire' | 'sprint'>>,
+    patch: Partial<
+      Pick<MechDriveInput, 'forward' | 'turn' | 'turretTurn' | 'fire' | 'sprint' | 'pointerLaserFire'>
+    >,
   ) => {
     Object.assign(driveInputRef.current, patch);
   };
@@ -278,6 +284,7 @@ export function TacticalHUD({
   const hpPct = Math.max(0, Math.min(100, (combatHud.playerHp / combatHud.playerMaxHp) * 100));
   const ghostHpPct = Math.max(hpPct, Math.min(100, (ghostHp / combatHud.playerMaxHp) * 100));
   const heatPct = Math.round(combatHud.weaponHeat * 100);
+  const laserPct = Math.round(combatHud.laserEnergy * 100);
   const criticalHp = driveMode && combatHud.playerHp > 0 && hpPct <= 30;
   const vignetteOpacity = driveMode
     ? Math.max(
@@ -676,6 +683,37 @@ export function TacticalHUD({
                   </div>
                 </div>
 
+                {/* Cutting Laser Capacitor Bar */}
+                <div className="mt-1">
+                  <div className="flex items-center justify-between gap-1 text-[9px] font-mono-tabular">
+                    <span className="text-slate-400">Луч-7</span>
+                    <span
+                      data-testid="laser-energy-status"
+                      className={`font-semibold ${
+                        combatHud.laserOverheated
+                          ? 'text-red-400'
+                          : combatHud.laserActive
+                            ? 'text-cyan-200'
+                            : 'text-cyan-300'
+                      }`}
+                    >
+                      {combatHud.laserOverheated ? 'РАЗРЯД' : `${laserPct}%`}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1 w-full overflow-hidden rounded-sm bg-slate-900">
+                    <div
+                      className={`h-full transition-all duration-75 ${
+                        combatHud.laserOverheated
+                          ? 'bg-red-500'
+                          : combatHud.laserActive
+                            ? 'bg-cyan-300'
+                            : 'bg-cyan-500'
+                      }`}
+                      style={{ width: `${laserPct}%` }}
+                    />
+                  </div>
+                </div>
+
                 <div className="mt-1.5 flex items-center justify-between border-t border-slate-700/60 pt-1 text-[10px] font-mono-tabular">
                   <span data-testid="targets-counter" className="font-bold text-amber-200">
                     Цели {combatHud.targetsDestroyed}/{combatHud.targetsTotal}
@@ -779,6 +817,43 @@ export function TacticalHUD({
                             : 'bg-amber-400'
                       }`}
                       style={{ width: `${heatPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Cutting Laser "Луч-7" Capacitor Bar */}
+                <div className="mt-1.5">
+                  <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono-tabular">
+                    <span className="uppercase tracking-wider text-slate-400">
+                      Резак «Луч-7»
+                    </span>
+                    <span
+                      data-testid="laser-energy-status"
+                      className={`font-semibold ${
+                        combatHud.laserOverheated
+                          ? 'text-red-400'
+                          : combatHud.laserActive
+                            ? 'text-cyan-200'
+                            : 'text-cyan-300'
+                      }`}
+                    >
+                      {combatHud.laserOverheated
+                        ? `РАЗРЯД · ${laserPct}%`
+                        : combatHud.laserActive
+                          ? `ЛУЧ · ${laserPct}%`
+                          : `${laserPct}%`}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-sm bg-slate-900">
+                    <div
+                      className={`h-full transition-all duration-75 ${
+                        combatHud.laserOverheated
+                          ? 'bg-red-500'
+                          : combatHud.laserActive
+                            ? 'bg-cyan-300'
+                            : 'bg-cyan-500'
+                      }`}
+                      style={{ width: `${laserPct}%` }}
                     />
                   </div>
                 </div>
@@ -1688,6 +1763,30 @@ export function TacticalHUD({
                       {combatHud.missileCooldown <= 0.05
                         ? 'ГОТОВ'
                         : `${combatHud.missileCooldown.toFixed(1)}с`}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    data-testid="cutting-laser-btn"
+                    onPointerDown={() => setHoldInput({ pointerLaserFire: true })}
+                    onPointerUp={() => setHoldInput({ pointerLaserFire: false })}
+                    onPointerLeave={() => setHoldInput({ pointerLaserFire: false })}
+                    onPointerCancel={() => setHoldInput({ pointerLaserFire: false })}
+                    aria-pressed={combatHud.laserActive}
+                    aria-disabled={combatHud.laserOverheated}
+                    className={`flex items-center gap-1 rounded border px-2.5 py-1.5 text-xs font-bold font-mono-tabular transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                      combatHud.laserOverheated
+                        ? 'border-red-500/60 bg-slate-900/85 text-red-300'
+                        : combatHud.laserActive
+                          ? 'border-cyan-200 bg-cyan-500/45 text-white shadow-[0_0_12px_rgba(34,211,238,0.48)]'
+                          : 'border-cyan-400/65 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/35'
+                    }`}
+                    aria-label="Удерживать плазменный резак Луч-7 (B)"
+                  >
+                    <Sun className="h-3.5 w-3.5 text-cyan-300" />
+                    <span>
+                      Луч (B) · {combatHud.laserOverheated ? 'РАЗРЯД' : `${laserPct}%`}
                     </span>
                   </button>
                   <button

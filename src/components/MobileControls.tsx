@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Crosshair, Flame, Rocket, ShieldPlus, Wind, Zap } from 'lucide-react';
+import { Crosshair, Flame, Rocket, ShieldPlus, Sun, Wind, Zap } from 'lucide-react';
 import type { CombatTelemetrySnapshot } from '../game/combatTypes';
 import type { MechDriveInput } from '../scene/objects/MechState';
 import { computeJoystickAxes, computeTouchAimDelta, computeTouchAimPitchDelta } from '../utils/touchControls';
@@ -26,6 +26,7 @@ export function MobileControls({
   const joyCenterRef = useRef({ x: 0, y: 0, radius: 44 });
 
   const firePointerRef = useRef<number | null>(null);
+  const laserPointerRef = useRef<number | null>(null);
   const aimPointerRef = useRef<number | null>(null);
   const lastAimXRef = useRef(0);
   const lastAimYRef = useRef(0);
@@ -54,7 +55,13 @@ export function MobileControls({
     driveInputRef.current.fire = false;
   };
 
+  const resetLaser = () => {
+    laserPointerRef.current = null;
+    driveInputRef.current.pointerLaserFire = false;
+  };
+
   const heatPct = Math.round(combatHud.weaponHeat * 100);
+  const laserPct = Math.round(combatHud.laserEnergy * 100);
 
   return (
     <>
@@ -385,6 +392,52 @@ export function MobileControls({
               aria-label="Удерживать точный прицел"
             >
               ПРИЦЕЛ
+            </button>
+
+            {/* Hold-to-fire Plasma Cutting Laser ("Луч-7") */}
+            <button
+              type="button"
+              tabIndex={-1}
+              data-testid="mobile-laser-btn"
+              aria-pressed={combatHud.laserActive}
+              aria-disabled={combatHud.laserOverheated}
+              aria-label="Плазменный резак Луч-7"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                laserPointerRef.current = e.pointerId;
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {
+                  // Ignore synthetic pointer capture error
+                }
+                driveInputRef.current.pointerLaserFire = true;
+              }}
+              onPointerUp={(e) => {
+                if (laserPointerRef.current === e.pointerId) {
+                  resetLaser();
+                }
+              }}
+              onPointerCancel={(e) => {
+                if (laserPointerRef.current === e.pointerId) {
+                  resetLaser();
+                }
+              }}
+              onLostPointerCapture={() => {
+                if (laserPointerRef.current !== null) {
+                  resetLaser();
+                }
+              }}
+              className={`flex min-h-[66px] min-w-[46px] flex-col items-center justify-center rounded-lg border px-1.5 font-mono-tabular text-[10px] font-bold touch-none select-none ${
+                combatHud.laserOverheated
+                  ? 'border-red-400/75 bg-red-950/70 text-red-200'
+                  : combatHud.laserActive
+                    ? 'border-cyan-200 bg-cyan-500/55 text-white shadow-[0_0_16px_rgba(34,211,238,0.5)]'
+                    : 'border-cyan-400/65 bg-[#0b131b]/90 text-cyan-100 active:bg-cyan-500/35'
+              }`}
+            >
+              <Sun className="h-3.5 w-3.5 text-cyan-300" />
+              <span className="mt-0.5 leading-none">ЛУЧ</span>
+              <span className="mt-0.5 text-[9px] text-cyan-200/85">{laserPct}%</span>
             </button>
 
             {/* Primary 37-mm Hold-to-Fire Trigger */}

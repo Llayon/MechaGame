@@ -39,6 +39,13 @@ import {
   ejectShellCasing,
   type BallisticPropPool,
 } from './debrisBallisticsPool';
+import type { ShotResolution } from '../../game/combatSimulation';
+import { combatAudio } from '../../game/combatAudio';
+import {
+  maybeSpawnRicochetTracer,
+  spawnTracer,
+  type TracerPoolState,
+} from './tracerPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -64,7 +71,6 @@ const _tmpNextPt = new THREE.Vector3();
 const _tmpP1Dyn = new THREE.Vector3();
 const _tmpP2Dyn = new THREE.Vector3();
 const _tmpExhaustPos = new THREE.Vector3();
-const _tmpLook = new THREE.Vector3();
 const _kickPos = new THREE.Vector3();
 const _kickEuler = new THREE.Euler();
 const _kickQuat = new THREE.Quaternion();
@@ -84,11 +90,12 @@ export function stepMechEffects(
   footLiftOffs: readonly MechFootImpact[],
   shots: readonly MechShot[],
   isSoftwareGl: boolean,
-  shotDistances?: readonly number[],
+  shotResolutions?: readonly ShotResolution[],
   waterVfxPool?: WaterVfxPoolState,
   groundTrailsPool?: GroundTrailsPoolState,
   muzzleFlashPool?: MuzzleFlashPoolState,
   casingsPool?: BallisticPropPool,
+  tracerPool?: TracerPoolState,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -351,25 +358,57 @@ export function stepMechEffects(
       });
     }
 
-    if (!fxParent || sim.particles.length >= 85) return;
-    const tracerMat = new THREE.MeshBasicMaterial({
-      color: 0xffe57f, transparent: true, opacity: 0.96, toneMapped: false,
-    });
-    const tracerMesh = new THREE.Mesh(rig.tracerGeom, tracerMat);
-    tracerMesh.position.copy(shot.muzzlePosition).addScaledVector(shot.direction, 1.25);
-    _tmpLook.copy(tracerMesh.position).add(shot.direction);
-    tracerMesh.lookAt(_tmpLook);
-    fxParent.add(tracerMesh);
-    const maxTracerDist = shotDistances?.[shotIdx];
-    const tracerLife =
-      maxTracerDist !== undefined
-        ? Math.max(0.03, Math.min(0.9, maxTracerDist / 68))
-        : 0.9;
-    sim.particles.push({
-      type: 'tracer', mesh: tracerMesh, mat: tracerMat,
-      vel: shot.direction.clone().multiplyScalar(68),
-      rotVel: new THREE.Vector3(), life: 0, maxLife: tracerLife, initialOpacity: 0.96,
-    });
+    if (tracerPool) {
+      const res = shotResolutions?.[shotIdx];
+      const maxTracerDist = res?.distance;
+      const tracerSpeed = 76;
+      const tracerLife =
+        maxTracerDist !== undefined
+          ? Math.max(0.028, Math.min(0.85, maxTracerDist / tracerSpeed))
+          : 0.85;
+      spawnTracer(tracerPool, {
+        x: shot.muzzlePosition.x + shot.direction.x * 1.15,
+        y: shot.muzzlePosition.y + shot.direction.y * 1.15,
+        z: shot.muzzlePosition.z + shot.direction.z * 1.15,
+        dx: shot.direction.x,
+        dy: shot.direction.y,
+        dz: shot.direction.z,
+        speed: tracerSpeed,
+        maxLife: tracerLife,
+        length: 1.85,
+        thickness: 0.092,
+        r: 1.0,
+        g: 0.88,
+        b: 0.44,
+        isRicochet: false,
+      });
+
+      if (
+        res?.hitKind === 'cover' &&
+        res.graze &&
+        res.nx !== undefined &&
+        res.ny !== undefined &&
+        res.nz !== undefined
+      ) {
+        const bounced = maybeSpawnRicochetTracer(
+          tracerPool,
+          res.hitX,
+          res.hitY,
+          res.hitZ,
+          shot.direction.x,
+          shot.direction.y,
+          shot.direction.z,
+          res.nx,
+          res.ny,
+          res.nz,
+          elapsed * 19.7 + shotIdx * 3.1,
+          true,
+        );
+        if (bounced) {
+          combatAudio.playRicochet();
+        }
+      }
+    }
   });
 
   rig.gunBarrels.forEach((b) => {
@@ -484,15 +523,10 @@ export function stepMechEffects(
         continue;
       }
       const t = p.life / p.maxLife;
-      if (p.type === 'tracer') {
-        p.mesh.position.addScaledVector(p.vel, dt);
-        (p.mat as THREE.MeshBasicMaterial).opacity = (1 - t) * p.initialOpacity;
-      } else {
-        p.mesh.position.addScaledVector(p.vel, dt);
-        const s = (p.type === 'smoke' ? 0.75 : 0.9) + t * (p.type === 'dust' ? 2.2 : 1.8);
-        p.mesh.scale.setScalar(s);
-        (p.mat as THREE.MeshBasicMaterial).opacity = (1 - t) * p.initialOpacity;
-      }
+      p.mesh.position.addScaledVector(p.vel, dt);
+      const s = (p.type === 'smoke' ? 0.75 : 0.9) + t * (p.type === 'dust' ? 2.2 : 1.8);
+      p.mesh.scale.setScalar(s);
+      (p.mat as THREE.MeshBasicMaterial).opacity = (1 - t) * p.initialOpacity;
     }
 
     // Step and upload parabolic InstancedMesh gravel kickup transforms
