@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "height": 0.48,
+  "metersPerUnit": 3.75,
+  "forward": "+Z",
+  "clips": [
+    {
+      "name": "idle",
+      "duration": 2.4,
+      "loop": true,
+      "movementSpeed": 0
+    },
+    {
+      "name": "walk",
+      "duration": 0.8333333333333334,
+      "loop": true,
+      "movementSpeed": 0.36
+    },
+    {
+      "name": "run",
+      "duration": 0.7,
+      "loop": true,
+      "movementSpeed": 0.8533333333333334
+    },
+    {
+      "name": "crouch",
+      "duration": 2.0,
+      "loop": true,
+      "movementSpeed": 0
+    },
+    {
+      "name": "crouchWalk",
+      "duration": 1.2,
+      "loop": true,
+      "movementSpeed": 0.21333333333333335
+    },
+    {
+      "name": "jump",
+      "duration": 0.7,
+      "loop": false,
+      "movementSpeed": 0
+    }
+  ],
+  "lods": [
+    {
+      "level": 0,
+      "glb": "infantry-demo-lod0.glb",
+      "bytes": 2754428,
+      "bones": 14,
+      "triangles": 3999,
+      "repairedTangents": 0,
+      "sourceSha256": "ae35bc9fec393ed8bfff9d0194a7e36232a0de638ea7d92514291ce211f06e68"
+    },
+    {
+      "level": 1,
+      "glb": "infantry-demo-lod1.glb",
+      "bytes": 993712,
+      "bones": 14,
+      "triangles": 1999,
+      "repairedTangents": 1,
+      "sourceSha256": "4d6d9e57043b9e6b91adbe32865acc8abf193972b24c2233ccffe1a14fa38784"
+    },
+    {
+      "level": 2,
+      "glb": "infantry-demo-lod2.glb",
+      "bytes": 419856,
+      "bones": 14,
+      "triangles": 999,
+      "repairedTangents": 0,
+      "sourceSha256": "79a8ceb05f8754ee0afa28d01b78a7e1a806dac7bfc988168c32888a58ae1e75"
+    }
+  ],
+  "notes": [
+    "Single controlled hero uses one active AnimationMixer; no crowd CPU skeleton animation",
+    "Source static LODs and the original Tripo lab are unchanged",
+    "Rigid armor cores with narrow joint blends; motion is a demo study, not final combat animation"
+  ]
+}
