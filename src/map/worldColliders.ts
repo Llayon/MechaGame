@@ -42,6 +42,8 @@ import {
 } from './worldStructures';
 import { getTitanWreckColliders } from './titanWrecks';
 import { getFloodedRuinColliders } from './floodedRuins';
+import { createRockyLedgeShotMesh } from './rockyFlankLedge';
+import type { Mesh } from 'three';
 
 // Effective XZ bounding radius for Soviet Object 316 at MECH_SCALE = 0.8 (~4.3 m)
 export const MECH_COLLISION_RADIUS = 1.15;
@@ -65,6 +67,7 @@ export interface CircleCollider {
   cx: number;
   cz: number;
   r: number;
+  shotMesh?: Mesh;
   minY?: number;
   maxY?: number;
   tag: ColliderTag;
@@ -625,7 +628,10 @@ function buildWorldColliders(): WorldCollider[] {
   }
 
   for (const ledge of [...RIVER_BEND_LEDGES, ...HQ_FOREFIELD_ROCK_RIDGES]) {
-    list.push(makeCircle(ledge.pos[0], ledge.pos[1], 4.2 * ledge.scale, 'rock'));
+    const [x, z] = ledge.pos;
+    const collider = makeCircle(x, z, 4.2 * ledge.scale, 'rock');
+    collider.shotMesh = createRockyLedgeShotMesh(x, z, ledge.rotY, ledge.scale);
+    list.push(collider);
   }
   for (const convoy of HQ_FOREFIELD_CONVOYS) {
     list.push(makeBox(convoy.pos[0], convoy.pos[1], 8.6 * convoy.scale, 6.4 * convoy.scale, convoy.rotY, 'wreck'));

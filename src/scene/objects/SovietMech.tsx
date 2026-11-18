@@ -16,7 +16,7 @@ import { createMechState, type MechDriveInput } from './MechState';
 import { resolveMechControl } from './MechController';
 import { stepMechMovement } from './MechMovementSystem';
 import { stepMechIK } from './MechIKSystem';
-import { stepWeaponSystem } from './WeaponSystem';
+import { getMainGunRay, stepWeaponSystem } from './WeaponSystem';
 import { stepMechEffects } from './MechEffects';
 import type { WaterVfxPoolState } from './waterVfxPool';
 import type { GroundTrailsPoolState } from './groundTrailsPool';
@@ -46,7 +46,7 @@ import {
 } from '../../game/combatSimulation';
 import type { CombatSimulationState, CombatTelemetrySnapshot } from '../../game/combatTypes';
 import { combatAudio } from '../../game/combatAudio';
-import { predictPhysicalShotEndpoint } from '../../game/weaponReticle';
+import { predictPhysicalShotEndpoint, resolveGunSightPoint } from '../../game/weaponReticle';
 
 import { resetCombatAim, updateCombatAim, approachTurretWorldYaw } from '../../game/combatAim';
 import type { CombatAimState } from '../../game/combatAim';
@@ -55,10 +55,10 @@ const _heavyMuzzleL = new THREE.Vector3();
 const _heavyMuzzleR = new THREE.Vector3();
 const _heavyOrigin = new THREE.Vector3();
 const _heavyDir = new THREE.Vector3();
-const _heavyQuat = new THREE.Quaternion();
-const _aimMuzzle = new THREE.Vector3();
-const _aimDir = new THREE.Vector3();
-const _aimQuat = new THREE.Quaternion();
+const _sightPoint = new THREE.Vector3();
+const _markerPoint = new THREE.Vector3();
+const _reticleOrigin = new THREE.Vector3();
+const _reticleAxis = new THREE.Vector3();
 
 export type { MechDriveInput } from './MechState';
 export interface SovietMechProps {
@@ -103,7 +103,7 @@ export function SovietMech({
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
-  const { gl, invalidate } = useThree();
+  const { gl, camera, invalidate } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const containerRef = useRef<THREE.Group>(null);
   const worldFxRef = useRef<THREE.Group>(null);
@@ -131,7 +131,6 @@ export function SovietMech({
   const simRef = useRef(createMechState());
   const prevResetNonceRef = useRef(resetNonce);
   const wasLocomotingRef = useRef(false);
-  const reticleTickRef = useRef(0);
 
   // Dispose geometries & leftover particles on unmount
   useEffect(() => {
@@ -231,7 +230,7 @@ export function SovietMech({
   // Battle view starts aligned to chassis; reset after replay or new drive session.
   useEffect(() => {
     if (driveMode) resetCombatAim(aimRef.current, mechPoseRef.current.yaw);
-    else { aimRef.current.precise = false; aimRef.current.reticleVisible = false; aimRef.current.muzzleDirectionValid = false; }
+    else { aimRef.current.precise = false; aimRef.current.reticleVisible = false; aimRef.current.gunSightValid = false; }
   }, [driveMode, resetNonce, aimRef, mechPoseRef]);
 
   // Reset initial pose cleanly on mount
@@ -275,12 +274,12 @@ export function SovietMech({
         aimRef.current.yaw = sim.yaw;
         aimRef.current.elevation = -0.025;
       }
+      aimRef.current.precise = !!driveInputRef.current.precisionAim;
       updateCombatAim(aimRef.current,
         driveInputRef.current.turretAimDelta ?? 0,
         driveInputRef.current.gunAimDelta ?? 0);
       driveInputRef.current.turretAimDelta = 0;
       driveInputRef.current.gunAimDelta = 0;
-      aimRef.current.precise = !!driveInputRef.current.precisionAim;
     } else {
       driveInputRef.current.dash = false;
       driveInputRef.current.centerTurret = false;
@@ -339,32 +338,34 @@ export function SovietMech({
       driveMode && canControl && !paused,
       Math.min(1, Math.abs(control.targetSpeed) / 3.45),
     );
-    const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch);
-    // Record the ACTUAL gun direction every frame. Secondary HUD indicator
-    // projects this angular direction from the camera, not the hit-point
-    // distance: transitions between enemy/cover/range cannot teleport it.
+    const sight = canControl ? resolveGunSightPoint(combat, camera.position,
+      sim.yaw + sim.turretYaw, -motion.gPitch, camera.position.distanceTo(rig.root.position), _sightPoint) : undefined;
+    const shots = stepWeaponSystem(rig, dt, activeFire, motion.gPitch, sight);
     if (canControl && rig.gunBarrels.length > 0) {
-      const muzzle = rig.gunBarrels[0].muzzleAnchor;
-      muzzle.getWorldQuaternion(_aimQuat);
-      _aimDir.set(0, 0, 1).applyQuaternion(_aimQuat).normalize();
-      const viewAim = aimRef.current;
-      viewAim.muzzleDirectionX = _aimDir.x;
-      viewAim.muzzleDirectionY = _aimDir.y;
-      viewAim.muzzleDirectionZ = _aimDir.z;
-      viewAim.muzzleDirectionValid = true;
-      // Contact classification is still computed from the real muzzle origin.
-      // It affects target feedback only, never visual indicator position.
-      if (++reticleTickRef.current % 2 === 0) {
-        muzzle.getWorldPosition(_aimMuzzle);
-        const predicted = predictPhysicalShotEndpoint(combat,
-          _aimMuzzle.x, _aimMuzzle.y, _aimMuzzle.z,
-          _aimDir.x, _aimDir.y, _aimDir.z);
-        viewAim.reticleHit = predicted.hit;
-        viewAim.reticleTargetId = predicted.targetId ?? null;
-        viewAim.infantryRole = predicted.infantryRole;
+      getMainGunRay(rig, _heavyOrigin, _heavyDir, sight);
+      _reticleOrigin.copy(_heavyOrigin);
+      _reticleAxis.copy(_heavyDir);
+      if (!control.isLaserFiring && !driveInputRef.current.heavyFire) {
+        // One shoulder can be behind cover while the other has a clear shot.
+        const barrel = shots.length ? rig.gunBarrels[shots[0].barrelIndex] :
+          rig.gunBarrels.reduce((next, b) => (1 - b.fireAccum) / b.rateHz < (1 - next.fireAccum) / next.rateHz ? b : next);
+        barrel.muzzleAnchor.getWorldPosition(_reticleOrigin);
+        barrel.muzzleAnchor.getWorldDirection(_reticleAxis);
       }
+      const predicted = predictPhysicalShotEndpoint(combat, _reticleOrigin.x, _reticleOrigin.y, _reticleOrigin.z,
+        _reticleAxis.x, _reticleAxis.y, _reticleAxis.z);
+      const markerRange = Math.min(predicted.distance, _reticleOrigin.distanceTo(_sightPoint));
+      _markerPoint.copy(_reticleOrigin).addScaledVector(_reticleAxis, markerRange);
+      const viewAim = aimRef.current;
+      viewAim.gunSightX = _markerPoint.x;
+      viewAim.gunSightY = _markerPoint.y;
+      viewAim.gunSightZ = _markerPoint.z;
+      viewAim.gunSightValid = true;
+      viewAim.reticleHit = predicted.hit;
+      viewAim.reticleTargetId = predicted.targetId ?? null;
+      viewAim.infantryRole = predicted.infantryRole;
     } else {
-      aimRef.current.muzzleDirectionValid = false;
+      aimRef.current.gunSightValid = false;
       aimRef.current.reticleVisible = false;
       aimRef.current.reticleHit = 'range';
       aimRef.current.reticleTargetId = null;
@@ -377,15 +378,6 @@ export function SovietMech({
         driveInputRef.current.heavyFire = false;
         const barrels = rig.gunBarrels;
         if (barrels.length > 0) {
-          barrels[0].muzzleAnchor.getWorldPosition(_heavyMuzzleL);
-          if (barrels.length > 1) {
-            barrels[1].muzzleAnchor.getWorldPosition(_heavyMuzzleR);
-            _heavyOrigin.copy(_heavyMuzzleL).add(_heavyMuzzleR).multiplyScalar(0.5);
-          } else {
-            _heavyOrigin.copy(_heavyMuzzleL);
-          }
-          barrels[0].muzzleAnchor.getWorldQuaternion(_heavyQuat);
-          _heavyDir.set(0, 0, 1).applyQuaternion(_heavyQuat).normalize();
           const heavyRes = triggerHeavyCannonShot(
             combat,
             _heavyOrigin.x,
@@ -445,8 +437,6 @@ export function SovietMech({
         if (podL && podR && barrels.length > 0) {
           podL.getWorldPosition(_heavyMuzzleL);
           podR.getWorldPosition(_heavyMuzzleR);
-          barrels[0].muzzleAnchor.getWorldQuaternion(_heavyQuat);
-          _heavyDir.set(0, 0, 1).applyQuaternion(_heavyQuat).normalize();
           const launched = triggerMissileSalvo(
             combat,
             { x: _heavyMuzzleL.x, y: _heavyMuzzleL.y, z: _heavyMuzzleL.z },
@@ -522,16 +512,6 @@ export function SovietMech({
     }
 
     if (canControl && rig.gunBarrels.length > 0) {
-      const barrels = rig.gunBarrels;
-      barrels[0].muzzleAnchor.getWorldPosition(_heavyMuzzleL);
-      if (barrels.length > 1) {
-        barrels[1].muzzleAnchor.getWorldPosition(_heavyMuzzleR);
-        _heavyOrigin.copy(_heavyMuzzleL).add(_heavyMuzzleR).multiplyScalar(0.5);
-      } else {
-        _heavyOrigin.copy(_heavyMuzzleL);
-      }
-      barrels[0].muzzleAnchor.getWorldQuaternion(_heavyQuat);
-      _heavyDir.set(0, 0, 1).applyQuaternion(_heavyQuat).normalize();
       const activeBeam = stepCuttingLaser(
         combat,
         _heavyOrigin.x,

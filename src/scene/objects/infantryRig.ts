@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import type { InfantrySoldier } from '../../game/infantrySkirmishes';
+import type { InfantryPose } from '../../game/infantryPose';
 
 type Clip = { name: string; offset: number; frames: number; duration: number; muzzleTime?: number };
 type Atlas = {
@@ -114,7 +115,7 @@ export async function loadInfantryRig(capacity: number) {
       if (!clip) throw Error('Missing infantry animation: ' + name);
       return clip;
     };
-    const idle = namedClip('idle'), run = namedClip('run'), fire = namedClip('fire'), crouch = namedClip('crouch');
+    const clips = { idle: namedClip('idle'), run: namedClip('run'), fire: namedClip('fire'), crouch: namedClip('crouch') };
     const boneOrder = body.skeleton.bones.map(bone => atlas.bones.indexOf(bone.name));
     const gltfHand = boneOrder.indexOf(hand);
     if (gltfHand < 0 || boneOrder.includes(-1)) throw Error('Infantry skeleton differs from baked atlas');
@@ -153,11 +154,10 @@ export async function loadInfantryRig(capacity: number) {
     root.add(bodies, rifles);
     return {
       root,
-      set(i: number, soldier: InfantrySoldier, elapsed: number, matrix: THREE.Matrix4, color: THREE.Color) {
+      set(i: number, soldier: InfantrySoldier, pose: InfantryPose, elapsed: number, matrix: THREE.Matrix4, color: THREE.Color) {
         const sinceShot = elapsed - soldier.lastShotAt;
-        const firing = sinceShot >= 0 && sinceShot < fire.duration - (fire.muzzleTime ?? 0);
-        const clip = soldier.moving ? run : firing ? fire : soldier.inCover ? crouch : idle;
-        const time = clip === fire ? sinceShot + (fire.muzzleTime ?? 0) : (elapsed + soldier.id * .317) % clip.duration;
+        const clip = clips[pose];
+        const time = pose === 'fire' ? sinceShot + (clip.muzzleTime ?? 0) : (elapsed + soldier.id * .317) % clip.duration;
         frames.setX(i, clip.offset + Math.min(clip.frames - 1, Math.floor(time / clip.duration * (clip.frames - 1))));
         bodies.setMatrixAt(i, matrix);
         bodies.setColorAt(i, color);

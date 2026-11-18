@@ -1,13 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Camera-relative angular representation of the real physical barrel.
- *
- * A projected hit-point is discontinuous when the same shot ray switches from
- * a distant enemy to nearby terrain. By projecting only the muzzle DIRECTION
- * from the camera, we keep the marker independent of cover/target depth and
- * of the barrel's bouncing translation during walking. This is an angular
- * indicator, NOT a pixel-exact world-space hit point at all depths.
+ * Project a camera-to-sight direction into the HUD, clipping rays outside the view.
  */
 export function projectMuzzleDirection(
   camera: THREE.Camera,

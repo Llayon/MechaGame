@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { CombatSimulationState } from '../../game/combatTypes';
 import type { InfantrySkirmishes } from '../../game/infantrySkirmishes';
+import { getInfantryPose } from '../../game/infantryPose';
 import { useSceneSimulation } from '../SceneSimulation';
 import { loadInfantryRig } from './infantryRig';
 
@@ -61,6 +62,7 @@ function createCrowd(capacity: number) {
   markers.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   const matrix = new THREE.Matrix4();
   const markerScale = new THREE.Vector3();
+  const crouchProxy = new THREE.Matrix4().makeScale(1, 2 / 3, 1).setPosition(-.025, 0, .05);
   let rig: Awaited<ReturnType<typeof loadInfantryRig>> | undefined;
   let disposed = false;
   group.add(proxies, tracers, markers);
@@ -80,9 +82,11 @@ function createCrowd(capacity: number) {
         const distanceSq = (camera.position.x - x) ** 2 + (camera.position.y - y) ** 2 + (camera.position.z - z) ** 2;
         const ally = soldier.side === 'friendly';
         const color = ally ? friendly : hostile;
+        const pose = getInfantryPose(soldier, state.elapsed);
         matrix.makeRotationY(yaw).setPosition(x, y, z);
-        if (rig && distanceSq < modelDistance ** 2) rig.set(nearCount++, soldier, state.elapsed, matrix, color);
+        if (rig && distanceSq < modelDistance ** 2) rig.set(nearCount++, soldier, pose, state.elapsed, matrix, color);
         else {
+          if (pose === 'crouch') matrix.multiply(crouchProxy);
           proxies.setMatrixAt(farCount, matrix);
           proxies.setColorAt(farCount++, color);
         }

@@ -50,12 +50,14 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
             (maybePromise as Promise<unknown>).catch(() => {});
           }
         } catch {
-          // Pointer lock may be blocked in sandboxed iframes; keyboard & drag aim remain active.
+          // The held-button drag path also works in embedded previews that reject pointer lock.
         }
       }
     };
     const onMouseMove = (event: MouseEvent) => {
-      if (!document.pointerLockElement) return;
+      const draggingOnScene = (input.precisionAim && (event.buttons & 2) !== 0) ||
+        (input.pointerFire && (event.buttons & 1) !== 0);
+      if (!document.pointerLockElement && !draggingOnScene) return;
       const { yaw, elevation } = mouseMovementToAimDelta(event.movementX, event.movementY);
       input.turretAimDelta = (input.turretAimDelta ?? 0) + yaw;
       input.gunAimDelta = (input.gunAimDelta ?? 0) + elevation;
@@ -106,7 +108,7 @@ export function DesktopCombatInput({driveMode, paused, gameOver, useTouchControl
   return showHint ? (
     <div data-testid="desktop-aim-hint" aria-live="polite"
       className="pointer-events-none fixed bottom-24 left-1/2 z-[15] w-max max-w-[94vw] -translate-x-1/2 rounded-md border border-amber-400/35 bg-[#09131d]/85 px-3 py-2 text-center text-[11px] font-medium text-amber-100 shadow-lg">
-      Клик по сцене — управление мышью · ЛКМ огонь · ПКМ точный прицел · Esc курсор
+      ЛКМ — огонь · Удерживайте ПКМ и двигайте мышь для точного прицеливания · Esc — курсор
     </div>
   ) : null;
 }

@@ -117,12 +117,9 @@ export function CombatCamera({ active, paused, resetNonce, aimRef, mechPoseRef, 
       perspective.fov = nextFov;
       perspective.updateProjectionMatrix();
     }
-    // The camera has just been positioned and oriented. Project the physical
-    // muzzle's DIRECTION, not a hitpoint at a changing depth. The HUD will
-    // smooth this secondary indicator; the main crosshair stays at screen center.
-    if (aim.muzzleDirectionValid) {
-      muzzleDirection.current.set(
-        aim.muzzleDirectionX, aim.muzzleDirectionY, aim.muzzleDirectionZ);
+    // Use the final camera pose to show where the guns are pointing at the sighted range.
+    if (aim.gunSightValid) {
+      muzzleDirection.current.set(aim.gunSightX, aim.gunSightY, aim.gunSightZ).sub(camera.position);
       const projectedGun = projectMuzzleDirection(camera, muzzleDirection.current);
       if (projectedGun) {
         aim.reticleX = projectedGun.x;
