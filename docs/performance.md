@@ -51,8 +51,14 @@ population. Shadow and contact representations have their own draw calls.
 
 Ground and mountain tiles cache vertex data and select an index range at run
 time. Trees keep their simulation ID when the mesh level changes. Patrol squads
-use one 157,248-byte bone matrix atlas for all four infantry meshes. A vertex
-animation texture would need a separate mapping for each mesh topology.
+use one 157,248-byte bone matrix atlas for all four infantry meshes. Each
+of the 364 sampled poses stores three RGBA16F texels for each of 18 bones.
+A position-only vertex animation texture at the same precision and sample rate
+would use 21,796,320 bytes across 3,857 + 2,263 + 1,365 vertices. The last two
+levels share vertex IDs and could share a VAT. A second RGBA16F texel per vertex
+for animated normals would double that estimate. These figures compare animation
+storage. Frame times below measure the shipped bone-matrix implementation.
+
 `scripts/infantry/bake-crowd.mjs` rebuilds the assets from the Git revision
 recorded in `public/assets/crowd/atlas.json`. The source revision must be present
 in the local Git object database. Regenerate the patrol lanes with
@@ -66,6 +72,25 @@ Build and start a production preview, then run
 combat spawn, warms the scene for five seconds and captures twenty seconds at
 1365 × 768, DPR 1. It checks the renderer and records its name in the JSON report.
 Use `BENCH_OUTPUT` to keep separate results for two revisions.
+
+### Reference capture on Radeon 780M
+
+Both production builds used Chrome on Windows, Direct3D 11, the High preset,
+dusk lighting, a 2048 shadow map and a stationary camera at the combat spawn.
+Adaptive quality was off. Each sample covered 20 seconds after warm-up.
+
+| Metric | GitHub main `d3dc19f` | World LOD `22acde5` |
+| --- | ---: | ---: |
+| Soldiers in the mission | 0 | 200 |
+| Mean FPS | 20.4 | 54.1 |
+| 95th percentile frame interval (ms) | 56 | 22 |
+| Mean draw calls per frame, both passes | 2,261 | 806 |
+| Mean triangles per frame, both passes | 1,831,585 | 626,871 |
+
+The frame counters include the animated infantry, their shadows and the rest
+of the world. This snapshot covers the spawn view. The 60 FPS desktop target,
+400–700 draw-call budget and sustained physical iPhone performance require
+separate checks on a combat route.
 
 ## Reproducible CI smoke/relative benchmark
 
