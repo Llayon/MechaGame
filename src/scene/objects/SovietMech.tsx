@@ -31,7 +31,6 @@ import {
   type BallisticPropPool,
 } from './debrisBallisticsPool';
 import {
-  resetTracerPool,
   type TracerPoolState,
 } from './tracerPool';
 import {
@@ -163,7 +162,6 @@ export function SovietMech({
       rig.kickupMesh.setMatrixAt(i, zeroMat);
     }
     rig.kickupMesh.instanceMatrix.needsUpdate = true;
-    if (tracerPoolRef?.current) resetTracerPool(tracerPoolRef.current);
 
     rig.root.position.set(MECH_SPAWN.x, MECH_SPAWN.y, MECH_SPAWN.z);
     rig.root.rotation.set(0, MECH_SPAWN.yaw, 0);
@@ -183,7 +181,7 @@ export function SovietMech({
     });
 
     invalidate();
-  }, [resetNonce, rig, mats, tracerPoolRef, invalidate]);
+  }, [resetNonce, rig, mats, invalidate]);
 
   // Never let recorded footsteps from the previous movement/session leak into overview.
   useEffect(() => {
