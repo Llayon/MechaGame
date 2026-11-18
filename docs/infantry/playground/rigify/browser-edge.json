@@ -1,10 +1,10 @@
 {
   "passed": true,
-  "createdAt": "2026-11-18T08:00:20.011Z",
+  "createdAt": "2026-11-18T09:03:17.728Z",
   "browser": "Edge",
   "software": false,
-  "maximumStandardVsTwistVertexComponentDelta": 0.013692871230240475,
-  "maximumRestoredVsOriginalVertexComponentDelta": 0.0000012273998876571879,
+  "maximumStandardVsTwistVertexComponentDelta": 0.01369256467401806,
+  "maximumRestoredVsOriginalVertexComponentDelta": 9.678344541907968e-7,
   "results": [
     {
       "ready": true,
@@ -26,7 +26,9 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0006453613303305458,
+      "maximumLocalY": 0.4756645293456741
     },
     {
       "ready": true,
@@ -48,7 +50,9 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.0002900313311182262,
+      "maximumLocalY": 0.4807378753802359
     },
     {
       "ready": true,
@@ -70,7 +74,9 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.00013510809634277346,
+      "maximumLocalY": 0.442825429102384
     },
     {
       "ready": true,
@@ -82,7 +88,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "rigify",
@@ -92,7 +98,9 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -2.640330740814878e-7,
+      "maximumLocalY": 0.3164940250986207
     },
     {
       "ready": true,
@@ -104,7 +112,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "rigify",
@@ -114,7 +122,9 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -7.30366529692883e-7,
+      "maximumLocalY": 0.3242265036127625
     },
     {
       "ready": true,
@@ -126,7 +136,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "rigify",
@@ -136,7 +146,33 @@
       "time": 0,
       "geometries": 40,
       "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.04728143408858807,
+      "maximumLocalY": 0.3969528425859543
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigify",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -0.0000013610826771551232,
+      "maximumLocalY": 0.36968167276265484
     },
     {
       "ready": true,
@@ -158,7 +194,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.000823984340198886,
+      "maximumLocalY": 0.4754950420158825
     },
     {
       "ready": true,
@@ -180,7 +218,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.00040032095612277385,
+      "maximumLocalY": 0.48098755211981314
     },
     {
       "ready": true,
@@ -202,7 +242,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0003952624579261691,
+      "maximumLocalY": 0.4432785600334564
     },
     {
       "ready": true,
@@ -214,7 +256,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "rigify",
@@ -224,7 +266,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.000450310487959564,
+      "maximumLocalY": 0.31695897599329936
     },
     {
       "ready": true,
@@ -236,7 +280,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "rigify",
@@ -246,7 +290,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.0004399901298660913,
+      "maximumLocalY": 0.325068022514216
     },
     {
       "ready": true,
@@ -258,7 +304,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "rigify",
@@ -268,7 +314,33 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.04717601187380458,
+      "maximumLocalY": 0.3968033387189608
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigify",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.00009060706992024964,
+      "maximumLocalY": 0.3702732714431848
     },
     {
       "ready": true,
@@ -287,10 +359,12 @@
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0007004281771096105,
+      "maximumLocalY": 0.4747437835633817
     },
     {
       "ready": true,
@@ -309,10 +383,12 @@
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.0007313252554417976,
+      "maximumLocalY": 0.48130527001220097
     },
     {
       "ready": true,
@@ -331,10 +407,12 @@
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0007499759616098569,
+      "maximumLocalY": 0.44359497679776283
     },
     {
       "ready": true,
@@ -346,17 +424,19 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "rigify",
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.002020345045528244,
+      "maximumLocalY": 0.318358681364281
     },
     {
       "ready": true,
@@ -368,17 +448,19 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "rigify",
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.0004939972999531625,
+      "maximumLocalY": 0.32516014536771637
     },
     {
       "ready": true,
@@ -390,17 +472,43 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "rigify",
       "phase": 0.4,
       "triangles": 999,
       "bones": 18,
-      "time": 0.14290000000013972,
+      "time": 0.13560000000055877,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.046051105064050225,
+      "maximumLocalY": 0.3984835350103546
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigify",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0.13560000000055877,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0009986428938420638,
+      "maximumLocalY": 0.37016371187068026
     },
     {
       "ready": true,
@@ -419,406 +527,516 @@
       "phase": 0.4,
       "triangles": 3999,
       "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.0006453404353792172,
+      "maximumLocalY": 0.4756645293456741
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "walk",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -0.0002868956152538571,
+      "maximumLocalY": 0.4807378753802359
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "run",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.00019346078782748961,
+      "maximumLocalY": 0.442825429102384
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouch",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -2.3721270592594323e-7,
+      "maximumLocalY": 0.3164940250986207
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouchWalk",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -8.980554348919645e-7,
+      "maximumLocalY": 0.3242265036127625
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "jump",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.047281143393100654,
+      "maximumLocalY": 0.3969528425859543
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -0.0000013669283085229744,
+      "maximumLocalY": 0.36968167276265484
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.0008239767856569717,
+      "maximumLocalY": 0.4754950420158825
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "walk",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.00039718831083901396,
+      "maximumLocalY": 0.48098755211981314
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "run",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.0004225846610899774,
+      "maximumLocalY": 0.4432785600334564
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouch",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0004502816516368281,
+      "maximumLocalY": 0.31695897599329936
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouchWalk",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.00044015934729365117,
+      "maximumLocalY": 0.325068022514216
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "jump",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.04717572140999414,
+      "maximumLocalY": 0.3968033387189608
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.00009061293042766927,
+      "maximumLocalY": 0.3702732714431848
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.0007004266633876624,
+      "maximumLocalY": 0.4747437835633817
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "walk",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0007279296635383375,
+      "maximumLocalY": 0.48130527001220097
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "run",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.0008260914895562937,
+      "maximumLocalY": 0.44359497679776283
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouch",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.002020314667985971,
+      "maximumLocalY": 0.318358681364281
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "crouchWalk",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0004941711242273036,
+      "maximumLocalY": 0.32516014536771637
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "jump",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": 0.0460508013669957,
+      "maximumLocalY": 0.3984835350103546
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "rigifyTwist",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 18,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0009986516007003815,
+      "maximumLocalY": 0.37016371187068026
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "mixamo",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 14,
       "time": 0,
       "geometries": 39,
       "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "walk",
-      "animationSource": "mixamo",
-      "lod": 0,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 39,
-      "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "run",
-      "animationSource": "mixamo",
-      "lod": 0,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 39,
-      "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouch",
-      "animationSource": "prototype",
-      "lod": 0,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 39,
-      "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouchWalk",
-      "animationSource": "prototype",
-      "lod": 0,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 39,
-      "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "jump",
-      "animationSource": "prototype",
-      "lod": 0,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 39,
-      "textures": 8,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "idle",
-      "animationSource": "mixamo",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "walk",
-      "animationSource": "mixamo",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "run",
-      "animationSource": "mixamo",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouch",
-      "animationSource": "prototype",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouchWalk",
-      "animationSource": "prototype",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "jump",
-      "animationSource": "prototype",
-      "lod": 1,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 1999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "idle",
-      "animationSource": "mixamo",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "walk",
-      "animationSource": "mixamo",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "run",
-      "animationSource": "mixamo",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouch",
-      "animationSource": "prototype",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "crouchWalk",
-      "animationSource": "prototype",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "jump",
-      "animationSource": "prototype",
-      "lod": 2,
-      "skin": "original",
-      "rig": "rigifyTwist",
-      "phase": 0.4,
-      "triangles": 999,
-      "bones": 18,
-      "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
-    },
-    {
-      "ready": true,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "speedMeters": 0,
-      "grounded": true,
-      "animation": "idle",
-      "animationSource": "mixamo",
-      "lod": 0,
-      "skin": "original",
-      "rig": "mixamo",
-      "phase": 0.4,
-      "triangles": 3999,
-      "bones": 14,
-      "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0006453680140421469,
+      "maximumLocalY": 0.47566458576481124
     },
     {
       "ready": true,
@@ -838,9 +1056,11 @@
       "triangles": 3999,
       "bones": 14,
       "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": -0.00028696903928773776,
+      "maximumLocalY": 0.4807377886985307
     },
     {
       "ready": true,
@@ -860,9 +1080,11 @@
       "triangles": 3999,
       "bones": 14,
       "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": 0.0001931954593724065,
+      "maximumLocalY": 0.44282547358375246
     },
     {
       "ready": true,
@@ -874,7 +1096,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "mixamo",
@@ -882,9 +1104,11 @@
       "triangles": 3999,
       "bones": 14,
       "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": -1.672747902484173e-7,
+      "maximumLocalY": 0.3164939191018747
     },
     {
       "ready": true,
@@ -896,7 +1120,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "mixamo",
@@ -904,9 +1128,11 @@
       "triangles": 3999,
       "bones": 14,
       "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": -4.935986313847618e-7,
+      "maximumLocalY": 0.32422646541300304
     },
     {
       "ready": true,
@@ -918,17 +1144,43 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 0,
       "skin": "original",
       "rig": "mixamo",
-      "phase": 0.39999999999999997,
+      "phase": 0.4,
       "triangles": 3999,
       "bones": 14,
       "time": 0,
-      "geometries": 40,
-      "textures": 12,
-      "missionMounted": false
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": 0.0472813132941757,
+      "maximumLocalY": 0.3969528501810593
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 0,
+      "skin": "original",
+      "rig": "mixamo",
+      "phase": 0.4,
+      "triangles": 3999,
+      "bones": 14,
+      "time": 0,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false,
+      "minimumLocalY": -0.0000013622596233969775,
+      "maximumLocalY": 0.3696816336233858
     },
     {
       "ready": true,
@@ -948,9 +1200,11 @@
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.0008239852337098403,
+      "maximumLocalY": 0.47549509844350035
     },
     {
       "ready": true,
@@ -970,9 +1224,11 @@
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -0.0002808438885519293,
+      "maximumLocalY": 0.4811039617034621
     },
     {
       "ready": true,
@@ -992,9 +1248,11 @@
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.00042243291577895,
+      "maximumLocalY": 0.44327860390520135
     },
     {
       "ready": true,
@@ -1006,7 +1264,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "mixamo",
@@ -1014,9 +1272,11 @@
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -1.736223767707934e-7,
+      "maximumLocalY": 0.3174089918829793
     },
     {
       "ready": true,
@@ -1028,7 +1288,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "mixamo",
@@ -1036,9 +1296,11 @@
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -4.777551760627718e-7,
+      "maximumLocalY": 0.32550722642715013
     },
     {
       "ready": true,
@@ -1050,17 +1312,43 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 1,
       "skin": "original",
       "rig": "mixamo",
-      "phase": 0.39999999999999997,
+      "phase": 0.4,
       "triangles": 1999,
       "bones": 14,
       "time": 0,
-      "geometries": 41,
-      "textures": 16,
-      "missionMounted": false
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": 0.04717591157348148,
+      "maximumLocalY": 0.3968033725143636
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 1,
+      "skin": "original",
+      "rig": "mixamo",
+      "phase": 0.4,
+      "triangles": 1999,
+      "bones": 14,
+      "time": 0,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false,
+      "minimumLocalY": -0.0000013751383624444058,
+      "maximumLocalY": 0.3703624577153339
     },
     {
       "ready": true,
@@ -1082,7 +1370,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0007004264820670433,
+      "maximumLocalY": 0.4747438400685489
     },
     {
       "ready": true,
@@ -1104,7 +1394,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -0.00028743142223111584,
+      "maximumLocalY": 0.4817459491052655
     },
     {
       "ready": true,
@@ -1126,7 +1418,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.0008261217132308037,
+      "maximumLocalY": 0.44359502076861396
     },
     {
       "ready": true,
@@ -1138,7 +1432,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouch",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "mixamo",
@@ -1148,7 +1442,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -1.7338478419670622e-7,
+      "maximumLocalY": 0.3203787075676487
     },
     {
       "ready": true,
@@ -1160,7 +1456,7 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "crouchWalk",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "mixamo",
@@ -1170,7 +1466,9 @@
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": -5.404851678748879e-7,
+      "maximumLocalY": 0.3256533295377668
     },
     {
       "ready": true,
@@ -1182,17 +1480,43 @@
       "speedMeters": 0,
       "grounded": true,
       "animation": "jump",
-      "animationSource": "prototype",
+      "animationSource": "mixamo",
       "lod": 2,
       "skin": "original",
       "rig": "mixamo",
-      "phase": 0.39999999999999997,
+      "phase": 0.4,
       "triangles": 999,
       "bones": 14,
       "time": 0,
       "geometries": 41,
       "textures": 16,
-      "missionMounted": false
+      "missionMounted": false,
+      "minimumLocalY": 0.04605092593548094,
+      "maximumLocalY": 0.3984835390402796
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "kneel",
+      "animationSource": "mixamo",
+      "lod": 2,
+      "skin": "original",
+      "rig": "mixamo",
+      "phase": 0.4,
+      "triangles": 999,
+      "bones": 14,
+      "time": 0,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false,
+      "minimumLocalY": -0.0000013570969725276716,
+      "maximumLocalY": 0.3711610362537884
     }
   ],
   "resourceCycles": [
@@ -1399,6 +1723,6 @@
   "limitations": [
     "One animated hero, not a GPU crowd performance benchmark",
     "Physical mobile QA not verified",
-    "Crouch/crouchWalk/jump are still explicitly attributed prototypes"
+    "No weapon mesh is attached; rifle/pistol pose names identify source motion only"
   ]
 }

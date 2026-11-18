@@ -1,5 +1,10 @@
 # Mixamo motion migration
 
+**Historical core-migration report.** The current runtime additionally uses
+[four user-provided FBX motions](../../motion-library/README.md), and all three
+rig variants now contain seven Mixamo clips. The pending-prototype description
+below records the earlier three-core-clip stage, not today's active assets.
+
 Status: **Idle / Walk / Run replaced with actual Mixamo motion on all three LODs.**
 Crouch, CrouchWalk and Jump still use the previous explicitly attributed demo
 clips pending user-selected Mixamo FBXs. They are not labelled as Mixamo.

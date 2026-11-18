@@ -7,9 +7,10 @@ Current default: [standard Rigify with comparison controls](rigify/README.md),
 18 export joints. The wardrobe switches between standard Rigify, preserved-twist
 Rigify and the previous 14-joint rig; animation preview has a same-phase pause
 and scrubber. [Mixamo Idle/Walk/Run](mixamo/README.md) remain the motion source.
-Jump/Crouch/CrouchWalk remain explicitly labelled prototype clips until their
-Mixamo FBXs are supplied. The asset/authoring description below documents the
-retained original demo exports; current Rigify evidence is in the linked report.
+[The user motion library](../motion-library/README.md) now supplies real FBX
+Crouch/CrouchWalk/Jump plus a separate Kneel preview. All seven active clips use
+Mixamo data. The asset/authoring description below documents the retained original
+demo exports; current Rigify and motion-library evidence is in the linked reports.
 
 ## Play
 

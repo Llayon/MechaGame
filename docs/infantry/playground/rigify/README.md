@@ -36,7 +36,7 @@ edited. The numerical comparison is therefore useful in addition to screenshots.
 * Preserved twist: [`infantry-rigify.blend`](../../../../public/assets/infantry-candidate/rigify-twist-demo/infantry-rigify.blend).
 * Each directory also contains three exported playable GLBs and its manifest.
 * Each blend contains the fitted metarig, generated controls, all three LODs
-  bound to the Rigify DEF bones, packed textures, six editable control actions,
+  bound to the Rigify DEF bones, packed textures, seven editable control actions,
   and the separate `QA_IK_PlantedFeet` study. LOD0 is visible by default.
 * The donor/previous armature is removed. Playback does not depend on a hidden
   source skeleton or external animation file.
@@ -86,23 +86,23 @@ See the [official Rigify workflow](https://docs.blender.org/manual/en/latest/add
 
 The verification reimports every GLB in Blender and independently evaluates its
 actual glTF joint TRS and inverse bind matrices against the authoring rig at
-every sampled frame of all six clips. Maximum matrix-component difference is
-approximately **0.000014**. This is numerical export fidelity, not an angular
+every sampled frame of all seven clips. Maximum matrix-component difference is
+below **0.000033**. This is numerical export fidelity, not an angular
 quality score. All three PBR maps per LOD remain byte-identical to the static LOD.
 The IK planted-foot study holds ankles within **0.051 mm** physical distance in
 the tested pelvis movement. Standard soft IK still compresses leg segments by
 up to **2.02%** in that separate study even with the Stretch slider at zero;
-we retain and report this stock behavior. The six playback clips use FK.
+we retain and report this stock behavior. The seven playback clips use FK.
 These measurements do not certify every locomotion contact or eliminate all
 pre-existing sliding/proportion limitations.
 
-Only **Idle/Walk/Run** come from the verified Mixamo source documented in
-[Mixamo provenance](../mixamo/README.md). **Crouch/CrouchWalk/Jump remain prototypes**,
-labelled in the UI and manifests; no missing motion is relabelled as Mixamo.
-The source action start frame is respected (Mixamo starts at 0, retained
-prototype actions start at 1), preserving complete loop endpoints.
+**Idle/Walk/Run** retain the verified Mixamo source documented in
+[Mixamo provenance](../mixamo/README.md). **Crouch/CrouchWalk/Jump/Kneel** now use
+[four user-provided Mixamo FBXs](../../motion-library/README.md). No active
+prototype clips remain. Imported source action intervals are respected and
+exported strips start at zero, preserving complete loops and comparable phases.
 
-Browser QA covers all 54 rig/LOD/state combinations, finite deformed positions,
+Browser QA covers all 63 rig/LOD/state combinations, finite deformed positions,
 same-phase comparison, pause/play, and repeated replacement with all LODs warmed
 before comparing resource counters. Existing movement, outfit, LOD, graphics
 and mobile-layout tests also apply. **DEVICE QA NOT VERIFIED**: no physical phone

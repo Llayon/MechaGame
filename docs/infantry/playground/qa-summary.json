@@ -1,6 +1,6 @@
 {
-  "createdAt": "2026-11-18T08:03:29.476Z",
-  "codeCommit": "14d4782356c93dd39c5b184290b1477236420abc",
+  "createdAt": "2026-11-18T09:07:49.641Z",
+  "codeCommit": "de3f901fdf88aaf698670d04aae1aca50e280656",
   "typescript": "PASS",
   "productionBuild": "PASS",
   "unitTests": {
@@ -19,18 +19,18 @@
     "asset": "retained previous-rig gameplay capture"
   },
   "physicalMobileVerified": false,
-  "animationArtStatus": "PARTIAL: Rigify variants ready for comparison; artist choice and GPU atlas pending. Crouch/crouchWalk/jump remain prototypes.",
+  "animationArtStatus": "PARTIAL: all seven clips use Mixamo; artist review, low-stance transitions, weapon grip, LOD-specific foot contact and candidate GPU atlas remain pending",
   "mixamo": {
     "activeClips": [
       "idle",
       "walk",
-      "run"
-    ],
-    "pendingClips": [
+      "run",
       "crouch",
       "crouchWalk",
-      "jump"
+      "jump",
+      "kneel"
     ],
+    "pendingClips": [],
     "sourceSha256": "002f8d269de68e5dce3d25195caf390d1aa359bbfaae3fcf4c8dc78ec36c3ba5"
   },
   "rigify": {
@@ -42,8 +42,8 @@
     ],
     "exportJoints": 18,
     "authoringBones": 146,
-    "chrome": "PASS (54 rig/LOD/state poses)",
-    "edge": "PASS (54 rig/LOD/state poses)",
+    "chrome": "PASS (63 rig/LOD/state poses)",
+    "edge": "PASS (63 rig/LOD/state poses)",
     "samePhasePause": "PASS",
     "resourceReplacementCycles": "PASS (equal LOD warmup)",
     "comparisonVideo": {
@@ -52,6 +52,18 @@
       "captureFps": 15,
       "bytes": 455845
     },
-    "gpuAtlasBaked": false
+    "gpuAtlasBaked": false,
+    "motionLibrary": {
+      "catalogFiles": 131,
+      "uniqueSkeletalKeySets": 122,
+      "newSourceFiles": 4,
+      "animationOnlySourceBytes": 1716496,
+      "video": {
+        "asset": "../motion-library/mixamo-motions.mp4",
+        "seconds": 6.4,
+        "captureFps": 15,
+        "bytes": 222296
+      }
+    }
   }
 }
