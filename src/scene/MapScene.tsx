@@ -615,7 +615,7 @@ function CameraRig({
   );
 }
 
-export function BalancedShadowCadence({
+function BalancedShadowCadence({
   lightRef, aimRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize,
 }: {
   lightRef: React.RefObject<THREE.DirectionalLight | null>;
@@ -686,7 +686,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
   return null;
 }
 
-interface MapSceneProps {
+export interface MapSceneProps {
   world: WorldAssets;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -842,19 +842,6 @@ export function MapScene({
           shadow-bias={-0.00022}
           shadow-normalBias={0.03}
         />
-        {halfRateShadows && quality.shadowEnabled && (
-          <BalancedShadowCadence
-            key={graphics.shadows}
-            lightRef={sunLightRef}
-            aimRef={aimRef}
-            lightingPreset={lightingPreset}
-            transitionNonce={transitionNonce}
-            resetNonce={resetNonce}
-            driveMode={driveMode}
-            paused={paused}
-            shadowMapSize={shadowMapSize}
-          />
-        )}
         <directionalLight
           position={[-180, 90, 190]}
           color={lightCfg.rimColor}
@@ -946,6 +933,19 @@ export function MapScene({
           onShadowFocus={(focus, cam) => syncShadowFrustum(
             sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
         />
+        {halfRateShadows && quality.shadowEnabled && (
+          <BalancedShadowCadence
+            key={graphics.shadows}
+            lightRef={sunLightRef}
+            aimRef={aimRef}
+            lightingPreset={lightingPreset}
+            transitionNonce={transitionNonce}
+            resetNonce={resetNonce}
+            driveMode={driveMode}
+            paused={paused}
+            shadowMapSize={shadowMapSize}
+          />
+        )}
         <group name="perf:combat">
           {driveMode && <InfantryCrowd combatRef={combatRef}/>}
           <CombatActors

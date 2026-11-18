@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useLazyRef } from '../../utils/useLazyRef';
@@ -143,8 +143,8 @@ export function SovietMech({
     };
   }, [rig, mats]);
 
-  // Reset Mech pose, particles & feet cleanly when mission restarts
-  useEffect(() => {
+  // Reset the rendered pose before the first frame of the new mission.
+  useLayoutEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;
     prevResetNonceRef.current = resetNonce;
 
