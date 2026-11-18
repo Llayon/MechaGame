@@ -46,3 +46,20 @@ test('scene inventory gracefully handles all hidden content', () => {
   assert.equal(report.total.visibleMeshes, 0);
   assert.equal(Object.keys(report.groups).length, 0);
 });
+
+test('inventory counts a grass-style instanced geometry only within its draw range and instance capacity', () => {
+  const scene = new THREE.Scene();
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  geo.setAttribute('offset', new THREE.InstancedBufferAttribute(new Float32Array(10), 1));
+  geo.setDrawRange(3, 3);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial());
+  mesh.userData.lodLevel = 2;
+  scene.add(mesh);
+  for (const [count, expected] of [[Infinity, 10], [4, 4], [0, 0]]) {
+    geo.instanceCount = count;
+    const {total} = analyzeSceneComplexity(scene);
+    assert.equal(total.estimatedTriangles, expected);
+    assert.equal(total.lodInstances[2] ?? 0, expected);
+  }
+});

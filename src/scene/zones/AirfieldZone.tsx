@@ -1,3 +1,4 @@
+import { StaticStructure } from '../objects/StaticStructure';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import {
@@ -34,7 +35,7 @@ export function AirfieldZone({
   );
 
   return (
-    <group
+    <StaticStructure revision={isSoftwareGl}
       position={[AIRFIELD_CENTER_X, airY, AIRFIELD_CENTER_Z]}
       rotation={[0, -0.22, 0]}
       onClick={(e) => {
@@ -214,6 +215,6 @@ export function AirfieldZone({
           <meshStandardMaterial color="#8F5642" roughness={0.65} />
         </mesh>
       ))}
-    </group>
+    </StaticStructure>
   );
 }

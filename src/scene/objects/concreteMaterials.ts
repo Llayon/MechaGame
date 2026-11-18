@@ -61,6 +61,7 @@ export function getOvergrownConcreteMaterial(
   }
   const mat = new THREE.MeshStandardMaterial(matParams);
 
+  mat.userData.localConcrete = true;
   mat.customProgramCacheKey = () => `sector7-weathered-concrete-v2-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
@@ -75,12 +76,18 @@ export function getOvergrownConcreteMaterial(
         `#include <common>
 varying vec3 vConcWorldPos;
 varying vec3 vConcWorldNormal;
-varying vec3 vConcLocalPos;`,
+varying vec3 vConcLocalPos;
+#ifdef BATCHED_CONCRETE
+attribute float aConcreteSourceY;
+#endif`,
       )
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
 vConcLocalPos = transformed;
+#ifdef BATCHED_CONCRETE
+  vConcLocalPos.y = aConcreteSourceY;
+#endif
 #ifdef USE_INSTANCING
   vec4 cWp = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vConcWorldNormal = normalize( mat3( modelMatrix ) * mat3( instanceMatrix ) * objectNormal );

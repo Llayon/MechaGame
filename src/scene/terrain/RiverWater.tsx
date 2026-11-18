@@ -8,7 +8,6 @@ import {
   MAX_WATER_DEPTH,
   WATER_SPAN_D,
   WATER_SPAN_W,
-  bakeWaterDepthData,
 } from '../../map/waterDepth';
 import { createWaterNormalTexture } from '../textures';
 import {
@@ -16,14 +15,14 @@ import {
   bindFlybyShadowUniforms,
 } from '../flybyShadow';
 
+import { WORLD_MAP_WIDTH as DEPTH_TEX_W, WORLD_MAP_HEIGHT as DEPTH_TEX_H } from '../../map/worldMapDimensions';
+
 export interface RiverWaterProps {
+  data: Uint8Array<ArrayBuffer>;
   isSoftwareGl: boolean;
 }
 
-const DEPTH_TEX_W = 512;
-const DEPTH_TEX_H = 448;
-
-export function RiverWater({ isSoftwareGl }: RiverWaterProps) {
+export function RiverWater({ isSoftwareGl, data }: RiverWaterProps) {
   const { gl } = useThree();
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const waterNormal = useMemo(() => createWaterNormalTexture(maxAniso), [maxAniso]);
@@ -32,7 +31,6 @@ export function RiverWater({ isSoftwareGl }: RiverWaterProps) {
   const timeUniformRef = useRef({ value: 1.2 });
 
   const waterDepthTex = useMemo(() => {
-    const data = bakeWaterDepthData(DEPTH_TEX_W, DEPTH_TEX_H);
     const tex = new THREE.DataTexture(
       data,
       DEPTH_TEX_W,
@@ -49,7 +47,7 @@ export function RiverWater({ isSoftwareGl }: RiverWaterProps) {
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
     return tex;
-  }, []);
+  }, [data]);
 
   const waterMaterial = useMemo(() => {
     const mat = new THREE.MeshPhysicalMaterial({

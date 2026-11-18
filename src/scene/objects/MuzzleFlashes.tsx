@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
+import { effectVisible } from '../../lod/worldLod';
 import {
   MAX_MUZZLE_FLASHES,
   computeMuzzleFlashRenderData,
@@ -254,7 +255,7 @@ export function MuzzleFlashes({ poolRef, resetNonce }: MuzzleFlashesProps) {
     hadActiveRef.current = true;
   }, [resetNonce, poolRef]);
 
-  useFrame((_, delta) => {
+  useFrame(({camera}, delta) => {
     if (paused) return;
 
     const dt = Math.min(delta, 0.05);
@@ -268,6 +269,7 @@ export function MuzzleFlashes({ poolRef, resetNonce }: MuzzleFlashesProps) {
     let renderedActive = 0;
     for (let i = 0; i < capacity; i++) {
       if (computeMuzzleFlashRenderData(pool.slots[i], _flashTf)) {
+        if (!effectVisible(camera, _flashTf.x, _flashTf.y, _flashTf.z, Math.max(_flashTf.scaleXZ, _flashTf.scaleZ), 1)) continue;
         _pos.set(_flashTf.x, _flashTf.y, _flashTf.z);
         _dir.set(_flashTf.dx, _flashTf.dy, _flashTf.dz);
         _quat.setFromUnitVectors(_fwdAxis, _dir);
@@ -275,9 +277,9 @@ export function MuzzleFlashes({ poolRef, resetNonce }: MuzzleFlashesProps) {
         _quat.multiply(_rollQuat);
         _scale.set(_flashTf.scaleXZ, _flashTf.scaleXZ, _flashTf.scaleZ);
         _mat4.compose(_pos, _quat, _scale);
-        mesh.setMatrixAt(i, _mat4);
+        mesh.setMatrixAt(renderedActive, _mat4);
 
-        const base = i * 3;
+        const base = renderedActive * 3;
         setup.flashStateData[base] = _flashTf.lifeNorm;
         setup.flashStateData[base + 1] = _flashTf.seed;
         setup.flashStateData[base + 2] = _flashTf.intensity;
@@ -286,13 +288,10 @@ export function MuzzleFlashes({ poolRef, resetNonce }: MuzzleFlashesProps) {
         setup.flashColorData[base + 1] = _flashTf.g;
         setup.flashColorData[base + 2] = _flashTf.b;
         renderedActive++;
-      } else {
-        mesh.setMatrixAt(i, _zeroMat4);
-        setup.flashStateData[i * 3] = 1;
-        setup.flashStateData[i * 3 + 2] = 0;
       }
     }
 
+    mesh.count = renderedActive;
     mesh.instanceMatrix.needsUpdate = true;
     setup.flashStateAttr.needsUpdate = true;
     setup.flashColorAttr.needsUpdate = true;
@@ -306,6 +305,7 @@ export function MuzzleFlashes({ poolRef, resetNonce }: MuzzleFlashesProps) {
     <instancedMesh
       ref={meshRef}
       name="muzzle-flash-cards"
+      count={0}
       args={[setup.geom, setup.mat, MAX_MUZZLE_FLASHES]}
       frustumCulled={false}
       renderOrder={5}

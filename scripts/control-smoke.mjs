@@ -66,17 +66,13 @@ try{
   await send('Emulation.setDeviceMetricsOverride',
     {width:1280,height:768,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',
-    {url:'http://127.0.0.1:4173/?autostart=1&benchmark=1&debugAim=1'});
+    {url:(process.env.BENCH_ORIGIN || 'http://127.0.0.1:4173')+'/?autostart=1&benchmark=1&debugAim=1'});
   await waitFor(async()=>await evalBrowser(
     'Boolean(window.__mechaAimDebug && document.body.dataset.state==="playing" && document.querySelector("canvas") && document.querySelector("[data-testid=combat-reticle]"))'),
     45000,'Combat scene, canvas or reticle did not mount');
-  const sceneBaseline = await waitFor(async()=>await evalBrowser(
-    '(()=>{const s=window.__mechaSceneAudit?.();return s?.total?.visibleMeshes>30 && s?.groups?.structures && s?.groups?.mech ? s : null;})()'
-  ),12000,'Per-system scene complexity inventory did not mount');
-  console.log('SCENE INVENTORY baseline',
-    JSON.stringify({ meshes:sceneBaseline.total.visibleMeshes,
-      triangles:sceneBaseline.total.estimatedTriangles,
-      sections:Object.keys(sceneBaseline.groups) }));
+  await waitFor(async()=>await evalBrowser(
+    'Object.values(window.__mechaSceneAudit?.().groups.infantry?.lodInstances ?? {}).reduce((n,count)=>n+count,0) === 200'
+  ),25000,'The mission did not submit the full 200-soldier population to visual LOD batches');
   const point=await evalBrowser('(function(){const r=document.querySelector("[data-testid=map-canvas-container] canvas").getBoundingClientRect();return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)};})()');
   const origin=await aim();
   console.log('INITIAL',JSON.stringify(origin));
@@ -87,6 +83,8 @@ try{
       Math.abs(initialMarkers.centerY-initialMarkers.viewportY)>2) {
     throw Error('Primary crosshair is not fixed at screen center, or secondary cue missing: '+JSON.stringify(initialMarkers));
   }
+  // Windows headless Chrome requires an active tab for native pointer lock.
+  await send('Page.bringToFront');
   await send('Input.dispatchMouseEvent',
     {type:'mouseMoved',x:point.x,y:point.y,button:'none'});
   await send('Input.dispatchMouseEvent',
@@ -158,19 +156,44 @@ try{
   await waitFor(async()=>await evalBrowser(
     'Boolean(document.querySelector("[data-testid=graphics-settings-dialog]")) && document.body.dataset.state==="paused" && !document.pointerLockElement'
   ),12000,'Opening graphics menu did not pause combat and release mouse');
+  // Compare the same camera, viewport and loaded population with the simulation paused.
+  await evalBrowser('document.querySelector("[data-testid=graphics-preset-high]").click()');
+  await waitFor(()=>evalBrowser(
+    'document.querySelector("[data-testid=map-canvas-container]").dataset.graphicsPreset === "high"'
+  ),15000,'High preset did not reach the scene');
+  await send('Runtime.evaluate', {
+    expression:'new Promise(done => requestAnimationFrame(() => requestAnimationFrame(() => done(true))))',
+    awaitPromise:true,
+  });
+  const sceneBaseline = await waitFor(()=>evalBrowser(
+    '(()=>{const s=window.__mechaSceneAudit?.();return s?.total?.visibleMeshes>30 && s.groups.structures && s.groups.mech && s.groups.infantry ? s : null;})()'
+  ),12000,'Per-system scene complexity inventory did not mount');
+  console.log('SCENE INVENTORY high', JSON.stringify({
+    meshes:sceneBaseline.total.visibleMeshes, triangles:sceneBaseline.total.estimatedTriangles,
+    sections:Object.keys(sceneBaseline.groups),
+  }));
   await evalBrowser('document.querySelector("[data-testid=graphics-preset-low]").click()');
   await waitFor(async()=>await evalBrowser(
     '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="low" && c.dataset.shadows==="off" && Number(c.dataset.renderDpr)<=0.7 && c.dataset.shadowMapSize==="0";})()'
   ),15000,'Low preset did not change actual R3F scene DPR/shadow configuration');
-  const sceneLow = await evalBrowser('window.__mechaSceneAudit?.()');
-  if (!sceneLow || sceneLow.total.estimatedTriangles >= sceneBaseline.total.estimatedTriangles) {
-    throw Error('Low quality did not reduce visible scene geometry: '+
-      JSON.stringify({baseline:sceneBaseline.total.estimatedTriangles,
-        low:sceneLow?.total.estimatedTriangles}));
-  }
+  const sceneLow = await waitFor(async()=>{
+    const inventory=await evalBrowser('window.__mechaSceneAudit?.()');
+    return inventory?.total.estimatedTriangles < sceneBaseline.total.estimatedTriangles ? inventory : null;
+  },15000,'Low quality did not reduce visible scene geometry');
   console.log('SCENE INVENTORY low',
     JSON.stringify({ meshes:sceneLow.total.visibleMeshes,
       triangles:sceneLow.total.estimatedTriangles }));
+  await evalBrowser(`document.querySelector('[data-testid=graphics-auto-quality]').click()`);
+  await evalBrowser(`for (const [id,val] of [['graphics-target-fps','45'],['graphics-object-detail','ultra']]) {
+    const select=document.querySelector('[data-testid='+id+']');
+    select.value=val; select.dispatchEvent(new Event('change',{bubbles:true}));
+  }`);
+  await waitFor(async()=>await evalBrowser(`(()=>{
+    const c=document.querySelector('[data-testid=map-canvas-container]').dataset;
+    const saved=JSON.parse(localStorage.getItem('mech-graphics-v1')).settings;
+    return c.targetFps==='45' && c.objectDetail==='ultra' && c.autoQuality==='true'
+      && saved.objectDetail==='ultra' && saved.autoQuality && saved.targetFps===45;
+  })()`),10000,'Object detail or adaptive quality was not applied and persisted');
   await evalBrowser('document.querySelector("[data-testid=graphics-preset-balanced]").click()');
   await waitFor(async()=>await evalBrowser(
     '(()=>{const c=document.querySelector("[data-testid=map-canvas-container]");return c?.dataset.graphicsPreset==="balanced" && c.dataset.shadows==="on" && Number(c.dataset.shadowMapSize)>0;})()'

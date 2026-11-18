@@ -1,3 +1,4 @@
+import { StaticStructure } from '../objects/StaticStructure';
 import { useMemo } from 'react';
 import {
   CITADEL_CENTER_X,
@@ -155,7 +156,7 @@ export function FlankCoverZone() {
   }, []);
 
   return (
-    <group>
+    <StaticStructure name="flank-cover">
       {bunkers.map((b, idx) => (
         <BunkerPillbox
           key={`bunker-${idx}`}
@@ -305,6 +306,6 @@ export function FlankCoverZone() {
 
       <PowerlineNetwork coords={WEST_FLANK_POWERLINE} />
       <PowerlineNetwork coords={SOUTH_FLANK_POWERLINE} />
-    </group>
+    </StaticStructure>
   );
 }

@@ -15,6 +15,7 @@ import type { CombatSimulationState } from '../game/combatTypes';
 import type { VegetationQuality, AtmosphereQuality } from '../game/graphicsSettings';
 
 interface FoliageAndUnitsProps {
+  grassMap: Uint8Array<ArrayBuffer>;
   showUnits: boolean;
   showMist: boolean;
   vegetation: VegetationQuality;
@@ -28,6 +29,7 @@ interface FoliageAndUnitsProps {
 }
 
 export function FoliageAndUnits({
+  grassMap,
   showUnits,
   showMist,
   vegetation,
@@ -47,6 +49,7 @@ export function FoliageAndUnits({
   return (
     <group>
       <PineForest
+        sunPos={sunPos}
         isSoftwareGl={simplified}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
@@ -54,6 +57,7 @@ export function FoliageAndUnits({
       />
       {showDecorativeFoliage && <GrassBushAccents isSoftwareGl={simplified} />}
       {showDecorativeFoliage && <GrassField
+        data={grassMap}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
         lightingPreset={lightingPreset}

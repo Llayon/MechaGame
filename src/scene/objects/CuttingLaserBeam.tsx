@@ -5,10 +5,12 @@ import { useSceneSimulation } from '../SceneSimulation';
 import { CUTTING_LASER_CONFIG } from '../../game/combatSimulation';
 import type { CombatSimulationState } from '../../game/combatTypes';
 import { traceLaserCut, type CraterPoolState, type LaserCutPoint } from './craterPool';
+import { spawnHeatShimmer, type HeatShimmerPoolState } from './heatShimmerPool';
 
 export interface CuttingLaserBeamProps {
   combatRef: React.MutableRefObject<CombatSimulationState>;
   craterPoolRef: React.MutableRefObject<CraterPoolState>;
+  heatShimmerPoolRef?: React.MutableRefObject<HeatShimmerPoolState>;
   resetNonce: number;
 }
 
@@ -65,6 +67,7 @@ void main() {
 export function CuttingLaserBeam({
   combatRef,
   craterPoolRef,
+  heatShimmerPoolRef,
   resetNonce,
 }: CuttingLaserBeamProps) {
   const { paused } = useSceneSimulation();
@@ -74,6 +77,7 @@ export function CuttingLaserBeam({
   const muzzleFlareRef = useRef<THREE.Mesh>(null);
   const impactFlareRef = useRef<THREE.Mesh>(null);
   const lastCutRef = useRef<LaserCutPoint | null>(null);
+  const lastHeatTimeRef = useRef(-10);
   const animTimeRef = useRef(0);
   const prevResetNonceRef = useRef(resetNonce);
 
@@ -137,6 +141,7 @@ export function CuttingLaserBeam({
     if (prevResetNonceRef.current === resetNonce) return;
     prevResetNonceRef.current = resetNonce;
     lastCutRef.current = null;
+    lastHeatTimeRef.current = -10;
     if (groupRef.current) groupRef.current.visible = false;
   }, [resetNonce]);
 
@@ -224,6 +229,28 @@ export function CuttingLaserBeam({
       );
     } else {
       lastCutRef.current = null;
+    }
+
+    const heatPool = heatShimmerPoolRef?.current;
+    if (
+      heatPool &&
+      beam.hasImpact &&
+      !beam.inWater &&
+      animTimeRef.current - lastHeatTimeRef.current >= 0.16
+    ) {
+      lastHeatTimeRef.current = animTimeRef.current;
+      spawnHeatShimmer(heatPool, {
+        x: beam.x1 + beam.nx * 0.12,
+        y: beam.y1 + beam.ny * 0.12,
+        z: beam.z1 + beam.nz * 0.12,
+        vy: 1.65,
+        width: 1.1,
+        height: 1.95,
+        intensity: 0.86,
+        maxAge: 1.1,
+        riseSpeed: 1.35,
+        warmTint: 0.92,
+      });
     }
   });
 

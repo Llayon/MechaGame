@@ -1,3 +1,4 @@
+import { StaticStructure } from './StaticStructure';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import {
@@ -98,7 +99,7 @@ export function FloodedRuins({ lightingPreset = 'dusk' }: FloodedRuinsProps) {
   const groundedBarge = FLOODED_RUIN_CLUSTERS[5];
 
   return (
-    <group name="flooded-eastern-ruins">
+    <StaticStructure revision={lightingPreset} name="flooded-eastern-ruins">
       {/* 1. Broken East Crossing Shore Abutment Stubs + Collapsed Deck Ends */}
       {abutmentGeoms.map(({ stub, height, centerY }) => (
         <group
@@ -398,6 +399,6 @@ export function FloodedRuins({ lightingPreset = 'dusk' }: FloodedRuinsProps) {
           <cylinderGeometry args={[0.32, 0.35, 5.8, 8]} />
         </mesh>
       </group>
-    </group>
+    </StaticStructure>
   );
 }

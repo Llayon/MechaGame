@@ -1,3 +1,4 @@
+import { batchStaticParts } from './staticBatches';
 import * as THREE from 'three';
 import { MECH_L1, MECH_L2, MECH_L3, MECH_SCALE, MECH_SOLE_HEIGHT, MECH_SPAWN, getWalkableSurfaceY } from '../../map/mechKinematics';
 import type { createMechMaterials } from './mechMaterials';
@@ -45,7 +46,8 @@ export interface GunBarrelRig {
 
 export interface AmmoBeltRig {
   side: -1 | 1;
-  links: Array<{ mesh: THREE.Mesh; t: number }>;
+  instances: THREE.InstancedMesh;
+  linkTransform: THREE.Object3D;
   p0: THREE.Vector3;
   p1: THREE.Vector3;
   p2: THREE.Vector3;
@@ -808,15 +810,14 @@ export function buildMechModel(mats: MechMaterials) {
         });
       });
 
-      const links: Array<{ mesh: THREE.Mesh; t: number }> = [];
-      for (let i = 0; i < 22; i++) {
-        const m = new THREE.Mesh(linkGeom, mats.brassMat);
-        podRoot.add(m);
-        links.push({ mesh: m, t: i / 21 });
-      }
+      const instances = new THREE.InstancedMesh(linkGeom, mats.brassMat, 22);
+      instances.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      // All four Bezier control points plus vibration and link extents fit this pod-local sphere.
+      instances.boundingSphere = new THREE.Sphere(new THREE.Vector3(side * 0.3, -0.28, -0.7), 1.4);
+      const linkTransform = new THREE.Object3D();
+      podRoot.add(instances, linkTransform);
       dynamicAmmoBelts.push({
-        side,
-        links,
+        side, instances, linkTransform,
         p0: new THREE.Vector3(side * 0.14, -0.48, -0.48),
         p1: new THREE.Vector3(side * 0.48, -0.74, -1.04),
         p2: new THREE.Vector3(side * 0.46, 0.14, -1.12),
@@ -1203,6 +1204,31 @@ export function buildMechModel(mats: MechMaterials) {
     if (kickupMesh.instanceColor) kickupMesh.instanceColor.needsUpdate = true;
     worldFeetGroup.add(kickupMesh);
 
+    // Merge only sibling meshes. Every animated group and attachment keeps its hierarchy.
+    const moving = new Set<THREE.Object3D>([
+      mtoBlock, mtoGrille, kickupMesh, ...grabRails.map(rail => rail.mesh),
+      ...exhaustPipes.map(pipe => pipe.mesh),
+    ]);
+    for (const leg of legs) {
+      moving.add(leg.hipBoot);
+      moving.add(leg.ankleBoot);
+      for (const piston of leg.pistons) {
+        moving.add(piston.rod);
+        moving.add(piston.barrel);
+      }
+    }
+    const joints: THREE.Group[] = [];
+    for (const assembly of [root, worldFeetGroup]) {
+      assembly.traverse(node => { if (node instanceof THREE.Group) joints.push(node); });
+    }
+    const immutableJointMaterials = new Set<THREE.Material>([
+      mats.darkSteelMat, mats.leatherStrapMat, mats.gunmetalBlueMat, mats.chromeRodMat,
+      mats.brassMat, mats.canvasBootMat, mats.whiteStripeMat,
+    ]);
+    const rigidBatches = joints.map(joint => batchStaticParts(joint, {
+      cellSize: Infinity, directChildrenOnly: true, exclude: moving, immutableJointMaterials,
+    }));
+
     return {
       root,
       worldFeetGroup,
@@ -1224,6 +1250,8 @@ export function buildMechModel(mats: MechMaterials) {
       tracerGeom,
       kickupMesh,
       dispose: () => {
+        rigidBatches.forEach(batch => batch.dispose());
+        dynamicAmmoBelts.forEach(belt => belt.instances.dispose());
         kickupMesh.dispose();
         disposableGeoms.forEach((g) => g.dispose());
         disposableMats.forEach((m) => m.dispose());

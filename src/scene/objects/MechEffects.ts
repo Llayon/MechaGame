@@ -46,6 +46,10 @@ import {
   spawnTracer,
   type TracerPoolState,
 } from './tracerPool';
+import {
+  spawnHeatShimmer,
+  type HeatShimmerPoolState,
+} from './heatShimmerPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -96,6 +100,8 @@ export function stepMechEffects(
   muzzleFlashPool?: MuzzleFlashPoolState,
   casingsPool?: BallisticPropPool,
   tracerPool?: TracerPoolState,
+  heatShimmerPool?: HeatShimmerPoolState,
+  thermalLoad = 0,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -437,21 +443,25 @@ export function stepMechEffects(
           ? Math.sin(elapsed * 32) * 0.025
           : Math.sin(sim.gaitPhase * 2) * 0.015 * sim.gaitBlend) +
         dieselVib * 2.2;
-      _tmpP1Dyn.copy(belt.p1).add(new THREE.Vector3(belt.side * vib, -Math.abs(vib) * 0.6, vib));
-      _tmpP2Dyn.copy(belt.p2).add(new THREE.Vector3(belt.side * vib * 0.7, 0, -vib));
-      belt.links.forEach((lk) => {
-        cubicBezier(belt.p0, _tmpP1Dyn, _tmpP2Dyn, belt.p3, lk.t, _tmpPt);
+      _tmpP1Dyn.set(belt.side * vib, -Math.abs(vib) * 0.6, vib).add(belt.p1);
+      _tmpP2Dyn.set(belt.side * vib * 0.7, 0, -vib).add(belt.p2);
+      for (let i = 0; i < belt.instances.count; i++) {
+        const t = i / (belt.instances.count - 1);
+        cubicBezier(belt.p0, _tmpP1Dyn, _tmpP2Dyn, belt.p3, t, _tmpPt);
         cubicBezier(
           belt.p0,
           _tmpP1Dyn,
           _tmpP2Dyn,
           belt.p3,
-          Math.min(1, lk.t + 0.04),
+          Math.min(1, t + 0.04),
           _tmpNextPt,
         );
-        lk.mesh.position.copy(_tmpPt);
-        lk.mesh.lookAt(_tmpNextPt);
-      });
+        belt.linkTransform.position.copy(_tmpPt);
+        belt.linkTransform.lookAt(_tmpNextPt);
+        belt.linkTransform.updateMatrix();
+        belt.instances.setMatrixAt(i, belt.linkTransform.matrix);
+      }
+      belt.instances.instanceMatrix.needsUpdate = true;
     });
 
     // Whip antenna spring sway
@@ -506,6 +516,34 @@ export function stepMechEffects(
         maxLife: 1.05,
         initialOpacity: 0.34,
       });
+    }
+
+    // Convective heat shimmer rising from rear MTO exhausts (stronger under sprint, overheat, or Jet-Dash)
+    if (heatShimmerPool && driveMode && dt > 0) {
+      const shimmerInterval = control.isDashing
+        ? (isSoftwareGl ? 0.14 : 0.075)
+        : (isSoftwareGl ? 0.34 : 0.18);
+      if (elapsed - sim.lastHeatShimmerTime >= shimmerInterval) {
+        sim.lastHeatShimmerTime = elapsed;
+        const tip = rig.exhaustTips[Math.floor(elapsed * 7) % rig.exhaustTips.length];
+        tip.getWorldPosition(_tmpExhaustPos);
+        const dashBoost = control.isDashing ? 1 : 0;
+        const heatBoost = Math.min(1, Math.max(0, thermalLoad));
+        spawnHeatShimmer(heatShimmerPool, {
+          x: _tmpExhaustPos.x - sinY * 0.15,
+          y: _tmpExhaustPos.y + 0.05,
+          z: _tmpExhaustPos.z - cosY * 0.15,
+          vx: -sinY * (0.45 + dashBoost * 1.1),
+          vy: 1.45 + dashBoost * 1.35 + (isMoving ? 0.35 : 0),
+          vz: -cosY * (0.45 + dashBoost * 1.1),
+          width: 0.95 + dashBoost * 0.55 + heatBoost * 0.25,
+          height: 1.65 + dashBoost * 0.9 + heatBoost * 0.45,
+          intensity: 0.58 + dashBoost * 0.42 + heatBoost * 0.28,
+          maxAge: control.isDashing ? 0.95 : 1.25,
+          riseSpeed: 1.05 + dashBoost * 0.65,
+          warmTint: 0.48 + dashBoost * 0.42 + heatBoost * 0.32,
+        });
+      }
     }
 
     // Update & recycle active world particles

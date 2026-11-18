@@ -1,3 +1,4 @@
+import { StaticStructure } from '../objects/StaticStructure';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import {
@@ -69,7 +70,7 @@ export function CitadelZone({
   }, []);
 
   return (
-    <group
+    <StaticStructure revision={lightingPreset + isSoftwareGl}
       position={[CITADEL_CENTER_X, citY, CITADEL_CENTER_Z]}
       onClick={(e) => {
         e.stopPropagation();
@@ -218,6 +219,6 @@ export function CitadelZone({
           decay={1.5}
         />
       )}
-    </group>
+    </StaticStructure>
   );
 }

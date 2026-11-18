@@ -137,6 +137,19 @@ export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Pro
                   description="Размер карты теней направленного света"
                   value={settings.shadows} options={shadows}
                   onChange={v=>onChange(changeGraphicsSetting(settings,'shadows',v))}/>
+                <SettingSelect id="graphics-object-detail" label="Детализация объектов"
+                  description="Дальность детальных моделей и рельефа"
+                  value={settings.objectDetail} options={PRESETS.map(p => ({value:p.value, label:p.name}))}
+                  onChange={v=>onChange(changeGraphicsSetting(settings,'objectDetail',v))}/>
+                <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-600/35 p-3 text-sm">
+                  Автоматическая оптимизация
+                  <input type="checkbox" data-testid="graphics-auto-quality" checked={settings.autoQuality}
+                    onChange={e=>onChange(changeGraphicsSetting(settings,'autoQuality',e.currentTarget.checked))}/>
+                </label>
+                {settings.autoQuality && <SettingSelect id="graphics-target-fps" label="Целевая частота кадров"
+                  description="Качество меняется при устойчивом изменении времени кадра"
+                  value={String(settings.targetFps)} options={['30','45','60'].map(value=>({value,label:value+' FPS'}))}
+                  onChange={v=>onChange(changeGraphicsSetting(settings,'targetFps',Number(v) as GraphicsSettings['targetFps']))}/>}
                 <SettingSelect id="graphics-vegetation" label="Растительность"
                   description="Количество травы, кустов и визуальных деталей"
                   value={settings.vegetation} options={vegetation}

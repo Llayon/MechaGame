@@ -1,3 +1,4 @@
+import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -37,6 +38,10 @@ import {
   spawnArmorDebrisBurst,
   type BallisticPropPool,
 } from './debrisBallisticsPool';
+import {
+  spawnHeatShimmer,
+  type HeatShimmerPoolState,
+} from './heatShimmerPool';
 
 const MAX_PROJECTILE_INSTANCES = 40;
 const MAX_SPARK_PARTICLES = 96;
@@ -63,6 +68,11 @@ interface SparkParticle {
 interface EnemyVisualNode {
   root: THREE.Group;
   hullGroup: THREE.Group;
+  lodParts: Array<{ mesh: THREE.Mesh; maxLevel: number; majorCaster: boolean;
+    originalCaster: boolean; geometry: THREE.BufferGeometry; coarse?: THREE.BufferGeometry }>;
+  lodLevel: number;
+  shadowLevel: number;
+  wheels?: THREE.InstancedMesh;
   turretGroup: THREE.Group;
   leftLeg?: THREE.Group;
   rightLeg?: THREE.Group;
@@ -73,6 +83,9 @@ interface EnemyVisualNode {
   baseEmissive: THREE.Color;
 }
 
+const VEHICLE_LOD_PIXELS = [75, 24];
+const VEHICLE_SHADOW_PIXELS = [36, 12];
+const _vehicleCenter = new THREE.Vector3();
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
 const _vFrom = new THREE.Vector3();
@@ -92,6 +105,7 @@ export interface CombatActorsProps {
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
   debrisPoolRef?: React.MutableRefObject<BallisticPropPool>;
   craterPoolRef?: React.MutableRefObject<CraterPoolState>;
+  heatShimmerPoolRef?: React.MutableRefObject<HeatShimmerPoolState>;
 }
 
 export function CombatActors({
@@ -104,6 +118,7 @@ export function CombatActors({
   missileRibbonPoolRef,
   debrisPoolRef,
   craterPoolRef: externalCraterPoolRef,
+  heatShimmerPoolRef,
 }: CombatActorsProps) {
   const enemiesGroupRef = useRef<THREE.Group>(null);
   const projectileMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -116,6 +131,7 @@ export function CombatActors({
   const craterMeshRef = useRef<THREE.InstancedMesh>(null);
   const lockRingRef = useRef<THREE.Mesh>(null);
 
+  const lodTimer = useRef(0);
   const visualNodesRef = useRef<Map<string, EnemyVisualNode>>(new Map());
   const createEnemyNodeRef = useRef<((enemy: EnemyUnitState) => EnemyVisualNode) | null>(null);
   const sparksRef = useRef<SparkParticle[]>(
@@ -143,6 +159,7 @@ export function CombatActors({
   const lastSeenProjectileIdRef = useRef(0);
   const activeMissileRibbonIdsRef = useRef<Map<number, number>>(new Map());
   const apcTrailPosRef = useRef<Map<string, { x: number; z: number }>>(new Map());
+  const wreckHeatTimeRef = useRef<Map<string, number>>(new Map());
 
   const sharedGeoms = useMemo(() => {
     const shadowDisc = new THREE.CircleGeometry(1, 20);
@@ -152,6 +169,12 @@ export function CombatActors({
     const apcGlacis = new THREE.BoxGeometry(1.18, 0.34, 0.65);
     const apcWheel = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 10);
     apcWheel.rotateZ(Math.PI / 2);
+    const coarseWheel = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 5);
+    coarseWheel.rotateZ(Math.PI / 2);
+    const coarseBase = new THREE.CylinderGeometry(1.45, 1.72, 1.15, 5);
+    const coarseDome = new THREE.CylinderGeometry(0.45, 0.56, 0.34, 5);
+    const coarseBarrel = new THREE.CylinderGeometry(0.09, 0.12, 1.85, 4);
+    coarseBarrel.rotateX(Math.PI / 2);
     const apcTurret = new THREE.CylinderGeometry(0.45, 0.56, 0.34, 8);
     const apcBarrel = new THREE.CylinderGeometry(0.055, 0.075, 1.35, 6);
     apcBarrel.rotateX(Math.PI / 2);
@@ -187,6 +210,7 @@ export function CombatActors({
 
     return {
       shadowDisc,
+      coarseWheel, coarseBase, coarseDome, coarseBarrel,
       apcHull,
       apcGlacis,
       apcWheel,
@@ -363,6 +387,7 @@ export function CombatActors({
       shadowMesh.scale.setScalar(shadowScale);
       root.add(shadowMesh);
 
+      let wheels: THREE.InstancedMesh | undefined;
       let leftLeg: THREE.Group | undefined;
       let rightLeg: THREE.Group | undefined;
       let laserBeam: THREE.Mesh | undefined;
@@ -379,14 +404,16 @@ export function CombatActors({
         glacis.castShadow = true;
         hullGroup.add(glacis);
 
-        for (let sx = -1; sx <= 1; sx += 2) {
-          for (let wz = -0.82; wz <= 0.85; wz += 0.82) {
-            const w = new THREE.Mesh(sharedGeoms.apcWheel, sharedMats.darkSteel);
-            w.position.set(sx * 0.68, 0.32, wz);
-            w.castShadow = true;
-            hullGroup.add(w);
+        wheels = new THREE.InstancedMesh(sharedGeoms.apcWheel, sharedMats.darkSteel, 6);
+        const placement = new THREE.Matrix4();
+        let index = 0;
+        for (const x of [-0.68, 0.68]) {
+          for (const z of [-0.82, 0, 0.82]) {
+            wheels.setMatrixAt(index++, placement.makeTranslation(x, 0.32, z));
           }
         }
+        wheels.castShadow = true;
+        hullGroup.add(wheels);
 
         turretGroup.position.set(0, 0.96, 0.05);
         const dome = new THREE.Mesh(sharedGeoms.apcTurret, armorMat);
@@ -492,9 +519,24 @@ export function CombatActors({
         hullGroup.add(turretGroup);
       }
 
+      const lodParts: EnemyVisualNode['lodParts'] = [];
+      hullGroup.traverse(object => {
+        if (!(object instanceof THREE.Mesh)) return;
+        const geometry = object.geometry;
+        const trim = geometry === sharedGeoms.walkerShield || geometry === sharedGeoms.turretCollar;
+        const secondary = geometry === sharedGeoms.apcGlacis || geometry === sharedGeoms.walkerFoot;
+        let coarse: THREE.BufferGeometry | undefined;
+        if (geometry === sharedGeoms.apcWheel) coarse = sharedGeoms.coarseWheel;
+        if (geometry === sharedGeoms.apcTurret) coarse = sharedGeoms.coarseDome;
+        if (geometry === sharedGeoms.turretBase) coarse = sharedGeoms.coarseBase;
+        if (geometry === sharedGeoms.turretBarrel) coarse = sharedGeoms.coarseBarrel;
+        lodParts.push({ mesh: object, geometry, coarse, maxLevel: trim ? 0 : secondary ? 1 : 2,
+          originalCaster: object.castShadow, majorCaster: !trim && !secondary && geometry !== sharedGeoms.apcWheel });
+      });
       container.add(root);
       return {
         root,
+        lodParts, lodLevel: -1, shadowLevel: -1, wheels,
         hullGroup,
         turretGroup,
         leftLeg,
@@ -518,6 +560,7 @@ export function CombatActors({
       nodes.forEach((n) => {
         container.remove(n.root);
         if (n.laserBeam) container.remove(n.laserBeam);
+        n.wheels?.dispose();
         n.armorMat.dispose();
         n.eyeMat.dispose();
       });
@@ -563,7 +606,7 @@ export function CombatActors({
 
   const { paused } = useSceneSimulation();
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (paused) return;
     const dt = Math.min(delta, 0.05);
     const combat = combatRef.current;
@@ -585,6 +628,7 @@ export function CombatActors({
             if (!validIds.has(id)) {
               container.remove(n.root);
               if (n.laserBeam) container.remove(n.laserBeam);
+              n.wheels?.dispose();
               n.armorMat.dispose();
               n.eyeMat.dispose();
               nodes.delete(id);
@@ -598,6 +642,7 @@ export function CombatActors({
       resetCraterPool(craterPoolRef.current);
       craterDirtyRef.current = true;
       apcTrailPosRef.current.clear();
+      wreckHeatTimeRef.current.clear();
       lastSeenProjectileIdRef.current = 0;
       activeMissileRibbonIdsRef.current.clear();
       if (debrisPoolRef?.current) resetBallisticPropPool(debrisPoolRef.current);
@@ -607,6 +652,7 @@ export function CombatActors({
     // Consume pending impact events into pooled sparks, ground craters, armor debris, & water ripples/splashes
     const waterPool = waterVfxPoolRef?.current;
     const debrisPool = debrisPoolRef?.current;
+    const heatPool = heatShimmerPoolRef?.current;
     while (combat.pendingImpacts.length > 0) {
       const ev = combat.pendingImpacts.shift()!;
       if (ev.kind === 'explosion') {
@@ -617,6 +663,11 @@ export function CombatActors({
         }
         if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
           spawnWaterImpact(waterPool, ev.x, ev.z, 1.85, { countScale: isSoftwareGl ? 0.6 : 1.0 });
+        } else if (heatPool) {
+          spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y + 0.15, z: ev.z, vy: 1.45, width: 2.35, height: 3.4, intensity: 1.05, maxAge: 2.6, warmTint: 0.9 });
+          if (!isSoftwareGl) {
+            spawnHeatShimmer(heatPool, { x: ev.x + 0.45, y: ev.y + 0.3, z: ev.z - 0.35, vx: 0.25, vy: 1.85, vz: -0.2, width: 1.65, height: 2.7, intensity: 0.85, maxAge: 2.1, warmTint: 0.75 });
+          }
         }
         if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 2.4, 1.0, ev.x * 0.7 + ev.z * 0.3)) {
           craterDirtyRef.current = true;
@@ -630,6 +681,11 @@ export function CombatActors({
         }
         if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
           spawnWaterImpact(waterPool, ev.x, ev.z, 2.25, { countScale: isSoftwareGl ? 0.65 : 1.0 });
+        } else if (heatPool) {
+          spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y + 0.2, z: ev.z, vy: 1.7, width: 2.85, height: 4.1, intensity: 1.2, maxAge: 3.1, warmTint: 0.95 });
+          if (!isSoftwareGl) {
+            spawnHeatShimmer(heatPool, { x: ev.x - 0.5, y: ev.y + 0.4, z: ev.z + 0.4, vx: -0.3, vy: 2.1, vz: 0.25, width: 2.0, height: 3.2, intensity: 0.92, maxAge: 2.4, warmTint: 0.82 });
+          }
         }
         if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 3.3, 1.15, ev.x * 1.1 + ev.z * 0.5)) {
           craterDirtyRef.current = true;
@@ -637,10 +693,16 @@ export function CombatActors({
       } else if (ev.kind === 'dash') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 6.8, 0.9, 0.35, 0.88, 1.0, 0.34);
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.2, 0.75, 1.0, 0.62, 0.18, 0.28);
+        if (heatPool) {
+          spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y + 0.25, z: ev.z, vy: 2.1, width: 1.4, height: 2.2, intensity: 0.95, maxAge: 1.05, riseSpeed: 1.5, warmTint: 0.72 });
+        }
       } else if (ev.kind === 'heavy-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 8 : 16, 7.6, 1.15, 0.45, 0.92, 1.0, 0.42);
         if (debrisPool) {
           spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y, z: ev.z, count: isSoftwareGl ? 3 : 5, speedScale: 1.05, scale: 1.0 });
+        }
+        if (heatPool) {
+          spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y, z: ev.z, vy: 1.6, width: 1.5, height: 2.35, intensity: 0.92, maxAge: 1.55, warmTint: 0.68 });
         }
       } else if (ev.kind === 'pickup') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 6 : 12, 4.8, 0.85, 0.2, 0.96, 0.58, 0.48);
@@ -679,6 +741,9 @@ export function CombatActors({
             ) {
               craterDirtyRef.current = true;
             }
+            if (ev.heavy && heatPool) {
+              spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y + 0.1, z: ev.z, vy: 1.5, width: 1.6, height: 2.4, intensity: 0.85, maxAge: 1.75, warmTint: 0.8 });
+            }
           }
         }
       } else if (ev.kind === 'player-hit') {
@@ -691,6 +756,9 @@ export function CombatActors({
           spawnBurst(ev.x, ev.y + 0.25, ev.z, isSoftwareGl ? 3 : 6, 3.8, 1.35, 0.32, 0.32, 0.34, 0.58);
           if (debrisPool) {
             spawnArmorDebrisBurst(debrisPool, { x: ev.x, y: ev.y + 0.15, z: ev.z, count: isSoftwareGl ? 2 : 3, speedScale: 0.92, scale: 0.85 });
+          }
+          if (heatPool) {
+            spawnHeatShimmer(heatPool, { x: ev.x, y: ev.y + 0.15, z: ev.z, vy: 1.55, width: 1.65, height: 2.55, intensity: 0.95, maxAge: 1.8, warmTint: 0.88 });
           }
           if (
             spawnCraterDecal(
@@ -715,12 +783,36 @@ export function CombatActors({
     let bestLockedDist = Infinity;
 
     const trailsPool = groundTrailsPoolRef?.current;
+    lodTimer.current -= delta;
+    const evaluateLod = lodTimer.current <= 0;
+    if (evaluateLod) lodTimer.current = 0.12;
+    const lodView = readWorldLod(camera);
     for (let i = 0; i < combat.enemies.length; i++) {
       const e = combat.enemies[i];
       const node = nodes.get(e.id);
       if (!node) continue;
 
       node.root.position.set(e.x, e.y, e.z);
+      if (evaluateLod || node.lodLevel < 0) {
+        _vehicleCenter.set(e.x, e.y + 1, e.z);
+        const radius = e.archetype === 'charger-walker' ? 1.85 : 1.7;
+        const distance = _vehicleCenter.distanceTo(camera.position);
+        const depth = -_vehicleCenter.applyMatrix4(camera.matrixWorldInverse).z;
+        const pixels = projectedPixels(radius, Math.max(radius, depth), lodView);
+        const level = chooseLod(pixels, node.lodLevel, VEHICLE_LOD_PIXELS);
+        const shadowPixels = lodView.shadowScale * lodView.focalPixels * radius * 2 / Math.max(radius, distance - 25);
+        const shadow = chooseLod(shadowPixels, node.shadowLevel, VEHICLE_SHADOW_PIXELS);
+        if (level !== node.lodLevel || shadow !== node.shadowLevel) {
+          node.lodLevel = level;
+          node.shadowLevel = shadow;
+          node.root.userData.lodLevel = level;
+          for (const part of node.lodParts) {
+            part.mesh.visible = level <= part.maxLevel;
+            part.mesh.geometry = level > 0 && part.coarse ? part.coarse : part.geometry;
+            part.mesh.castShadow = part.originalCaster && (shadow === 0 || (shadow === 1 && part.majorCaster));
+          }
+        }
+      }
       node.hullGroup.rotation.y = e.yaw;
       node.turretGroup.rotation.y = e.turretYaw - e.yaw;
 
@@ -750,6 +842,24 @@ export function CombatActors({
         node.armorMat.emissiveIntensity = 0;
         node.eyeMat.emissiveIntensity = 0;
         if (node.laserBeam) node.laserBeam.visible = false;
+        if (heatPool && driveMode) {
+          const lastWreck = wreckHeatTimeRef.current.get(e.id) ?? -10;
+          const wreckInterval = isSoftwareGl ? 0.95 : 0.48;
+          if (combat.elapsedSec - lastWreck >= wreckInterval) {
+            wreckHeatTimeRef.current.set(e.id, combat.elapsedSec);
+            spawnHeatShimmer(heatPool, {
+              x: e.x,
+              y: e.y + 0.55,
+              z: e.z,
+              vy: 1.35,
+              width: 1.75,
+              height: 2.75,
+              intensity: 0.82,
+              maxAge: 1.85,
+              warmTint: 0.85,
+            });
+          }
+        }
         continue;
       }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -38,7 +38,8 @@ import {
 import { MAP_DEPTH, MAP_HALF_D, MAP_HALF_W, MAP_WIDTH } from '../map/terrainMath';
 import type { MechTelemetrySnapshot } from '../map/mechKinematics';
 import type { MechDriveInput } from '../scene/objects/SovietMech';
-import type { CombatSimulationState, CombatTelemetrySnapshot } from '../game/combatTypes';
+import type { CombatSimulationState } from '../game/combatTypes';
+import { buildCombatTelemetry } from '../game/combatSimulation';
 import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
 import { InfantryContacts } from './InfantryContacts';
 import type { DeviceLayoutMode, InputControlPreference } from '../utils/touchControls';
@@ -47,9 +48,14 @@ import { projectedReticlePercent } from '../game/combatAim';
 import { smoothMuzzleIndicator } from '../game/reticlePresentation';
 import type { CombatAimState } from '../game/combatAim';
 
+function readCombatHud(combat: CombatSimulationState, pose: MechTelemetrySnapshot) {
+  return buildCombatTelemetry(
+    combat, pose.x, pose.y, pose.z, pose.yaw + (pose.aimTurretYaw ?? pose.turretYaw), pose.inWater,
+  );
+}
+
 interface TacticalHUDProps {
   focusedSite: InfantrySite | null;
-  combatRef: React.RefObject<CombatSimulationState>;
   activeSector: SectorId;
   lightingPreset: LightingPreset;
   driveMode: boolean;
@@ -61,7 +67,8 @@ interface TacticalHUDProps {
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   driveInputRef: React.MutableRefObject<MechDriveInput>;
   aimRef: React.MutableRefObject<CombatAimState>;
-  combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
+  combatRef: React.MutableRefObject<CombatSimulationState>;
+  resetNonce: number;
   showMarkers: boolean;
   showUnits: boolean;
   showMist: boolean;
@@ -105,7 +112,6 @@ function formatClock(sec: number): string {
 
 export function TacticalHUD({
   focusedSite,
-  combatRef,
   activeSector,
   lightingPreset,
   driveMode,
@@ -117,7 +123,8 @@ export function TacticalHUD({
   mechPoseRef,
   driveInputRef,
   aimRef,
-  combatTelemetryRef,
+  combatRef,
+  resetNonce,
   showMarkers,
   showUnits,
   showMist,
@@ -183,92 +190,32 @@ export function TacticalHUD({
   const [mechHud, setMechHud] = useState<MechTelemetrySnapshot>(() => ({
     ...mechPoseRef.current,
   }));
-  const [combatHud, setCombatHud] = useState<CombatTelemetrySnapshot>(() => ({
-    ...combatTelemetryRef.current,
-  }));
-  const [ghostHp, setGhostHp] = useState(combatTelemetryRef.current.playerHp);
+  const [combatHud, setCombatHud] = useState(() => readCombatHud(combatRef.current, mechPoseRef.current));
+  const [ghostHp, setGhostHp] = useState(combatHud.playerHp);
   const [crouchUi, setCrouchUi] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
 
-  // Sync Drive HUD & combat telemetry at ~10 Hz only while driving
-  useEffect(() => {
-    setMechHud({ ...mechPoseRef.current });
-    setCombatHud({ ...combatTelemetryRef.current });
-    if (!paused) setGhostHp(combatTelemetryRef.current.playerHp);
-    setCrouchUi(driveInputRef.current.crouch);
-    if (!driveMode || paused) return;
+  // One clock samples the simulation and publishes the minimap and combat HUD.
+  useLayoutEffect(() => {
+    const refresh = () => {
+      const pose = mechPoseRef.current;
+      const snapshot = readCombatHud(combatRef.current, pose);
+      setMechHud({ ...pose });
+      setCombatHud(snapshot);
+      setCrouchUi(driveInputRef.current.crouch);
+      return snapshot.playerHp;
+    };
+
+    const hp = refresh();
+    if (!paused) setGhostHp(hp);
+    if (!driveMode || paused || missionOutcome !== null) return;
     const id = window.setInterval(() => {
-      const next = mechPoseRef.current;
-      const nextCombat = combatTelemetryRef.current;
-      const nextCrouch = driveInputRef.current.crouch;
-      setCrouchUi((prev) => (prev === nextCrouch ? prev : nextCrouch));
-      setMechHud((prev) => {
-        if (
-          Math.abs(prev.x - next.x) < 0.01 &&
-          Math.abs(prev.z - next.z) < 0.01 &&
-          Math.abs(prev.yaw - next.yaw) < 0.005 &&
-          Math.abs(prev.turretYaw - next.turretYaw) < 0.005 &&
-          Math.abs(prev.speedKmh - next.speedKmh) < 0.05 &&
-          prev.elevationM === next.elevationM &&
-          prev.isFiring === next.isFiring &&
-          prev.isCrouched === next.isCrouched &&
-          prev.inWater === next.inWater &&
-          prev.onBridge === next.onBridge
-        ) {
-          return prev;
-        }
-        return { ...next };
-      });
-      setCombatHud((prev) => {
-        if (
-          prev.playerHp === nextCombat.playerHp &&
-          Math.abs(prev.weaponHeat - nextCombat.weaponHeat) < 0.015 &&
-          prev.weaponOverheated === nextCombat.weaponOverheated &&
-          Math.abs(prev.laserEnergy - nextCombat.laserEnergy) < 0.015 &&
-          prev.laserOverheated === nextCombat.laserOverheated &&
-          prev.laserActive === nextCombat.laserActive &&
-          Math.abs(prev.heavyCooldown - nextCombat.heavyCooldown) < 0.08 &&
-          Math.abs(prev.missileCooldown - nextCombat.missileCooldown) < 0.08 &&
-          prev.repairCharges === nextCombat.repairCharges &&
-          Math.abs(prev.repairCooldown - nextCombat.repairCooldown) < 0.2 &&
-          Math.abs(prev.dashCooldown - nextCombat.dashCooldown) < 0.08 &&
-          prev.dashActive === nextCombat.dashActive &&
-          prev.combatPhase === nextCombat.combatPhase &&
-          prev.alertMessage === nextCombat.alertMessage &&
-          prev.targetsDestroyed === nextCombat.targetsDestroyed &&
-          prev.targetsTotal === nextCombat.targetsTotal &&
-          prev.score === nextCombat.score &&
-          prev.bestScore === nextCombat.bestScore &&
-          prev.missionRank === nextCombat.missionRank &&
-          prev.bestRank === nextCombat.bestRank &&
-          prev.pickupBlips.length === nextCombat.pickupBlips.length &&
-          prev.barrelBlips.length === nextCombat.barrelBlips.length &&
-          prev.threatAngles.length === nextCombat.threatAngles.length &&
-          nextCombat.threatAngles.every(
-            (a, idx) => Math.abs(a - (prev.threatAngles[idx] ?? 99)) < 0.08,
-          ) &&
-          prev.shotsFired === nextCombat.shotsFired &&
-          prev.shotsHit === nextCombat.shotsHit &&
-          prev.hitMarkerActive === nextCombat.hitMarkerActive &&
-          Math.abs(prev.playerHitFlash - nextCombat.playerHitFlash) < 0.02 &&
-          prev.lockedTarget?.id === nextCombat.lockedTarget?.id &&
-          prev.lockedTarget?.hp === nextCombat.lockedTarget?.hp &&
-          prev.lockedTarget?.distanceM === nextCombat.lockedTarget?.distanceM &&
-          Math.floor(prev.elapsedSec) === Math.floor(nextCombat.elapsedSec) &&
-          prev.missionStatus === nextCombat.missionStatus
-        ) {
-          return prev;
-        }
-        return { ...nextCombat };
-      });
-      setGhostHp((prevGhost) => {
-        if (prevGhost <= nextCombat.playerHp) return nextCombat.playerHp;
-        return Math.max(nextCombat.playerHp, prevGhost - 3.5);
-      });
+      const nextHp = refresh();
+      setGhostHp((previous) => Math.max(nextHp, previous - 3.5));
     }, 100);
     return () => window.clearInterval(id);
-  }, [driveMode, paused, mechPoseRef, driveInputRef, combatTelemetryRef]);
+  }, [driveMode, paused, missionOutcome, resetNonce, mechPoseRef, driveInputRef, combatRef]);
 
   const setHoldInput = (
     patch: Partial<

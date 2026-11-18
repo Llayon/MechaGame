@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
@@ -20,7 +20,6 @@ const _fwdAxis = new THREE.Vector3(0, 0, 1);
 const _quat = new THREE.Quaternion();
 const _scale = new THREE.Vector3();
 const _mat4 = new THREE.Matrix4();
-const _zeroMat4 = new THREE.Matrix4().makeScale(0, 0, 0);
 
 /**
  * Two intersecting longitudinal quads along +Z with leading edge at z = 0
@@ -142,7 +141,6 @@ void main() {
 export function Tracers({ poolRef, resetNonce }: TracersProps) {
   const { paused } = useSceneSimulation();
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const hadActiveRef = useRef(false);
   const prevResetNonceRef = useRef(resetNonce);
 
   const setup = useMemo(() => {
@@ -152,29 +150,22 @@ export function Tracers({ poolRef, resetNonce }: TracersProps) {
   }, []);
 
   useEffect(() => {
-    const mesh = meshRef.current;
-    if (mesh) {
-      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      for (let i = 0; i < MAX_TRACER_INSTANCES; i++) {
-        mesh.setMatrixAt(i, _zeroMat4);
-        setup.stateData[i * 3] = 1;
-        setup.stateData[i * 3 + 1] = 0;
-        setup.stateData[i * 3 + 2] = 0;
-      }
-      mesh.instanceMatrix.needsUpdate = true;
-      setup.stateAttr.needsUpdate = true;
-    }
+    meshRef.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     return () => {
       setup.geom.dispose();
       setup.mat.dispose();
     };
   }, [setup]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;
     prevResetNonceRef.current = resetNonce;
     resetTracerPool(poolRef.current);
-    hadActiveRef.current = true;
+    const mesh = meshRef.current;
+    if (mesh) {
+      mesh.count = 0;
+      mesh.visible = false;
+    }
   }, [resetNonce, poolRef]);
 
   useFrame((_, delta) => {
@@ -182,22 +173,15 @@ export function Tracers({ poolRef, resetNonce }: TracersProps) {
 
     const dt = Math.min(delta, 0.05);
     const pool = poolRef.current;
-    if (pool.activeCount === 0 && !hadActiveRef.current && !pool.dirty) return;
-
     const mesh = meshRef.current;
-    if (!mesh) return;
+    if (!mesh || (pool.activeCount === 0 && !mesh.visible)) return;
 
     const slots = pool.slots;
     let renderedActive = 0;
     for (let i = 0; i < slots.length; i++) {
       const s = slots[i];
-      const base = i * 3;
-      if (!s.active) {
-        mesh.setMatrixAt(i, _zeroMat4);
-        setup.stateData[base] = 1;
-        setup.stateData[base + 2] = 0;
-        continue;
-      }
+      if (!s.active) continue;
+      const base = renderedActive * 3;
 
       const lifeNorm = Math.min(1, s.life / Math.max(0.02, s.maxLife));
       _pos.set(s.x, s.y, s.z);
@@ -206,7 +190,7 @@ export function Tracers({ poolRef, resetNonce }: TracersProps) {
       const lenScale = s.length * (s.isRicochet ? 1.0 - lifeNorm * 0.3 : 1.0);
       _scale.set(s.thickness, s.thickness, lenScale);
       _mat4.compose(_pos, _quat, _scale);
-      mesh.setMatrixAt(i, _mat4);
+      mesh.setMatrixAt(renderedActive, _mat4);
 
       setup.stateData[base] = lifeNorm;
       setup.stateData[base + 1] = s.isRicochet ? 1 : 0;
@@ -218,13 +202,16 @@ export function Tracers({ poolRef, resetNonce }: TracersProps) {
       renderedActive++;
     }
 
-    mesh.instanceMatrix.needsUpdate = true;
-    setup.stateAttr.needsUpdate = true;
-    setup.colorAttr.needsUpdate = true;
-    pool.dirty = false;
+    mesh.count = renderedActive;
+    mesh.visible = renderedActive > 0;
+    if (renderedActive === 0) return;
 
-    const remaining = stepTracerPool(pool, dt);
-    hadActiveRef.current = renderedActive > 0 || remaining > 0;
+    for (const attribute of [mesh.instanceMatrix, setup.stateAttr, setup.colorAttr]) {
+      attribute.clearUpdateRanges();
+      attribute.addUpdateRange(0, renderedActive * attribute.itemSize);
+      attribute.needsUpdate = true;
+    }
+    stepTracerPool(pool, dt);
   });
 
   return (
@@ -232,6 +219,8 @@ export function Tracers({ poolRef, resetNonce }: TracersProps) {
       ref={meshRef}
       name="ballistic-tracers"
       args={[setup.geom, setup.mat, MAX_TRACER_INSTANCES]}
+      count={0}
+      visible={false}
       frustumCulled={false}
       renderOrder={6}
     />

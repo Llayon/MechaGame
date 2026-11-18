@@ -1,3 +1,4 @@
+import { StaticStructure } from './StaticStructure';
 import { useMemo } from 'react';
 import {
   BridgeSpec,
@@ -18,6 +19,7 @@ import { VehicleWreck } from './VehicleWreck';
 import { VolumetricSearchlight } from './VolumetricSearchlight';
 
 export interface SteppedViaductSpanProps {
+  splitBridgeBatches: boolean;
   spec: BridgeSpec;
   lightingPreset?: LightingPreset;
   isSoftwareGl?: boolean;
@@ -79,6 +81,7 @@ function buildFlight(
  * Flight 1 (Island -> Bastion) -> Central Bastion-Crossway (47 deg turn & heat-venting cover) -> Flight 2 + Tunnel (Bastion -> Citadel West Gate).
  */
 export function SteppedViaductSpan({
+  splitBridgeBatches,
   spec,
   lightingPreset = 'dusk',
   isSoftwareGl = false,
@@ -167,7 +170,7 @@ export function SteppedViaductSpan({
   const tunnelClearH = 5.4;
 
   return (
-    <group>
+    <StaticStructure splitShadowBatches={splitBridgeBatches} revision={lightingPreset + isSoftwareGl} name={spec.id}>
       {/* FLIGHT 1 & FLIGHT 2 ANGLED SERPENTINE SPANS */}
       {[flights.flight1, flights.flight2].map((fl) => {
         const trussLen = fl.slopeLen * 0.88;
@@ -550,6 +553,6 @@ export function SteppedViaductSpan({
           ))}
         </group>
       ))}
-    </group>
+    </StaticStructure>
   );
 }

@@ -78,12 +78,12 @@ function softenNormalsToSphere(
  * organically deformed bough tiers) with blended non-indexed faceted + spherical normals
  * and an `aNeedleTip` attribute for sunlit foliage rim translucency in 1 Draw Call.
  */
-export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
+export function createUnifiedPineTreeGeometry(simplified = false): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
   const tmpColor = new THREE.Color();
 
   // 1. Grounded bark trunk rooted slightly below y=0 (-0.01..0.71)
-  const rawTrunk = new THREE.CylinderGeometry(0.045, 0.088, 0.72, 6, 1);
+  const rawTrunk = new THREE.CylinderGeometry(0.045, 0.088, 0.72, simplified ? 4 : 6, 1);
   rawTrunk.translate(0, 0.35, 0);
   const trunk = rawTrunk.toNonIndexed();
   rawTrunk.dispose();
@@ -98,7 +98,12 @@ export function createUnifiedPineTreeGeometry(): THREE.BufferGeometry {
   const tipGreen = new THREE.Color('#649651');
   const sphereCenter = new THREE.Vector3(0, 1.06, 0);
 
-  CONE_TIERS.forEach((tier, idx) => {
+  const tiers = simplified ? [
+    { y: .81, r: .58, h: 1.04, segs: 6 },
+    { y: 1.31, r: .41, h: .86, segs: 5 },
+    { y: 1.78, r: .25, h: .74, segs: 4 },
+  ] : CONE_TIERS;
+  tiers.forEach((tier, idx) => {
     const rawCone = new THREE.ConeGeometry(tier.r, tier.h, tier.segs, 1, false);
     const pos = rawCone.getAttribute('position');
 

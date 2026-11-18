@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import type { WorldAssets } from '../map/worldAssets';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { WorldLodDriver } from '../lod/WorldLodDriver';
+import { effectiveGraphics } from '../lod/adaptiveQuality';
+import { InfantryCrowd } from '../infantry/InfantryCrowd';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -15,6 +19,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
 import { TerrainSlab } from './TerrainSlab';
 import { Structures } from './Structures';
+import { BRIDGE_SHADOW_LAYER } from './objects/bridgeBatches';
 import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
@@ -27,37 +32,37 @@ import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import { StormFront } from './objects/StormFront';
 import { WaterEffects } from './objects/WaterEffects';
-import { createWaterVfxPool, type WaterVfxPoolState } from './objects/waterVfxPool';
+import { useLazyRef } from '../utils/useLazyRef';
+import { createWaterVfxPool } from './objects/waterVfxPool';
 import { GroundTrails } from './objects/GroundTrails';
-import { createGroundTrailsPool, type GroundTrailsPoolState } from './objects/groundTrailsPool';
+import { createGroundTrailsPool } from './objects/groundTrailsPool';
 import { MuzzleFlashes } from './objects/MuzzleFlashes';
-import { createMuzzleFlashPool, type MuzzleFlashPoolState } from './objects/muzzleFlashPool';
+import { createMuzzleFlashPool } from './objects/muzzleFlashPool';
 import { MissileRibbons } from './objects/MissileRibbons';
-import { createMissileRibbonPool, type MissileRibbonPoolState } from './objects/missileRibbonPool';
+import { createMissileRibbonPool } from './objects/missileRibbonPool';
 import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
 import {
   MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
-  type BallisticPropPool,
 } from './objects/debrisBallisticsPool';
 import { Tracers } from './objects/Tracers';
 import {
   MAX_TRACER_INSTANCES,
   createTracerPool,
-  type TracerPoolState,
 } from './objects/tracerPool';
 import { CuttingLaserBeam } from './objects/CuttingLaserBeam';
 import {
   MAX_CRATER_DECALS,
   createCraterPool,
-  type CraterPoolState,
 } from './objects/craterPool';
+import { HeatShimmer } from './objects/HeatShimmer';
+import { createHeatShimmerPool } from './objects/heatShimmerPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
 } from '../map/mechKinematics';
-import type { CombatSimulationState, CombatTelemetrySnapshot } from '../game/combatTypes';
+import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
 
@@ -634,8 +639,81 @@ function CameraRig({
   );
 }
 
+function BalancedShadowCadence({
+  lightRef, aimRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize,
+}: {
+  lightRef: React.RefObject<THREE.DirectionalLight | null>;
+  aimRef: React.RefObject<CombatAimState>;
+  lightingPreset: LightingPreset;
+  transitionNonce: number;
+  resetNonce: number;
+  driveMode: boolean;
+  paused: boolean;
+  shadowMapSize: number;
+}) {
+  const invalidate = useThree((state) => state.invalidate);
+  const frames = useRef(0);
+  const precise = useRef(false);
+
+  useLayoutEffect(() => {
+    const shadow = lightRef.current?.shadow;
+    if (!shadow) return;
+    shadow.autoUpdate = false;
+    shadow.needsUpdate = true;
+    frames.current = 0;
+    invalidate();
+    return () => {
+      shadow.autoUpdate = true;
+      shadow.needsUpdate = true;
+    };
+  }, [lightRef, lightingPreset, transitionNonce, resetNonce, driveMode, paused, shadowMapSize, invalidate]);
+
+  useFrame(() => {
+    if (paused) return;
+    const shadow = lightRef.current?.shadow;
+    if (!shadow) return;
+    const usingPrecisionCamera = driveMode && aimRef.current.precise;
+    if (usingPrecisionCamera !== precise.current) {
+      precise.current = usingPrecisionCamera;
+      frames.current = 0;
+    }
+    if (frames.current % 2 === 0) shadow.needsUpdate = true;
+    frames.current++;
+  });
+  return null;
+}
+
+function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
+  const scene = useThree((state) => state.scene);
+  const terrainReported = useRef(false);
+  const combatReported = useRef(false);
+  useLayoutEffect(() => {
+    if (terrainReported.current && (!driveMode || combatReported.current)) return;
+    const previous = scene.onAfterRender;
+    const report: typeof previous = function (...args) {
+      previous.apply(scene, args);
+      scene.onAfterRender = previous;
+      if (!terrainReported.current) {
+        terrainReported.current = true;
+        onReady();
+      }
+      if (driveMode && !combatReported.current) {
+        combatReported.current = true;
+        performance.mark('mecha-first-controllable-frame');
+      }
+    };
+    scene.onAfterRender = report;
+    return () => {
+      if (scene.onAfterRender === report) scene.onAfterRender = previous;
+    };
+  }, [scene, onReady, driveMode]);
+  return null;
+}
+
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
+  world: WorldAssets;
+  onTerrainReady: () => void;
   activeSector: SectorId;
   transitionNonce: number;
   resetNonce: number;
@@ -648,7 +726,6 @@ export interface MapSceneProps {
   driveInputRef: React.MutableRefObject<MechDriveInput>;
   aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
-  combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
   showMarkers: boolean;
   showUnits: boolean;
   showMist: boolean;
@@ -660,11 +737,13 @@ export interface MapSceneProps {
 
 export function MapScene({
   focusedSite,
+  world,
+  onTerrainReady,
   activeSector,
   transitionNonce,
   resetNonce,
   lightingPreset,
-  graphics,
+  graphics: preferences,
   driveMode,
   useTouchControls = false,
   paused,
@@ -672,7 +751,6 @@ export function MapScene({
   driveInputRef,
   aimRef,
   combatRef,
-  combatTelemetryRef,
   showMarkers,
   showUnits,
   showMist,
@@ -681,23 +759,28 @@ export function MapScene({
   onEnterDriveMode,
   onMissionEnded,
 }: MapSceneProps) {
+  const [adaptation, setAdaptation] = useState({ settings: preferences, step: 0 });
+  const step = preferences.autoQuality && adaptation.settings === preferences ? adaptation.step : 0;
+  const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   // CI benchmarking opts into a continuous frame loop on software renderers.
-  const benchmarkContinuousFrames = useMemo(
-    () => typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('benchmark') === '1',
-    [],
-  );
+  const query = useMemo(() => new URLSearchParams(
+    typeof window === 'undefined' ? '' : window.location.search,
+  ), []);
+  const benchmarkContinuousFrames = query.get('benchmark') === '1';
+  const splitBridgeBatches = query.get('bridgeCells') === '96';
+  const halfRateShadows = preferences.preset === 'balanced' && query.get('shadowCadence') === '2';
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const waterVfxPoolRef = useRef<WaterVfxPoolState>(createWaterVfxPool());
-  const groundTrailsPoolRef = useRef<GroundTrailsPoolState>(createGroundTrailsPool());
-  const muzzleFlashPoolRef = useRef<MuzzleFlashPoolState>(createMuzzleFlashPool());
-  const missileRibbonPoolRef = useRef<MissileRibbonPoolState>(createMissileRibbonPool());
-  const casingsPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_CASING_INSTANCES));
-  const debrisPoolRef = useRef<BallisticPropPool>(createBallisticPropPool(MAX_DEBRIS_INSTANCES));
-  const craterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
-  const tracerPoolRef = useRef<TracerPoolState>(createTracerPool(MAX_TRACER_INSTANCES));
+  const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
+  const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);
+  const muzzleFlashPoolRef = useLazyRef(createMuzzleFlashPool);
+  const missileRibbonPoolRef = useLazyRef(createMissileRibbonPool);
+  const casingsPoolRef = useLazyRef(() => createBallisticPropPool(MAX_CASING_INSTANCES));
+  const debrisPoolRef = useLazyRef(() => createBallisticPropPool(MAX_DEBRIS_INSTANCES));
+  const craterPoolRef = useLazyRef(() => createCraterPool(MAX_CRATER_DECALS));
+  const tracerPoolRef = useLazyRef(() => createTracerPool(MAX_TRACER_INSTANCES));
+  const heatShimmerPoolRef = useLazyRef(createHeatShimmerPool);
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -711,6 +794,10 @@ export function MapScene({
       data-lighting={lightingPreset}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
+      data-adaptive-step={step}
+      data-object-detail={graphics.objectDetail}
+      data-auto-quality={preferences.autoQuality}
+      data-target-fps={preferences.targetFps}
       data-render-dpr={quality.dpr}
       data-shadows={quality.shadowEnabled ? 'on' : 'off'}
       data-shadow-map-size={quality.shadowMapSize}
@@ -748,6 +835,9 @@ export function MapScene({
         }}
       >
         <SceneSimulationProvider paused={paused}>
+        <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
+        <WorldLodDriver settings={preferences} paused={paused} step={step}
+          changeStep={next => setAdaptation({settings: preferences, step: next})}/>
         <color attach="background" args={[lightCfg.bg]} />
         <fogExp2 attach="fog" args={[lightCfg.fogColor, lightCfg.fogDensity]} />
 
@@ -764,7 +854,6 @@ export function MapScene({
         <directionalLight
           key={'sun-shadow-'+graphics.shadows}
           ref={sunLightRef}
-          onUpdate={light => light.shadow.camera.layers.enable(PLAYER_MODEL_LAYER)}
           position={lightCfg.keyPos}
           color={lightCfg.keyColor}
           intensity={lightCfg.keyIntensity}
@@ -772,6 +861,7 @@ export function MapScene({
           shadow-mapSize-width={shadowMapSize}
           shadow-mapSize-height={shadowMapSize}
           shadow-camera-near={20}
+          shadow-camera-layers-mask={1 | (1 << BRIDGE_SHADOW_LAYER) | (1 << PLAYER_MODEL_LAYER)}
           shadow-camera-far={680}
           shadow-camera-left={-210}
           shadow-camera-right={210}
@@ -813,11 +903,12 @@ export function MapScene({
         />
 
         <group name="perf:terrain">
-          <TerrainSlab showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
+          <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
         </group>
 
         <group name="perf:structures">
           <Structures
+            splitBridgeBatches={splitBridgeBatches}
             lightingPreset={lightingPreset}
             driveMode={driveMode}
             distantWar={quality.distantWar}
@@ -852,7 +943,6 @@ export function MapScene({
           mechPoseRef={mechPoseRef}
           driveInputRef={driveInputRef}
           combatRef={combatRef}
-          combatTelemetryRef={combatTelemetryRef}
           waterVfxPoolRef={waterVfxPoolRef}
           groundTrailsPoolRef={groundTrailsPoolRef}
           muzzleFlashPoolRef={muzzleFlashPoolRef}
@@ -861,13 +951,29 @@ export function MapScene({
           tracerPoolRef={tracerPoolRef}
           onShadowFocus={(focus, cam) => syncShadowFrustum(
             sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
+          heatShimmerPoolRef={heatShimmerPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
         </group>
 
+        {halfRateShadows && quality.shadowEnabled && (
+          <BalancedShadowCadence
+            key={graphics.shadows}
+            lightRef={sunLightRef}
+            aimRef={aimRef}
+            lightingPreset={lightingPreset}
+            transitionNonce={transitionNonce}
+            resetNonce={resetNonce}
+            driveMode={driveMode}
+            paused={paused}
+            shadowMapSize={shadowMapSize}
+          />
+        )}
         <group name="perf:combat">
-          <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+          {driveMode || focusedSite
+            ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+            : showUnits && <InfantryCrowd combatRef={combatRef} />}
           <CombatActors
             combatRef={combatRef}
             driveMode={driveMode}
@@ -878,6 +984,7 @@ export function MapScene({
             missileRibbonPoolRef={missileRibbonPoolRef}
             debrisPoolRef={debrisPoolRef}
             craterPoolRef={craterPoolRef}
+            heatShimmerPoolRef={heatShimmerPoolRef}
           />
           <WaterEffects
             poolRef={waterVfxPoolRef}
@@ -912,12 +1019,18 @@ export function MapScene({
           <CuttingLaserBeam
             combatRef={combatRef}
             craterPoolRef={craterPoolRef}
+            heatShimmerPoolRef={heatShimmerPoolRef}
+            resetNonce={resetNonce}
+          />
+          <HeatShimmer
+            poolRef={heatShimmerPoolRef}
+            lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
         </group>
 
         <group name="perf:foliage">
-        <FoliageAndUnits
+        <FoliageAndUnits grassMap={world.grass}
           showUnits={showUnits}
           showMist={showMist}
           vegetation={graphics.vegetation}
@@ -952,6 +1065,7 @@ export function MapScene({
           onSelectSector={onSelectSector}
         />
         <ScenePerformanceProbe
+          adaptiveStep={step}
           paused={paused}
           driveMode={driveMode}
           lightingPreset={lightingPreset}

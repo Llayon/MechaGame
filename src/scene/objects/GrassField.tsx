@@ -1,3 +1,5 @@
+import { readWorldLod } from '../../lod/worldLod';
+import { createGrassBands } from './grassBands';
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -5,20 +7,15 @@ import * as THREE from 'three';
 import type { LightingPreset } from '../../map/sectors';
 import type { MechTelemetrySnapshot } from '../../map/mechKinematics';
 import {
-  GRASS_INSTANCE_COUNT_GPU,
-  GRASS_INSTANCE_COUNT_SW,
   GRASS_MAX_Y,
   GRASS_MIN_Y,
   GRASS_PATCH_RADIUS_GPU,
   GRASS_PATCH_RADIUS_SW,
   GRASS_SPAN_D,
   GRASS_SPAN_W,
-  bakeTerrainGrassMap,
-  createGrassClumpGeometry,
 } from '../../map/grassField';
 
-const TEX_W = 512;
-const TEX_H = 448;
+import { WORLD_MAP_WIDTH as TEX_W, WORLD_MAP_HEIGHT as TEX_H } from '../../map/worldMapDimensions';
 
 const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
   day: new THREE.Color('#dce85c'),
@@ -27,6 +24,7 @@ const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
 };
 
 export interface GrassFieldProps {
+  data: Uint8Array<ArrayBuffer>;
   driveMode: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
@@ -35,6 +33,7 @@ export interface GrassFieldProps {
 }
 
 interface GrassRuntimeProps {
+  data: Uint8Array<ArrayBuffer>;
   visible: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
@@ -43,6 +42,7 @@ interface GrassRuntimeProps {
 }
 
 function GrassFieldMesh({
+  data,
   visible,
   mechPoseRef,
   lightingPreset,
@@ -51,7 +51,6 @@ function GrassFieldMesh({
 }: GrassRuntimeProps) {
   const patchRadius = isSoftwareGl ? GRASS_PATCH_RADIUS_SW : GRASS_PATCH_RADIUS_GPU;
   const patchSize = patchRadius * 2;
-  const instanceCount = isSoftwareGl ? GRASS_INSTANCE_COUNT_SW : GRASS_INSTANCE_COUNT_GPU;
 
   const uniformsRef = useRef({
     uTime: { value: 0.75 },
@@ -95,7 +94,6 @@ function GrassFieldMesh({
   }, [lightingPreset, sunPos]);
 
   const terrainMap = useMemo(() => {
-    const data = bakeTerrainGrassMap(TEX_W, TEX_H);
     const tex = new THREE.DataTexture(
       data,
       TEX_W,
@@ -115,13 +113,9 @@ function GrassFieldMesh({
     tex.needsUpdate = true;
     uniformsRef.current.uTerrainMap.value = tex;
     return tex;
-  }, []);
+  }, [data]);
 
-  const geometry = useMemo(() => {
-    const bladeHeight = isSoftwareGl ? 0.35 : 0.32;
-    const bladeWidth = isSoftwareGl ? 0.084 : 0.046;
-    return createGrassClumpGeometry(instanceCount, patchSize, bladeHeight, bladeWidth);
-  }, [instanceCount, patchSize, isSoftwareGl]);
+  const bands = useMemo(() => createGrassBands(isSoftwareGl, data, TEX_W, TEX_H), [isSoftwareGl, data]);
 
   const material = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
@@ -433,17 +427,13 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
     return mat;
   }, []);
 
-  useEffect(() => {
-    return () => {
-      geometry.dispose();
-      material.dispose();
-      terrainMap.dispose();
-    };
-  }, [geometry, material, terrainMap]);
+  useEffect(() => () => bands.dispose(), [bands]);
+  useEffect(() => () => material.dispose(), [material]);
+  useEffect(() => () => terrainMap.dispose(), [terrainMap]);
 
   const { paused } = useSceneSimulation();
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (paused) return;
     if (!visible) return;
     const m = mechPoseRef.current;
@@ -454,6 +444,9 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
       m.x + Math.sin(m.yaw) * forwardBias,
       m.z + Math.cos(m.yaw) * forwardBias,
     );
+    u.uPatchSize.value = patchSize;
+    u.uPatchRadius.value = patchRadius;
+    bands.update(u.uWindowCenter.value.x, u.uWindowCenter.value.y, readWorldLod(camera).detailScale);
     u.uMechPos.value.set(m.x, m.y, m.z);
     u.uFootL.value.set(m.footLX ?? m.x, m.footLZ ?? m.z);
     u.uFootR.value.set(m.footRX ?? m.x, m.footRZ ?? m.z);
@@ -463,14 +456,12 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
   });
 
   return (
-    <mesh
-      visible={visible}
-      geometry={geometry}
-      material={material}
-      receiveShadow={!isSoftwareGl}
-      castShadow={false}
-      frustumCulled={false}
-    />
+    <group visible={visible}>
+      {bands.geometries.map((geometry, level) => (
+        <mesh key={level} geometry={geometry} material={material}
+          userData={{ lodLevel: level }} receiveShadow={!isSoftwareGl} frustumCulled={false} />
+      ))}
+    </group>
   );
 }
 
@@ -479,6 +470,7 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
  * Lazily bakes the 512x448 height/suitability map on first Drive Mode entry so Overview load stays instant.
  */
 export function GrassField({
+  data,
   driveMode,
   mechPoseRef,
   lightingPreset,
@@ -497,6 +489,7 @@ export function GrassField({
 
   return (
     <GrassFieldMesh
+      data={data}
       visible={driveMode}
       mechPoseRef={mechPoseRef}
       lightingPreset={lightingPreset}
