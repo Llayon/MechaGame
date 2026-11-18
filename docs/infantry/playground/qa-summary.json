@@ -1,0 +1,22 @@
+{
+  "createdAt": "2026-11-18T06:06:03.179Z",
+  "codeCommit": "30516449627c34ed5f4f4823c6d27bc9bc39a372",
+  "typescript": "PASS",
+  "productionBuild": "PASS",
+  "unitTests": {
+    "passed": 150,
+    "failed": 0,
+    "files": 39
+  },
+  "desktopSmoke": "PASS",
+  "touchViewportSmoke": "PASS (emulated only)",
+  "originalGpuLabRegression": "PASS (200 original Tripo instances)",
+  "video": {
+    "seconds": 8,
+    "bytes": 728695,
+    "captureFps": 15,
+    "notPerformanceBenchmark": true
+  },
+  "physicalMobileVerified": false,
+  "animationArtStatus": "Playable prototype; final combat art acceptance pending"
+}

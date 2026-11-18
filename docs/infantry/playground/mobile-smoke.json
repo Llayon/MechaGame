@@ -1,0 +1,51 @@
+{
+  "createdAt": "2026-11-18T05:59:04.208Z",
+  "passed": true,
+  "emulatedViewportOnly": true,
+  "physicalDeviceVerified": false,
+  "layout": {
+    "width": 390,
+    "scrollWidth": 390,
+    "touch": "flex",
+    "menu": true
+  },
+  "start": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "idle",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 0.7958000000119209,
+    "geometries": 22,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "moving": {
+    "ready": true,
+    "position": [
+      -7.587923814615397e-17,
+      0,
+      0.6196010000514766
+    ],
+    "speedMeters": 2.7428386661532724,
+    "grounded": true,
+    "animation": "run",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 1.7956999999880767,
+    "geometries": 22,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "errors": []
+}

@@ -1,0 +1,337 @@
+{
+  "createdAt": "2026-11-18T06:01:24.970Z",
+  "passed": true,
+  "start": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "idle",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 1.1026000000238412,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "run": {
+    "ready": true,
+    "position": [
+      -1.304114490771694e-16,
+      0,
+      1.0648902946381515
+    ],
+    "speedMeters": 3.19999988231439,
+    "grounded": true,
+    "animation": "run",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 2.6193000000119167,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "sprint": {
+    "ready": true,
+    "position": [
+      -2.096543393277083e-16,
+      0,
+      1.7119575984984239
+    ],
+    "speedMeters": 4.494220486262941,
+    "grounded": true,
+    "animation": "run",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 3.2361999999880764,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "jump": {
+    "ready": true,
+    "position": [
+      -2.1582724786239203e-16,
+      0.11336101272435632,
+      1.7623632218910752
+    ],
+    "speedMeters": 0,
+    "grounded": false,
+    "animation": "jump",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 4.019400000035761,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "walk": {
+    "ready": true,
+    "position": [
+      -2.450023996314984e-16,
+      0,
+      2.0005964152446163
+    ],
+    "speedMeters": 1.3479650731521133,
+    "grounded": true,
+    "animation": "walk",
+    "lod": 2,
+    "skin": "original",
+    "triangles": 999,
+    "bones": 14,
+    "time": 6.769400000035753,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "skins": [
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "original",
+      "triangles": 999,
+      "bones": 14,
+      "time": 8.436100000023833,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "urban",
+      "triangles": 999,
+      "bones": 14,
+      "time": 9.119499999999984,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "arctic",
+      "triangles": 999,
+      "bones": 14,
+      "time": 9.803100000023827,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "desert",
+      "triangles": 999,
+      "bones": 14,
+      "time": 10.48649999999999,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "assault",
+      "triangles": 999,
+      "bones": 14,
+      "time": 11.036400000035755,
+      "geometries": 39,
+      "textures": 8,
+      "missionMounted": false
+    }
+  ],
+  "lods": [
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 0,
+      "skin": "assault",
+      "triangles": 3999,
+      "bones": 14,
+      "time": 0.4336000000238421,
+      "geometries": 40,
+      "textures": 12,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 1,
+      "skin": "assault",
+      "triangles": 1999,
+      "bones": 14,
+      "time": 0.41700000000000015,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "assault",
+      "triangles": 999,
+      "bones": 14,
+      "time": 11.752699999988074,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 0,
+      "skin": "assault",
+      "triangles": 3999,
+      "bones": 14,
+      "time": 0.8669000000357627,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 1,
+      "skin": "assault",
+      "triangles": 1999,
+      "bones": 14,
+      "time": 0.8665999999642372,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false
+    },
+    {
+      "ready": true,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "speedMeters": 0,
+      "grounded": true,
+      "animation": "idle",
+      "lod": 2,
+      "skin": "assault",
+      "triangles": 999,
+      "bones": 14,
+      "time": 12.169400000035758,
+      "geometries": 41,
+      "textures": 16,
+      "missionMounted": false
+    }
+  ],
+  "changedSkinPixels": 29964,
+  "final": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "idle",
+    "lod": 2,
+    "skin": "urban",
+    "triangles": 999,
+    "bones": 14,
+    "time": 13.407800000071521,
+    "geometries": 41,
+    "textures": 16,
+    "missionMounted": false
+  },
+  "errors": [],
+  "limitations": [
+    "Static yard and single controlled hero; not a crowd performance measurement",
+    "Physical mobile QA not verified"
+  ]
+}

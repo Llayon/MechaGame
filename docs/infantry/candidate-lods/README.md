@@ -101,3 +101,6 @@ node scripts/infantry/verify_candidate_lods.mjs
 
 No paid API, cloud baking or substitute geometry was used. All three exports
 retain the candidate's original helmet, armor, gloves, boots, pouches and backpack.
+
+The static files above remain unchanged. A later [playable wardrobe demo](../playground/README.md)
+adds separate rigged exports under `demo/` and opens with `?demo=infantry`.

@@ -76,4 +76,6 @@ No main push, mission infantry, AI or battlefield behavior is part of this chang
 
 The subsequently supplied `textured_mesh 1.glb` has its own
 [normal-baked static LOD package](candidate-lods/README.md). It does not replace
-the Tripo source or change the lab's active character. Candidate rigging is pending.
+the Tripo source or change the lab's active character. A separate
+[playable wardrobe demo](playground/README.md), opened with `?demo=infantry`,
+now provides rigged candidate LODs, free movement and five material palettes.

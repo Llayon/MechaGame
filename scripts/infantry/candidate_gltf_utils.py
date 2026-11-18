@@ -34,4 +34,3 @@ def repair_export_tangents(path):
   struct.pack_into('<4f',data,offsets[vertex],*replacement);repaired+=1
  if repaired:path.write_bytes(data)
  return repaired
-
