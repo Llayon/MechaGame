@@ -21,6 +21,10 @@ import { CombatActors } from './objects/CombatActors';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
+import { WaterEffects } from './objects/WaterEffects';
+import { createWaterVfxPool, type WaterVfxPoolState } from './objects/waterVfxPool';
+import { GroundTrails } from './objects/GroundTrails';
+import { createGroundTrailsPool, type GroundTrailsPoolState } from './objects/groundTrailsPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
@@ -633,6 +637,8 @@ export function MapScene({
   );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const waterVfxPoolRef = useRef<WaterVfxPoolState>(createWaterVfxPool());
+  const groundTrailsPoolRef = useRef<GroundTrailsPoolState>(createGroundTrailsPool());
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -784,6 +790,8 @@ export function MapScene({
           driveInputRef={driveInputRef}
           combatRef={combatRef}
           combatTelemetryRef={combatTelemetryRef}
+          waterVfxPoolRef={waterVfxPoolRef}
+          groundTrailsPoolRef={groundTrailsPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
@@ -803,6 +811,19 @@ export function MapScene({
             combatRef={combatRef}
             driveMode={driveMode}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+            waterVfxPoolRef={waterVfxPoolRef}
+            groundTrailsPoolRef={groundTrailsPoolRef}
+          />
+          <WaterEffects
+            poolRef={waterVfxPoolRef}
+            lightingPreset={lightingPreset}
+            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+            resetNonce={resetNonce}
+          />
+          <GroundTrails
+            poolRef={groundTrailsPoolRef}
+            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+            resetNonce={resetNonce}
           />
         </group>
 

@@ -22,6 +22,15 @@ import {
   stepKickupPool,
   type PebbleTransform,
 } from './TerrainKickup';
+import {
+  spawnWaterImpact,
+  type WaterVfxPoolState,
+} from './waterVfxPool';
+import {
+  stampMechFootprint,
+  stampMechSkidTrail,
+  type GroundTrailsPoolState,
+} from './groundTrailsPool';
 
 function cubicBezier(
   p0: THREE.Vector3,
@@ -68,6 +77,8 @@ export function stepMechEffects(
   shots: readonly MechShot[],
   isSoftwareGl: boolean,
   shotDistances?: readonly number[],
+  waterVfxPool?: WaterVfxPoolState,
+  groundTrailsPool?: GroundTrailsPoolState,
 ): void {
   const { isFiring, isMoving, targetTurnRate } = control;
   const { dieselVib, dieselVibAlt, sinY, cosY } = motion;
@@ -142,6 +153,17 @@ export function stepMechEffects(
       });
     }
   }
+  if (
+    groundTrailsPool &&
+    driveMode &&
+    dt > 0 &&
+    !sim.inWater &&
+    ((control.isDashing && control.isMoving) || isBrakingHard) &&
+    elapsed - sim.lastSkidTrailTime >= 0.18
+  ) {
+    sim.lastSkidTrailTime = elapsed;
+    stampMechSkidTrail(groundTrailsPool, sim.x, sim.z, sim.yaw, sim.y);
+  }
   sim.prevTargetSpeed = THREE.MathUtils.lerp(
     sim.prevTargetSpeed,
     control.targetSpeed,
@@ -166,7 +188,17 @@ export function stepMechEffects(
           isRoad: onRoad,
         }).waterFactor > 0.35;
     }
-    const footInWater = groundY < WATER_LEVEL + 0.08 || footInPuddle;
+    const riverFootInWater = groundY < WATER_LEVEL + 0.08;
+    const footInWater = riverFootInWater || footInPuddle;
+    if (groundTrailsPool && !riverFootInWater && sim.gaitBlend > 0.16) {
+      stampMechFootprint(
+        groundTrailsPool,
+        impact.position.x,
+        impact.position.z,
+        sim.yaw,
+        sim.y,
+      );
+    }
     if (
       (control.isSprinting || control.isDashing) &&
       sim.gaitBlend > 0.25 &&
@@ -185,9 +217,21 @@ export function stepMechEffects(
       });
     }
 
-    if (!fxParent ||
-        elapsed - sim.lastStepParticleTime[impact.index] <= 0.22 ||
-        sim.gaitBlend <= 0.2 || sim.particles.length >= 75) continue;
+    if (elapsed - sim.lastStepParticleTime[impact.index] <= 0.22 || sim.gaitBlend <= 0.2) {
+      continue;
+    }
+
+    if (riverFootInWater && waterVfxPool) {
+      sim.lastStepParticleTime[impact.index] = elapsed;
+      spawnWaterImpact(waterVfxPool, impact.position.x, impact.position.z, speedScale, {
+        dirX: -sinY * moveSign,
+        dirZ: -cosY * moveSign,
+        countScale: isSoftwareGl ? 0.6 : 1.0,
+      });
+      continue;
+    }
+
+    if (!fxParent || sim.particles.length >= 75) continue;
     sim.lastStepParticleTime[impact.index] = elapsed;
     const puffCount = isSoftwareGl ? 3 : 5;
     for (let d = 0; d < puffCount; d++) {
@@ -216,6 +260,44 @@ export function stepMechEffects(
         maxLife: footInWater ? 0.65 : 0.8,
         initialOpacity: footInWater ? 0.52 : 0.4,
       });
+    }
+  }
+
+  // 3b) Continuous V-shaped hydro-wake trail behind wading / Jet-Dashing Mech
+  if (
+    waterVfxPool &&
+    driveMode &&
+    sim.inWater &&
+    control.isMoving &&
+    (control.isDashing || Math.abs(control.targetSpeed) > 1.35)
+  ) {
+    const wakeInterval = control.isDashing ? 0.11 : 0.26;
+    if (elapsed - sim.lastWaterWakeTime >= wakeInterval) {
+      sim.lastWaterWakeTime = elapsed;
+      const wakeBack = control.isDashing ? 1.35 : 0.95;
+      const sideOffset = 0.72;
+      const wxBase = sim.x - sinY * moveSign * wakeBack;
+      const wzBase = sim.z - cosY * moveSign * wakeBack;
+      const wakeIntensity = control.isDashing ? 1.45 : 0.72;
+      spawnWaterImpact(
+        waterVfxPool,
+        wxBase + cosY * sideOffset,
+        wzBase - sinY * sideOffset,
+        wakeIntensity,
+        {
+          dirX: -sinY * moveSign,
+          dirZ: -cosY * moveSign,
+          splash: control.isDashing,
+          countScale: isSoftwareGl ? 0.5 : 0.75,
+        },
+      );
+      spawnWaterImpact(
+        waterVfxPool,
+        wxBase - cosY * sideOffset,
+        wzBase + sinY * sideOffset,
+        wakeIntensity,
+        { splash: false },
+      );
     }
   }
 

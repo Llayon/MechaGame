@@ -125,6 +125,7 @@ export interface CombatImpactEvent {
   y: number;
   z: number;
   heavy: boolean;
+  inWater?: boolean;
 }
 
 export interface LockedTargetSnapshot {

@@ -4,11 +4,13 @@ import {
   ISLAND_CENTER_X,
   ISLAND_CENTER_Z,
   METERS_PER_UNIT,
+  WATER_LEVEL,
   clamp,
 } from '../map/terrainMath';
 import { MECH_SPAWN, getWalkableSurfaceY } from '../map/mechKinematics';
 import { resolveWorldObstacles } from '../map/worldColliders';
 import { castCombatRay, hasLineOfSight } from '../map/worldRaycaster';
+import { findWaterSurfaceCrossing } from '../scene/objects/waterVfxPool';
 import type {
   CombatImpactEvent,
   CombatPhase,
@@ -829,19 +831,36 @@ export function processPlayerShots(
         });
       }
     } else if (coverHit) {
+      const waterHit =
+        coverHit.kind === 'terrain' && coverHit.y < WATER_LEVEL - 0.04
+          ? findWaterSurfaceCrossing(
+              shot.muzzleX,
+              shot.muzzleY,
+              shot.muzzleZ,
+              coverHit.x,
+              coverHit.y,
+              coverHit.z,
+            )
+          : null;
+      const hx = waterHit ? waterHit.x : coverHit.x;
+      const hy = waterHit ? waterHit.y : coverHit.y;
+      const hz = waterHit ? waterHit.z : coverHit.z;
       state.pendingImpacts.push({
         kind: 'cover-hit',
-        x: coverHit.x,
-        y: coverHit.y,
-        z: coverHit.z,
+        x: hx,
+        y: hy,
+        z: hz,
         heavy: false,
+        inWater: waterHit !== null,
       });
       resolutions.push({
         hitKind: 'cover',
-        hitX: coverHit.x,
-        hitY: coverHit.y,
-        hitZ: coverHit.z,
-        distance: coverHit.distance,
+        hitX: hx,
+        hitY: hy,
+        hitZ: hz,
+        distance: waterHit
+          ? Math.hypot(hx - shot.muzzleX, hy - shot.muzzleY, hz - shot.muzzleZ)
+          : coverHit.distance,
       });
     } else {
       resolutions.push({
@@ -1064,30 +1083,47 @@ export function triggerHeavyCannonShot(
   }
 
   if (coverHit) {
+    const waterHit =
+      coverHit.kind === 'terrain' && coverHit.y < WATER_LEVEL - 0.04
+        ? findWaterSurfaceCrossing(
+            muzzleX,
+            muzzleY,
+            muzzleZ,
+            coverHit.x,
+            coverHit.y,
+            coverHit.z,
+          )
+        : null;
+    const hx = waterHit ? waterHit.x : coverHit.x;
+    const hy = waterHit ? waterHit.y : coverHit.y;
+    const hz = waterHit ? waterHit.z : coverHit.z;
     state.heavyBeams.push({
       x0: muzzleX,
       y0: muzzleY,
       z0: muzzleZ,
-      x1: coverHit.x,
-      y1: coverHit.y,
-      z1: coverHit.z,
+      x1: hx,
+      y1: hy,
+      z1: hz,
       life: 0.22,
       maxLife: 0.22,
     });
     state.trauma = clamp(state.trauma + 0.08, 0, 1);
     state.pendingImpacts.push({
       kind: 'cover-hit',
-      x: coverHit.x,
-      y: coverHit.y,
-      z: coverHit.z,
+      x: hx,
+      y: hy,
+      z: hz,
       heavy: true,
+      inWater: waterHit !== null,
     });
     return {
       hitKind: 'cover',
-      hitX: coverHit.x,
-      hitY: coverHit.y,
-      hitZ: coverHit.z,
-      distance: coverHit.distance,
+      hitX: hx,
+      hitY: hy,
+      hitZ: hz,
+      distance: waterHit
+        ? Math.hypot(hx - muzzleX, hy - muzzleY, hz - muzzleZ)
+        : coverHit.distance,
     };
   }
 
@@ -1575,12 +1611,17 @@ export function stepCombatSimulation(
     }
 
     if (coverHit) {
+      const waterHit =
+        coverHit.kind === 'terrain' && coverHit.y < WATER_LEVEL - 0.04
+          ? findWaterSurfaceCrossing(p.x, p.y, p.z, coverHit.x, coverHit.y, coverHit.z)
+          : null;
       state.pendingImpacts.push({
         kind: 'cover-hit',
-        x: coverHit.x,
-        y: coverHit.y,
-        z: coverHit.z,
+        x: waterHit ? waterHit.x : coverHit.x,
+        y: waterHit ? waterHit.y : coverHit.y,
+        z: waterHit ? waterHit.z : coverHit.z,
         heavy: false,
+        inWater: waterHit !== null,
       });
       state.projectiles.splice(i, 1);
       continue;

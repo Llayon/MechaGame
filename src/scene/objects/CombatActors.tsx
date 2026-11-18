@@ -12,6 +12,15 @@ import {
   spawnCraterDecal,
   type CraterPoolState,
 } from './craterPool';
+import {
+  isRiverWaterImpact,
+  spawnWaterImpact,
+  type WaterVfxPoolState,
+} from './waterVfxPool';
+import {
+  stampApcTrack,
+  type GroundTrailsPoolState,
+} from './groundTrailsPool';
 
 const MAX_PROJECTILE_INSTANCES = 40;
 const MAX_SPARK_PARTICLES = 96;
@@ -61,12 +70,16 @@ export interface CombatActorsProps {
   combatRef: React.MutableRefObject<CombatSimulationState>;
   driveMode: boolean;
   isSoftwareGl: boolean;
+  waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
+  groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
 }
 
 export function CombatActors({
   combatRef,
   driveMode,
   isSoftwareGl,
+  waterVfxPoolRef,
+  groundTrailsPoolRef,
 }: CombatActorsProps) {
   const enemiesGroupRef = useRef<THREE.Group>(null);
   const projectileMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -102,6 +115,7 @@ export function CombatActors({
   const craterPoolRef = useRef<CraterPoolState>(createCraterPool(MAX_CRATER_DECALS));
   const craterDirtyRef = useRef(true);
   const prevElapsedRef = useRef(0);
+  const apcTrailPosRef = useRef<Map<string, { x: number; z: number }>>(new Map());
 
   const sharedGeoms = useMemo(() => {
     const shadowDisc = new THREE.CircleGeometry(1, 20);
@@ -545,15 +559,20 @@ export function CombatActors({
     if (combat.elapsedSec < prevElapsedRef.current - 0.1) {
       resetCraterPool(craterPoolRef.current);
       craterDirtyRef.current = true;
+      apcTrailPosRef.current.clear();
     }
     prevElapsedRef.current = combat.elapsedSec;
 
-    // Consume pending impact events into pooled sparks & ground crater decals
+    // Consume pending impact events into pooled sparks, ground craters, & water ripples/splashes
+    const waterPool = waterVfxPoolRef?.current;
     while (combat.pendingImpacts.length > 0) {
       const ev = combat.pendingImpacts.shift()!;
       if (ev.kind === 'explosion') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 10 : 22, 8.5, 1.35, 1.0, 0.52, 0.14, 0.55);
         spawnBurst(ev.x, ev.y + 0.3, ev.z, isSoftwareGl ? 6 : 12, 4.5, 1.85, 0.25, 0.25, 0.25, 0.75);
+        if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
+          spawnWaterImpact(waterPool, ev.x, ev.z, 1.85, { countScale: isSoftwareGl ? 0.6 : 1.0 });
+        }
         if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 2.4, 1.0, ev.x * 0.7 + ev.z * 0.3)) {
           craterDirtyRef.current = true;
         }
@@ -561,6 +580,9 @@ export function CombatActors({
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 14 : 28, 11.2, 1.75, 1.0, 0.44, 0.1, 0.65);
         spawnBurst(ev.x, ev.y + 0.5, ev.z, isSoftwareGl ? 8 : 16, 6.2, 2.15, 0.98, 0.78, 0.22, 0.52);
         spawnBurst(ev.x, ev.y + 0.9, ev.z, isSoftwareGl ? 6 : 10, 3.8, 2.2, 0.22, 0.22, 0.24, 0.85);
+        if (waterPool && isRiverWaterImpact(ev.x, ev.y - 1.2, ev.z)) {
+          spawnWaterImpact(waterPool, ev.x, ev.z, 2.25, { countScale: isSoftwareGl ? 0.65 : 1.0 });
+        }
         if (spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 3.3, 1.15, ev.x * 1.1 + ev.z * 0.5)) {
           craterDirtyRef.current = true;
         }
@@ -574,9 +596,15 @@ export function CombatActors({
       } else if (ev.kind === 'armor-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 3 : 6, 5.2, 0.65, 1.0, 0.85, 0.35, 0.28);
       } else if (ev.kind === 'cover-hit') {
-        spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 2 : 5, 4.0, 0.55, 0.85, 0.78, 0.64, 0.25);
-        if (ev.heavy && spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.85, 0.92, ev.x * 0.4 + ev.z * 0.9)) {
-          craterDirtyRef.current = true;
+        if (waterPool && (ev.inWater || isRiverWaterImpact(ev.x, ev.y, ev.z))) {
+          spawnWaterImpact(waterPool, ev.x, ev.z, ev.heavy ? 1.65 : 0.62, {
+            countScale: isSoftwareGl ? 0.6 : 1.0,
+          });
+        } else {
+          spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 2 : 5, 4.0, 0.55, 0.85, 0.78, 0.64, 0.25);
+          if (ev.heavy && spawnCraterDecal(craterPoolRef.current, ev.x, ev.y, ev.z, 1.85, 0.92, ev.x * 0.4 + ev.z * 0.9)) {
+            craterDirtyRef.current = true;
+          }
         }
       } else if (ev.kind === 'player-hit') {
         spawnBurst(ev.x, ev.y, ev.z, isSoftwareGl ? 4 : 8, 5.5, 0.75, 1.0, 0.32, 0.16, 0.32);
@@ -587,6 +615,7 @@ export function CombatActors({
     let lockedEnemy: EnemyUnitState | null = null;
     let bestLockedDist = Infinity;
 
+    const trailsPool = groundTrailsPoolRef?.current;
     for (let i = 0; i < combat.enemies.length; i++) {
       const e = combat.enemies[i];
       const node = nodes.get(e.id);
@@ -595,6 +624,23 @@ export function CombatActors({
       node.root.position.set(e.x, e.y, e.z);
       node.hullGroup.rotation.y = e.yaw;
       node.turretGroup.rotation.y = e.turretYaw - e.yaw;
+
+      if (trailsPool && e.archetype === 'scout-apc' && e.aiState !== 'destroyed' && e.aiState !== 'ko') {
+        const last = apcTrailPosRef.current.get(e.id);
+        if (!last) {
+          apcTrailPosRef.current.set(e.id, { x: e.x, z: e.z });
+        } else {
+          const dx = e.x - last.x;
+          const dz = e.z - last.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist >= 0.95) {
+            const moveYaw = Math.atan2(dx, dz);
+            stampApcTrack(trailsPool, (e.x + last.x) * 0.5, (e.z + last.z) * 0.5, moveYaw, e.y);
+            last.x = e.x;
+            last.z = e.z;
+          }
+        }
+      }
 
       if (e.aiState === 'destroyed') {
         node.hullGroup.rotation.z = 0.58;

@@ -18,6 +18,8 @@ import { stepMechMovement } from './MechMovementSystem';
 import { stepMechIK } from './MechIKSystem';
 import { stepWeaponSystem } from './WeaponSystem';
 import { stepMechEffects } from './MechEffects';
+import type { WaterVfxPoolState } from './waterVfxPool';
+import type { GroundTrailsPoolState } from './groundTrailsPool';
 import {
   buildCombatTelemetry,
   processPlayerShots,
@@ -54,6 +56,8 @@ export interface SovietMechProps {
   aimRef: React.MutableRefObject<CombatAimState>;
   combatRef: React.MutableRefObject<CombatSimulationState>;
   combatTelemetryRef: React.MutableRefObject<CombatTelemetrySnapshot>;
+  waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
+  groundTrailsPoolRef?: React.MutableRefObject<GroundTrailsPoolState>;
   onSelectMech?: () => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
@@ -70,6 +74,8 @@ export function SovietMech({
   aimRef,
   combatRef,
   combatTelemetryRef,
+  waterVfxPoolRef,
+  groundTrailsPoolRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
@@ -438,6 +444,8 @@ export function SovietMech({
       shots,
       isSoftwareGl,
       shotDistances,
+      waterVfxPoolRef?.current,
+      groundTrailsPoolRef?.current,
     );
 
     // Publish lightweight telemetry snapshot for camera rig, minimap & combat HUD

@@ -50,6 +50,8 @@ export function createMechState() {
     lastStepParticleTime: [0, 0],
     lastLiftKickupTime: [0, 0],
     lastDriftKickupTime: 0,
+    lastWaterWakeTime: -10,
+    lastSkidTrailTime: -10,
     springSwayX: new SmoothSpring(0, 6.2),
     springBounceY: new SmoothSpring(0, 8.5),
     springSurgeZ: new SmoothSpring(0, 6.5),
