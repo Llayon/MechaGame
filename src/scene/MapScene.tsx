@@ -52,6 +52,8 @@ import {
   MAX_CRATER_DECALS,
   createCraterPool,
 } from './objects/craterPool';
+import { HeatShimmer } from './objects/HeatShimmer';
+import { createHeatShimmerPool } from './objects/heatShimmerPool';
 import {
   MechTelemetrySnapshot,
   getWalkableSurfaceY,
@@ -754,6 +756,7 @@ export function MapScene({
   const debrisPoolRef = useLazyRef(() => createBallisticPropPool(MAX_DEBRIS_INSTANCES));
   const craterPoolRef = useLazyRef(() => createCraterPool(MAX_CRATER_DECALS));
   const tracerPoolRef = useLazyRef(() => createTracerPool(MAX_TRACER_INSTANCES));
+  const heatShimmerPoolRef = useLazyRef(createHeatShimmerPool);
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
@@ -919,6 +922,7 @@ export function MapScene({
           missileRibbonPoolRef={missileRibbonPoolRef}
           casingsPoolRef={casingsPoolRef}
           tracerPoolRef={tracerPoolRef}
+          heatShimmerPoolRef={heatShimmerPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
@@ -958,6 +962,7 @@ export function MapScene({
             missileRibbonPoolRef={missileRibbonPoolRef}
             debrisPoolRef={debrisPoolRef}
             craterPoolRef={craterPoolRef}
+            heatShimmerPoolRef={heatShimmerPoolRef}
           />
           <WaterEffects
             poolRef={waterVfxPoolRef}
@@ -992,6 +997,12 @@ export function MapScene({
           <CuttingLaserBeam
             combatRef={combatRef}
             craterPoolRef={craterPoolRef}
+            heatShimmerPoolRef={heatShimmerPoolRef}
+            resetNonce={resetNonce}
+          />
+          <HeatShimmer
+            poolRef={heatShimmerPoolRef}
+            lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
         </group>

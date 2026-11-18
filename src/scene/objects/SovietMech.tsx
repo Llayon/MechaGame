@@ -33,6 +33,7 @@ import {
 import {
   type TracerPoolState,
 } from './tracerPool';
+import type { HeatShimmerPoolState } from './heatShimmerPool';
 import {
   processPlayerShots,
   stepCombatSimulation,
@@ -76,6 +77,7 @@ export interface SovietMechProps {
   missileRibbonPoolRef?: React.MutableRefObject<MissileRibbonPoolState>;
   casingsPoolRef?: React.MutableRefObject<BallisticPropPool>;
   tracerPoolRef?: React.MutableRefObject<TracerPoolState>;
+  heatShimmerPoolRef?: React.MutableRefObject<HeatShimmerPoolState>;
   onSelectMech?: () => void;
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
@@ -97,6 +99,7 @@ export function SovietMech({
   missileRibbonPoolRef,
   casingsPoolRef,
   tracerPoolRef,
+  heatShimmerPoolRef,
   onSelectMech,
   onMissionEnded,
 }: SovietMechProps) {
@@ -543,6 +546,13 @@ export function SovietMech({
       }
     }
 
+    const thermalLoad = Math.min(
+      1,
+      combat.weaponHeat * 0.75 +
+        (combat.weaponOverheated ? 0.35 : 0) +
+        (combat.laserActive ? 0.35 : 0) +
+        (combat.laserOverheated ? 0.35 : 0),
+    );
     stepMechEffects(
       rig,
       sim,
@@ -563,6 +573,8 @@ export function SovietMech({
       muzzleFlashPoolRef?.current,
       casingsPoolRef?.current,
       tracerPoolRef?.current,
+      heatShimmerPoolRef?.current,
+      thermalLoad,
     );
 
     // Publish live pose for the camera and HUD sampling.
