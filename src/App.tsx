@@ -3,6 +3,7 @@ import { useLazyRef } from './utils/useLazyRef';
 import { LightingPreset, SectorId } from './map/sectors';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
+import type { WorldAssets } from './map/worldAssets';
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
@@ -63,14 +64,17 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App() {
+export default function App({ world }: { world: WorldAssets }) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
   const [transitionNonce, setTransitionNonce] = useState(0);
   const [resetNonce, setResetNonce] = useState(0);
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
-  const [driveMode, setDriveMode] = useState(autostart);
+  const [requestedDriveMode, setDriveMode] = useState(autostart);
+  const [terrainReady, setTerrainReady] = useState(false);
+  const driveMode = requestedDriveMode && terrainReady;
+  const handleTerrainReady = useCallback(() => setTerrainReady(true), []);
   const [paused, setPaused] = useState(false);
   const [graphicsOpen, setGraphicsOpen] = useState(false);
   const graphicsWasRunningRef = useRef(false);
@@ -482,6 +486,8 @@ export default function App() {
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-[#091016]">
       <MapScene
+        world={world}
+        onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
         transitionNonce={transitionNonce}
         resetNonce={resetNonce}
@@ -502,54 +508,62 @@ export default function App() {
         onEnterDriveMode={handleEnterDriveMode}
         onMissionEnded={handleMissionEnded}
       />
-      <TacticalHUD
-        activeSector={activeSector}
-        lightingPreset={lightingPreset}
-        driveMode={driveMode}
-        paused={paused}
-        muted={muted}
-        missionOutcome={missionOutcome}
-        layoutMode={layoutMode}
-        inputPref={inputPref}
-        mechPoseRef={mechPoseRef}
-        driveInputRef={driveInputRef}
-        aimRef={aimRef}
-        combatRef={combatRef}
-        resetNonce={resetNonce}
-        showMarkers={showMarkers}
-        showUnits={showUnits}
-        showMist={showMist}
-        showWireframeGrid={showWireframeGrid}
-        hudHidden={hudHidden}
-        onSelectSector={handleSelectSector}
-        onResetOverview={handleResetOverview}
-        onChangeLighting={setLightingPreset}
-        onToggleDriveMode={handleToggleDriveMode}
-        onTogglePause={handleTogglePause}
-        onRestartMission={handleRestartMission}
-        onToggleMute={handleToggleMute}
-        onCycleInputPref={handleCycleInputPref}
-        onToggleMarkers={() => setShowMarkers((v) => !v)}
-        onToggleUnits={() => setShowUnits((v) => !v)}
-        onToggleMist={() => setShowMist((v) => !v)}
-        onToggleGrid={() => setShowWireframeGrid((v) => !v)}
-        onToggleHud={() => setHudHidden((v) => !v)}
-      />
-      <DesktopCombatInput
-        driveMode={driveMode}
-        paused={paused}
-        gameOver={missionOutcome !== null}
-        useTouchControls={layoutMode.useTouchControls}
-        driveInputRef={driveInputRef}
-      />
-      <GraphicsSettingsMenu
-        open={graphicsOpen}
-        settings={graphics}
-        onChange={setGraphics}
-        onOpen={handleOpenGraphics}
-        onClose={handleCloseGraphics}
-      />
-      <PerformancePanel />
+      {terrainReady ? (
+        <>
+          <TacticalHUD
+            activeSector={activeSector}
+            lightingPreset={lightingPreset}
+            driveMode={driveMode}
+            paused={paused}
+            muted={muted}
+            missionOutcome={missionOutcome}
+            layoutMode={layoutMode}
+            inputPref={inputPref}
+            mechPoseRef={mechPoseRef}
+            driveInputRef={driveInputRef}
+            aimRef={aimRef}
+            combatRef={combatRef}
+            resetNonce={resetNonce}
+            showMarkers={showMarkers}
+            showUnits={showUnits}
+            showMist={showMist}
+            showWireframeGrid={showWireframeGrid}
+            hudHidden={hudHidden}
+            onSelectSector={handleSelectSector}
+            onResetOverview={handleResetOverview}
+            onChangeLighting={setLightingPreset}
+            onToggleDriveMode={handleToggleDriveMode}
+            onTogglePause={handleTogglePause}
+            onRestartMission={handleRestartMission}
+            onToggleMute={handleToggleMute}
+            onCycleInputPref={handleCycleInputPref}
+            onToggleMarkers={() => setShowMarkers((v) => !v)}
+            onToggleUnits={() => setShowUnits((v) => !v)}
+            onToggleMist={() => setShowMist((v) => !v)}
+            onToggleGrid={() => setShowWireframeGrid((v) => !v)}
+            onToggleHud={() => setHudHidden((v) => !v)}
+          />
+          <DesktopCombatInput
+            driveMode={driveMode}
+            paused={paused}
+            gameOver={missionOutcome !== null}
+            useTouchControls={layoutMode.useTouchControls}
+            driveInputRef={driveInputRef}
+          />
+          <GraphicsSettingsMenu
+            open={graphicsOpen}
+            settings={graphics}
+            onChange={setGraphics}
+            onOpen={handleOpenGraphics}
+            onClose={handleCloseGraphics}
+          />
+          <PerformancePanel />
+        </>
+      ) : (
+        <div className="absolute inset-0 z-50 grid place-items-center bg-[#091016] text-cyan-100" role="status">
+          ???????? ??????
+        </div>
+      )}
     </main>
   );
 }

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import type { WorldAssets } from '../map/worldAssets';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { WorldLodDriver } from '../lod/WorldLodDriver';
 import { effectiveGraphics } from '../lod/adaptiveQuality';
 import { InfantryCrowd } from '../infantry/InfantryCrowd';
@@ -613,7 +614,36 @@ function CameraRig({
   );
 }
 
-export interface MapSceneProps {
+export function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
+  const scene = useThree((state) => state.scene);
+  const terrainReported = useRef(false);
+  const combatReported = useRef(false);
+  useLayoutEffect(() => {
+    if (terrainReported.current && (!driveMode || combatReported.current)) return;
+    const previous = scene.onAfterRender;
+    const report: typeof previous = function (...args) {
+      previous.apply(scene, args);
+      scene.onAfterRender = previous;
+      if (!terrainReported.current) {
+        terrainReported.current = true;
+        onReady();
+      }
+      if (driveMode && !combatReported.current) {
+        combatReported.current = true;
+        performance.mark('mecha-first-controllable-frame');
+      }
+    };
+    scene.onAfterRender = report;
+    return () => {
+      if (scene.onAfterRender === report) scene.onAfterRender = previous;
+    };
+  }, [scene, onReady, driveMode]);
+  return null;
+}
+
+interface MapSceneProps {
+  world: WorldAssets;
+  onTerrainReady: () => void;
   activeSector: SectorId;
   transitionNonce: number;
   resetNonce: number;
@@ -636,6 +666,8 @@ export interface MapSceneProps {
 }
 
 export function MapScene({
+  world,
+  onTerrainReady,
   activeSector,
   transitionNonce,
   resetNonce,
@@ -728,6 +760,7 @@ export function MapScene({
         }}
       >
         <SceneSimulationProvider paused={paused}>
+        <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
         <WorldLodDriver settings={preferences} paused={paused} step={step}
           changeStep={next => setAdaptation({settings: preferences, step: next})}/>
         <color attach="background" args={[lightCfg.bg]} />
@@ -794,7 +827,7 @@ export function MapScene({
         />
 
         <group name="perf:terrain">
-          <TerrainSlab showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
+          <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
         </group>
 
         <group name="perf:structures">
@@ -904,7 +937,7 @@ export function MapScene({
         </group>
 
         <group name="perf:foliage">
-        <FoliageAndUnits
+        <FoliageAndUnits grassMap={world.grass}
           showUnits={showUnits}
           showMist={showMist}
           vegetation={graphics.vegetation}

@@ -13,12 +13,9 @@ import {
   GRASS_PATCH_RADIUS_SW,
   GRASS_SPAN_D,
   GRASS_SPAN_W,
-  bakeTerrainGrassMap,
 } from '../../map/grassField';
 
-const TEX_W = 512;
-const TEX_H = 448;
-let grassSamples: Uint8Array | undefined;
+import { WORLD_MAP_WIDTH as TEX_W, WORLD_MAP_HEIGHT as TEX_H } from '../../map/worldMapDimensions';
 
 const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
   day: new THREE.Color('#dce85c'),
@@ -27,6 +24,7 @@ const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
 };
 
 export interface GrassFieldProps {
+  data: Uint8Array<ArrayBuffer>;
   driveMode: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
@@ -35,6 +33,7 @@ export interface GrassFieldProps {
 }
 
 interface GrassRuntimeProps {
+  data: Uint8Array<ArrayBuffer>;
   visible: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
@@ -43,6 +42,7 @@ interface GrassRuntimeProps {
 }
 
 function GrassFieldMesh({
+  data,
   visible,
   mechPoseRef,
   lightingPreset,
@@ -52,7 +52,6 @@ function GrassFieldMesh({
   const patchRadius = isSoftwareGl ? GRASS_PATCH_RADIUS_SW : GRASS_PATCH_RADIUS_GPU;
   const patchSize = patchRadius * 2;
 
-  const data = grassSamples ??= bakeTerrainGrassMap(TEX_W, TEX_H);
   const uniformsRef = useRef({
     uTime: { value: 0.75 },
     uWindowCenter: { value: new THREE.Vector2(mechPoseRef.current.x, mechPoseRef.current.z) },
@@ -114,7 +113,7 @@ function GrassFieldMesh({
     tex.needsUpdate = true;
     uniformsRef.current.uTerrainMap.value = tex;
     return tex;
-  }, []);
+  }, [data]);
 
   const bands = useMemo(() => createGrassBands(isSoftwareGl, data, TEX_W, TEX_H), [isSoftwareGl, data]);
 
@@ -471,6 +470,7 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
  * Lazily bakes the 512x448 height/suitability map on first Drive Mode entry so Overview load stays instant.
  */
 export function GrassField({
+  data,
   driveMode,
   mechPoseRef,
   lightingPreset,
@@ -489,6 +489,7 @@ export function GrassField({
 
   return (
     <GrassFieldMesh
+      data={data}
       visible={driveMode}
       mechPoseRef={mechPoseRef}
       lightingPreset={lightingPreset}
