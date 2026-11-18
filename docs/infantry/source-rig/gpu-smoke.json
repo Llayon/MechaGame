@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "directSourceLink": true,
+  "smoke": [
+    {
+      "count": 20,
+      "animation": "run",
+      "shadows": true,
+      "sourceTriangles": 999,
+      "weaponTriangles": 458,
+      "calls": 6,
+      "triangles": 58282,
+      "cpuSkeletonUpdates": 0,
+      "matrixUpdatesLastFrame": 0,
+      "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "count": 100,
+      "animation": "run",
+      "shadows": true,
+      "sourceTriangles": 999,
+      "weaponTriangles": 458,
+      "calls": 6,
+      "triangles": 291402,
+      "cpuSkeletonUpdates": 0,
+      "matrixUpdatesLastFrame": 0,
+      "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "count": 200,
+      "animation": "run",
+      "shadows": true,
+      "sourceTriangles": 999,
+      "weaponTriangles": 458,
+      "calls": 6,
+      "triangles": 582802,
+      "cpuSkeletonUpdates": 0,
+      "matrixUpdatesLastFrame": 0,
+      "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    }
+  ]
+}

@@ -1,0 +1,544 @@
+{
+  "passed": true,
+  "start": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "idle",
+    "animationSource": "mixamo",
+    "lod": 2,
+    "skin": "original",
+    "rig": "rigify",
+    "kit": "vpulse",
+    "phase": 0.028258065385331158,
+    "triangles": 999,
+    "weaponTriangles": 458,
+    "bones": 18,
+    "time": 0.08759999999962748,
+    "shots": 0,
+    "flashVisible": false,
+    "geometries": 35,
+    "textures": 8,
+    "missionMounted": false
+  },
+  "full": {
+    "ready": true,
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "speedMeters": 0,
+    "grounded": true,
+    "animation": "run",
+    "animationSource": "mixamo",
+    "lod": 3,
+    "skin": "original",
+    "rig": "rigify",
+    "kit": "vpulse",
+    "phase": 0.29,
+    "triangles": 40000,
+    "weaponTriangles": 3702,
+    "bones": 18,
+    "time": 0,
+    "shots": 0,
+    "flashVisible": false,
+    "geometries": 47,
+    "textures": 15,
+    "missionMounted": false
+  },
+  "delta": 0,
+  "sourceRequests": 1,
+  "steadyRun": [
+    {
+      "phase": 0.40769799909452903,
+      "speed": 3.1580404487489337,
+      "animation": "run"
+    },
+    {
+      "phase": 0.43307829708484663,
+      "speed": 3.16622887698026,
+      "animation": "run"
+    },
+    {
+      "phase": 0.45896916956143896,
+      "speed": 3.1729251273629404,
+      "animation": "run"
+    },
+    {
+      "phase": 0.4845982790662447,
+      "speed": 3.178237112978941,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5093441997538252,
+      "speed": 3.182369927851066,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5342692126486029,
+      "speed": 3.1857364677341886,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5613599326616607,
+      "speed": 3.188668277553219,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5858650621673207,
+      "speed": 3.1907962952906517,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6114566885781849,
+      "speed": 3.1925924030474735,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6365997814292201,
+      "speed": 3.194014702240085,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6623655898694687,
+      "speed": 3.195188994582452,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6878321032193665,
+      "speed": 3.1961228277406475,
+      "animation": "run"
+    },
+    {
+      "phase": 0.713458094417238,
+      "speed": 3.196879459921864,
+      "animation": "run"
+    },
+    {
+      "phase": 0.739549481733744,
+      "speed": 3.1974982109678427,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7653378696682434,
+      "speed": 3.197989052329549,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7905152878238743,
+      "speed": 3.1983751652979566,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8163093600200876,
+      "speed": 3.1986939516014203,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8413377027560555,
+      "speed": 3.1989433472922504,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8669818908868379,
+      "speed": 3.1991495536172674,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8932417024416446,
+      "speed": 3.199319068735567,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9188883145860784,
+      "speed": 3.19945195282567,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9439214554127209,
+      "speed": 3.19955660484608,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9697231854934314,
+      "speed": 3.199643597265624,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9947575394149483,
+      "speed": 3.199711653936605,
+      "animation": "run"
+    },
+    {
+      "phase": 0.021021045029226894,
+      "speed": 3.1997691284794327,
+      "animation": "run"
+    },
+    {
+      "phase": 0.04605619355387514,
+      "speed": 3.1998132144125595,
+      "animation": "run"
+    },
+    {
+      "phase": 0.07247395987141589,
+      "speed": 3.1998506397209114,
+      "animation": "run"
+    },
+    {
+      "phase": 0.09720243585594603,
+      "speed": 3.199878846132765,
+      "animation": "run"
+    },
+    {
+      "phase": 0.1225454691577166,
+      "speed": 3.1999022355154105,
+      "animation": "run"
+    },
+    {
+      "phase": 0.1486566313465436,
+      "speed": 3.19992162058197,
+      "animation": "run"
+    },
+    {
+      "phase": 0.17430713093206532,
+      "speed": 3.1999369163661378,
+      "animation": "run"
+    },
+    {
+      "phase": 0.1994969384440231,
+      "speed": 3.199949028769397,
+      "animation": "run"
+    },
+    {
+      "phase": 0.22499401756749407,
+      "speed": 3.199958922465448,
+      "animation": "run"
+    },
+    {
+      "phase": 0.251566343422128,
+      "speed": 3.1999671956421496,
+      "animation": "run"
+    },
+    {
+      "phase": 0.2764491478691509,
+      "speed": 3.199973425253967,
+      "animation": "run"
+    },
+    {
+      "phase": 0.30317516794381544,
+      "speed": 3.1999788050834432,
+      "animation": "run"
+    },
+    {
+      "phase": 0.32821164370557915,
+      "speed": 3.1999828523460616,
+      "animation": "run"
+    },
+    {
+      "phase": 0.3534017433954904,
+      "speed": 3.1999861447895595,
+      "animation": "run"
+    },
+    {
+      "phase": 0.37951345451530194,
+      "speed": 3.199988892046674,
+      "animation": "run"
+    },
+    {
+      "phase": 0.4045499941239223,
+      "speed": 3.199991013159247,
+      "animation": "run"
+    },
+    {
+      "phase": 0.43004734284319507,
+      "speed": 3.1999927575368012,
+      "animation": "run"
+    },
+    {
+      "phase": 0.45631269583984535,
+      "speed": 3.199994201139879,
+      "animation": "run"
+    },
+    {
+      "phase": 0.4810420717440019,
+      "speed": 3.1999952962438694,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5071538427322472,
+      "speed": 3.199996228920237,
+      "animation": "run"
+    },
+    {
+      "phase": 0.532651224940804,
+      "speed": 3.1999969609001666,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5587630068191617,
+      "speed": 3.199997563502971,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5836460025616772,
+      "speed": 3.199998026198513,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6092969950846818,
+      "speed": 3.1999984113868973,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6347943913075865,
+      "speed": 3.19999871974232,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6605989871025821,
+      "speed": 3.19999897092394,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6868643809329387,
+      "speed": 3.199999176044391,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7117473868304345,
+      "speed": 3.1999993325151896,
+      "animation": "run"
+    },
+    {
+      "phase": 0.737859184223799,
+      "speed": 3.199999464866279,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7628957907604326,
+      "speed": 3.199999567052442,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7880859967639761,
+      "speed": 3.1999996501807355,
+      "animation": "run"
+    },
+    {
+      "phase": 0.814658592704106,
+      "speed": 3.1999997206357076,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8398487996845134,
+      "speed": 3.1999997742751676,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8651926058325266,
+      "speed": 3.1999998178525293,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8909972087452804,
+      "speed": 3.199999853589166,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9166482130579233,
+      "speed": 3.1999998821613094,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9421456187251621,
+      "speed": 3.1999999050342183,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9679502222030125,
+      "speed": 3.1999999236661436,
+      "animation": "run"
+    },
+    {
+      "phase": 0.9940620234636622,
+      "speed": 3.1999999388018776,
+      "animation": "run"
+    },
+    {
+      "phase": 0.01955942949460915,
+      "speed": 3.1999999506806485,
+      "animation": "run"
+    },
+    {
+      "phase": 0.04521043443651093,
+      "speed": 3.199999960305349,
+      "animation": "run"
+    },
+    {
+      "phase": 0.07101503826975805,
+      "speed": 3.199999968093278,
+      "animation": "run"
+    },
+    {
+      "phase": 0.09697324098869578,
+      "speed": 3.199999974386574,
+      "animation": "run"
+    },
+    {
+      "phase": 0.12216344958308178,
+      "speed": 3.1999999793044904,
+      "animation": "run"
+    },
+    {
+      "phase": 0.14704646054053333,
+      "speed": 3.199999983234604,
+      "animation": "run"
+    },
+    {
+      "phase": 0.17239026802399646,
+      "speed": 3.1999999864712394,
+      "animation": "run"
+    },
+    {
+      "phase": 0.19788767436104432,
+      "speed": 3.199999989097235,
+      "animation": "run"
+    },
+    {
+      "phase": 0.22384587721675847,
+      "speed": 3.1999999912476995,
+      "animation": "run"
+    },
+    {
+      "phase": 0.250418475421532,
+      "speed": 3.1999999930104375,
+      "animation": "run"
+    },
+    {
+      "phase": 0.2749942887991308,
+      "speed": 3.199999994323025,
+      "animation": "run"
+    },
+    {
+      "phase": 0.30049169518659763,
+      "speed": 3.199999995424964,
+      "animation": "run"
+    },
+    {
+      "phase": 0.32614270041431176,
+      "speed": 3.199999996317764,
+      "animation": "run"
+    },
+    {
+      "phase": 0.35210090331704563,
+      "speed": 3.1999999970440616,
+      "animation": "run"
+    },
+    {
+      "phase": 0.3774447108887644,
+      "speed": 3.199999997614717,
+      "animation": "run"
+    },
+    {
+      "phase": 0.40539969864064596,
+      "speed": 3.1999999981172644,
+      "animation": "run"
+    },
+    {
+      "phase": 0.42982191321398655,
+      "speed": 3.1999999984688343,
+      "animation": "run"
+    },
+    {
+      "phase": 0.45501212196154744,
+      "speed": 3.1999999987628187,
+      "animation": "run"
+    },
+    {
+      "phase": 0.4791271388752124,
+      "speed": 3.199999998991253,
+      "animation": "run"
+    },
+    {
+      "phase": 0.505392539461916,
+      "speed": 3.1999999991923285,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5316579400499407,
+      "speed": 3.1999999993533037,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5570017476364181,
+      "speed": 3.1999999994781763,
+      "animation": "run"
+    },
+    {
+      "phase": 0.5831135493930266,
+      "speed": 3.199999999581627,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6076893628116147,
+      "speed": 3.1999999996601987,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6336475657361142,
+      "speed": 3.199999999727221,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6597593674943522,
+      "speed": 3.1999999997812894,
+      "animation": "run"
+    },
+    {
+      "phase": 0.6852567739168683,
+      "speed": 3.199999999823777,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7104469826730472,
+      "speed": 3.1999999998575865,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7357907902627474,
+      "speed": 3.1999999998851,
+      "animation": "run"
+    },
+    {
+      "phase": 0.76128819668593,
+      "speed": 3.1999999999074062,
+      "animation": "run"
+    },
+    {
+      "phase": 0.7869392019425631,
+      "speed": 3.199999999925442,
+      "animation": "run"
+    },
+    {
+      "phase": 0.81474059087707,
+      "speed": 3.199999999941089,
+      "animation": "run"
+    },
+    {
+      "phase": 0.838241212459019,
+      "speed": 3.199999999951709,
+      "animation": "run"
+    },
+    {
+      "phase": 0.8641994153854168,
+      "speed": 3.1999999999612387,
+      "animation": "run"
+    }
+  ]
+}
