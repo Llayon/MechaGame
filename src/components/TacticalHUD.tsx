@@ -1551,7 +1551,7 @@ export function TacticalHUD({
               onToggleHud();
             }}
             aria-label={hudHidden ? 'Показать панель управления' : 'Скрыть панель управления'}
-            className="pointer-events-auto flex items-center gap-1.5 rounded border border-[#5f86a1]/35 bg-[#0b131b]/95 px-3 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-amber-400/60 hover:text-amber-200 focus-visible:outline-2 focus-visible:outline-amber-400 cursor-pointer"
+            className={`pointer-events-auto flex items-center gap-1.5 rounded border border-[#5f86a1]/35 bg-[#0b131b]/95 px-3 py-1 text-[11px] font-medium text-slate-300 transition-colors hover:border-amber-400/60 hover:text-amber-200 focus-visible:outline-2 focus-visible:outline-amber-400 cursor-pointer ${driveMode ? 'self-end' : ''}`}
           >
             {hudHidden ? (
               <>

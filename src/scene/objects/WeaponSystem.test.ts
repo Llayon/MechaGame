@@ -117,7 +117,7 @@ test('centered shoulder sights hit a bridge spotter near maximum range from eith
       const yaw = Math.atan2(dx, dz) - Math.asin(camera.shoulderOffset / Math.hypot(dx, dz));
       hull.rotation.set(-0.045, yaw, 0.025, 'YXZ');
       const shoulder = setCombatCameraShoulder(new THREE.Vector3(),
-        hull.position.x, hull.position.y, hull.position.z, yaw, false, camera);
+        hull.position.x, hull.position.y + camera.heightAboveMech, hull.position.z, yaw, camera.shoulderOffset);
       const elevation = Math.atan2(target.y - shoulder.y, Math.hypot(target.x - shoulder.x, target.z - shoulder.z))
         + (aimedHigh ? 0.08 : 0);
       const eye = setCombatCameraEye(new THREE.Vector3(), shoulder,

@@ -324,7 +324,7 @@ export function SovietMech({
     );
     const followMech = driveMode && aimRef.current.initialized;
     if (followMech) {
-      combatCamera.position(aimRef.current, sim.x, sim.y, sim.z, control.isCrouched, delta);
+      combatCamera.position(aimRef.current, combat, sim.x, sim.y, sim.z, control.isCrouched, delta);
     }
     const sight = canControl ? resolveGunSightPoint(combat, camera.position,
       sim.yaw + sim.turretYaw, -motion.gPitch, camera.position.distanceTo(rig.root.position), _sightPoint) : undefined;
