@@ -1,5 +1,7 @@
 export const ANIMATIONS = ['idle', 'walk', 'run', 'fire', 'crouch', 'hit', 'death'] as const;
-export type InfantryAnimation = typeof ANIMATIONS[number];
+export const SUPPORTED_ANIMATIONS = [...ANIMATIONS, 'crouchWalk', 'jump', 'kneel'] as const;
+export type InfantryAnimation = typeof SUPPORTED_ANIMATIONS[number];
+export type InfantryKit = 'original' | 'vpulse';
 export interface InfantryInstanceState {
   id: number;
   faction: 'friendly' | 'enemy';
@@ -22,6 +24,8 @@ export interface AnimationAtlas {
   metersPerUnit: number; forward: string; bones: string[]; width: number;
   heightTexels: number; format: string; clips: AnimationClip[]; byteLength: number;
   sourceSha256: string;
+  /** Weapon root transform in the local frame of the exported hand_R bone. */
+  weaponGrip?: { position: [number, number, number]; quaternion: [number, number, number, number] };
 }
 export interface LabSettings {
   count: 1 | 20 | 100 | 200;
@@ -38,14 +42,18 @@ export const DEFAULT_LAB: LabSettings = {
   count: 20, animation: 'mixed', individualPhases: true, batches: 1,
   shadows: false, travel: false, matricesEveryFrame: false, preset: 'high', camera: 'medium',
 };
-export function makeInstances(settings: LabSettings): InfantryInstanceState[] {
+export function makeInstances(settings: LabSettings, clips?: readonly AnimationClip[]): InfantryInstanceState[] {
   if (![1, 20, 100, 200].includes(settings.count)) throw Error('Unsupported infantry count');
   const columns = settings.count === 1 ? 1 : settings.count <= 20 ? 5 : 20;
+  const available = clips ? new Map(clips.map(clip => [clip.name, clip.movementSpeed])) : null;
+  const mixable = SUPPORTED_ANIMATIONS.filter(name => available?.has(name) && name !== 'hit' && name !== 'death');
+  const mixed = mixable.length ? mixable : ANIMATIONS.slice(0, 5);
   return Array.from({ length: settings.count }, (_, id) => {
-    const animation = settings.animation === 'mixed' ? ANIMATIONS[id % 5] : settings.animation;
+    const animation = settings.animation === 'mixed' ? mixed[id % mixed.length] : settings.animation;
     const rate = settings.individualPhases ? .9 + ((id * .371) % .2) : 1;
-    const speed = animation === 'run' ? .4 * .48 / (.43 * (25 / 30))
-      : animation === 'walk' ? .22 * .48 / (.62 * (38 / 30)) : 0;
+    const speed = available ? available.get(animation) ?? 0
+      : animation === 'run' ? .4 * .48 / (.43 * (25 / 30))
+        : animation === 'walk' ? .22 * .48 / (.62 * (38 / 30)) : 0;
     return ({
     id, faction: id < Math.ceil(settings.count / 4) ? 'friendly' : 'enemy',
     squadId: Math.floor(id / 20),

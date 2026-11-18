@@ -9,14 +9,14 @@ import { analyzeSceneComplexity } from '../perf/sceneComplexity';
 import { createGpuInfantry, disposeInfantryData, loadInfantryData } from './gpuAnimation';
 import type { InfantryData } from './gpuAnimation';
 import { ANIMATIONS, DEFAULT_LAB } from './types';
-import type { LabSettings } from './types';
+import type { InfantryKit, LabSettings } from './types';
 import { MechReference } from './MechReference';
 import './lab.css';
 
 interface UpdateSample { at: number; jsMs: number; matrices: number; gpuMs: number | null }
 interface RuntimeView {
-  ready: boolean; settings: LabSettings; capabilities: Record<string, unknown>;
-  sourceTriangles: number; activeInstances: number; batches: number;
+  ready: boolean; kit: InfantryKit; settings: LabSettings; capabilities: Record<string, unknown>;
+  sourceTriangles: number; weaponTriangles: number; activeInstances: number; batches: number; weaponBatches: number;
   resourceBytes: Record<string, number>; cpuSkeletonUpdates: number;
   matrixUpdatesLastFrame: number; uniformUpdatesLastFrame: number;
   calls: number; triangles: number; geometries: number; textures: number;
@@ -57,6 +57,10 @@ class GpuTimer {
   dispose() { if (this.active) this.end(); this.pending.forEach(q => this.context.deleteQuery(q)); this.pending = []; }
 }
 
+function triangleCount(mesh: THREE.Mesh | undefined) {
+  return mesh ? (mesh.geometry.index?.count ?? mesh.geometry.getAttribute('position').count) / 3 : 0;
+}
+
 function Stage({ data, settings, view, samples, frozen, audit }: {
   data: InfantryData; settings: LabSettings;
   view: React.MutableRefObject<RuntimeView | null>; samples: React.MutableRefObject<UpdateSample[]>;
@@ -90,8 +94,9 @@ function Stage({ data, settings, view, samples, frozen, audit }: {
     if (!initialized.current) { frameProfiler.interrupt(); initialized.current = true; }
     audit.current = () => analyzeSceneComplexity(scene);
     view.current = {
-      ready: true, settings, gameMissionMounted: false, sourceTriangles: (data.mesh.geometry.index?.count ?? 0) / 3,
+      ready: true, kit: data.kit, settings, gameMissionMounted: false, sourceTriangles: triangleCount(data.mesh),
       activeInstances: gpu.instances.length, batches: gpu.meshes.length,
+      weaponTriangles: triangleCount(data.weapon), weaponBatches: gpu.weaponMeshes.length,
       resourceBytes: gpu.resourceBytes, cpuSkeletonUpdates: 0, matrixUpdatesLastFrame: 0, uniformUpdatesLastFrame: 1,
       calls: 0, triangles: 0, geometries: 0, textures: 0, time: 0,
       instances: gpu.instances.map(s => ({ id: s.id, animation: s.animation, phase: s.animationPhase, alive: s.alive })),
@@ -163,6 +168,7 @@ function summary(values: number[]) {
 }
 
 export default function InfantryLab() {
+  const [kit] = useState<InfantryKit>(() => new URLSearchParams(location.search).get('kit') === 'vpulse' ? 'vpulse' : 'original');
   const [settings, setSettings] = useState<LabSettings>(DEFAULT_LAB);
   const [data, setData] = useState<InfantryData | null>(null);
   const [error, setError] = useState('');
@@ -173,9 +179,10 @@ export default function InfantryLab() {
   const frozen = useRef<number | null>(null), audit = useRef<LabApi['audit']>(() => null);
   useEffect(() => {
     let cancelled = false; let loaded: InfantryData | null = null;
-    loadInfantryData().then(value => { loaded = value; if (cancelled) disposeInfantryData(value); else setData(value); }).catch(e => setError(String(e)));
+    loadInfantryData(undefined, kit).then(value => { loaded = value; if (cancelled) disposeInfantryData(value); else setData(value); })
+      .catch(e => { if (!cancelled) setError(String(e)); });
     return () => { cancelled = true; if (loaded) disposeInfantryData(loaded); };
-  }, []);
+  }, [kit]);
   useEffect(() => {
     const timer = setInterval(() => setDisplay(view.current ? { ...view.current } : null), 500);
     return () => clearInterval(timer);
@@ -195,7 +202,7 @@ export default function InfantryLab() {
           await new Promise(resolve => setTimeout(resolve, durationMs + 100));
           const capture = frameProfiler.getReport();
           const updates = samples.current.filter(s => s.at >= begin && s.at < begin + durationMs);
-          const result = { schemaVersion: 1, lab: 'infantry', settings: view.current?.settings,
+          const result = { schemaVersion: 1, lab: 'infantry', kit: view.current?.kit, settings: view.current?.settings,
             capture, runtime: view.current, scene: audit.current(),
             cpu: { jsUpdateMs: summary(updates.map(s => s.jsMs)), skeletonUpdates: 0,
               instanceMatrixUpdates: updates.reduce((n, s) => n + s.matrices, 0),
@@ -217,16 +224,23 @@ export default function InfantryLab() {
   }, []);
   const update = <K extends keyof LabSettings>(key: K, value: LabSettings[K]) => setSettings(s => ({ ...s, [key]: value }));
   const stats = frameProfiler.getLive().stats;
+  const animations = data ? data.atlas.clips.map(clip => clip.name) : [...ANIMATIONS];
   return <div className="infantry-lab">
     <header><span className="lab-kicker">GAUNTLET / OBJECT 316</span><h1>INFANTRY GPU ANIMATION LAB</h1>
-      <p>Original Tripo mesh · 1.8 m / 0.48 units · baked bone texture · isolated from the mission</p><a href="?demo=infantry" style={{ color: '#e4bd68', fontSize: 12 }}>Полигон: побегать и примерить экипировку ↗</a></header>
+      <p>{kit === 'vpulse' ? 'Rigify + V-Pulse' : 'Original Tripo mesh'} · 1.8 m / 0.48 units · baked bone texture</p>
+      <nav style={{ display: 'flex', gap: 16, fontSize: 12, pointerEvents: 'auto' }}>
+        <a href={kit === 'vpulse' ? '?demo=infantry&kit=vpulse' : '?demo=infantry'} style={{ color: '#e4bd68' }}>Полигон ↗</a>
+        <a href={kit === 'vpulse' ? '?lab=infantry' : '?lab=infantry&kit=vpulse'} style={{ color: '#e4bd68' }}>
+          {kit === 'vpulse' ? 'Original lab ↗' : 'V-Pulse GPU lab ↗'}
+        </a>
+      </nav></header>
     <main>{data ? <Canvas shadows camera={{ position: [2.5, 2, 4], fov: 42, near: .01, far: 150 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <Stage data={data} settings={settings} view={view} samples={samples} frozen={frozen} audit={audit} />
-    </Canvas> : <div className="lab-loading">{error || 'Loading original infantry and animation atlas…'}</div>}</main>
+    </Canvas> : <div className="lab-loading">{error || 'Loading infantry and animation atlas…'}</div>}</main>
     <aside>
       <label>INSTANCES<div className="lab-buttons">{([1, 20, 100, 200] as const).map(count => <button key={count} className={settings.count === count ? 'active' : ''} onClick={() => update('count', count)}>{count}</button>)}</div></label>
-      <label>ANIMATION<select value={settings.animation} onChange={e => update('animation', e.target.value as LabSettings['animation'])}>{[...ANIMATIONS, 'mixed'].map(s => <option key={s}>{s}</option>)}</select></label>
+      <label>ANIMATION<select value={settings.animation} onChange={e => update('animation', e.target.value as LabSettings['animation'])}>{[...animations, 'mixed'].map(s => <option key={s}>{s}</option>)}</select></label>
       <label>BATCH CONFIGURATION<select value={settings.batches} onChange={e => update('batches', +e.target.value as 1 | 10)}><option value="1">A — one batch</option><option value="10">B — up to 10 × 20</option></select></label>
       <label>MECHAGAME QUALITY<select value={settings.preset} onChange={e => update('preset', e.target.value as LabSettings['preset'])}>{['low', 'balanced', 'high', 'ultra'].map(s => <option key={s}>{s}</option>)}</select></label>
       <label>CAMERA<select value={settings.camera} onChange={e => update('camera', e.target.value as LabSettings['camera'])}><option value="close">Close inspection</option><option value="medium">Formation</option><option value="gameplay">Mech-height viewpoint</option></select></label>
@@ -241,7 +255,8 @@ export default function InfantryLab() {
       <section><b>{stats.fps.toFixed(1)} FPS</b><span>p50 / p95 / p99: {stats.p50Ms.toFixed(1)} / {stats.p95Ms.toFixed(1)} / {stats.p99Ms.toFixed(1)} ms</span>
         <span>{display?.calls ?? 0} draw calls · {display?.triangles ?? 0} triangles</span>
         <span>CPU skeletons: 0 · matrices/frame: {display?.matrixUpdatesLastFrame ?? 0}</span>
-        <span>Atlas: {data ? (data.binary.byteLength / 1024).toFixed(1) : '—'} KiB · 14 bones</span>
+        <span>Atlas: {data ? (data.binary.byteLength / 1024).toFixed(1) : '—'} KiB · {data?.atlas.bones.length ?? '—'} bones</span>
+        {kit === 'vpulse' && <span>V-Pulse: {display?.weaponTriangles ?? '—'} triangles · {display?.weaponBatches ?? '—'} weapon batches</span>}
         <span>{String(display?.capabilities.renderer ?? 'Detecting renderer…')}</span></section>
     </aside>
     <footer>Drag to orbit · wheel to inspect · grid spacing 0.5 units = 1.875 m · no AI or combat simulation<br />DEVICE QA NOT VERIFIED — software WebGL results are not smartphone performance.</footer>

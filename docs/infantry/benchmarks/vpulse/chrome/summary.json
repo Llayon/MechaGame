@@ -1,0 +1,696 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "warmupMs": 800,
+  "sampleMs": 1500,
+  "repeats": 2,
+  "environment": {
+    "renderer": "ANGLE (AMD, AMD Radeon 780M Graphics (0x00001900) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "softwareMode": false,
+    "webgl2": true,
+    "maxTextureSize": 16384,
+    "vertexTextureUnits": 16,
+    "atlasFormat": "RGBA16F / nearest sampling / manual quaternion interpolation",
+    "floatRenderTargetRequired": false,
+    "floatLinearFilteringRequired": false,
+    "gpuTimerAvailable": true,
+    "physicalMobileVerified": false
+  },
+  "available": [
+    "idle",
+    "walk",
+    "run",
+    "crouch",
+    "crouchWalk",
+    "jump",
+    "kneel",
+    "fire",
+    "mixed"
+  ],
+  "results": [
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 60.01348617666891,
+        "meanMs": 16.662921348314608,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 18.700000001117587,
+        "p99Ms": 19.90000000037253,
+        "worstMs": 19.90000000037253,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 29142,
+        "trianglesPeak": 29142
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 0.79008,
+        "p95": 0.92228,
+        "p99": 1.74096,
+        "samples": 90
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 1280,
+        "configuration": 320
+      },
+      "modelTriangles": 29140,
+      "calls": 4
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 20,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 88,
+        "fps": 59.89654233591959,
+        "meanMs": 16.695454545467246,
+        "p50Ms": 16.799999998882413,
+        "p95Ms": 18.300000000745058,
+        "p99Ms": 19.299999998882413,
+        "worstMs": 19.299999998882413,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 29142,
+        "trianglesPeak": 29142
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 89
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 89
+      },
+      "gpuTimeMs": {
+        "p50": 0.77944,
+        "p95": 0.8718,
+        "p99": 0.91388,
+        "samples": 88
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 1280,
+        "configuration": 320
+      },
+      "modelTriangles": 29140,
+      "calls": 4
+    },
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 59.88829823028215,
+        "meanMs": 16.69775280898458,
+        "p50Ms": 16.700000001117587,
+        "p95Ms": 17.40000000037253,
+        "p99Ms": 24.799999998882413,
+        "worstMs": 24.799999998882413,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 145702,
+        "trianglesPeak": 145702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 1.20244,
+        "p95": 1.32648,
+        "p99": 1.5344,
+        "samples": 87
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 6400,
+        "configuration": 1600
+      },
+      "modelTriangles": 145700,
+      "calls": 4
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 100,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 88,
+        "fps": 59.87616520373756,
+        "meanMs": 16.701136363649063,
+        "p50Ms": 16.700000001117587,
+        "p95Ms": 17.799999998882413,
+        "p99Ms": 18.800000000745058,
+        "worstMs": 18.800000000745058,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 145702,
+        "trianglesPeak": 145702
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 89
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 89
+      },
+      "gpuTimeMs": {
+        "p50": 1.18164,
+        "p95": 1.2872,
+        "p99": 1.68786,
+        "samples": 88
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 6400,
+        "configuration": 1600
+      },
+      "modelTriangles": 145700,
+      "calls": 4
+    },
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 88,
+        "fps": 59.89654233591959,
+        "meanMs": 16.695454545467246,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 17.5,
+        "p99Ms": 18.300000000745058,
+        "worstMs": 18.300000000745058,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 89
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 89
+      },
+      "gpuTimeMs": {
+        "p50": 1.6706,
+        "p95": 1.76832,
+        "p99": 1.83864,
+        "samples": 88
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 4
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 88,
+        "fps": 59.89246580001046,
+        "meanMs": 16.696590909099374,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 17.200000001117587,
+        "p99Ms": 18,
+        "worstMs": 18,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000000149011612,
+          "samples": 89
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 89
+      },
+      "gpuTimeMs": {
+        "p50": 1.67884,
+        "p95": 1.80276,
+        "p99": 2.20481,
+        "samples": 87
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 4
+    },
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 59.948807759680946,
+        "meanMs": 16.68089887640031,
+        "p50Ms": 16.600000001490116,
+        "p95Ms": 18.59999999962747,
+        "p99Ms": 19.5,
+        "worstMs": 19.5,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 22,
+        "drawCallsPeak": 22,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999999962747097,
+          "p99": 0.10000000149011612,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 1.66564,
+        "p95": 1.772,
+        "p99": 2.69268,
+        "samples": 86
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 22
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 10,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 88,
+        "fps": 59.84766050052891,
+        "meanMs": 16.709090909095142,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 18.40000000037253,
+        "p99Ms": 18.90000000037253,
+        "worstMs": 18.90000000037253,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 22,
+        "drawCallsPeak": 22,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0.09999999962747097,
+          "p99": 0.10000000149011612,
+          "samples": 89
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 89
+      },
+      "gpuTimeMs": {
+        "p50": 1.65984,
+        "p95": 1.78284,
+        "p99": 1.93925,
+        "samples": 87
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 22
+    },
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 59.880239520928065,
+        "meanMs": 16.700000000008373,
+        "p50Ms": 16.700000001117587,
+        "p95Ms": 18,
+        "p99Ms": 19,
+        "worstMs": 19,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 6,
+        "drawCallsPeak": 6,
+        "trianglesMean": 582802,
+        "trianglesPeak": 582802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.09999999962747097,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 2.4028,
+        "p95": 2.48356,
+        "p99": 3.41984,
+        "samples": 85
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 6
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": true,
+        "travel": false,
+        "matricesEveryFrame": false,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 59.87621097953289,
+        "meanMs": 16.701123595509802,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 17.200000001117587,
+        "p99Ms": 17.59999999962747,
+        "worstMs": 17.59999999962747,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 6,
+        "drawCallsPeak": 6,
+        "trianglesMean": 582802,
+        "trianglesPeak": 582802
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0,
+          "p95": 0,
+          "p99": 0.10000000149011612,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 0,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 2.41896,
+        "p95": 2.70468,
+        "p99": 2.8984,
+        "samples": 88
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 6
+    },
+    {
+      "repeat": 1,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 60.07830430672176,
+        "meanMs": 16.644943820228903,
+        "p50Ms": 16.700000001117587,
+        "p95Ms": 17.300000000745058,
+        "p99Ms": 18.199999999254942,
+        "worstMs": 18.199999999254942,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999999962747097,
+          "p95": 0.2999999988824129,
+          "p99": 0.5,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 18000,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 1.68332,
+        "p95": 1.77472,
+        "p99": 1.83412,
+        "samples": 87
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 4
+    },
+    {
+      "repeat": 2,
+      "settings": {
+        "count": 200,
+        "animation": "mixed",
+        "individualPhases": true,
+        "batches": 1,
+        "shadows": false,
+        "travel": false,
+        "matricesEveryFrame": true,
+        "preset": "high",
+        "camera": "medium"
+      },
+      "stats": {
+        "sampleCount": 89,
+        "fps": 59.88829823020709,
+        "meanMs": 16.697752809005507,
+        "p50Ms": 16.699999999254942,
+        "p95Ms": 18.199999999254942,
+        "p99Ms": 23.09999999962747,
+        "worstMs": 23.09999999962747,
+        "slowOver33Ms": 0,
+        "slowOver50Ms": 0,
+        "drawCallsMean": 4,
+        "drawCallsPeak": 4,
+        "trianglesMean": 291402,
+        "trianglesPeak": 291402
+      },
+      "cpu": {
+        "jsUpdateMs": {
+          "p50": 0.09999999962747097,
+          "p95": 0.2000000011175871,
+          "p99": 4.900000000372529,
+          "samples": 90
+        },
+        "skeletonUpdates": 0,
+        "instanceMatrixUpdates": 18000,
+        "uniformUpdates": 90
+      },
+      "gpuTimeMs": {
+        "p50": 1.65868,
+        "p95": 1.72624,
+        "p99": 1.74536,
+        "samples": 87
+      },
+      "resourceBytes": {
+        "geometry": 155790,
+        "animation": 123264,
+        "instanceMatrices": 12800,
+        "configuration": 3200
+      },
+      "modelTriangles": 291400,
+      "calls": 4
+    }
+  ],
+  "culling": {
+    "formationDraws": 22,
+    "closeDraws": 18
+  },
+  "repeatSwitch": {
+    "before": {
+      "geometries": 22,
+      "textures": 7
+    },
+    "after": {
+      "geometries": 22,
+      "textures": 7
+    }
+  }
+}
