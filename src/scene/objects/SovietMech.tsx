@@ -300,7 +300,7 @@ export function SovietMech({
     const activeFire = control.isFiring && !combat.weaponOverheated;
 
     // Step combat sim first so hitstop freezes movement/physics cleanly while visual timers tick
-    const combatStep = canControl
+    const combatStep = driveMode && combat.missionStatus === 'playing'
       ? stepCombatSimulation(combat, sim.x, sim.y, sim.z, activeFire, rawDt, sim.inWater)
       : { simDt: driveMode ? 0 : rawDt, justEnded: null };
 
@@ -361,12 +361,14 @@ export function SovietMech({
           _aimDir.x, _aimDir.y, _aimDir.z);
         viewAim.reticleHit = predicted.hit;
         viewAim.reticleTargetId = predicted.targetId ?? null;
+        viewAim.infantryRole = predicted.infantryRole;
       }
     } else {
       aimRef.current.muzzleDirectionValid = false;
       aimRef.current.reticleVisible = false;
       aimRef.current.reticleHit = 'range';
       aimRef.current.reticleTargetId = null;
+      aimRef.current.infantryRole = undefined;
     }
 
     // Consume edge-triggered Heavy Cannon (KeyF) and Emergency Repair (KeyV)

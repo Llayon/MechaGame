@@ -1,3 +1,5 @@
+import type { InfantryRole } from './infantrySkirmishes';
+
 /**
  * Independent camera-view intention versus delayed physical turret direction.
  * Angles are world-relative radians: positive yaw looks right (+X), positive
@@ -18,6 +20,7 @@ export interface CombatAimState {
   muzzleDirectionValid: boolean;
   reticleHit: 'enemy' | 'barrel' | 'cover' | 'range';
   reticleTargetId: string | null;
+  infantryRole?: InfantryRole;
 }
 
 export const AIM_ELEVATION_MIN = -0.34;
@@ -65,6 +68,7 @@ export function resetCombatAim(aim: CombatAimState, hullYaw: number): void {
   aim.muzzleDirectionZ = 1;
   aim.reticleHit = 'range';
   aim.reticleTargetId = null;
+  aim.infantryRole = undefined;
 }
 
 export function updateCombatAim(

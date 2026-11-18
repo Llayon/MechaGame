@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LightingPreset, SectorId } from './map/sectors';
+import type { InfantrySite } from './map/infantryEncounters';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import { MapScene } from './scene/MapScene';
@@ -50,6 +51,7 @@ export default function App() {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
+  const [focusedSite, setFocusedSite] = useState<InfantrySite | null>(null);
   const [transitionNonce, setTransitionNonce] = useState(0);
   const [resetNonce, setResetNonce] = useState(0);
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
@@ -134,7 +136,8 @@ export default function App() {
   });
 
   const aimRef = useRef(createCombatAimState(MECH_SPAWN.yaw));
-  const combatRef = useRef(createCombatState(autostart));
+  const [initialCombat] = useState(() => createCombatState(autostart));
+  const combatRef = useRef(initialCombat);
   const combatTelemetryRef = useRef(
     buildCombatTelemetry(
       combatRef.current,
@@ -193,12 +196,14 @@ export default function App() {
   }, [paused]);
 
   const handleSelectSector = useCallback(
-    (id: SectorId) => {
+    (id: SectorId, site?: InfantrySite) => {
       clearDriveInput();
       if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
       setDriveMode(false);
       setPaused(false);
       setActiveSector(id);
+      setFocusedSite(site ?? null);
+      if (site) setShowUnits(true);
       setTransitionNonce((n) => n + 1);
     },
     [clearDriveInput],
@@ -210,6 +215,7 @@ export default function App() {
     setDriveMode(false);
     setPaused(false);
     setActiveSector('overview');
+    setFocusedSite(null);
     setTransitionNonce((n) => n + 1);
   }, [clearDriveInput]);
 
@@ -290,6 +296,7 @@ export default function App() {
     clearDriveInput();
     driveInputRef.current.crouch = false;
     resetCombatState(combatRef.current, 'playing');
+    setFocusedSite(null);
     setMissionOutcome(null);
     setPaused(false);
     setDriveMode(true);
@@ -486,6 +493,7 @@ export default function App() {
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-[#091016]">
       <MapScene
+        focusedSite={focusedSite}
         activeSector={activeSector}
         transitionNonce={transitionNonce}
         resetNonce={resetNonce}
@@ -508,6 +516,8 @@ export default function App() {
         onMissionEnded={handleMissionEnded}
       />
       <TacticalHUD
+        focusedSite={focusedSite}
+        combatRef={combatRef}
         activeSector={activeSector}
         lightingPreset={lightingPreset}
         driveMode={driveMode}

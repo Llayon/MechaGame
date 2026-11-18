@@ -1,4 +1,6 @@
 import { castCombatRay } from '../map/worldRaycaster';
+import { traceHostileInfantry } from './infantryHits';
+import type { InfantryRole } from './infantrySkirmishes';
 import { BARREL_HIT_RADIUS, ENEMY_CONFIGS, PLAYER_MAX_RANGE, isEnemyAlive } from './combatSimulation';
 import type { CombatSimulationState } from './combatTypes';
 
@@ -6,6 +8,7 @@ export interface PredictedPhysicalImpact {
   distance: number;
   hit: 'enemy' | 'barrel' | 'cover' | 'range';
   targetId?: string;
+  infantryRole?: InfantryRole;
 }
 
 /**
@@ -53,6 +56,11 @@ export function predictPhysicalShotEndpoint(
       kind = 'barrel';
       targetId = barrel.id;
     }
+  }
+  const infantry = traceHostileInfantry(state.infantry, muzzleX, muzzleY, muzzleZ, dx, dy, dz, closest);
+  if (infantry) {
+    return { distance: infantry.distance, hit: 'enemy', targetId: `infantry-${infantry.soldier.id}`,
+      infantryRole: infantry.soldier.role };
   }
   return { distance: closest, hit: kind, ...(targetId ? { targetId } : {}) };
 }
