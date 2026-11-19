@@ -65,8 +65,14 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App({ world }: { world: WorldAssets }) {
-  const autostart = useRef(hasAutostartParam()).current;
+interface AppProps {
+  world: WorldAssets;
+  startInDriveMode?: boolean;
+  onFirstControllableFrame?: () => void;
+}
+
+export default function App({ world, startInDriveMode, onFirstControllableFrame }: AppProps) {
+  const autostart = useRef(startInDriveMode ?? hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
   const [focusedSite, setFocusedSite] = useState<InfantrySite | null>(null);
@@ -495,6 +501,7 @@ export default function App({ world }: { world: WorldAssets }) {
         focusedSite={focusedSite}
         world={world}
         onTerrainReady={handleTerrainReady}
+        onFirstControllableFrame={onFirstControllableFrame}
         activeSector={activeSector}
         transitionNonce={transitionNonce}
         resetNonce={resetNonce}

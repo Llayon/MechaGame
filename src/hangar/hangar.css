@@ -1,0 +1,197 @@
+.hangar {
+  position: absolute;
+  z-index: 3000;
+  inset: 0;
+  overflow: auto;
+  touch-action: pan-y;
+  display: grid;
+  background: radial-gradient(ellipse at 38% 45%, #182525, #091016 68%);
+  color: #e7eee9;
+  font-family: system-ui, sans-serif;
+}
+
+.hangar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem);
+  align-items: center;
+  gap: clamp(1.5rem, 5vw, 5rem);
+  width: min(88rem, 100%);
+  margin: auto;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, 4vw, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, 4vw, env(safe-area-inset-left));
+}
+
+.hangar-stage {
+  --pylon-space: 7.6rem;
+  position: relative;
+  isolation: isolate;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  max-height: 85dvh;
+  overflow: hidden;
+  border: 1px solid #3c4b46;
+  border-radius: 0.75rem;
+  background: #14201f;
+}
+
+.hangar-poster,
+.hangar-viewer,
+.hangar-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hangar-poster {
+  object-fit: contain;
+}
+
+.hangar-poster,
+.hangar-canvas {
+  height: calc(100% - var(--pylon-space));
+}
+
+.hangar-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.hangar-canvas canvas:active {
+  cursor: grabbing;
+}
+
+.hangar-pylons {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  min-height: var(--pylon-space);
+  background: #0a1413ed;
+  border-top: 1px solid #3c4b46;
+}
+
+.hangar-pylons label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  color: #c3d2c7;
+  font-size: 0.86rem;
+}
+
+.hangar-pylons select {
+  min-width: 0;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.4rem;
+  border: 1px solid #57665e;
+  border-radius: 0.3rem;
+  background: #1b2926;
+  color: #e7eee9;
+}
+
+.hangar-pylons p {
+  grid-column: 1 / -1;
+  min-height: 1em;
+  color: #c1cdc2;
+  font-size: 0.76rem;
+}
+
+.hangar-pylon-status {
+  font-size: 0.75rem;
+}
+
+.hangar-pylon-status:empty {
+  display: none;
+}
+
+.hangar-brief {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.hangar-brief h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 6vw, 5.25rem);
+  line-height: 0.95;
+  font-weight: 760;
+  letter-spacing: -0.05em;
+}
+
+.hangar-model {
+  margin-top: 0.8rem;
+  color: #bbcbbd;
+  font-size: 1.15rem;
+}
+
+.hangar-play {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 2rem;
+  border-radius: 0.35rem;
+  background: #ebc47b;
+  color: #151a17;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.hangar-play:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.hangar-play:focus-visible,
+.hangar-pylons select:focus-visible,
+.hangar-canvas canvas:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+.hangar-canvas canvas:focus-visible {
+  outline-offset: -3px;
+}
+
+.hangar-status,
+.hangar-error {
+  margin-top: 0.6rem;
+  min-height: 1.5rem;
+  color: #c1cdc2;
+}
+
+.hangar-error {
+  color: #ffd0a3;
+}
+
+@media (max-width: 760px) {
+  .hangar-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .hangar-stage {
+    grid-row: 2;
+    aspect-ratio: 1;
+    min-height: 19rem;
+    max-height: 65dvh;
+  }
+
+  .hangar-brief {
+    grid-column: 1;
+  }
+
+  .hangar-model,
+  .hangar-play {
+    margin-top: 0.55rem;
+  }
+
+  .hangar-status:empty {
+    min-height: 0;
+    margin: 0;
+  }
+}
