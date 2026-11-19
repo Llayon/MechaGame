@@ -1,0 +1,223 @@
+.hangar {
+  --edge: clamp(1rem, 3.5vw, 4.5rem);
+  --amber: #e8b46d;
+  position: absolute;
+  z-index: 3000;
+  inset: 0;
+  overflow: auto;
+  touch-action: pan-y;
+  background: #141b1e;
+  color: #f1eee5;
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.hangar-layout {
+  display: grid;
+  grid-template-areas: "stage stage stage" "model weapons deploy";
+  grid-template-columns: minmax(10rem, 0.83fr) minmax(22rem, 1.4fr) minmax(11rem, 0.77fr);
+  grid-template-rows: minmax(15rem, 1fr) auto;
+  align-items: center;
+  min-height: 100%;
+  height: 100%;
+  isolation: isolate;
+  background: linear-gradient(110deg, #22292a, #172023 49%, #11181b);
+}
+
+.hangar-poster, .hangar-canvas, .hangar-layout::before {
+  grid-area: stage;
+  align-self: stretch;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.hangar-poster img, .hangar-canvas canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hangar-poster img { object-fit: cover; }
+.hangar-canvas { z-index: 1; }
+.hangar-canvas canvas { cursor: grab; touch-action: none; }
+.hangar-canvas canvas:active { cursor: grabbing; }
+.hangar-layout::before {
+  content: "";
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #080e12a8, transparent 16%, transparent 85%, #0c12165c);
+  border-bottom: 1px solid #7d827366;
+}
+
+.hangar-heading, .hangar-orbit-hint {
+  grid-area: stage;
+  z-index: 3;
+  pointer-events: none;
+  text-shadow: 0 1px 10px #000;
+}
+.hangar-heading {
+  align-self: start;
+  justify-self: start;
+  margin: max(1.25rem, env(safe-area-inset-top)) 0 0 max(var(--edge), env(safe-area-inset-left));
+}
+.hangar-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font: 700 clamp(1.25rem, 2.1vw, 2rem)/1 "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hangar-heading h1::before {
+  content: "";
+  width: 0.8em;
+  height: 0.76em;
+  transform: skewX(-19deg);
+  border-inline: 0.17em solid var(--amber);
+}
+.hangar-orbit-hint {
+  justify-self: end;
+  align-self: end;
+  margin: 0 max(var(--edge), env(safe-area-inset-right)) 1rem 0;
+  color: #f2eee4;
+  font-size: 0.76rem;
+}
+
+.hangar-model, .hangar-pylons, .hangar-deploy {
+  min-width: 0;
+  padding-block: clamp(1.1rem, 3.2vh, 2.35rem) max(clamp(1.1rem, 3.2vh, 2.35rem), env(safe-area-inset-bottom));
+}
+.hangar-model {
+  grid-area: model;
+  padding-left: max(var(--edge), env(safe-area-inset-left));
+  padding-right: 0.75rem;
+}
+.hangar-model span, .hangar-loadout-title {
+  margin: 0;
+  color: var(--amber);
+  font-size: 0.65rem;
+  line-height: 1.2;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.hangar-model h2 {
+  margin: 0.2rem 0 0;
+  font: 700 clamp(2.15rem, 4.3vw, 4.35rem)/0.96 "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  letter-spacing: -0.035em;
+}
+.hangar-pylons {
+  grid-area: weapons;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(0.65rem, 1.6vw, 1.8rem);
+  padding-inline: clamp(0.75rem, 1.6vw, 2rem);
+}
+.hangar-loadout-title { grid-column: 1 / -1; margin-bottom: 0.52rem; }
+.hangar-pylons label { display: grid; min-width: 0; gap: 0.28rem; font-size: 0.76rem; color: #bdc5c4; }
+.hangar-select { position: relative; min-width: 0; }
+.hangar-select::after {
+  content: "";
+  position: absolute;
+  right: 0.95rem;
+  top: 44%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border: solid #d7c09a;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.hangar-select select {
+  display: block;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.52rem 2.1rem 0.52rem 0.73rem;
+  border: 1px solid #505c5d;
+  border-radius: 2px;
+  color: #f0ede5;
+  background: #222d30;
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color-scheme: dark;
+}
+.hangar-select select:hover:enabled { border-color: #ba9a64; }
+.hangar-select select:disabled { color: #acb4af; cursor: default; }
+.hangar-pylon-status, .hangar-preview-error { color: #e5bc92; font-size: 0.75rem; }
+.hangar-pylon-status:empty, .hangar-status:empty { display: none; }
+.hangar-preview-error { grid-column: 1 / -1; margin-top: 0.3rem; }
+.hangar-deploy {
+  grid-area: deploy;
+  padding-left: clamp(0.75rem, 2.2vw, 2.5rem);
+  padding-right: max(var(--edge), env(safe-area-inset-right));
+}
+.hangar-play {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 3.45rem;
+  padding: 0.6rem clamp(0.95rem, 1.8vw, 1.9rem);
+  border: 1px solid #f7cd89;
+  border-radius: 2px;
+  color: #191811;
+  background: #edb363;
+  font-size: 1.1rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.hangar-play::after {
+  content: "";
+  width: 1.05rem;
+  height: 0.7rem;
+  background: currentColor;
+  clip-path: polygon(0 41%, 68% 41%, 45% 0, 63% 0, 100% 50%, 63% 100%, 45% 100%, 68% 59%, 0 59%);
+}
+.hangar-play:hover:enabled { background: #ffd091; }
+.hangar-play:disabled { background: #a38961; border-color: #b99a6d; cursor: wait; }
+.hangar-play:focus-visible, .hangar-select select:focus-visible, .hangar-canvas canvas:focus-visible {
+  outline: 2px solid #ffdaa2;
+  outline-offset: 3px;
+}
+.hangar-canvas canvas:focus-visible { outline-offset: -4px; }
+.hangar-status, .hangar-error { margin: 0.45rem 0 0; color: #d2d7d2; font-size: 0.82rem; }
+.hangar-error { color: #ffc298; }
+
+@media (max-width: 740px) and (orientation: portrait), (max-width: 700px) and (min-height: 521px) {
+  .hangar-layout {
+    grid-template-areas: "stage stage" "model deploy" "weapons weapons";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(15rem, 1fr) auto auto;
+  }
+  .hangar-model, .hangar-deploy { padding-block: 1.05rem 0.85rem; }
+  .hangar-model h2 { font-size: 2.45rem; }
+  .hangar-deploy { padding-left: 0; }
+  .hangar-play { min-height: 2.85rem; }
+  .hangar-pylons {
+    padding: 0.8rem max(var(--edge), env(safe-area-inset-right)) max(0.875rem, env(safe-area-inset-bottom)) max(var(--edge), env(safe-area-inset-left));
+    border-top: 1px solid #344144;
+  }
+  .hangar-heading { margin-top: max(1rem, env(safe-area-inset-top)); }
+  .hangar-orbit-hint { font-size: 0.68rem; margin-bottom: 0.65rem; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .hangar-layout {
+    grid-template-columns: minmax(6rem, 0.75fr) minmax(14rem, 2fr) minmax(7rem, 0.85fr);
+    grid-template-rows: minmax(10rem, 1fr) auto;
+  }
+  .hangar-model, .hangar-pylons, .hangar-deploy { padding-block: 0.45rem max(0.5rem, env(safe-area-inset-bottom)); }
+  .hangar-model h2 { font-size: 1.9rem; }
+  .hangar-loadout-title { margin-bottom: 0.2rem; }
+  .hangar-play { min-height: 2.75rem; }
+  .hangar-orbit-hint { margin-bottom: 0.5rem; }
+}

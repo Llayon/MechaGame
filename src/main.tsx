@@ -1,44 +1,28 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
-import { loadWorldAssets, type WorldAssets } from './map/worldAssets';
+import { HangarEntry } from './hangar/HangarEntry';
+import { StartupErrorBoundary } from './hangar/StartupErrorBoundary';
 import './index.css';
 
-function GameEntry() {
-  const [world, setWorld] = useState<WorldAssets>();
-  const [failed, setFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+const DirectGameEntry = lazy(() => import('./DirectGameEntry'));
+const query = new URLSearchParams(window.location.search);
+const showHangar = query.get('menu') === 'hangar' && query.get('autostart') !== '1';
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const bakedTerrain = new URLSearchParams(window.location.search).get('terrain') === 'baked';
-    loadWorldAssets(bakedTerrain, controller.signal).then(
-      (loaded) => { if (!controller.signal.aborted) setWorld(loaded); },
-      () => {
-        if (controller.signal.aborted) return;
-        controller.abort();
-        setFailed(true);
-      },
-    );
-    return () => controller.abort();
-  }, [attempt]);
-
-  if (world) return <App world={world} />;
-  return (
-    <main className="grid h-dvh place-items-center bg-[#091016] text-cyan-100">
-      {failed ? (
-        <div className="space-y-4 text-center" role="alert">
-          <p>Не удалось загрузить карту.</p>
-          <button
-            className="rounded border border-cyan-400 px-4 py-2"
-            onClick={() => { setFailed(false); setAttempt((n) => n + 1); }}
-          >
-            Повторить
-          </button>
-        </div>
-      ) : <p role="status">Загрузка карты…</p>}
+createRoot(document.getElementById('root')!).render(showHangar ? (
+  <HangarEntry bakedTerrain={query.get('terrain') !== 'worker'} />
+) : (
+  <StartupErrorBoundary fallback={
+    <main className="grid h-dvh place-items-center p-6 text-cyan-100" role="alert">
+      <div className="space-y-4 text-center">
+        <p>Не удалось запустить игру.</p>
+        <button className="rounded border border-cyan-400 px-4 py-2" onClick={() => window.location.reload()}>
+          Перезагрузить
+        </button>
+      </div>
     </main>
-  );
-}
-
-createRoot(document.getElementById('root')!).render(<GameEntry />);
+  }>
+    <Suspense fallback={<main className="grid h-dvh place-items-center text-cyan-100" role="status">Загрузка карты…</main>}>
+      <DirectGameEntry bakedTerrain={query.get('terrain') === 'baked'} />
+    </Suspense>
+  </StartupErrorBoundary>
+));

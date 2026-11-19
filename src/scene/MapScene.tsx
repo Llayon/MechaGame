@@ -683,7 +683,13 @@ function BalancedShadowCadence({
   return null;
 }
 
-function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
+interface FirstTerrainRenderProps {
+  onReady: () => void;
+  driveMode: boolean;
+  onFirstControllableFrame?: () => void;
+}
+
+function ReportFirstTerrainRender({ onReady, driveMode, onFirstControllableFrame }: FirstTerrainRenderProps) {
   const scene = useThree((state) => state.scene);
   const terrainReported = useRef(false);
   const combatReported = useRef(false);
@@ -700,13 +706,14 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
       if (driveMode && !combatReported.current) {
         combatReported.current = true;
         performance.mark('mecha-first-controllable-frame');
+        onFirstControllableFrame?.();
       }
     };
     scene.onAfterRender = report;
     return () => {
       if (scene.onAfterRender === report) scene.onAfterRender = previous;
     };
-  }, [scene, onReady, driveMode]);
+  }, [scene, onReady, driveMode, onFirstControllableFrame]);
   return null;
 }
 
@@ -714,6 +721,7 @@ export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets;
   onTerrainReady: () => void;
+  onFirstControllableFrame?: () => void;
   activeSector: SectorId;
   transitionNonce: number;
   resetNonce: number;
@@ -739,6 +747,7 @@ export function MapScene({
   focusedSite,
   world,
   onTerrainReady,
+  onFirstControllableFrame,
   activeSector,
   transitionNonce,
   resetNonce,
@@ -835,7 +844,11 @@ export function MapScene({
         }}
       >
         <SceneSimulationProvider paused={paused}>
-        <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
+        <ReportFirstTerrainRender
+          onReady={onTerrainReady}
+          driveMode={driveMode}
+          onFirstControllableFrame={onFirstControllableFrame}
+        />
         <WorldLodDriver settings={preferences} paused={paused} step={step}
           changeStep={next => setAdaptation({settings: preferences, step: next})}/>
         <color attach="background" args={[lightCfg.bg]} />
