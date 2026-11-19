@@ -2,7 +2,9 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type App from '../App';
 import type { WorldAssets } from '../map/worldAssets';
 import { StartupErrorBoundary } from './StartupErrorBoundary';
+import { HangarLoadout } from './HangarLoadout';
 import poster from './assets/mech-042.webp';
+import portraitPoster from './assets/mech-042-portrait.webp';
 import './hangar.css';
 
 const HangarPreview = lazy(() => import('./HangarPreview'));
@@ -129,9 +131,23 @@ export function HangarEntry({ bakedTerrain }: { bakedTerrain: boolean }) {
       {phase !== 'battle' && (
         <main className="hangar" aria-label="Ангар" onKeyDown={phase === 'scene' ? (event) => event.stopPropagation() : undefined}>
           <div className="hangar-layout">
-            <section className="hangar-brief">
-              <h1>Ангар</h1>
-              <p className="hangar-model">Мех Т2-042</p>
+            <picture className="hangar-poster">
+              <source media="(orientation: portrait) and (max-aspect-ratio: 4/5)" srcSet={portraitPoster} />
+              <img src={poster} alt="Т2-042 на ремонтной платформе ангара" fetchPriority="high" />
+            </picture>
+            <header className="hangar-heading"><h1>Ангар</h1></header>
+            <section className="hangar-model" aria-label="Выбранный мех">
+              <span>Мех</span>
+              <h2>Т2-042</h2>
+            </section>
+            {previewEnabled && !transferring ? (
+              <StartupErrorBoundary fallback={<HangarLoadout failed />}>
+                <Suspense fallback={<HangarLoadout />}>
+                  <HangarPreview />
+                </Suspense>
+              </StartupErrorBoundary>
+            ) : <HangarLoadout />}
+            <div className="hangar-deploy">
               <button
                 ref={playButton}
                 className="hangar-play"
@@ -146,16 +162,6 @@ export function HangarEntry({ bakedTerrain }: { bakedTerrain: boolean }) {
                 {phase === 'scene' && 'Готовим сцену…'}
               </div>
               {phase === 'error' && <p className="hangar-error" role="alert">Не удалось подготовить карту.</p>}
-            </section>
-            <div className="hangar-stage">
-              <img className="hangar-poster" src={poster} alt="Мех Т2-042 на платформе ангара" fetchPriority="high" />
-              {previewEnabled && (phase === 'hangar' || phase === 'error') && (
-                <StartupErrorBoundary>
-                  <Suspense fallback={null}>
-                    <HangarPreview />
-                  </Suspense>
-                </StartupErrorBoundary>
-              )}
             </div>
           </div>
         </main>
