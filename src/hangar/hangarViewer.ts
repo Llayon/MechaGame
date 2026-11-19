@@ -1,9 +1,10 @@
 import {
-  CircleGeometry, Color, CylinderGeometry, DirectionalLight, Group, HemisphereLight, InstancedMesh, Mesh,
-  MeshStandardMaterial, Object3D, PerspectiveCamera, Scene, WebGLRenderer,
+  ACESFilmicToneMapping, Color, DirectionalLight, Group, HemisphereLight, InstancedMesh, Mesh,
+  Object3D, PCFShadowMap, PerspectiveCamera, PMREMGenerator, Scene, WebGLRenderer,
   type BufferGeometry, type Material, type Texture,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import mechUrl from './assets/mech-042.glb?url';
 
@@ -34,7 +35,12 @@ function disposeModel(root: Object3D) {
     material.dispose();
   }
   for (const geometry of geometries) geometry.dispose();
-  for (const texture of textures) texture.dispose();
+  const bitmaps = new Set<ImageBitmap>();
+  for (const texture of textures) {
+    if (typeof ImageBitmap !== 'undefined' && texture.image instanceof ImageBitmap) bitmaps.add(texture.image);
+    texture.dispose();
+  }
+  for (const bitmap of bitmaps) bitmap.close();
 }
 
 function namedPart(model: Group, name: string) {
@@ -52,25 +58,44 @@ export async function createHangarViewer(container: HTMLElement, signal: AbortSi
     signal.throwIfAborted();
     const stock = { left: namedPart(model, 'Stock_Left'), right: namedPart(model, 'Stock_Right') };
     const sockets = { left: namedPart(model, 'Mount_Left'), right: namedPart(model, 'Mount_Right') };
-    renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
-    const scene = new Scene();
-    scene.background = new Color('#14201f');
-    scene.add(model, new HemisphereLight('#cedfed', '#776650', 2));
-    const key = new DirectionalLight('#fff1d0', 2.5);
-    key.position.set(5, 10, 6);
-    const rim = new DirectionalLight('#91c4df', 2);
-    rim.position.set(-6, 6, -7);
-    scene.add(key, rim);
+    renderer = new WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
+    renderer.toneMapping = ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFShadowMap;
+    renderer.shadowMap.autoUpdate = false;
 
-    const platform = new Mesh(
-      new CylinderGeometry(3.42, 3.5, 0.25, 64),
-      new MeshStandardMaterial({ color: '#34423d', roughness: 0.86 }),
-    );
-    platform.position.y = 0.125;
-    const deck = new Mesh(new CircleGeometry(3.1, 64), new MeshStandardMaterial({ color: '#46554e', roughness: 0.9 }));
-    deck.rotation.x = -Math.PI / 2;
-    deck.position.y = 0.253;
-    scene.add(platform, deck);
+    const scene = new Scene();
+    scene.background = new Color('#161a1d');
+    model.traverse((part) => {
+      if (part instanceof Mesh) {
+        part.castShadow = true;
+        part.receiveShadow = true;
+      }
+    });
+    scene.add(model, new HemisphereLight('#a8bed4', '#24282b', 0.75));
+    const key = new DirectionalLight('#fff8ee', 2.25);
+    key.position.set(6.5, 11.5, 7.5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    Object.assign(key.shadow.camera, { near: 2, far: 26, left: -5.6, right: 5.6, top: 7.1, bottom: -4.6 });
+    key.shadow.camera.updateProjectionMatrix();
+    key.shadow.bias = -0.0004;
+    key.shadow.normalBias = 0.02;
+    const rim = new DirectionalLight('#78aee0', 1.25);
+    rim.position.set(-7.5, 7.5, -6.5);
+    const fill = new DirectionalLight('#9aa69d', 0.55);
+    fill.position.set(-5, 3.5, 6);
+    scene.add(key, rim, fill);
+
+    const room = new RoomEnvironment();
+    const generator = new PMREMGenerator(renderer);
+    const studio = generator.fromScene(room, 0.04);
+    scene.environment = studio.texture;
+    scene.environmentIntensity = 0.65;
+    generator.dispose();
+    room.dispose();
+    renderer.shadowMap.needsUpdate = true;
 
     const camera = new PerspectiveCamera(35, 1, 0.1, 75);
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -136,6 +161,8 @@ export async function createHangarViewer(container: HTMLElement, signal: AbortSi
       controls.dispose();
       canvas.removeEventListener('keydown', rotate);
       disposeModel(scene);
+      key.shadow.dispose();
+      studio.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       canvas.remove();
@@ -151,13 +178,19 @@ export async function createHangarViewer(container: HTMLElement, signal: AbortSi
         const next = weapon?.createWeapon();
         if (next && !next.isObject3D) throw new Error(`Invalid hangar weapon: ${modulePath}`);
         const previous = attachments[side];
-        if (next) sockets[side].add(next);
+        if (next) {
+          next.traverse((part) => {
+            if (part instanceof Mesh) part.receiveShadow = true;
+          });
+          sockets[side].add(next);
+        }
         attachments[side] = next;
         stock[side].visible = !next;
         if (previous) {
           previous.removeFromParent();
           disposeModel(previous);
         }
+        renderer.shadowMap.needsUpdate = true;
         invalidate();
         return true;
       },
