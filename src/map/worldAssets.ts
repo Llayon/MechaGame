@@ -4,7 +4,6 @@ import { WORLD_MAP_HEIGHT, WORLD_MAP_WIDTH } from './worldMapDimensions';
 
 export interface WorldAssets {
   terrain: TerrainTiles;
-  grass: Uint8Array<ArrayBuffer>;
   water: Uint8Array<ArrayBuffer>;
 }
 
@@ -51,11 +50,14 @@ async function loadBakedTerrain(signal: AbortSignal): Promise<TerrainTiles> {
   return decodeTerrainTiles(buffer, MeshoptDecoder);
 }
 
+export function loadGrassMap(signal: AbortSignal) {
+  return loadMap(paths.grass, signal);
+}
+
 export async function loadWorldAssets(bakedTerrain: boolean, signal: AbortSignal): Promise<WorldAssets> {
-  const [grass, water, terrain] = await Promise.all([
-    loadMap(paths.grass, signal),
+  const [water, terrain] = await Promise.all([
     loadMap(paths.water, signal),
     bakedTerrain ? loadBakedTerrain(signal) : generateTerrainInWorker(signal).then(buffer => decodeTerrainTiles(buffer)),
   ]);
-  return { grass, water, terrain };
+  return { water, terrain };
 }

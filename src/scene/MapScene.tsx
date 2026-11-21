@@ -717,6 +717,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets | null;
+  grassMap: Uint8Array<ArrayBuffer> | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
   transitionNonce: number;
@@ -745,6 +746,7 @@ import { LandmarkMeshes, StageDriver, landmarksReady, lastStage } from './Landma
 export function MapScene({
   focusedSite,
   world,
+  grassMap,
   onTerrainReady,
   activeSector,
   transitionNonce,
@@ -1061,7 +1063,7 @@ export function MapScene({
         </group>}
 
         <group name="perf:foliage">
-        {world && <FoliageAndUnits stage={level} grassMap={world.grass}
+        {world && <FoliageAndUnits stage={level} grassMap={grassMap}
           showUnits={showUnits}
           showMist={showMist}
           vegetation={graphics.vegetation}

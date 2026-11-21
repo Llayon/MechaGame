@@ -4,7 +4,7 @@ import { LightingPreset, SectorId } from './map/sectors';
 import type { InfantrySite } from './map/infantryEncounters';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
-import type { WorldAssets } from './map/worldAssets';
+import { loadGrassMap, type WorldAssets } from './map/worldAssets';
 import { MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
@@ -99,6 +99,19 @@ export default function App({ world, onOverviewDraw }: { world: WorldAssets | nu
     saveGraphicsSettings(graphics);
   }, [graphics]);
   const [muted, setMuted] = useState(false);
+  const [grassMap, setGrassMap] = useState<Uint8Array<ArrayBuffer> | null>(null);
+  const [grassFailed, setGrassFailed] = useState(false);
+  const needsGrass = Boolean(world) && graphics.vegetation !== 'minimal';
+  useEffect(() => {
+    if (!needsGrass || grassMap || grassFailed) return;
+    const controller = new AbortController();
+    loadGrassMap(controller.signal).then(data => {
+      if (!controller.signal.aborted) setGrassMap(data);
+    }).catch(() => {
+      if (!controller.signal.aborted) setGrassFailed(true);
+    });
+    return () => controller.abort();
+  }, [needsGrass, grassMap, grassFailed]);
   const [missionOutcome, setMissionOutcome] = useState<'victory' | 'defeat' | null>(null);
   const [showMarkers, setShowMarkers] = useState(true);
   const [showUnits, setShowUnits] = useState(true);
@@ -499,6 +512,7 @@ export default function App({ world, onOverviewDraw }: { world: WorldAssets | nu
       <MapScene
         focusedSite={focusedSite}
         world={world}
+        grassMap={grassMap}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
         transitionNonce={transitionNonce}
@@ -520,6 +534,7 @@ export default function App({ world, onOverviewDraw }: { world: WorldAssets | nu
         onEnterDriveMode={handleEnterDriveMode}
         onMissionEnded={handleMissionEnded}
       />
+      {needsGrass && grassFailed && <button className="absolute bottom-20 left-4 z-50 rounded bg-slate-900 px-4 py-2 text-white" onClick={() => setGrassFailed(false)}>Повторить загрузку травы</button>}
       {requestedDriveMode && !world && <p role="status" className="pointer-events-none absolute inset-x-0 top-14 text-center text-sm text-cyan-100">Подготовка к бою…</p>}
       {terrainReady ? (
         <>
