@@ -16,7 +16,7 @@ import type { VegetationQuality, AtmosphereQuality } from '../game/graphicsSetti
 
 interface FoliageAndUnitsProps {
   stage:number;
-  grassMap: Uint8Array<ArrayBuffer>;
+  grassMap: Uint8Array<ArrayBuffer> | null;
   showUnits: boolean;
   showMist: boolean;
   vegetation: VegetationQuality;
@@ -58,7 +58,7 @@ export function FoliageAndUnits({
         combatRef={combatRef}
       />}
       {showDecorativeFoliage && stage >= 8 && <GrassBushAccents isSoftwareGl={simplified} />}
-      {showDecorativeFoliage && stage >= 8 && <GrassField
+      {showDecorativeFoliage && stage >= 8 && grassMap && <GrassField
         data={grassMap}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}

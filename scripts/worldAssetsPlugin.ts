@@ -27,7 +27,9 @@ export function worldAssetsPlugin(): Plugin {
         tag: 'script', injectTo: 'head-prepend',
         children: `(() => {
           const query = new URLSearchParams(location.search);
-          if (query.get('entry') !== 'landmarks' || query.get('surface') !== 'stream' || query.get('terrain') !== 'baked' || query.get('autostart') === '1') return;
+          if (query.get('autostart') === '1') return;
+          const hasOverride = ['entry', 'surface', 'terrain'].some(key => query.has(key));
+          if (hasOverride && !(query.get('entry') === 'landmarks' && query.get('surface') === 'stream' && query.get('terrain') === 'baked')) return;
           for (const href of ${JSON.stringify(urls)}) {
             const link = document.createElement('link');
             link.rel = 'preload'; link.as = 'fetch'; link.crossOrigin = 'anonymous'; link.href = href;
