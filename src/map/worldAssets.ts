@@ -41,11 +41,21 @@ function generateTerrainInWorker(signal: AbortSignal): Promise<ArrayBuffer> {
   });
 }
 
+async function loadBakedTerrain(signal: AbortSignal): Promise<TerrainTiles> {
+  const [buffer, { MeshoptDecoder }] = await Promise.all([
+    fetchWorldAsset(paths.terrain, signal),
+    import('meshoptimizer/decoder'),
+  ]);
+  await MeshoptDecoder.ready;
+  signal.throwIfAborted();
+  return decodeTerrainTiles(buffer, MeshoptDecoder);
+}
+
 export async function loadWorldAssets(bakedTerrain: boolean, signal: AbortSignal): Promise<WorldAssets> {
-  const [grass, water, tiles] = await Promise.all([
+  const [grass, water, terrain] = await Promise.all([
     loadMap(paths.grass, signal),
     loadMap(paths.water, signal),
-    bakedTerrain ? fetchWorldAsset(paths.terrain, signal) : generateTerrainInWorker(signal),
+    bakedTerrain ? loadBakedTerrain(signal) : generateTerrainInWorker(signal).then(buffer => decodeTerrainTiles(buffer)),
   ]);
-  return { grass, water, terrain: decodeTerrainTiles(tiles) };
+  return { grass, water, terrain };
 }

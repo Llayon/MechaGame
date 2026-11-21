@@ -1,5 +1,6 @@
 import { packOverview } from './packOverview';
 import { createHash } from 'node:crypto';
+import { MeshoptEncoder } from 'meshoptimizer/encoder';
 import type { Plugin } from 'vite';
 import { bakeTerrainGrassMap } from '../src/map/grassField';
 import { bakeWaterDepthData } from '../src/map/waterDepth';
@@ -19,8 +20,8 @@ export function worldAssetsPlugin(): Plugin {
   return {
     name: 'world-assets',
     configResolved(config) { base = config.base; },
-    transformIndexHtml() {
-      const overview = getAssets().find(asset => asset.key === 'overview')!;
+    async transformIndexHtml() {
+      const overview = (await getAssets()).find(asset => asset.key === 'overview')!;
       const urls = [overview.path, 'landmarks.bin.gz', 'landmark-color.webp', 'overview-ground.webp'].map(path => base + path);
       return [{
         tag: 'script', injectTo: 'head-prepend',
@@ -38,25 +39,25 @@ export function worldAssetsPlugin(): Plugin {
     resolveId(id) {
       if (id === moduleId) return resolvedId;
     },
-    load(id) {
+    async load(id) {
       if (id === resolvedId) {
-        const paths = Object.fromEntries(getAssets().map(({ key, path }) => [key, path]));
+        const paths = Object.fromEntries((await getAssets()).map(({ key, path }) => [key, path]));
         return 'export default ' + JSON.stringify(paths);
       }
     },
-    buildStart() {
+    async buildStart() {
       if (this.environment.config.consumer !== 'client' || this.environment.mode !== 'build') return;
-      for (const { path, data } of getAssets()) {
+      for (const { path, data } of await getAssets()) {
         this.emitFile({ type: 'asset', fileName: path, source: data });
       }
     },
-    configureServer(server) {
-      getAssets();
+    async configureServer(server) {
+      const baked = await getAssets();
       const prefix = server.config.base + 'assets/world/';
       server.middlewares.use((req, res, next) => {
         const path = req.url?.split('?')[0];
         if (!path?.startsWith(prefix)) return next();
-        const asset = getAssets().find((item) => server.config.base + item.path === path);
+        const asset = baked.find((item) => server.config.base + item.path === path);
         if (!asset) return next();
         res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -66,7 +67,8 @@ export function worldAssetsPlugin(): Plugin {
   };
 }
 
-function bakeAssets() {
+async function bakeAssets() {
+  await MeshoptEncoder.ready;
   const tiles = {ground: generateGroundTiles(), mountains: generateMountainTiles()};
   return [
     { key: 'overview', data: packOverview(tiles) },
@@ -74,7 +76,7 @@ function bakeAssets() {
     { key: 'water', data: bakeWaterDepthData(WORLD_MAP_WIDTH, WORLD_MAP_HEIGHT) },
     {
       key: 'terrain',
-      data: new Uint8Array(encodeTerrainTiles(tiles)),
+      data: new Uint8Array(encodeTerrainTiles(tiles, MeshoptEncoder)),
     },
   ].map(({ key, data }) => {
     const hash = createHash('sha256').update(data).digest('hex').slice(0, 16);
