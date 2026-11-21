@@ -15,6 +15,7 @@ import type { CombatSimulationState } from '../game/combatTypes';
 import type { VegetationQuality, AtmosphereQuality } from '../game/graphicsSettings';
 
 interface FoliageAndUnitsProps {
+  stage:number;
   grassMap: Uint8Array<ArrayBuffer>;
   showUnits: boolean;
   showMist: boolean;
@@ -29,6 +30,7 @@ interface FoliageAndUnitsProps {
 }
 
 export function FoliageAndUnits({
+  stage,
   grassMap,
   showUnits,
   showMist,
@@ -48,15 +50,15 @@ export function FoliageAndUnits({
   // Only decorative grass, small bushes and vines are optional.
   return (
     <group>
-      <PineForest
+      {stage >= 7 && <PineForest
         sunPos={sunPos}
         isSoftwareGl={simplified}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
         combatRef={combatRef}
-      />
-      {showDecorativeFoliage && <GrassBushAccents isSoftwareGl={simplified} />}
-      {showDecorativeFoliage && <GrassField
+      />}
+      {showDecorativeFoliage && stage >= 8 && <GrassBushAccents isSoftwareGl={simplified} />}
+      {showDecorativeFoliage && stage >= 8 && <GrassField
         data={grassMap}
         driveMode={driveMode}
         mechPoseRef={mechPoseRef}
@@ -64,17 +66,17 @@ export function FoliageAndUnits({
         sunPos={sunPos}
         isSoftwareGl={simplified}
       />}
-      <RockOutcrops />
-      {showDecorativeFoliage && <HangingVines isSoftwareGl={simplified} />}
-      <FlankCoverZone />
-      <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />
-      <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />
-      <CanyonWaterfalls
+      {stage >= 8 && <RockOutcrops />}
+      {showDecorativeFoliage && stage >= 9 && <HangingVines isSoftwareGl={simplified} />}
+      {stage >= 9 && <FlankCoverZone />}
+      {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
+      {stage >= 9 && <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />}
+      {stage >= 9 && <CanyonWaterfalls
         lightingPreset={lightingPreset}
         showMist={mistVisible}
         isSoftwareGl={isSoftwareGl}
-      />
-      {showDecorativeFoliage && <SkyBirds lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
+      />}
+      {showDecorativeFoliage && stage >= 9 && <SkyBirds lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
     </group>
   );
 }

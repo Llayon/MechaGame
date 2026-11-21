@@ -1,3 +1,4 @@
+import { packOverview } from './packOverview';
 import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
 import { bakeTerrainGrassMap } from '../src/map/grassField';
@@ -13,9 +14,27 @@ const resolvedId = '\0' + moduleId;
 export function worldAssetsPlugin(): Plugin {
   let assets: ReturnType<typeof bakeAssets> | undefined;
   const getAssets = () => assets ??= bakeAssets();
+  let base = '/';
 
   return {
     name: 'world-assets',
+    configResolved(config) { base = config.base; },
+    transformIndexHtml() {
+      const overview = getAssets().find(asset => asset.key === 'overview')!;
+      const urls = [overview.path, 'landmarks.bin.gz', 'landmark-color.webp', 'overview-ground.webp'].map(path => base + path);
+      return [{
+        tag: 'script', injectTo: 'head-prepend',
+        children: `(() => {
+          const query = new URLSearchParams(location.search);
+          if (query.get('entry') !== 'landmarks' || query.get('surface') !== 'stream' || query.get('terrain') !== 'baked' || query.get('autostart') === '1') return;
+          for (const href of ${JSON.stringify(urls)}) {
+            const link = document.createElement('link');
+            link.rel = 'preload'; link.as = 'fetch'; link.crossOrigin = 'anonymous'; link.href = href;
+            document.head.append(link);
+          }
+        })();`
+      }];
+    },
     resolveId(id) {
       if (id === moduleId) return resolvedId;
     },
@@ -48,12 +67,14 @@ export function worldAssetsPlugin(): Plugin {
 }
 
 function bakeAssets() {
+  const tiles = {ground: generateGroundTiles(), mountains: generateMountainTiles()};
   return [
+    { key: 'overview', data: packOverview(tiles) },
     { key: 'grass', data: bakeTerrainGrassMap(WORLD_MAP_WIDTH, WORLD_MAP_HEIGHT) },
     { key: 'water', data: bakeWaterDepthData(WORLD_MAP_WIDTH, WORLD_MAP_HEIGHT) },
     {
       key: 'terrain',
-      data: new Uint8Array(encodeTerrainTiles({ ground: generateGroundTiles(), mountains: generateMountainTiles() })),
+      data: new Uint8Array(encodeTerrainTiles(tiles)),
     },
   ].map(({ key, data }) => {
     const hash = createHash('sha256').update(data).digest('hex').slice(0, 16);

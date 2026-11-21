@@ -12,6 +12,8 @@ import { HorizonWarSystem } from './objects/HorizonWarSystem';
 import { TitanWrecks } from './objects/TitanWrecks';
 
 interface StructuresProps {
+  stage:number;
+  quarryDetails:boolean;
   splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   driveMode: boolean;
@@ -21,6 +23,7 @@ interface StructuresProps {
 }
 
 export function Structures({
+  stage, quarryDetails,
   splitBridgeBatches,
   lightingPreset,
   driveMode,
@@ -42,32 +45,32 @@ export function Structures({
 
   return (
     <group>
-      <AirfieldZone
+      {stage >= 1 && <group name="bake-airfield"><AirfieldZone
         helipadTex={helipadTex}
         corrugatedTex={corrugatedTex}
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
-      />
-      <RefineryIslandZone
+      /></group>}
+      {stage >= 3 && <group name="bake-refinery"><RefineryIslandZone
         corrugatedTex={corrugatedTex}
         onSelectSector={onSelectSector}
-      />
-      <CitadelZone
+      /></group>}
+      {stage >= 4 && <group name="bake-citadel"><CitadelZone
         corrugatedTex={corrugatedTex}
         lightingPreset={lightingPreset}
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
-      />
-      <QuarryAndPassZone
+      /></group>}
+      {stage >= 2 && <QuarryAndPassZone details={quarryDetails}
         splitBridgeBatches={splitBridgeBatches}
         lightingPreset={lightingPreset}
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
-      />
-      <HorizonLandmarks />
-      <TitanWrecks />
-      <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />
-      {distantWar && <HorizonWarSystem
+      />}
+      {stage >= 5 && <HorizonLandmarks />}
+      {stage >= 5 && <TitanWrecks />}
+      {stage >= 5 && <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
+      {stage >= 5 && distantWar && <HorizonWarSystem
         lightingPreset={lightingPreset}
         driveMode={driveMode}
         isSoftwareGl={isSoftwareGl}
