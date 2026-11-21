@@ -59,6 +59,6 @@ The raw desktop captures, startup measurements and browser screenshots are in `.
 
 ## Streamed map overview
 
-Open `?terrain=baked&entry=landmarks&surface=stream` for the interactive preview. Use `?terrain=baked&entry=landmarks&surface=quick` for the previous version that waits for the full world assets before rendering.
+The normal map URL opens the streamed overview. It uses the same startup path as `?terrain=baked&entry=landmarks&surface=stream`. Direct combat links (`?autostart=1`) retain their original startup. Use `?terrain=baked&entry=landmarks&surface=quick` to wait for the full world assets before rendering, or `?terrain=worker` to generate the terrain locally.
 
 The build generates the compact ground and mountain meshes from the same tiles as the detailed terrain. The opening view uses quantized geometry and baked dusk colors for terrain, water, bridges and bases. After the first draw, the game requests the detailed terrain and the grass and water maps. The water material, near terrain and mountain ring enter on separate frames. Entering combat while the files are downloading queues the request. A failed download can be retried from the overview.

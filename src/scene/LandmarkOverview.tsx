@@ -3,8 +3,7 @@ import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { SectorId } from '../map/sectors';
 
-const params = new URLSearchParams(location.search);
-export const landmarksRequested = params.get('entry') === 'landmarks' && params.get('autostart') !== '1';
+import { mapStartup } from '../map/mapStartup';
 export const lastStage = 11;
 const sectors = ['airfield', 'crossing', 'refinery', 'citadel'] as const;
 let geometry: THREE.BufferGeometry[] | undefined;
@@ -12,7 +11,7 @@ const material = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: f
 export const landmarksReady = () => geometry !== undefined;
 
 export async function loadLandmarks(signal: AbortSignal) {
-  if (!landmarksRequested || geometry) return;
+  if (!mapStartup.landmarks || geometry) return;
   const [response, image] = await Promise.all([
     fetch(import.meta.env.BASE_URL + 'landmarks.bin.gz', {signal}),
     fetch(import.meta.env.BASE_URL + 'landmark-color.webp', {signal}).then(async r => {

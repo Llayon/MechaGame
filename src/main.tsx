@@ -4,12 +4,11 @@ import App from './App';
 import { loadWorldAssets, type WorldAssets } from './map/worldAssets';
 import { prepareGroundMap } from './scene/terrain/OverviewGround';
 import { prepareCompactGround } from './scene/terrain/CompactGround';
-import { landmarksRequested, loadLandmarks } from './scene/LandmarkOverview';
+import { loadLandmarks } from './scene/LandmarkOverview';
+import { mapStartup } from './map/mapStartup';
 import './index.css';
 
-const query = new URLSearchParams(location.search);
-const baked = query.get('terrain') === 'baked';
-const streaming = baked && landmarksRequested && query.get('surface') === 'stream';
+const { baked, streaming } = mapStartup;
 
 function GameEntry() {
   const [world, setWorld] = useState<WorldAssets | null>(null);

@@ -4,7 +4,9 @@ import type { TerrainTiles } from './terrainTileCodec';
 import { WATER_LEVEL } from '../../map/terrainMath';
 import { WATER_SPAN_D, WATER_SPAN_W } from '../../map/waterDepth';
 
-const mode = new URLSearchParams(location.search).get('surface');
+import { mapStartup } from '../../map/mapStartup';
+
+const mode = mapStartup.surface;
 export const useGroundAtlas = mode === 'atlas' || mode === 'quick' || mode === 'stream';
 export const deferSky = mode === 'sky' || mode === 'quick' || mode === 'stream';
 let groundMap: THREE.Texture | undefined;
