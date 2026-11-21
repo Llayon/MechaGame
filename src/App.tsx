@@ -65,7 +65,7 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App({ world }: { world: WorldAssets }) {
+export default function App({ world, onOverviewDraw }: { world: WorldAssets | null; onOverviewDraw: () => void }) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
@@ -75,8 +75,13 @@ export default function App({ world }: { world: WorldAssets }) {
   const [lightingPreset, setLightingPreset] = useState<LightingPreset>('dusk');
   const [requestedDriveMode, setDriveMode] = useState(autostart);
   const [terrainReady, setTerrainReady] = useState(false);
-  const driveMode = requestedDriveMode && terrainReady;
-  const handleTerrainReady = useCallback(() => setTerrainReady(true), []);
+  const driveMode = requestedDriveMode && terrainReady && Boolean(world);
+  const loadingLabel = useRef<HTMLDivElement>(null);
+  const handleTerrainReady = useCallback(() => {
+    if (loadingLabel.current) loadingLabel.current.style.visibility = "hidden";
+    setTerrainReady(true);
+    onOverviewDraw();
+  }, [onOverviewDraw]);
   const [paused, setPaused] = useState(false);
   const [graphicsOpen, setGraphicsOpen] = useState(false);
   const graphicsWasRunningRef = useRef(false);
@@ -239,7 +244,7 @@ export default function App({ world }: { world: WorldAssets }) {
       document.activeElement.blur();
     }
     window.focus();
-    if (driveModeRef.current) {
+    if (driveModeRef.current || (requestedDriveMode && !world)) {
       clearDriveInput();
       if (combatRef.current.missionStatus === 'paused') combatRef.current.missionStatus = 'playing';
       setPaused(false);
@@ -252,7 +257,7 @@ export default function App({ world }: { world: WorldAssets }) {
       setPaused(false);
       setDriveMode(true);
     }
-  }, [clearDriveInput]);
+  }, [clearDriveInput, requestedDriveMode, world]);
 
   const handleTogglePause = useCallback(() => {
     if (!driveMode || missionOutcome !== null) return;
@@ -515,6 +520,7 @@ export default function App({ world }: { world: WorldAssets }) {
         onEnterDriveMode={handleEnterDriveMode}
         onMissionEnded={handleMissionEnded}
       />
+      {requestedDriveMode && !world && <p role="status" className="pointer-events-none absolute inset-x-0 top-14 text-center text-sm text-cyan-100">Подготовка к бою…</p>}
       {terrainReady ? (
         <>
           <TacticalHUD
@@ -568,7 +574,7 @@ export default function App({ world }: { world: WorldAssets }) {
           <PerformancePanel />
         </>
       ) : (
-        <div className="absolute inset-0 z-50 grid place-items-center bg-[#091016] text-cyan-100" role="status">
+        <div ref={world ? undefined : loadingLabel} className={`absolute inset-0 z-50 grid place-items-center text-cyan-100 ${world ? "bg-[#091016]" : "pointer-events-none"}`} role="status">
           Загрузка карты…
         </div>
       )}

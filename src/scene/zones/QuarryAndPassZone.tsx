@@ -15,6 +15,7 @@ import { FloodedRuins } from '../objects/FloodedRuins';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
 
 export interface QuarryAndPassZoneProps {
+  details: boolean;
   splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   isSoftwareGl: boolean;
@@ -22,6 +23,7 @@ export interface QuarryAndPassZoneProps {
 }
 
 export function QuarryAndPassZone({
+  details,
   splitBridgeBatches,
   lightingPreset,
   isSoftwareGl,
@@ -47,7 +49,7 @@ export function QuarryAndPassZone({
   return (
     <group>
       {/* Bridges & Elevated Viaduct */}
-      {BRIDGE_SPECS.map((spec) => (
+      <group name="bake-crossing">{BRIDGE_SPECS.map((spec) => (
         <BridgeSpan
           splitBridgeBatches={splitBridgeBatches}
           key={spec.id}
@@ -55,10 +57,10 @@ export function QuarryAndPassZone({
           lightingPreset={lightingPreset}
           isSoftwareGl={isSoftwareGl}
         />
-      ))}
+      ))}</group>
 
       {/* Flooded Eastern River Ruins & Collapsed Bridge Abutments */}
-      <FloodedRuins lightingPreset={lightingPreset} />
+      {details && <><FloodedRuins lightingPreset={lightingPreset} />
 
       {/* Northern Canyon Pass (Point B Excavator kept small 1.35x + Powerline Poles) */}
       <StaticStructure
@@ -87,7 +89,7 @@ export function QuarryAndPassZone({
           <boxGeometry args={[5.2, 2.8, 4.2]} />
           <meshStandardMaterial color="#8F5642" roughness={0.65} metalness={0.18} />
         </mesh>
-      </StaticStructure>
+      </StaticStructure></>}
     </group>
   );
 }

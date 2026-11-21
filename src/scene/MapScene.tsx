@@ -1,5 +1,5 @@
 import type { WorldAssets } from '../map/worldAssets';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { WorldLodDriver } from '../lod/WorldLodDriver';
 import { effectiveGraphics } from '../lod/adaptiveQuality';
 import { InfantryCrowd } from '../infantry/InfantryCrowd';
@@ -243,6 +243,9 @@ function CameraRig({
   shadowMapSize,
 }: CameraRigProps) {
   const { camera, scene, gl, invalidate, size } = useThree();
+  useLayoutEffect(() => {
+    if (new URLSearchParams(location.search).has('debugAim')) Object.assign(window, { orbitAngle: () => controlsRef.current?.getAzimuthalAngle() });
+  }, []);
   const focusAspect = focusedSite ? size.width / Math.max(1, size.height) : 1;
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const transitioningRef = useRef(false);
@@ -695,6 +698,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
       scene.onAfterRender = previous;
       if (!terrainReported.current) {
         terrainReported.current = true;
+        performance.mark('overview-first-draw');
         onReady();
       }
       if (driveMode && !combatReported.current) {
@@ -712,7 +716,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
-  world: WorldAssets;
+  world: WorldAssets | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
   transitionNonce: number;
@@ -735,6 +739,9 @@ export interface MapSceneProps {
   onMissionEnded: (outcome: 'victory' | 'defeat') => void;
 }
 
+import { CompactGround, compactReady } from './terrain/CompactGround';
+import { OverviewGround, deferSky, hasGroundMap } from './terrain/OverviewGround';
+import { LandmarkMeshes, StageDriver, landmarksReady, lastStage } from './LandmarkOverview';
 export function MapScene({
   focusedSite,
   world,
@@ -759,6 +766,20 @@ export function MapScene({
   onEnterDriveMode,
   onMissionEnded,
 }: MapSceneProps) {
+  const [stage, setStage] = useState(() => landmarksReady() ? 0 : lastStage);
+  const advance = useCallback(() => setStage(s => Math.min(lastStage + 5, s + 1)), []);
+  const optimized = landmarksReady() && (hasGroundMap() || deferSky);
+  const streamed = compactReady() && landmarksReady();
+  const detailLevels = [0,0,1,2,2,3,4,4,4,4,5,6,7,8,9,10,11];
+  const waterReady = Boolean(world) && stage >= 7;
+  const nearReady = Boolean(world) && stage >= 8;
+  const farReady = Boolean(world) && stage >= 9;
+  const level = streamed ? detailLevels[Math.min(stage, detailLevels.length - 1)] : optimized ? Math.max(0, stage - (stage >= 2 ? 1 : 0) - (stage >= 5 ? 1 : 0)) : stage;
+  const stagedSky = optimized && deferSky && stage < (streamed ? 1 : 2) && !driveMode;
+  const stagedGround = optimized && hasGroundMap() && stage < 5 && !driveMode;
+  const [enteredBattle, setEnteredBattle] = useState(false);
+  useEffect(() => { if (driveMode) setEnteredBattle(true); }, [driveMode]);
+  const battleRequested = driveMode || enteredBattle;
   const [adaptation, setAdaptation] = useState({ settings: preferences, step: 0 });
   const step = preferences.autoQuality && adaptation.settings === preferences ? adaptation.step : 0;
   const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
@@ -791,6 +812,8 @@ export function MapScene({
     <div
       data-testid="map-canvas-container"
       data-sector={activeSector}
+      data-landmark-stage={level}
+      data-terrain-stage={stage}
       data-lighting={lightingPreset}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
@@ -825,7 +848,10 @@ export function MapScene({
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 0.92,
         }}
-        onCreated={({ gl, camera, raycaster }) => {
+        onCreated={({ gl, camera, raycaster, scene }) => {
+          performance.mark('canvas-created');
+          if (query.has('startupTrace')) Object.assign(window,{startupRenderer:gl});
+          if(query.has('bake')) Object.assign(window,{bakeScene:scene,bakeRenderer:gl,threeForBake:THREE});
           camera.layers.enable(PLAYER_MODEL_LAYER);
           raycaster.layers.enable(PLAYER_MODEL_LAYER);
           gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -835,17 +861,18 @@ export function MapScene({
         }}
       >
         <SceneSimulationProvider paused={paused}>
+        <StageDriver limit={streamed ? lastStage + 5 : optimized ? lastStage + 2 : lastStage} stage={stage} advance={advance} paused={paused || (streamed && !world && stage >= 6)} />
         <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
         <WorldLodDriver settings={preferences} paused={paused} step={step}
           changeStep={next => setAdaptation({settings: preferences, step: next})}/>
         <color attach="background" args={[lightCfg.bg]} />
         <fogExp2 attach="fog" args={[lightCfg.fogColor, lightCfg.fogDensity]} />
 
-        <ProceduralSky
+        {!stagedSky && <ProceduralSky
           lightingPreset={lightingPreset}
           sunPos={lightCfg.keyPos}
           isSoftwareGl={isSoftwareGl}
-        />
+        />}
 
         {/* Tactical Lighting Rig: key sun (dynamic shadow frustum), sky rim fill, & warm ground bounce */}
         <hemisphereLight
@@ -903,11 +930,15 @@ export function MapScene({
         />
 
         <group name="perf:terrain">
-          <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />
+          {streamed ? <>
+            {(!nearReady || !farReady) && <CompactGround near={!nearReady} far={!farReady} water={waterReady} />}
+            {waterReady && world && <TerrainSlab near={nearReady} far={farReady} water tiles={world.terrain} waterDepth={world.water} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />}
+          </> : world && (stagedGround ? <OverviewGround tiles={world.terrain} /> : <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />)}
         </group>
 
         <group name="perf:structures">
-          <Structures
+          {level<4 && <LandmarkMeshes stage={level} select={onSelectSector}/>}
+          {(!streamed || level >= 1) && <Structures stage={level} quarryDetails={!streamed || stage >= 4}
             splitBridgeBatches={splitBridgeBatches}
             lightingPreset={lightingPreset}
             driveMode={driveMode}
@@ -916,8 +947,8 @@ export function MapScene({
             onSelectSector={(id) => {
               if (!driveMode) onSelectSector(id);
             }}
-          />
-          <DropshipFlyby
+          />}
+          {level >= 5 && <DropshipFlyby
             lightingPreset={lightingPreset}
             sunPos={lightCfg.keyPos}
             visible={quality.distantWar}
@@ -925,14 +956,14 @@ export function MapScene({
             isSoftwareGl={isSoftwareGl}
             mechPoseRef={mechPoseRef}
             combatRef={combatRef}
-          />
-          <HologramSigns
+          />}
+          {level >= 5 && <HologramSigns
             lightingPreset={lightingPreset}
             combatRef={combatRef}
-          />
+          />}
         </group>
 
-        <group name="perf:mech">
+        {(level >= 6 || battleRequested) && <group name="perf:mech">
         <SovietMech
           aimRef={aimRef}
           driveMode={driveMode}
@@ -955,7 +986,7 @@ export function MapScene({
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}
         />
-        </group>
+        </group>}
 
         {halfRateShadows && quality.shadowEnabled && (
           <BalancedShadowCadence
@@ -970,7 +1001,7 @@ export function MapScene({
             shadowMapSize={shadowMapSize}
           />
         )}
-        <group name="perf:combat">
+        {(level >= 10 || battleRequested) && <group name="perf:combat">
           {driveMode || focusedSite
             ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
             : showUnits && <InfantryCrowd combatRef={combatRef} />}
@@ -1027,10 +1058,10 @@ export function MapScene({
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
-        </group>
+        </group>}
 
         <group name="perf:foliage">
-        <FoliageAndUnits grassMap={world.grass}
+        {world && <FoliageAndUnits stage={level} grassMap={world.grass}
           showUnits={showUnits}
           showMist={showMist}
           vegetation={graphics.vegetation}
@@ -1041,10 +1072,10 @@ export function MapScene({
           sunPos={lightCfg.keyPos}
           mechPoseRef={mechPoseRef}
           combatRef={combatRef}
-        />
+        />}
         </group>
 
-        <group name="perf:shafts">
+        {level >= 11 && <group name="perf:shafts">
         <VolumetricSunShafts
           lightingPreset={lightingPreset}
           sunPos={lightCfg.keyPos}
@@ -1057,7 +1088,7 @@ export function MapScene({
           isSoftwareGl={isSoftwareGl}
           resetNonce={resetNonce}
         />
-        </group>
+        </group>}
 
         <TacticalMarkers
           visible={showMarkers && !driveMode && !focusedSite}

@@ -55,3 +55,10 @@ The Radeon 780M completed 900 seconds of Balanced combat with no mission restart
 A physical iPhone was unavailable. The cold iPhone startup selection and sustained iPhone frame-time validation remain pending.
 
 The raw desktop captures, startup measurements and browser screenshots are in `.tools/world-lod-bench/` in the original checkout under the `optimization-` prefix.
+
+
+## Streamed map overview
+
+Open `?terrain=baked&entry=landmarks&surface=stream` for the interactive preview. Use `?terrain=baked&entry=landmarks&surface=quick` for the previous version that waits for the full world assets before rendering.
+
+The build generates the compact ground and mountain meshes from the same tiles as the detailed terrain. The opening view uses quantized geometry and baked dusk colors for terrain, water, bridges and bases. After the first draw, the game requests the detailed terrain and the grass and water maps. The water material, near terrain and mountain ring enter on separate frames. Entering combat while the files are downloading queues the request. A failed download can be retried from the overview.
