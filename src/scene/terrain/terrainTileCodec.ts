@@ -1,5 +1,7 @@
 ﻿import { Box3, Vector3 } from 'three';
 import type { TerrainTile } from './terrainChunks';
+import type { MeshoptEncoder } from 'meshoptimizer/encoder';
+import type { MeshoptDecoder } from 'meshoptimizer/decoder';
 
 export interface TerrainTiles {
   ground: TerrainTile[];
@@ -21,17 +23,31 @@ interface TerrainHeader {
   mountains: TileHeader[];
 }
 
-const VERSION = 1;
+const RAW = 1;
+const MESHOPT = 2;
 const align = (offset: number) => Math.ceil(offset / 4) * 4;
 
-export function encodeTerrainTiles({ ground, mountains }: TerrainTiles): ArrayBuffer {
+// A packed stream has a byte-length prefix. Raw worker buffers use the original layout.
+export function encodeTerrainTiles({ ground, mountains }: TerrainTiles, encoder?: typeof MeshoptEncoder): ArrayBuffer {
+  const blocks: Uint8Array[] = [];
   let payloadSize = 0;
+  function append(data: Float32Array | Uint16Array, size: number) {
+    const bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    let block: Uint8Array = bytes;
+    if (encoder) {
+      block = data instanceof Uint16Array
+        ? encoder.encodeIndexSequence(bytes, data.length, 2)
+        : encoder.encodeVertexBuffer(bytes, data.length / size, size * 4);
+    }
+    blocks.push(block);
+    payloadSize += (encoder ? 4 : 0) + align(block.length);
+  }
   function describe(tile: TerrainTile): TileHeader {
     const attributes = Object.entries(tile.attributes).map(([name, { data, size }]): TileHeader['attributes'][number] => {
-      payloadSize += data.byteLength;
+      append(data, size);
       return [name, size, data.length];
     });
-    payloadSize = align(payloadSize + tile.indices.byteLength);
+    append(tile.indices, 1);
     return {
       attributes,
       indexLength: tile.indices.length,
@@ -42,41 +58,64 @@ export function encodeTerrainTiles({ ground, mountains }: TerrainTiles): ArrayBu
     };
   }
 
-  const header: TerrainHeader = { version: VERSION, ground: ground.map(describe), mountains: mountains.map(describe) };
+  const header: TerrainHeader = { version: encoder ? MESHOPT : RAW, ground: ground.map(describe), mountains: mountains.map(describe) };
   const json = new TextEncoder().encode(JSON.stringify(header));
   const payloadOffset = align(4 + json.byteLength);
   const buffer = new ArrayBuffer(payloadOffset + payloadSize);
-  new DataView(buffer).setUint32(0, json.byteLength, true);
+  const view = new DataView(buffer);
+  view.setUint32(0, json.byteLength, true);
   new Uint8Array(buffer, 4, json.byteLength).set(json);
 
   let offset = payloadOffset;
-  for (const tile of [...ground, ...mountains]) {
-    for (const { data } of Object.values(tile.attributes)) {
-      new Float32Array(buffer, offset, data.length).set(data);
-      offset += data.byteLength;
+  for (const block of blocks) {
+    if (encoder) {
+      view.setUint32(offset, block.length, true);
+      offset += 4;
     }
-    new Uint16Array(buffer, offset, tile.indices.length).set(tile.indices);
-    offset = align(offset + tile.indices.byteLength);
+    new Uint8Array(buffer, offset, block.length).set(block);
+    offset += align(block.length);
   }
   return buffer;
 }
 
-export function decodeTerrainTiles(buffer: ArrayBuffer): TerrainTiles {
-  const headerLength = new DataView(buffer).getUint32(0, true);
+export function decodeTerrainTiles(buffer: ArrayBuffer, decoder?: typeof MeshoptDecoder): TerrainTiles {
+  const view = new DataView(buffer);
+  const headerLength = view.getUint32(0, true);
   const json = new TextDecoder().decode(new Uint8Array(buffer, 4, headerLength));
   const header = JSON.parse(json) as TerrainHeader;
-  if (header.version !== VERSION) throw new Error('Unsupported terrain asset version');
+  const packedDecoder = header.version === MESHOPT ? decoder : undefined;
+  if (header.version !== RAW && !packedDecoder) throw new Error('Unsupported terrain asset version');
 
   let offset = align(4 + headerLength);
+  function readBlock(length: number) {
+    const block = new Uint8Array(buffer, offset, length);
+    offset += align(length);
+    return block;
+  }
+  function readPackedBlock() {
+    const length = view.getUint32(offset, true);
+    offset += 4;
+    return readBlock(length);
+  }
   function decode(tile: TileHeader): TerrainTile {
     const attributes: TerrainTile['attributes'] = {};
     for (const [name, size, length] of tile.attributes) {
-      const data = new Float32Array(buffer, offset, length);
-      offset += data.byteLength;
+      let data: Float32Array;
+      if (packedDecoder) {
+        data = new Float32Array(length);
+        packedDecoder.decodeVertexBuffer(new Uint8Array(data.buffer), length / size, size * 4, readPackedBlock());
+      } else {
+        data = new Float32Array(buffer, readBlock(length * 4).byteOffset, length);
+      }
       attributes[name] = { data, size };
     }
-    const indices = new Uint16Array(buffer, offset, tile.indexLength);
-    offset = align(offset + indices.byteLength);
+    let indices: Uint16Array;
+    if (packedDecoder) {
+      indices = new Uint16Array(tile.indexLength);
+      packedDecoder.decodeIndexSequence(new Uint8Array(indices.buffer), indices.length, 2, readPackedBlock());
+    } else {
+      indices = new Uint16Array(buffer, readBlock(tile.indexLength * 2).byteOffset, tile.indexLength);
+    }
     const bounds = new Box3(new Vector3(...tile.min), new Vector3(...tile.max));
     return { attributes, indices, bounds, ranges: tile.ranges, shoreline: tile.shoreline };
   }
