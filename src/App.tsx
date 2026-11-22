@@ -518,6 +518,7 @@ export default function App({ world, battle, onOverviewDraw }: {
         focusedSite={focusedSite}
         world={world}
         battle={battle}
+        preparingBattle={requestedDriveMode && terrainReady && !world}
         grassMap={grassMap}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}

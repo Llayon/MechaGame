@@ -12,7 +12,7 @@ import {
   type MechTelemetrySnapshot,
 } from '../../map/mechKinematics';
 import { createMechMaterials } from './mechMaterials';
-import { buildMechModel } from './MechModel';
+import { buildMechModel, type MechRig, type MechMaterials } from './MechModel';
 import { createMechState, type MechDriveInput } from './MechState';
 import { resolveMechControl } from './MechController';
 import { stepMechMovement } from './MechMovementSystem';
@@ -84,8 +84,32 @@ export interface SovietMechProps {
   onMissionEnded?: (outcome: 'victory' | 'defeat') => void;
 }
 
-/** React Three Fiber adapter: lifecycle, system ordering, combat loop, and lightweight telemetry. */
-export function SovietMech({
+export function SovietMech({ prepareOnly = false, ...props }: SovietMechProps & { prepareOnly?: boolean }) {
+  const { gl, camera, scene } = useThree();
+  const mats = useMemo(() => createMechMaterials(gl.capabilities.getMaxAnisotropy()), [gl]);
+  const rig = useMemo(() => buildMechModel(mats), [mats]);
+
+  useEffect(() => () => {
+    rig.dispose();
+    mats.dispose();
+  }, [rig, mats]);
+
+  useEffect(() => {
+    if (!prepareOnly || !scene.environment || !gl.extensions.has('KHR_parallel_shader_compile')) return;
+    // The overview sky supplies the reflection map used by the battle shaders.
+    // Compile both rig assemblies while world data is still in flight.
+    for (const assembly of [rig.root, rig.worldFeetGroup]) {
+      void gl.compileAsync(assembly, camera, scene).catch(error => {
+        if (!gl.getContext().isContextLost()) console.warn('Mech shader warmup failed', error);
+      });
+    }
+  }, [prepareOnly, gl, rig, camera, scene]);
+
+  return prepareOnly ? null : <ActiveMech {...props} rig={rig} mats={mats} />;
+}
+
+function ActiveMech({
+  rig, mats,
   driveMode,
   paused,
   resetNonce,
@@ -105,20 +129,11 @@ export function SovietMech({
   onSelectMech,
   onShadowFocus,
   onMissionEnded,
-}: SovietMechProps) {
-  const { gl, camera, invalidate } = useThree();
+}: SovietMechProps & { rig: MechRig; mats: MechMaterials }) {
+  const { camera, invalidate } = useThree();
   const combatCamera = useCombatCamera(driveMode, resetNonce);
-  const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const containerRef = useRef<THREE.Group>(null);
   const worldFxRef = useRef<THREE.Group>(null);
-
-  const mats = useMemo(() => createMechMaterials(maxAniso), [maxAniso]);
-
-  useEffect(() => {
-    return () => {
-      mats.dispose();
-    };
-  }, [mats]);
 
   // Adjust emissive intensities to match Sector 7 Day/Dusk/Night lighting
   useEffect(() => {
@@ -131,12 +146,11 @@ export function SovietMech({
     invalidate();
   }, [lightingPreset, mats, invalidate]);
 
-  const rig = useMemo(() => buildMechModel(mats), [mats]);
   const simRef = useLazyRef(createMechState);
   const prevResetNonceRef = useRef(resetNonce);
   const wasLocomotingRef = useRef(false);
 
-  // Dispose geometries & leftover particles on unmount
+  // Dispose leftover simulation particles on unmount.
   useEffect(() => {
     return () => {
       const sim = simRef.current;
@@ -145,9 +159,8 @@ export function SovietMech({
         if (p.mat !== mats.brassMat) p.mat.dispose();
       });
       sim.particles = [];
-      rig.dispose();
     };
-  }, [rig, mats]);
+  }, [mats]);
 
   // Reset the rendered pose before the first frame of the new mission.
   useLayoutEffect(() => {
