@@ -3,6 +3,7 @@ import {
   createGrassClumpGeometry, GRASS_INSTANCE_COUNT_GPU, GRASS_INSTANCE_COUNT_SW,
   GRASS_PATCH_RADIUS_GPU, GRASS_PATCH_RADIUS_SW, GRASS_SPAN_W, GRASS_SPAN_D,
 } from '../../map/grassField';
+import { createGrassCells } from './grassCells';
 
 /** Compact the original world-locked seed population. The shader still handles
  * smooth growth, slope, wind and trampling. Only eligible seeds reach the GPU. */
@@ -43,6 +44,12 @@ export function createGrassBands(reduced: boolean, samples: Uint8Array, width: n
     mask[current] = Math.max(samples[current * 4 + 2], samples[(z*width+nextX)*4+2],
       samples[(nextRow+x)*4+2], samples[(nextRow+nextX)*4+2]);
   }
+  const cells = createGrassCells(seeds, period, (x, z) => {
+    const mx = Math.min(width-1, Math.max(0, Math.floor(x * maskColumns + width * .5 - .5)));
+    const mz = Math.min(height-1, Math.max(0, Math.floor(z * maskRows + height * .5 - .5)));
+    return mask[mz * width + mx] >= 35;
+  });
+  const guardSq = (radius + .8) ** 2;
   let lastX = Infinity, lastZ = Infinity, lastScale = -1;
   return {
     geometries: bands.map(band => band.geo), radius,
@@ -53,25 +60,34 @@ export function createGrassBands(reduced: boolean, samples: Uint8Array, width: n
       if (Math.abs(lastX-cx) < .5 && Math.abs(lastZ-cz) < .5 && scale === lastScale) return;
       lastX = cx; lastZ = cz; lastScale = scale;
       for (const band of bands) band.geo.instanceCount = 0;
-      for (let id = 0; id < count; id++) {
-        const src = id * 4;
-        const x = seeds[src] + period * Math.floor((cx + radius - seeds[src]) / period);
-        const z = seeds[src+1] + period * Math.floor((cz + radius - seeds[src+1]) / period);
-        const dx = x - cx, dz = z - cz;
-        const distSq = dx * dx + dz * dz;
-        if (distSq > (radius + .8) ** 2) continue;
-        const mx = Math.min(width-1, Math.max(0, Math.floor(x * maskColumns + width * .5 - .5)));
-        const mz = Math.min(height-1, Math.max(0, Math.floor(z * maskRows + height * .5 - .5)));
-        if (mask[mz * width + mx] < 35) continue;
-        const rand = seeds[src+3] / (2*Math.PI);
-        // Jitter the level boundaries per seed; spacing stays world-locked.
-        const distance = Math.sqrt(distSq) / radius + (rand - .5) * .06;
-        const level = distance < .47 * scale ? 0 : distance < .80 * scale ? 1 : 2;
-        const density = (level === 2 ? .78 : 1) * scale;
-        if (rand > density) continue;
-        const { geo, offsets } = bands[level];
-        const slot = geo.instanceCount++;
-        offsets.setXYZW(slot, seeds[src], seeds[src+1], seeds[src+2], seeds[src+3]);
+      const left = cx - radius, right = cx + radius;
+      const top = cz - radius, bottom = cz + radius;
+      for (let row = Math.floor(top / cells.side); row <= Math.floor(bottom / cells.side); row++) {
+        const originZ = cells.tileOrigin(row);
+        const rowMin = row * cells.side;
+        const nearZ = Math.max(rowMin - cz, cz - (rowMin + cells.side), 0);
+        for (let col = Math.floor(left / cells.side); col <= Math.floor(right / cells.side); col++) {
+          const colMin = col * cells.side;
+          const nearX = Math.max(colMin - cx, cx - (colMin + cells.side), 0);
+          if (nearX * nearX + nearZ * nearZ > guardSq) continue;
+          const originX = cells.tileOrigin(col);
+          const cell = cells.get(col, row);
+          for (let i = 0; i < cell.count; i++) {
+            const src = cell.ids[i] * 4;
+            const x = originX + seeds[src], z = originZ + seeds[src+1];
+            // The original toroidal window includes only its upper endpoint.
+            if (x <= left || x > right || z <= top || z > bottom) continue;
+            const dx = x - cx, dz = z - cz;
+            const distSq = dx * dx + dz * dz;
+            if (distSq > guardSq) continue;
+            const rand = seeds[src+3] / (2*Math.PI);
+            const distance = Math.sqrt(distSq) / radius + (rand - .5) * .06;
+            const level = distance < .47 * scale ? 0 : distance < .80 * scale ? 1 : 2;
+            if (rand > (level === 2 ? .78 : 1) * scale) continue;
+            const { geo, offsets } = bands[level];
+            offsets.setXYZW(geo.instanceCount++, seeds[src], seeds[src+1], seeds[src+2], seeds[src+3]);
+          }
+        }
       }
       for (const { geo, offsets } of bands) {
         offsets.clearUpdateRanges();
