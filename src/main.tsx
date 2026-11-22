@@ -9,6 +9,8 @@ import { mapStartup } from './map/mapStartup';
 import './index.css';
 
 const { baked, streaming } = mapStartup;
+const traceStartup = new URLSearchParams(location.search).has('startupTrace');
+if (traceStartup) performance.mark('entry-evaluated');
 
 function GameEntry() {
   const [world, setWorld] = useState<WorldAssets | null>(null);
@@ -23,11 +25,20 @@ function GameEntry() {
     const controller = new AbortController();
     const signal = controller.signal;
     async function start() {
-      const artwork = Promise.all([loadLandmarks(signal), prepareGroundMap(signal)]);
+      const timed = (name: string, task: Promise<void>) => traceStartup
+        ? task.then(() => { if (!signal.aborted) performance.mark(name); })
+        : task;
+      const artwork = Promise.all([
+        timed('overview-landmarks-ready', loadLandmarks(signal)),
+        timed('overview-texture-ready', prepareGroundMap(signal)),
+      ]);
       if (streaming) {
         try {
-          await Promise.all([artwork, prepareCompactGround(signal)]);
-          if (!signal.aborted) setPreview(true);
+          await Promise.all([artwork, timed('overview-mesh-ready', prepareCompactGround(signal))]);
+          if (!signal.aborted) {
+            if (traceStartup) performance.mark('overview-assets-ready');
+            setPreview(true);
+          }
           return;
         } catch {
           if (signal.aborted) return;
