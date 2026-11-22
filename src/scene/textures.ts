@@ -8,35 +8,40 @@ function makeCanvas(width: number, height: number): [HTMLCanvasElement, CanvasRe
   return [canvas, ctx];
 }
 
+// Adjacent texels interpolate the same noise lattice. Hash each lattice point once.
+function periodicNoise(period: number, seed: number) {
+  const stride = period + 1;
+  const lattice = new Float64Array(stride * stride);
+  for (let y = 0; y <= period; y++) {
+    for (let x = 0; x <= period; x++) {
+      const n = Math.sin((x % period) * 127.1 + (y % period) * 311.7 + seed * 74.7) * 43758.5453123;
+      lattice[y * stride + x] = n - Math.floor(n);
+    }
+  }
+
+  return (u: number, v: number) => {
+    const fx = u * period, fy = v * period;
+    const x = Math.floor(fx), y = Math.floor(fy);
+    const tx = fx - x, ty = fy - y;
+    const sx = tx * tx * tx * (tx * (tx * 6 - 15) + 10);
+    const sy = ty * ty * ty * (ty * (ty * 6 - 15) + 10);
+    const i = y * stride + x, j = i + stride;
+    const low = lattice[i] + (lattice[i + 1] - lattice[i]) * sx;
+    const high = lattice[j] + (lattice[j + 1] - lattice[j]) * sx;
+    return low + (high - low) * sy;
+  };
+}
+
 export function createTerrainBumpTexture(maxAnisotropy = 4): THREE.CanvasTexture {
   const size = 256;
   const [canvas, ctx] = makeCanvas(size, size);
   const img = ctx.createImageData(size, size);
   const data = img.data;
 
-  const hash2 = (ix: number, iy: number, period: number, seed: number) => {
-    const px = ((ix % period) + period) % period;
-    const py = ((iy % period) + period) % period;
-    const n = Math.sin(px * 127.1 + py * 311.7 + seed * 74.7) * 43758.5453123;
-    return n - Math.floor(n);
-  };
-  const tileNoise = (u: number, v: number, period: number, seed: number) => {
-    const fx = u * period;
-    const fy = v * period;
-    const ix = Math.floor(fx);
-    const iy = Math.floor(fy);
-    const tx = fx - ix;
-    const ty = fy - iy;
-    const sx = tx * tx * tx * (tx * (tx * 6 - 15) + 10);
-    const sy = ty * ty * ty * (ty * (ty * 6 - 15) + 10);
-    const h00 = hash2(ix, iy, period, seed);
-    const h10 = hash2(ix + 1, iy, period, seed);
-    const h01 = hash2(ix, iy + 1, period, seed);
-    const h11 = hash2(ix + 1, iy + 1, period, seed);
-    const nx0 = h00 + (h10 - h00) * sx;
-    const nx1 = h01 + (h11 - h01) * sx;
-    return nx0 + (nx1 - nx0) * sy;
-  };
+  const octave8 = periodicNoise(8, 1);
+  const octave16 = periodicNoise(16, 2);
+  const octave32 = periodicNoise(32, 3);
+  const octave64 = periodicNoise(64, 4);
 
   // Seamless periodic multi-octave quintic micro-grain (zero diagonal sine striping)
   for (let y = 0; y < size; y++) {
@@ -44,10 +49,10 @@ export function createTerrainBumpTexture(maxAnisotropy = 4): THREE.CanvasTexture
     for (let x = 0; x < size; x++) {
       const u = x / size;
       const fbm =
-        tileNoise(u, v, 8, 1.0) * 0.48 +
-        tileNoise(u, v, 16, 2.0) * 0.28 +
-        tileNoise(u, v, 32, 3.0) * 0.16 +
-        tileNoise(u, v, 64, 4.0) * 0.08;
+        octave8(u, v) * 0.48 +
+        octave16(u, v) * 0.28 +
+        octave32(u, v) * 0.16 +
+        octave64(u, v) * 0.08;
       const val = Math.floor(Math.max(0, Math.min(1, fbm)) * 255);
       const i = (y * size + x) * 4;
       data[i] = val;
@@ -253,32 +258,10 @@ export function createWaterNormalTexture(maxAnisotropy = 4): THREE.DataTexture {
   const size = 512;
   const data = new Uint8Array(size * size * 4);
 
-  const hash2 = (ix: number, iy: number, period: number, seed: number) => {
-    const px = ((ix % period) + period) % period;
-    const py = ((iy % period) + period) % period;
-    const n = Math.sin(px * 127.1 + py * 311.7 + seed * 74.7) * 43758.5453123;
-    return n - Math.floor(n);
-  };
-
-  const tileNoise = (u: number, v: number, periodX: number, periodY: number, seed: number) => {
-    const fx = u * periodX;
-    const fy = v * periodY;
-    const ix = Math.floor(fx);
-    const iy = Math.floor(fy);
-    const tx = fx - ix;
-    const ty = fy - iy;
-    const sx = tx * tx * tx * (tx * (tx * 6 - 15) + 10);
-    const sy = ty * ty * ty * (ty * (ty * 6 - 15) + 10);
-
-    const h00 = hash2(ix, iy, periodX, seed);
-    const h10 = hash2(ix + 1, iy, periodX, seed);
-    const h01 = hash2(ix, iy + 1, periodY, seed);
-    const h11 = hash2(ix + 1, iy + 1, periodY, seed);
-
-    const nx0 = h00 + (h10 - h00) * sx;
-    const nx1 = h01 + (h11 - h01) * sx;
-    return nx0 + (nx1 - nx0) * sy - 0.5;
-  };
+  const octave8 = periodicNoise(8, 1);
+  const octave16 = periodicNoise(16, 2);
+  const octave32 = periodicNoise(32, 3);
+  const octave64 = periodicNoise(64, 4);
 
   // Precompute seamless multi-octave water heightfield so derivatives have zero grid alignment
   const heights = new Float32Array(size * size);
@@ -288,10 +271,10 @@ export function createWaterNormalTexture(maxAnisotropy = 4): THREE.DataTexture {
       const u = x / size;
       // Slightly anisotropic across X/Y for natural river-current elongation
       const h =
-        tileNoise(u, v, 8, 8, 1.0) * 0.50 +
-        tileNoise(u, v, 16, 16, 2.0) * 0.28 +
-        tileNoise(u, v, 32, 32, 3.0) * 0.14 +
-        tileNoise(u, v, 64, 64, 4.0) * 0.06;
+        (octave8(u, v) - 0.5) * 0.50 +
+        (octave16(u, v) - 0.5) * 0.28 +
+        (octave32(u, v) - 0.5) * 0.14 +
+        (octave64(u, v) - 0.5) * 0.06;
       heights[y * size + x] = h;
     }
   }
