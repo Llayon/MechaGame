@@ -6,7 +6,7 @@ import {
   effectiveGraphics,
   type AdaptiveState,
 } from '../lod/adaptiveQuality';
-import { InfantryCrowd } from '../infantry/InfantryCrowd';
+import { loadPlayerMech, type BattleScene } from './loadBattleScene';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -28,39 +28,29 @@ import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader } from './heightFog';
-import { MechDriveInput, SovietMech } from './objects/SovietMech';
-import { CombatActors } from './objects/CombatActors';
-import { InfantryActors } from './objects/InfantryActors';
+import type { MechDriveInput } from './objects/MechState';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import { StormFront } from './objects/StormFront';
-import { WaterEffects } from './objects/WaterEffects';
 import { useLazyRef } from '../utils/useLazyRef';
 import { createWaterVfxPool } from './objects/waterVfxPool';
-import { GroundTrails } from './objects/GroundTrails';
 import { createGroundTrailsPool } from './objects/groundTrailsPool';
-import { MuzzleFlashes } from './objects/MuzzleFlashes';
 import { createMuzzleFlashPool } from './objects/muzzleFlashPool';
-import { MissileRibbons } from './objects/MissileRibbons';
 import { createMissileRibbonPool } from './objects/missileRibbonPool';
-import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
 import {
   MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
 } from './objects/debrisBallisticsPool';
-import { Tracers } from './objects/Tracers';
 import {
   MAX_TRACER_INSTANCES,
   createTracerPool,
 } from './objects/tracerPool';
-import { CuttingLaserBeam } from './objects/CuttingLaserBeam';
 import {
   MAX_CRATER_DECALS,
   createCraterPool,
 } from './objects/craterPool';
-import { HeatShimmer } from './objects/HeatShimmer';
 import { createHeatShimmerPool } from './objects/heatShimmerPool';
 import {
   MechTelemetrySnapshot,
@@ -729,6 +719,8 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets | null;
+  battle: BattleScene | null;
+  preparingBattle: boolean;
   grassMap: Uint8Array<ArrayBuffer> | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -763,6 +755,8 @@ import { LandmarkMeshes, StageDriver, landmarksReady, lastStage } from './Landma
 export function MapScene({
   focusedSite,
   world,
+  battle,
+  preparingBattle,
   grassMap,
   onTerrainReady,
   activeSector,
@@ -816,6 +810,18 @@ export function MapScene({
     [preferences, activeAdaptation],
   );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
+  const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
+  const [earlyMech, setEarlyMech] = useState<BattleScene['SovietMech'] | null>(null);
+  useEffect(() => {
+    if (!prepareMech || earlyMech) return;
+    let active = true;
+    // The details loader owns the retry UI if this shared import fails.
+    loadPlayerMech().then(({ SovietMech }) => {
+      if (active) setEarlyMech(() => SovietMech);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [prepareMech, earlyMech]);
+  const PlayerMech = battle?.SovietMech ?? earlyMech;
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const query = useMemo(() => new URLSearchParams(
     typeof window === 'undefined' ? '' : window.location.search,
@@ -1005,8 +1011,9 @@ export function MapScene({
           />}
         </group>
 
-        {(level >= 6 || battleRequested) && <group name="perf:mech">
-        <SovietMech
+        {PlayerMech && (prepareMech || (battle && (level >= 6 || battleRequested))) && <group name="perf:mech">
+        <PlayerMech
+          prepareOnly={prepareMech}
           aimRef={aimRef}
           driveMode={driveMode}
           paused={paused}
@@ -1043,11 +1050,11 @@ export function MapScene({
             shadowMapSize={shadowMapSize}
           />
         )}
-        {(level >= 10 || battleRequested) && <group name="perf:combat">
+        {battle && (level >= 10 || battleRequested) && <group name="perf:combat">
           {driveMode || focusedSite
-            ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
-            : showUnits && <InfantryCrowd combatRef={combatRef} />}
-          <CombatActors
+            ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+            : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
+          <battle.CombatActors
             combatRef={combatRef}
             driveMode={driveMode}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
@@ -1059,43 +1066,43 @@ export function MapScene({
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
           />
-          <WaterEffects
+          <battle.WaterEffects
             poolRef={waterVfxPoolRef}
             lightingPreset={lightingPreset}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <GroundTrails
+          <battle.GroundTrails
             poolRef={groundTrailsPoolRef}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <MuzzleFlashes
+          <battle.MuzzleFlashes
             poolRef={muzzleFlashPoolRef}
             resetNonce={resetNonce}
           />
-          <MissileRibbons
+          <battle.MissileRibbons
             poolRef={missileRibbonPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
-          <ShellCasingsAndDebris
+          <battle.ShellCasingsAndDebris
             casingsPoolRef={casingsPoolRef}
             debrisPoolRef={debrisPoolRef}
             waterVfxPoolRef={waterVfxPoolRef}
             resetNonce={resetNonce}
           />
-          <Tracers
+          <battle.Tracers
             poolRef={tracerPoolRef}
             resetNonce={resetNonce}
           />
-          <CuttingLaserBeam
+          <battle.CuttingLaserBeam
             combatRef={combatRef}
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
             resetNonce={resetNonce}
           />
-          <HeatShimmer
+          <battle.HeatShimmer
             poolRef={heatShimmerPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
