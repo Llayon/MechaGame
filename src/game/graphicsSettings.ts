@@ -65,6 +65,9 @@ export const GRAPHICS_PRESETS: Readonly<Record<Exclude<GraphicsPreset, 'custom'>
   },
 };
 
+export const MIN_RESOLUTION_SCALE = 0.5;
+export const MAX_RESOLUTION_SCALE = 1.15;
+
 export function withGraphicsPreset(
   preset: Exclude<GraphicsPreset, 'custom'>,
 ): GraphicsSettings {
@@ -82,6 +85,14 @@ export function recommendGraphicsPreset(options: {
   return 'high';
 }
 
+export function recommendAutoQuality(options: {
+  mobile: boolean;
+  deviceMemoryGB?: number | null;
+  hardwareConcurrency?: number | null;
+}): boolean {
+  return recommendGraphicsPreset(options) !== 'high';
+}
+
 export function defaultGraphicsSettings(): GraphicsSettings {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return withGraphicsPreset('high');
@@ -89,9 +100,14 @@ export function defaultGraphicsSettings(): GraphicsSettings {
   const nav = navigator as Navigator & { deviceMemory?: number };
   const mobile = window.matchMedia?.('(pointer: coarse)')?.matches ??
     /Android|iPhone|iPad/i.test(navigator.userAgent);
-  return withGraphicsPreset(recommendGraphicsPreset({
-    mobile, deviceMemoryGB: nav.deviceMemory, hardwareConcurrency: nav.hardwareConcurrency,
-  }));
+  const hw = {
+    mobile,
+    deviceMemoryGB: nav.deviceMemory,
+    hardwareConcurrency: nav.hardwareConcurrency,
+  };
+  const preset = recommendGraphicsPreset(hw);
+  const base = withGraphicsPreset(preset);
+  return recommendAutoQuality(hw) ? { ...base, autoQuality: true } : base;
 }
 
 function isOneOf<T extends string>(value: unknown, options: readonly T[]): value is T {
@@ -103,6 +119,15 @@ const SHADOWS = ['off', 'low', 'high', 'ultra'] as const;
 const VEGETATION = ['minimal', 'reduced', 'full'] as const;
 const PARTICLES = ['reduced', 'full'] as const;
 const ATMOSPHERE = ['off', 'reduced', 'full'] as const;
+const VISUAL_PRESET_KEYS: readonly (keyof QualityValues)[] = [
+  'objectDetail',
+  'resolutionScale',
+  'shadows',
+  'vegetation',
+  'particles',
+  'atmosphere',
+  'distantWar',
+];
 
 export function sanitizeGraphicsSettings(
   value: unknown,
@@ -113,7 +138,7 @@ export function sanitizeGraphicsSettings(
   const preset = isOneOf(v.preset, PRESETS) ? v.preset :
     v.preset === 'custom' ? 'custom' : fallback.preset;
   const resolution = typeof v.resolutionScale === 'number' && Number.isFinite(v.resolutionScale)
-    ? Math.round(Math.max(0.55, Math.min(1.15, v.resolutionScale)) * 20) / 20
+    ? Math.round(Math.max(MIN_RESOLUTION_SCALE, Math.min(MAX_RESOLUTION_SCALE, v.resolutionScale)) * 20) / 20
     : fallback.resolutionScale;
   const next: GraphicsSettings = {
     objectDetail: isOneOf(v.objectDetail, PRESETS) ? v.objectDetail : (preset === 'custom' ? fallback.objectDetail : preset),
@@ -130,9 +155,8 @@ export function sanitizeGraphicsSettings(
   };
   if (preset !== 'custom') {
     const expected = GRAPHICS_PRESETS[preset];
-    if (Object.keys(expected).every(k =>
-      next[k as keyof QualityValues] === expected[k as keyof QualityValues])) {
-      return withGraphicsPreset(preset);
+    if (VISUAL_PRESET_KEYS.every(k => next[k] === expected[k])) {
+      return { ...next, preset };
     }
     next.preset = 'custom';
   }
@@ -165,7 +189,11 @@ export function saveGraphicsSettings(settings: GraphicsSettings): void {
 export function changeGraphicsSetting<K extends keyof QualityValues>(
   current: GraphicsSettings, key: K, value: QualityValues[K],
 ): GraphicsSettings {
-  return sanitizeGraphicsSettings({ ...current, [key]: value, preset: 'custom' }, current);
+  const isVisualKey = VISUAL_PRESET_KEYS.includes(key);
+  return sanitizeGraphicsSettings(
+    { ...current, [key]: value, preset: isVisualKey ? 'custom' : current.preset },
+    current,
+  );
 }
 
 export interface GraphicsRuntime {

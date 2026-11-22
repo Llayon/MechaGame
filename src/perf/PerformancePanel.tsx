@@ -121,27 +121,30 @@ export function PerformancePanel() {
         <button className="rounded border border-slate-600 px-2 py-1 text-xs"
           onClick={() => setOpen(false)}>Скрыть · F8</button>
       </div>
-      <p className="mt-1 text-[10px] text-slate-400">
+      <p data-testid="perf-env-summary" className="mt-1 text-[10px] tabular-nums text-slate-400">
         {view.environment.scenario === 'combat' ? 'Бой' : 'Обзор'} · {view.environment.lighting} ·
-        {view.environment.softwareMode ? ' Software WebGL' : ' WebGL'} ·
+        {view.environment.softwareMode ? ' Software WebGL' : ' WebGL'} ·{' '}
         {view.environment.graphicsPreset ?? 'неизвестно'} · DPR {view.environment.renderDpr ?? '—'} · rAF-интервалы
-        {view.environment.autoQuality && ' · Авто ' + view.environment.targetFps + ' FPS · ступень ' + view.environment.adaptiveStep}
+        {view.environment.autoQuality &&
+          ` · Авто ${view.environment.targetFps} FPS · DRS ${Math.round((view.environment.drsScale ?? 1) * 100)}% · ступень ${view.environment.adaptiveStep ?? 0}` +
+          ((view.environment.drsRecoveryWait ?? 0) > 4 ? ` · откат ${view.environment.drsRecoveryWait}с` : '') +
+          (view.environment.drsContextLost ? ' · откат GPU' : '')}
       </p>
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded bg-slate-800/80 p-2">
-          <div data-testid="perf-fps" className="font-mono text-lg font-bold text-emerald-300">{metric(stats.fps)}</div>
+          <div data-testid="perf-fps" className="font-mono text-lg font-bold tabular-nums text-emerald-300">{metric(stats.fps)}</div>
           <div className="text-[10px] text-slate-400">FPS</div>
         </div>
         <div className="rounded bg-slate-800/80 p-2">
-          <div className="font-mono text-lg">{metric(stats.p50Ms)}</div>
+          <div className="font-mono text-lg tabular-nums">{metric(stats.p50Ms)}</div>
           <div className="text-[10px] text-slate-400">p50 мс</div>
         </div>
         <div className="rounded bg-slate-800/80 p-2">
-          <div className="font-mono text-lg text-amber-300">{metric(stats.p95Ms)}</div>
+          <div className="font-mono text-lg tabular-nums text-amber-300">{metric(stats.p95Ms)}</div>
           <div className="text-[10px] text-slate-400">p95 мс</div>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[11px]">
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[11px] tabular-nums">
         <span>Кадры: {count(stats.sampleCount)}</span>
         <span>Медленные &gt;33мс: {stats.slowOver33Ms}</span>
         <span>Draw calls: {count(counters.calls)}</span>

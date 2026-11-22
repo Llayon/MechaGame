@@ -1,17 +1,21 @@
 import { useEffect, useRef } from 'react';
-import { Gauge, Settings2, X } from 'lucide-react';
+import { Gauge, RotateCcw, Settings2, X } from 'lucide-react';
 import {
-  changeGraphicsSetting, GRAPHICS_PRESETS, withGraphicsPreset,
+  changeGraphicsSetting, MIN_RESOLUTION_SCALE, MAX_RESOLUTION_SCALE, withGraphicsPreset,
 } from '../game/graphicsSettings';
 import type {
   GraphicsSettings, GraphicsPreset, ShadowQuality,
   VegetationQuality, AtmosphereQuality, ParticleQuality,
 } from '../game/graphicsSettings';
+import { isAdaptiveDegraded, type AdaptiveState } from '../lod/adaptiveQuality';
 
 interface Props {
   open: boolean;
   settings: GraphicsSettings;
+  adaptation: AdaptiveState;
+  activeDpr: number;
   onChange: (next: GraphicsSettings) => void;
+  onResetDrs: () => void;
   onOpen: () => void;
   onClose: () => void;
 }
@@ -64,16 +68,31 @@ function SettingSelect<T extends string>({
 }
 
 /** Render-only configuration UI. It never changes game simulation or combat state. */
-export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Props) {
+export function GraphicsSettingsMenu({
+  open,
+  settings,
+  adaptation,
+  activeDpr,
+  onChange,
+  onResetDrs,
+  onOpen,
+  onClose,
+}: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) closeRef.current?.focus();
   }, [open]);
+
+  const activeScale = settings.autoQuality
+    ? Math.min(settings.resolutionScale, adaptation.drsScale)
+    : settings.resolutionScale;
+  const degraded = settings.autoQuality && isAdaptiveDegraded(adaptation, settings);
+
   return (
     <>
       {!open && (
         <button type="button" data-testid="graphics-open" onClick={onOpen}
-          className="fixed right-3 top-3 z-[120] flex min-h-10 items-center gap-2 rounded-lg border border-slate-400/50 bg-[#111b26]/90 px-3 py-2 text-xs font-semibold tracking-wide text-slate-100 shadow-xl backdrop-blur hover:border-amber-300 hover:bg-[#202c39] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+          className="fixed right-3 top-3 z-[120] flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-slate-400/50 bg-[#111b26]/90 px-3 py-2 text-xs font-semibold tracking-wide text-slate-100 shadow-xl backdrop-blur hover:border-amber-300 hover:bg-[#202c39] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
           <Settings2 size={16} aria-hidden="true"/> ГРАФИКА <span className="text-[10px] text-slate-400">G</span>
         </button>
       )}
@@ -116,22 +135,33 @@ export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Pro
               <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
                 <span>{settings.preset==='custom' ? 'Собственные настройки' : 'Пресет: '+PRESETS.find(p=>p.value===settings.preset)?.name}</span>
                 <button type="button" onClick={()=>onChange(withGraphicsPreset('high'))}
-                  className="rounded border border-slate-600 px-2 py-1.5 text-slate-300 hover:bg-slate-700">
+                  className="whitespace-nowrap rounded border border-slate-600 px-2.5 py-1.5 text-slate-300 hover:bg-slate-700">
                   Сбросить на высокие
                 </button>
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <label className="grid gap-1.5 rounded-lg border border-slate-600/35 bg-slate-900/40 p-3">
                   <span className="text-sm font-medium">Масштаб рендеринга</span>
-                  <span className="text-[11px] text-slate-400">Чем ниже — тем меньше пикселей вычисляет GPU</span>
+                  <span className="text-[11px] text-slate-400">Базовый потолок разрешения GPU (от 50% до 115%)</span>
                   <div className="mt-1 flex items-center gap-3">
-                    <input data-testid="graphics-resolution" type="range" min="0.55" max="1.15" step="0.05"
+                    <input data-testid="graphics-resolution" type="range"
+                      min={MIN_RESOLUTION_SCALE} max={MAX_RESOLUTION_SCALE} step="0.05"
                       value={settings.resolutionScale}
                       onChange={e=>onChange(changeGraphicsSetting(settings,'resolutionScale',Number(e.currentTarget.value)))}
                       className="h-8 min-w-0 flex-1 accent-amber-400"
                       aria-label="Масштаб рендеринга" />
-                    <span className="w-11 text-right font-mono font-semibold text-amber-200">{Math.round(settings.resolutionScale*100)}%</span>
+                    <span className="w-11 text-right font-mono font-semibold tabular-nums text-amber-200">
+                      {Math.round(settings.resolutionScale*100)}%
+                    </span>
                   </div>
+                  {settings.autoQuality && (
+                    <span data-testid="graphics-drs-status"
+                      className={'font-mono text-[11px] tabular-nums ' + (degraded ? 'text-amber-300' : 'text-slate-400')}>
+                      Авто-масштаб: {Math.round(activeScale * 100)}% · DPR {activeDpr.toFixed(2)}
+                      {adaptation.cascadeStep > 0 ? ` · ступень ${adaptation.cascadeStep}` : ''}
+                      {adaptation.contextLostFallback ? ' · откат GPU' : ''}
+                    </span>
+                  )}
                 </label>
                 <SettingSelect id="graphics-shadows" label="Тени"
                   description="Размер карты теней направленного света"
@@ -141,13 +171,40 @@ export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Pro
                   description="Дальность детальных моделей и рельефа"
                   value={settings.objectDetail} options={PRESETS.map(p => ({value:p.value, label:p.name}))}
                   onChange={v=>onChange(changeGraphicsSetting(settings,'objectDetail',v))}/>
-                <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-600/35 p-3 text-sm">
-                  Автоматическая оптимизация
-                  <input type="checkbox" data-testid="graphics-auto-quality" checked={settings.autoQuality}
-                    onChange={e=>onChange(changeGraphicsSetting(settings,'autoQuality',e.currentTarget.checked))}/>
-                </label>
+                <div className="grid gap-2 rounded-lg border border-slate-600/35 bg-slate-900/40 p-3">
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="grid gap-0.5">
+                      <span className="text-sm font-medium text-slate-100">Автоматическая оптимизация</span>
+                      <span className="text-[11px] text-slate-400">
+                        Сначала плавно снижает разрешение до 50%, затем — тени и детали
+                      </span>
+                    </span>
+                    <input type="checkbox" data-testid="graphics-auto-quality"
+                      checked={settings.autoQuality}
+                      onChange={e=>onChange(changeGraphicsSetting(settings,'autoQuality',e.currentTarget.checked))}
+                      className="h-5 w-5 shrink-0 accent-amber-400" />
+                  </label>
+                  {settings.autoQuality && (
+                    <div className="flex items-center justify-between gap-2 border-t border-slate-700/60 pt-2">
+                      <span className="text-[11px] text-slate-400">
+                        {degraded ? 'Подобранный масштаб сохранён' : 'Работает на базовом масштабе'}
+                      </span>
+                      <button
+                        type="button"
+                        data-testid="graphics-reset-drs"
+                        onClick={onResetDrs}
+                        className={'flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-amber-300 ' +
+                          (degraded
+                            ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20'
+                            : 'border-slate-600 text-slate-300 hover:bg-slate-800')}>
+                        <RotateCcw size={13} aria-hidden="true" />
+                        Сбросить авто-масштаб
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {settings.autoQuality && <SettingSelect id="graphics-target-fps" label="Целевая частота кадров"
-                  description="Качество меняется при устойчивом изменении времени кадра"
+                  description="Окно ~1 с без выбросов · экспоненциальное ожидание возврата"
                   value={String(settings.targetFps)} options={['30','45','60'].map(value=>({value,label:value+' FPS'}))}
                   onChange={v=>onChange(changeGraphicsSetting(settings,'targetFps',Number(v) as GraphicsSettings['targetFps']))}/>}
                 <SettingSelect id="graphics-vegetation" label="Растительность"
@@ -170,19 +227,18 @@ export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Pro
                   <input data-testid="graphics-distant-war" type="checkbox"
                     checked={settings.distantWar}
                     onChange={e=>onChange(changeGraphicsSetting(settings,'distantWar',e.currentTarget.checked))}
-                    className="h-5 w-5 accent-amber-400" />
+                    className="h-5 w-5 shrink-0 accent-amber-400" />
                 </label>
               </div>
               <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-                Настройки сохраняются в браузере. Снижение масштаба рендера и теней обычно даёт больший эффект,
-                чем отключение нескольких декоративных деталей. Ни физика, ни точность стрельбы не меняются.
-                Для сравнения FPS и времени кадра нажми <strong className="text-amber-200">F8</strong>.
+                Настройки сохраняются в браузере. Подобранный динамический масштаб запоминается отдельно и не меняет ваш базовый пресет.
+                Ни физика, ни точность стрельбы не меняются. Для сравнения FPS и времени кадра нажми <strong className="text-amber-200">F8</strong>.
               </p>
             </div>
             <div className="flex items-center justify-between gap-3 border-t border-slate-700/70 px-4 py-3 sm:px-6">
               <p className="text-[11px] text-slate-400">Во время настройки бой приостановлен</p>
               <button type="button" data-testid="graphics-apply" onClick={onClose}
-                className="min-h-10 rounded-lg bg-amber-400 px-5 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300">
+                className="min-h-10 whitespace-nowrap rounded-lg bg-amber-400 px-5 py-2 text-sm font-bold text-slate-950 hover:bg-amber-300">
                 Применить и закрыть
               </button>
             </div>
@@ -192,3 +248,4 @@ export function GraphicsSettingsMenu({open,settings,onChange,onOpen,onClose}:Pro
     </>
   );
 }
+

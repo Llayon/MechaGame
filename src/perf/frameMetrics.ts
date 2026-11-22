@@ -46,6 +46,10 @@ export interface ProfilerEnvironment {
   autoQuality?: boolean;
   targetFps?: number;
   adaptiveStep?: number;
+  drsScale?: number;
+  baseResolutionScale?: number;
+  drsRecoveryWait?: number;
+  drsContextLost?: boolean;
   renderDpr?: number;
   shadowMapSize?: number;
   vegetation?: string;

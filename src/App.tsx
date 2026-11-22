@@ -1,20 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLazyRef } from './utils/useLazyRef';
 import { LightingPreset, SectorId } from './map/sectors';
 import type { InfantrySite } from './map/infantryEncounters';
 import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import { loadGrassMap, type WorldAssets } from './map/worldAssets';
-import { MapScene } from './scene/MapScene';
-import type { BattleScene } from './scene/loadBattleScene';
+import { detectSoftwareWebGL, MapScene } from './scene/MapScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
 import { PerformancePanel } from './perf/PerformancePanel';
 import { GraphicsSettingsMenu } from './components/GraphicsSettingsMenu';
 import {
-  GRAPHICS_PRESETS, readGraphicsSettings, saveGraphicsSettings, withGraphicsPreset,
+  GRAPHICS_PRESETS, readGraphicsSettings, resolveGraphicsRuntime,
+  saveGraphicsSettings, withGraphicsPreset,
 } from './game/graphicsSettings';
 import type { GraphicsSettings } from './game/graphicsSettings';
+import {
+  applyContextLostFallback,
+  clearPersistedDrs,
+  createInitialAdaptiveState,
+  drsSignature,
+  effectiveGraphics,
+  readPersistedDrs,
+  savePersistedDrs,
+  type AdaptiveState,
+} from './lod/adaptiveQuality';
 import {
   clearMechInput,
   normalizeKeyboardCode,
@@ -66,11 +76,7 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App({ world, battle, onOverviewDraw }: {
-  world: WorldAssets | null;
-  battle: BattleScene | null;
-  onOverviewDraw: () => void;
-}) {
+export default function App({ world, onOverviewDraw }: { world: WorldAssets | null; onOverviewDraw: () => void }) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
@@ -90,19 +96,82 @@ export default function App({ world, battle, onOverviewDraw }: {
   const [paused, setPaused] = useState(false);
   const [graphicsOpen, setGraphicsOpen] = useState(false);
   const graphicsWasRunningRef = useRef(false);
+  const urlGraphicsPreset = useRef<keyof typeof GRAPHICS_PRESETS | null>(
+    (() => {
+      if (typeof window === 'undefined') return null;
+      const preset = new URLSearchParams(window.location.search).get('graphics');
+      return preset && Object.prototype.hasOwnProperty.call(GRAPHICS_PRESETS, preset)
+        ? (preset as keyof typeof GRAPHICS_PRESETS)
+        : null;
+    })(),
+  ).current;
+
   const [graphics, setGraphics] = useState<GraphicsSettings>(() => {
     // Explicit URL presets make CI A/B benchmarking reproducible.
-    const preset = typeof window === 'undefined' ? null :
-      new URLSearchParams(window.location.search).get('graphics');
-    if (preset && Object.prototype.hasOwnProperty.call(GRAPHICS_PRESETS, preset)) {
-      return withGraphicsPreset(preset as keyof typeof GRAPHICS_PRESETS);
+    if (urlGraphicsPreset) {
+      return withGraphicsPreset(urlGraphicsPreset);
     }
     return readGraphicsSettings();
   });
 
+  const [adaptation, setAdaptation] = useState<AdaptiveState>(() => {
+    if (!urlGraphicsPreset && graphics.autoQuality) {
+      return readPersistedDrs(graphics) ?? createInitialAdaptiveState(graphics);
+    }
+    return createInitialAdaptiveState(graphics);
+  });
+  const [drsResetNonce, setDrsResetNonce] = useState(0);
+
   useEffect(() => {
-    saveGraphicsSettings(graphics);
-  }, [graphics]);
+    if (!urlGraphicsPreset) {
+      saveGraphicsSettings(graphics);
+    }
+  }, [graphics, urlGraphicsPreset]);
+
+  const handleGraphicsChange = useCallback((next: GraphicsSettings) => {
+    const signatureChanged = drsSignature(graphics) !== drsSignature(next);
+    setGraphics(next);
+    if (signatureChanged) {
+      if (!urlGraphicsPreset) clearPersistedDrs();
+      setAdaptation(createInitialAdaptiveState(next));
+    } else if (next.autoQuality && !graphics.autoQuality) {
+      const restored = !urlGraphicsPreset ? readPersistedDrs(next) : null;
+      setAdaptation(restored ?? createInitialAdaptiveState(next));
+    } else if (!next.autoQuality && graphics.autoQuality) {
+      setAdaptation(createInitialAdaptiveState(next));
+    }
+    setDrsResetNonce((n) => n + 1);
+  }, [graphics, urlGraphicsPreset]);
+
+  const handleAdaptationChange = useCallback((next: AdaptiveState) => {
+    setAdaptation(next);
+    if (!urlGraphicsPreset && graphics.autoQuality) {
+      savePersistedDrs(graphics, next);
+    }
+  }, [graphics, urlGraphicsPreset]);
+
+  const handleResetDrs = useCallback(() => {
+    if (!urlGraphicsPreset) clearPersistedDrs();
+    setAdaptation(createInitialAdaptiveState(graphics));
+    setDrsResetNonce((n) => n + 1);
+  }, [graphics, urlGraphicsPreset]);
+
+  const handleContextLost = useCallback(() => {
+    setAdaptation((prev) => {
+      const next = applyContextLostFallback(prev, graphics);
+      if (!urlGraphicsPreset && graphics.autoQuality) {
+        savePersistedDrs(graphics, next);
+      }
+      return next;
+    });
+  }, [graphics, urlGraphicsPreset]);
+
+  const activeDpr = useMemo(() => {
+    const active = graphics.autoQuality ? adaptation : createInitialAdaptiveState(graphics);
+    const eff = effectiveGraphics(graphics, active);
+    const nativeDpr = typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1;
+    return resolveGraphicsRuntime(eff, nativeDpr, detectSoftwareWebGL()).dpr;
+  }, [graphics, adaptation]);
   const [muted, setMuted] = useState(false);
   const [grassMap, setGrassMap] = useState<Uint8Array<ArrayBuffer> | null>(null);
   const [grassFailed, setGrassFailed] = useState(false);
@@ -517,8 +586,6 @@ export default function App({ world, battle, onOverviewDraw }: {
       <MapScene
         focusedSite={focusedSite}
         world={world}
-        battle={battle}
-        preparingBattle={requestedDriveMode && terrainReady && !world}
         grassMap={grassMap}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
@@ -526,6 +593,11 @@ export default function App({ world, battle, onOverviewDraw }: {
         resetNonce={resetNonce}
         lightingPreset={lightingPreset}
         graphics={graphics}
+        adaptation={adaptation}
+        drsResetNonce={drsResetNonce}
+        drsSamplingPaused={graphicsOpen}
+        onAdaptationChange={handleAdaptationChange}
+        onContextLost={handleContextLost}
         driveMode={driveMode}
         useTouchControls={layoutMode.useTouchControls}
         paused={paused}
@@ -589,7 +661,10 @@ export default function App({ world, battle, onOverviewDraw }: {
           <GraphicsSettingsMenu
             open={graphicsOpen}
             settings={graphics}
-            onChange={setGraphics}
+            adaptation={adaptation}
+            activeDpr={activeDpr}
+            onChange={handleGraphicsChange}
+            onResetDrs={handleResetDrs}
             onOpen={handleOpenGraphics}
             onClose={handleCloseGraphics}
           />

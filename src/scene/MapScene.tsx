@@ -1,8 +1,12 @@
 import type { WorldAssets } from '../map/worldAssets';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { WorldLodDriver } from '../lod/WorldLodDriver';
-import { effectiveGraphics } from '../lod/adaptiveQuality';
-import { loadPlayerMech, type BattleScene } from './loadBattleScene';
+import {
+  createInitialAdaptiveState,
+  effectiveGraphics,
+  type AdaptiveState,
+} from '../lod/adaptiveQuality';
+import { InfantryCrowd } from '../infantry/InfantryCrowd';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -24,29 +28,39 @@ import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader } from './heightFog';
-import type { MechDriveInput } from './objects/MechState';
+import { MechDriveInput, SovietMech } from './objects/SovietMech';
+import { CombatActors } from './objects/CombatActors';
+import { InfantryActors } from './objects/InfantryActors';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import { StormFront } from './objects/StormFront';
+import { WaterEffects } from './objects/WaterEffects';
 import { useLazyRef } from '../utils/useLazyRef';
 import { createWaterVfxPool } from './objects/waterVfxPool';
+import { GroundTrails } from './objects/GroundTrails';
 import { createGroundTrailsPool } from './objects/groundTrailsPool';
+import { MuzzleFlashes } from './objects/MuzzleFlashes';
 import { createMuzzleFlashPool } from './objects/muzzleFlashPool';
+import { MissileRibbons } from './objects/MissileRibbons';
 import { createMissileRibbonPool } from './objects/missileRibbonPool';
+import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
 import {
   MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
 } from './objects/debrisBallisticsPool';
+import { Tracers } from './objects/Tracers';
 import {
   MAX_TRACER_INSTANCES,
   createTracerPool,
 } from './objects/tracerPool';
+import { CuttingLaserBeam } from './objects/CuttingLaserBeam';
 import {
   MAX_CRATER_DECALS,
   createCraterPool,
 } from './objects/craterPool';
+import { HeatShimmer } from './objects/HeatShimmer';
 import { createHeatShimmerPool } from './objects/heatShimmerPool';
 import {
   MechTelemetrySnapshot,
@@ -56,18 +70,26 @@ import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
 
+let cachedSoftwareWebGL: boolean | null = null;
+
 export function detectSoftwareWebGL(): boolean {
   if (typeof document === 'undefined') return false;
+  if (cachedSoftwareWebGL !== null) return cachedSoftwareWebGL;
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    if (!gl) return true;
+    if (!gl) {
+      cachedSoftwareWebGL = true;
+      return true;
+    }
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
     const gpu = String(gl.getParameter(param) || '');
     gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+    cachedSoftwareWebGL = /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+    return cachedSoftwareWebGL;
   } catch {
+    cachedSoftwareWebGL = true;
     return true;
   }
 }
@@ -707,8 +729,6 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets | null;
-  battle: BattleScene | null;
-  preparingBattle: boolean;
   grassMap: Uint8Array<ArrayBuffer> | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -716,6 +736,11 @@ export interface MapSceneProps {
   resetNonce: number;
   lightingPreset: LightingPreset;
   graphics: GraphicsSettings;
+  adaptation: AdaptiveState;
+  drsResetNonce: number;
+  drsSamplingPaused?: boolean;
+  onAdaptationChange: (next: AdaptiveState) => void;
+  onContextLost?: () => void;
   driveMode: boolean;
   useTouchControls?: boolean;
   paused: boolean;
@@ -738,8 +763,6 @@ import { LandmarkMeshes, StageDriver, landmarksReady, lastStage } from './Landma
 export function MapScene({
   focusedSite,
   world,
-  battle,
-  preparingBattle,
   grassMap,
   onTerrainReady,
   activeSector,
@@ -747,6 +770,11 @@ export function MapScene({
   resetNonce,
   lightingPreset,
   graphics: preferences,
+  adaptation,
+  drsResetNonce,
+  drsSamplingPaused = false,
+  onAdaptationChange,
+  onContextLost,
   driveMode,
   useTouchControls = false,
   paused,
@@ -776,22 +804,18 @@ export function MapScene({
   const [enteredBattle, setEnteredBattle] = useState(false);
   useEffect(() => { if (driveMode) setEnteredBattle(true); }, [driveMode]);
   const battleRequested = driveMode || enteredBattle;
-  const [adaptation, setAdaptation] = useState({ settings: preferences, step: 0 });
-  const step = preferences.autoQuality && adaptation.settings === preferences ? adaptation.step : 0;
-  const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
+  const activeAdaptation = useMemo(
+    () => (preferences.autoQuality ? adaptation : createInitialAdaptiveState(preferences)),
+    [preferences, adaptation],
+  );
+  const [contextRestoredNonce, setContextRestoredNonce] = useState(0);
+  const onContextLostRef = useRef(onContextLost);
+  onContextLostRef.current = onContextLost;
+  const graphics = useMemo(
+    () => effectiveGraphics(preferences, activeAdaptation),
+    [preferences, activeAdaptation],
+  );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
-  const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
-  const [earlyMech, setEarlyMech] = useState<BattleScene['SovietMech'] | null>(null);
-  useEffect(() => {
-    if (!prepareMech || earlyMech) return;
-    let active = true;
-    // The details loader owns the retry UI if this shared import fails.
-    loadPlayerMech().then(({ SovietMech }) => {
-      if (active) setEarlyMech(() => SovietMech);
-    }).catch(() => {});
-    return () => { active = false; };
-  }, [prepareMech, earlyMech]);
-  const PlayerMech = battle?.SovietMech ?? earlyMech;
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const query = useMemo(() => new URLSearchParams(
     typeof window === 'undefined' ? '' : window.location.search,
@@ -825,7 +849,8 @@ export function MapScene({
       data-lighting={lightingPreset}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
-      data-adaptive-step={step}
+      data-adaptive-step={activeAdaptation.cascadeStep}
+      data-drs-scale={graphics.resolutionScale}
       data-object-detail={graphics.objectDetail}
       data-auto-quality={preferences.autoQuality}
       data-target-fps={preferences.targetFps}
@@ -865,14 +890,23 @@ export function MapScene({
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.domElement.addEventListener('webglcontextlost', (e) => {
             e.preventDefault();
+            onContextLostRef.current?.();
+          });
+          gl.domElement.addEventListener('webglcontextrestored', () => {
+            setContextRestoredNonce((n) => n + 1);
           });
         }}
       >
         <SceneSimulationProvider paused={paused}>
         <StageDriver limit={streamed ? lastStage + 5 : optimized ? lastStage + 2 : lastStage} stage={stage} advance={advance} paused={paused || (streamed && !world && stage >= 6)} />
         <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
-        <WorldLodDriver settings={preferences} paused={paused} step={step}
-          changeStep={next => setAdaptation({settings: preferences, step: next})}/>
+        <WorldLodDriver
+          settings={preferences}
+          paused={paused || drsSamplingPaused}
+          adaptation={activeAdaptation}
+          resetNonce={drsResetNonce + contextRestoredNonce}
+          onAdaptationChange={onAdaptationChange}
+        />
         <color attach="background" args={[lightCfg.bg]} />
         <fogExp2 attach="fog" args={[lightCfg.fogColor, lightCfg.fogDensity]} />
 
@@ -971,9 +1005,8 @@ export function MapScene({
           />}
         </group>
 
-        {PlayerMech && (prepareMech || (battle && (level >= 6 || battleRequested))) && <group name="perf:mech">
-        <PlayerMech
-          prepareOnly={prepareMech}
+        {(level >= 6 || battleRequested) && <group name="perf:mech">
+        <SovietMech
           aimRef={aimRef}
           driveMode={driveMode}
           paused={paused}
@@ -1010,11 +1043,11 @@ export function MapScene({
             shadowMapSize={shadowMapSize}
           />
         )}
-        {battle && (level >= 10 || battleRequested) && <group name="perf:combat">
+        {(level >= 10 || battleRequested) && <group name="perf:combat">
           {driveMode || focusedSite
-            ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
-            : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
-          <battle.CombatActors
+            ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+            : showUnits && <InfantryCrowd combatRef={combatRef} />}
+          <CombatActors
             combatRef={combatRef}
             driveMode={driveMode}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
@@ -1026,43 +1059,43 @@ export function MapScene({
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
           />
-          <battle.WaterEffects
+          <WaterEffects
             poolRef={waterVfxPoolRef}
             lightingPreset={lightingPreset}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <battle.GroundTrails
+          <GroundTrails
             poolRef={groundTrailsPoolRef}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <battle.MuzzleFlashes
+          <MuzzleFlashes
             poolRef={muzzleFlashPoolRef}
             resetNonce={resetNonce}
           />
-          <battle.MissileRibbons
+          <MissileRibbons
             poolRef={missileRibbonPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
-          <battle.ShellCasingsAndDebris
+          <ShellCasingsAndDebris
             casingsPoolRef={casingsPoolRef}
             debrisPoolRef={debrisPoolRef}
             waterVfxPoolRef={waterVfxPoolRef}
             resetNonce={resetNonce}
           />
-          <battle.Tracers
+          <Tracers
             poolRef={tracerPoolRef}
             resetNonce={resetNonce}
           />
-          <battle.CuttingLaserBeam
+          <CuttingLaserBeam
             combatRef={combatRef}
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
             resetNonce={resetNonce}
           />
-          <battle.HeatShimmer
+          <HeatShimmer
             poolRef={heatShimmerPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
@@ -1105,7 +1138,11 @@ export function MapScene({
           onSelectSector={onSelectSector}
         />
         <ScenePerformanceProbe
-          adaptiveStep={step}
+          adaptiveStep={activeAdaptation.cascadeStep}
+          drsScale={graphics.resolutionScale}
+          baseResolutionScale={preferences.resolutionScale}
+          drsRecoveryWait={activeAdaptation.recoveryWait}
+          drsContextLost={activeAdaptation.contextLostFallback}
           paused={paused}
           driveMode={driveMode}
           lightingPreset={lightingPreset}

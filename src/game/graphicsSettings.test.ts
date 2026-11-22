@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAPHICS_PRESETS, GRAPHICS_STORAGE_KEY, changeGraphicsSetting, defaultGraphicsSettings,
-  readGraphicsSettings, recommendGraphicsPreset, resolveGraphicsRuntime,
-  sanitizeGraphicsSettings, withGraphicsPreset,
+  GRAPHICS_PRESETS, GRAPHICS_STORAGE_KEY, MIN_RESOLUTION_SCALE, changeGraphicsSetting,
+  defaultGraphicsSettings, readGraphicsSettings, recommendAutoQuality, recommendGraphicsPreset,
+  resolveGraphicsRuntime, sanitizeGraphicsSettings, withGraphicsPreset,
 } from './graphicsSettings';
 
 test('quality presets are grounded in real renderer controls', () => {
@@ -29,6 +29,10 @@ test('GPU scale is bounded and low preset reduces pixel count', () => {
   assert.ok((low.dpr / high.dpr) ** 2 < .5);
   assert.equal(resolveGraphicsRuntime(withGraphicsPreset('low'), 0, false).dpr, .7);
   assert.equal(resolveGraphicsRuntime(withGraphicsPreset('low'), Number.NaN, false).dpr, .7);
+  assert.equal(
+    sanitizeGraphicsSettings({ ...withGraphicsPreset('low'), resolutionScale: 0.3 }).resolutionScale,
+    MIN_RESOLUTION_SCALE,
+  );
 });
 
 test('custom settings survive serialization, corruption and invalid values', () => {
@@ -37,6 +41,9 @@ test('custom settings survive serialization, corruption and invalid values', () 
   assert.equal(custom.preset, 'custom');
   assert.equal(custom.resolutionScale, .75);
   assert.equal(changeGraphicsSetting(custom, 'shadows', 'off').shadows, 'off');
+  const withAuto = changeGraphicsSetting(base, 'autoQuality', true);
+  assert.equal(withAuto.preset, 'high');
+  assert.equal(withAuto.autoQuality, true);
   assert.deepEqual(readGraphicsSettings({
     getItem(k) {
       assert.equal(k, GRAPHICS_STORAGE_KEY);
@@ -60,4 +67,7 @@ test('recommendation never assumes that every phone has a powerful GPU', () => {
   assert.equal(recommendGraphicsPreset({mobile:false,deviceMemoryGB:4}), 'balanced');
   assert.equal(recommendGraphicsPreset({mobile:false,hardwareConcurrency:2}), 'balanced');
   assert.equal(recommendGraphicsPreset({mobile:false,hardwareConcurrency:16}), 'high');
+  assert.equal(recommendAutoQuality({mobile:true}), true);
+  assert.equal(recommendAutoQuality({mobile:false,deviceMemoryGB:4}), true);
+  assert.equal(recommendAutoQuality({mobile:false,hardwareConcurrency:16}), false);
 });

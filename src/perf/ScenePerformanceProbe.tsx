@@ -11,7 +11,11 @@ interface Props {
   driveMode: boolean;
   lightingPreset: string;
   graphics: GraphicsSettings;
+  baseResolutionScale: number;
   adaptiveStep: number;
+  drsScale: number;
+  drsRecoveryWait: number;
+  drsContextLost: boolean;
   renderDpr: number;
   shadowMapSize: number;
   isSoftwareGl: boolean;
@@ -20,8 +24,9 @@ interface Props {
 
 /** Invisible profiling adapter: measurements only, with no scene or gameplay mutations. */
 export function ScenePerformanceProbe({
-  paused, driveMode, lightingPreset, graphics, adaptiveStep, renderDpr, shadowMapSize,
-  isSoftwareGl, benchmarkContinuousFrames,
+  paused, driveMode, lightingPreset, graphics, baseResolutionScale,
+  adaptiveStep, drsScale, drsRecoveryWait, drsContextLost,
+  renderDpr, shadowMapSize, isSoftwareGl, benchmarkContinuousFrames,
 }: Props) {
   const { gl, scene, camera, invalidate } = useThree();
   const shadow = useRef({ calls: 0, triangles: 0 });
@@ -79,14 +84,19 @@ export function ScenePerformanceProbe({
       autoQuality: graphics.autoQuality,
       targetFps: graphics.targetFps,
       adaptiveStep,
+      drsScale,
+      baseResolutionScale,
+      drsRecoveryWait,
+      drsContextLost,
       renderDpr,
       shadowMapSize,
       vegetation: graphics.vegetation,
       particles: graphics.particles,
       atmosphere: graphics.atmosphere,
     });
-  }, [gl, driveMode, lightingPreset, graphics, adaptiveStep, renderDpr, shadowMapSize,
-    isSoftwareGl, benchmarkContinuousFrames]);
+  }, [gl, driveMode, lightingPreset, graphics, baseResolutionScale,
+    adaptiveStep, drsScale, drsRecoveryWait, drsContextLost,
+    renderDpr, shadowMapSize, isSoftwareGl, benchmarkContinuousFrames]);
 
   useFrame(() => {
     if (paused) {
