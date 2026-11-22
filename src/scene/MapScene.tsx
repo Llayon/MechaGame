@@ -31,32 +31,24 @@ import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
 import { VolumetricSunShafts } from './objects/VolumetricSunShafts';
 import { StormFront } from './objects/StormFront';
-import { WaterEffects } from './objects/WaterEffects';
 import { useLazyRef } from '../utils/useLazyRef';
 import { createWaterVfxPool } from './objects/waterVfxPool';
-import { GroundTrails } from './objects/GroundTrails';
 import { createGroundTrailsPool } from './objects/groundTrailsPool';
-import { MuzzleFlashes } from './objects/MuzzleFlashes';
 import { createMuzzleFlashPool } from './objects/muzzleFlashPool';
-import { MissileRibbons } from './objects/MissileRibbons';
 import { createMissileRibbonPool } from './objects/missileRibbonPool';
-import { ShellCasingsAndDebris } from './objects/ShellCasingsAndDebris';
 import {
   MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   createBallisticPropPool,
 } from './objects/debrisBallisticsPool';
-import { Tracers } from './objects/Tracers';
 import {
   MAX_TRACER_INSTANCES,
   createTracerPool,
 } from './objects/tracerPool';
-import { CuttingLaserBeam } from './objects/CuttingLaserBeam';
 import {
   MAX_CRATER_DECALS,
   createCraterPool,
 } from './objects/craterPool';
-import { HeatShimmer } from './objects/HeatShimmer';
 import { createHeatShimmerPool } from './objects/heatShimmerPool';
 import {
   MechTelemetrySnapshot,
@@ -717,6 +709,7 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
 export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets | null;
+  effects: typeof import('./combatEffects') | null;
   grassMap: Uint8Array<ArrayBuffer> | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -746,6 +739,7 @@ import { LandmarkMeshes, StageDriver, landmarksReady, lastStage } from './Landma
 export function MapScene({
   focusedSite,
   world,
+  effects,
   grassMap,
   onTerrainReady,
   activeSector,
@@ -1003,7 +997,7 @@ export function MapScene({
             shadowMapSize={shadowMapSize}
           />
         )}
-        {(level >= 10 || battleRequested) && <group name="perf:combat">
+        {effects && (level >= 10 || battleRequested) && <group name="perf:combat">
           {driveMode || focusedSite
             ? <InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
             : showUnits && <InfantryCrowd combatRef={combatRef} />}
@@ -1019,43 +1013,43 @@ export function MapScene({
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
           />
-          <WaterEffects
+          <effects.WaterEffects
             poolRef={waterVfxPoolRef}
             lightingPreset={lightingPreset}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <GroundTrails
+          <effects.GroundTrails
             poolRef={groundTrailsPoolRef}
             isSoftwareGl={isSoftwareGl || quality.reducedParticles}
             resetNonce={resetNonce}
           />
-          <MuzzleFlashes
+          <effects.MuzzleFlashes
             poolRef={muzzleFlashPoolRef}
             resetNonce={resetNonce}
           />
-          <MissileRibbons
+          <effects.MissileRibbons
             poolRef={missileRibbonPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}
           />
-          <ShellCasingsAndDebris
+          <effects.ShellCasingsAndDebris
             casingsPoolRef={casingsPoolRef}
             debrisPoolRef={debrisPoolRef}
             waterVfxPoolRef={waterVfxPoolRef}
             resetNonce={resetNonce}
           />
-          <Tracers
+          <effects.Tracers
             poolRef={tracerPoolRef}
             resetNonce={resetNonce}
           />
-          <CuttingLaserBeam
+          <effects.CuttingLaserBeam
             combatRef={combatRef}
             craterPoolRef={craterPoolRef}
             heatShimmerPoolRef={heatShimmerPoolRef}
             resetNonce={resetNonce}
           />
-          <HeatShimmer
+          <effects.HeatShimmer
             poolRef={heatShimmerPoolRef}
             lightingPreset={lightingPreset}
             resetNonce={resetNonce}

@@ -65,7 +65,11 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App({ world, onOverviewDraw }: { world: WorldAssets | null; onOverviewDraw: () => void }) {
+export default function App({ world, effects, onOverviewDraw }: {
+  world: WorldAssets | null;
+  effects: typeof import('./scene/combatEffects') | null;
+  onOverviewDraw: () => void;
+}) {
   const autostart = useRef(hasAutostartParam()).current;
 
   const [activeSector, setActiveSector] = useState<SectorId>('overview');
@@ -512,6 +516,7 @@ export default function App({ world, onOverviewDraw }: { world: WorldAssets | nu
       <MapScene
         focusedSite={focusedSite}
         world={world}
+        effects={effects}
         grassMap={grassMap}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}

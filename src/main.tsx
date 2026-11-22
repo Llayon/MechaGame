@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { loadWorldAssets, type WorldAssets } from './map/worldAssets';
+import { loadWorldAssets } from './map/worldAssets';
 import { prepareGroundMap } from './scene/terrain/OverviewGround';
 import { prepareCompactGround } from './scene/terrain/CompactGround';
 import { loadLandmarks } from './scene/LandmarkOverview';
@@ -12,8 +12,16 @@ const { baked, streaming } = mapStartup;
 const traceStartup = new URLSearchParams(location.search).has('startupTrace');
 if (traceStartup) performance.mark('entry-evaluated');
 
+async function loadDetails(signal: AbortSignal) {
+  const [world, effects] = await Promise.all([
+    loadWorldAssets(baked, signal),
+    import('./scene/combatEffects'),
+  ]);
+  return { world, effects };
+}
+
 function GameEntry() {
-  const [world, setWorld] = useState<WorldAssets | null>(null);
+  const [details, setDetails] = useState<Awaited<ReturnType<typeof loadDetails>> | null>(null);
   const [preview, setPreview] = useState(false);
   const [drawn, setDrawn] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -44,33 +52,33 @@ function GameEntry() {
           if (signal.aborted) return;
         }
       }
-      const [loaded] = await Promise.all([loadWorldAssets(baked, signal), artwork.catch(() => undefined)]);
-      if (!signal.aborted) setWorld(loaded);
+      const [loaded] = await Promise.all([loadDetails(signal), artwork.catch(() => undefined)]);
+      if (!signal.aborted) setDetails(loaded);
     }
     start().catch(() => { if (!signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, [preview, attempt]);
 
   useEffect(() => {
-    if (!drawn || !preview || world) return;
+    if (!drawn || !preview || details) return;
     const controller = new AbortController();
     let frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => {
         performance.mark('full-world-request');
-        loadWorldAssets(baked, controller.signal).then(loaded => {
+        loadDetails(controller.signal).then(loaded => {
           if (!controller.signal.aborted) {
             performance.mark('full-world-loaded');
-            setWorld(loaded);
+            setDetails(loaded);
           }
         }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
       });
     });
     return () => { cancelAnimationFrame(frame); controller.abort(); };
-  }, [drawn, preview, world, attempt]);
+  }, [drawn, preview, details, attempt]);
 
   function retry() { setFailed(false); setAttempt(n => n + 1); }
-  if (world || preview) return <>
-    <App world={world} onOverviewDraw={notifyDraw} />
+  if (details || preview) return <>
+    <App world={details?.world ?? null} effects={details?.effects ?? null} onOverviewDraw={notifyDraw} />
     {failed && <button className="fixed bottom-20 left-4 z-50 rounded bg-slate-900 px-4 py-2 text-white" onClick={retry}>Повторить загрузку деталей карты</button>}
   </>;
   return <main className="grid h-dvh place-items-center bg-[#091016] text-cyan-100">
