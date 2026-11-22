@@ -6,6 +6,7 @@ import { prepareGroundMap } from './scene/terrain/OverviewGround';
 import { prepareCompactGround } from './scene/terrain/CompactGround';
 import { loadLandmarks } from './scene/LandmarkOverview';
 import { mapStartup } from './map/mapStartup';
+import { loadBattleScene, loadPlayerMech } from './scene/loadBattleScene';
 import './index.css';
 
 const { baked, streaming } = mapStartup;
@@ -13,11 +14,11 @@ const traceStartup = new URLSearchParams(location.search).has('startupTrace');
 if (traceStartup) performance.mark('entry-evaluated');
 
 async function loadDetails(signal: AbortSignal) {
-  const [world, effects] = await Promise.all([
+  const [world, battle] = await Promise.all([
     loadWorldAssets(baked, signal),
-    import('./scene/combatEffects'),
+    loadBattleScene(),
   ]);
-  return { world, effects };
+  return { world, battle };
 }
 
 function GameEntry() {
@@ -26,7 +27,12 @@ function GameEntry() {
   const [drawn, setDrawn] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const notifyDraw = useCallback(() => setDrawn(true), []);
+  const notifyDraw = useCallback(() => {
+    setDrawn(true);
+    // Start the mech transfer at the first overview draw. The details loader
+    // awaits the same module and routes failures through the existing retry UI.
+    if (streaming) void loadPlayerMech().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (preview) return;
@@ -78,7 +84,7 @@ function GameEntry() {
 
   function retry() { setFailed(false); setAttempt(n => n + 1); }
   if (details || preview) return <>
-    <App world={details?.world ?? null} effects={details?.effects ?? null} onOverviewDraw={notifyDraw} />
+    <App world={details?.world ?? null} battle={details?.battle ?? null} onOverviewDraw={notifyDraw} />
     {failed && <button className="fixed bottom-20 left-4 z-50 rounded bg-slate-900 px-4 py-2 text-white" onClick={retry}>Повторить загрузку деталей карты</button>}
   </>;
   return <main className="grid h-dvh place-items-center bg-[#091016] text-cyan-100">

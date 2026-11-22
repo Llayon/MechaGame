@@ -1,3 +1,6 @@
+export { InfantryCrowd } from '../infantry/InfantryCrowd';
+export { CombatActors } from './objects/CombatActors';
+export { InfantryActors } from './objects/InfantryActors';
 export { WaterEffects } from './objects/WaterEffects';
 export { GroundTrails } from './objects/GroundTrails';
 export { MuzzleFlashes } from './objects/MuzzleFlashes';

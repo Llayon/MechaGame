@@ -6,6 +6,7 @@ import { METERS_PER_UNIT } from './map/terrainMath';
 import { MECH_SPAWN, MechTelemetrySnapshot } from './map/mechKinematics';
 import { loadGrassMap, type WorldAssets } from './map/worldAssets';
 import { MapScene } from './scene/MapScene';
+import type { BattleScene } from './scene/loadBattleScene';
 import type { MechDriveInput } from './scene/objects/SovietMech';
 import { TacticalHUD } from './components/TacticalHUD';
 import { PerformancePanel } from './perf/PerformancePanel';
@@ -65,9 +66,9 @@ function createSpawnPose(): MechTelemetrySnapshot {
   };
 }
 
-export default function App({ world, effects, onOverviewDraw }: {
+export default function App({ world, battle, onOverviewDraw }: {
   world: WorldAssets | null;
-  effects: typeof import('./scene/combatEffects') | null;
+  battle: BattleScene | null;
   onOverviewDraw: () => void;
 }) {
   const autostart = useRef(hasAutostartParam()).current;
@@ -516,7 +517,7 @@ export default function App({ world, effects, onOverviewDraw }: {
       <MapScene
         focusedSite={focusedSite}
         world={world}
-        effects={effects}
+        battle={battle}
         grassMap={grassMap}
         onTerrainReady={handleTerrainReady}
         activeSector={activeSector}
