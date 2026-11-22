@@ -20,10 +20,12 @@ import { WORLD_MAP_WIDTH as DEPTH_TEX_W, WORLD_MAP_HEIGHT as DEPTH_TEX_H } from 
 export interface RiverWaterProps {
   data: Uint8Array<ArrayBuffer>;
   isSoftwareGl: boolean;
+  visible?: boolean;
 }
 
-export function RiverWater({ isSoftwareGl, data }: RiverWaterProps) {
-  const { gl } = useThree();
+export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterProps) {
+  const { gl, scene, camera } = useThree();
+  const meshRef = useRef<THREE.Mesh>(null);
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const waterNormal = useMemo(() => createWaterNormalTexture(maxAniso), [maxAniso]);
   const normalScale = useMemo(() => new THREE.Vector2(0.75, 0.75), []);
@@ -195,11 +197,19 @@ material.clearcoat *= ( 1.0 - wFoam * 0.92 );`,
     };
   }, [waterMaterial, waterDepthTex, waterNormal]);
 
+  useEffect(() => {
+    if (visible || !meshRef.current || !scene.environment || !gl.extensions.has('KHR_parallel_shader_compile')) return;
+    // Compile against the live reflection map while the compact terrain still covers the river.
+    void gl.compileAsync(meshRef.current, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('River shader warmup failed', error);
+    });
+  }, [visible, gl, camera, scene, waterMaterial]);
+
   const { paused } = useSceneSimulation();
 
   useFrame((_, delta) => {
     if (paused) return;
-    if (isSoftwareGl) return;
+    if (isSoftwareGl || !visible) return;
     timeUniformRef.current.value += delta;
     waterNormal.offset.x = (waterNormal.offset.x + delta * 0.018) % 1;
     waterNormal.offset.y = (waterNormal.offset.y + delta * 0.012) % 1;
@@ -207,6 +217,8 @@ material.clearcoat *= ( 1.0 - wFoam * 0.92 );`,
 
   return (
     <mesh
+      ref={meshRef}
+      visible={visible}
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, WATER_LEVEL, 0]}
       material={waterMaterial}

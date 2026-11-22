@@ -22,6 +22,7 @@ import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
 import { TerrainSlab } from './TerrainSlab';
+import { RiverWater } from './terrain/RiverWater';
 import { Structures } from './Structures';
 import { BRIDGE_SHADOW_LAYER } from './objects/bridgeBatches';
 import { FoliageAndUnits } from './FoliageAndUnits';
@@ -980,7 +981,10 @@ export function MapScene({
         <group name="perf:terrain">
           {streamed ? <>
             {(!nearReady || !farReady) && <CompactGround near={!nearReady} far={!farReady} water={waterReady} />}
-            {waterReady && world && <TerrainSlab near={nearReady} far={farReady} water tiles={world.terrain} waterDepth={world.water} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />}
+            {world && (waterReady || (!isSoftwareGl && stage >= 5)) && <RiverWater
+              data={world.water} isSoftwareGl={isSoftwareGl} visible={waterReady}
+            />}
+            {nearReady && world && <TerrainSlab near={nearReady} far={farReady} water={false} tiles={world.terrain} waterDepth={world.water} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />}
           </> : world && (stagedGround ? <OverviewGround tiles={world.terrain} /> : <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />)}
         </group>
 
