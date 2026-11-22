@@ -16,6 +16,7 @@ import {
 } from '../flybyShadow';
 
 import { WORLD_MAP_WIDTH as DEPTH_TEX_W, WORLD_MAP_HEIGHT as DEPTH_TEX_H } from '../../map/worldMapDimensions';
+import { WATER_AA_CONFIG, buildWaterAntiAliasingGlsl } from './waterAntiAliasing';
 
 export interface RiverWaterProps {
   data: Uint8Array<ArrayBuffer>;
@@ -52,6 +53,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
   }, [data]);
 
   const waterMaterial = useMemo(() => {
+    const aaGlsl = buildWaterAntiAliasingGlsl();
     const mat = new THREE.MeshPhysicalMaterial({
       color: '#0C2232',
       roughness: 0.08,
@@ -69,7 +71,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
       depthWrite: false,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v2';
+    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v3';
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uWaterDepthMap = { value: waterDepthTex };
@@ -134,6 +136,7 @@ float waterFbm( vec2 p ) {
         .replace(
           '#include <color_fragment>',
           `#include <color_fragment>
+${aaGlsl.footprintAndNyquist}
 vec2 wDepthUv = vWaterWorldPos.xz / uWaterSpan + 0.5;
 vec2 wDepthSample = texture2D( uWaterDepthMap, clamp( wDepthUv, 0.001, 0.999 ) ).rg;
 float wDepth = wDepthSample.r * uMaxWaterDepth;
@@ -147,22 +150,23 @@ vec3 wMidCol = pow( vec3( 0.095, 0.305, 0.375 ), vec3( 2.2 ) );
 vec3 wShallowCol = pow( vec3( 0.215, 0.515, 0.525 ), vec3( 2.2 ) );
 vec3 wBaseCol = mix( wDeepCol, mix( wMidCol, wShallowCol, wShallowT ), smoothstep( 0.0, 0.92, wShallowT ) );
 
-// Organic lacy shoreline & bridge-pier surf foam broken up by 2D quintic FBM (zero contour stripes)
+// Organic lacy shoreline & bridge-pier surf foam broken up by 2D quintic FBM (Nyquist-filtered at distance)
 float wFbm = waterFbm( vWaterWorldPos.xz * 0.48 + vec2( uWaterTime * 0.045, -uWaterTime * 0.032 ) );
-float wMicro = waterNoise( vWaterWorldPos.xz * 2.15 - vec2( uWaterTime * 0.11, uWaterTime * 0.09 ) );
+float wMicroRaw = waterNoise( vWaterWorldPos.xz * 2.15 - vec2( uWaterTime * 0.11, uWaterTime * 0.09 ) );
+float wMicro = mix( 0.5, wMicroRaw, wMicroWeight );
 float wLace = smoothstep( 0.32, 0.72, wFbm * 0.66 + wMicro * 0.34 );
 
 // 1. Shoreline lapping edge & shallow surf wavelets (~0..1.8 m depth)
 float wShoreBand = 1.0 - smoothstep( 0.03, 0.46 + wFbm * 0.20, wDepth );
 float wWavePhase = wDepth * 16.0 - uWaterTime * 2.2 + wFbm * 5.6;
-float wSurfWave = pow( max( 0.0, sin( wWavePhase ) ), 3.0 ) * ( 1.0 - smoothstep( 0.08, 0.54, wDepth ) );
+float wSurfWave = pow( max( 0.0, sin( wWavePhase ) ), 3.0 ) * ( 1.0 - smoothstep( 0.08, 0.54, wDepth ) ) * wSurfWeight;
 float wEdgeCrisp = ( 1.0 - smoothstep( 0.015, 0.13, wDepth ) ) * ( 0.54 + 0.46 * wLace );
 float wShoreFoam = max( wEdgeCrisp, wShoreBand * wLace * 0.72 + wSurfWave * wLace * 0.52 );
 
 // 2. Bridge pier, quay caisson & moored river barge wake collar (gated strictly inside water)
 float wInWater = smoothstep( 0.04, 0.18, wDepth );
 float wPierCollar = 1.0 - smoothstep( 0.04, 0.82 + wFbm * 0.34, wObstDist );
-float wPierRipple = pow( max( 0.0, sin( wObstDist * 9.0 - uWaterTime * 2.4 + wFbm * 4.4 ) ), 3.0 ) * ( 1.0 - smoothstep( 0.22, 1.65, wObstDist ) );
+float wPierRipple = pow( max( 0.0, sin( wObstDist * 9.0 - uWaterTime * 2.4 + wFbm * 4.4 ) ), 3.0 ) * ( 1.0 - smoothstep( 0.22, 1.65, wObstDist ) ) * wSurfWeight;
 float wPierFoam = ( wPierCollar * ( 0.58 + 0.42 * wLace ) + wPierRipple * 0.50 * wLace ) * wInWater;
 
 float wFoam = clamp( max( wShoreFoam, wPierFoam ) * smoothstep( 0.005, 0.035, wDepth ), 0.0, 0.90 );
@@ -177,12 +181,22 @@ diffuseColor.a = clamp( max( wWaterAlpha, wFoam * 0.92 ) * wEdgeFeather, 0.0, 0.
         .replace(
           '#include <roughnessmap_fragment>',
           `#include <roughnessmap_fragment>
-roughnessFactor = mix( roughnessFactor, 0.84, wFoam );`,
+roughnessFactor = mix( roughnessFactor, ${WATER_AA_CONFIG.foamRoughness.toFixed(2)}, wFoam );`,
+        )
+        .replace(
+          '#include <normal_fragment_maps>',
+          `#include <normal_fragment_maps>
+${aaGlsl.normalCaptureAndDamp}`,
+        )
+        .replace(
+          '#include <clearcoat_normal_fragment_maps>',
+          `#include <clearcoat_normal_fragment_maps>
+${aaGlsl.clearcoatNormalCaptureAndDamp}`,
         )
         .replace(
           '#include <lights_physical_fragment>',
           `#include <lights_physical_fragment>
-material.clearcoat *= ( 1.0 - wFoam * 0.92 );`,
+${aaGlsl.applySpecularAa}`,
         );
     };
 
