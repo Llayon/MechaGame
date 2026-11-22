@@ -1,8 +1,8 @@
-export const loadPlayerMech = () => import('./objects/SovietMech');
+export const loadPlayerBattleEntry = () => import('./playerBattleEntry');
 
 export async function loadBattleScene() {
-  const [{ SovietMech }, actors] = await Promise.all([loadPlayerMech(), import('./battleActors')]);
-  return { SovietMech, ...actors };
+  const [player, actors] = await Promise.all([loadPlayerBattleEntry(), import('./battleActors')]);
+  return { ...player, ...actors };
 }
 
 export type BattleScene = Awaited<ReturnType<typeof loadBattleScene>>;

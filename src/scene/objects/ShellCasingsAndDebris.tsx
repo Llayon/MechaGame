@@ -2,12 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
 import { combatAudio } from '../../game/combatAudio';
 import {
-  MAX_CASING_INSTANCES,
   MAX_DEBRIS_INSTANCES,
   getBallisticSlotVisualFactor,
   resetBallisticPropPool,
@@ -18,6 +16,8 @@ import {
 import { spawnWaterImpact, type WaterVfxPoolState } from './waterVfxPool';
 
 export interface ShellCasingsAndDebrisProps {
+  casingMesh: THREE.InstancedMesh;
+  hideEmptyCasings: boolean;
   casingsPoolRef: React.MutableRefObject<BallisticPropPool>;
   debrisPoolRef: React.MutableRefObject<BallisticPropPool>;
   waterVfxPoolRef?: React.MutableRefObject<WaterVfxPoolState>;
@@ -55,24 +55,6 @@ const _debrisEvents: BallisticStepEvents = {
   waterImpactZ: 0,
   hasWaterImpact: false,
 };
-
-/**
- * Low-poly 24-tri heavy autocannon/artillery casing with base extractor rim.
- */
-function createShellCasingGeometry(): THREE.BufferGeometry {
-  const body = new THREE.CylinderGeometry(0.042, 0.042, 0.25, 6);
-  const rim = new THREE.CylinderGeometry(0.054, 0.054, 0.032, 6);
-  rim.translate(0, -0.115, 0);
-
-  const merged = mergeGeometries([body, rim], false);
-  body.dispose();
-  rim.dispose();
-  if (!merged) {
-    return new THREE.CylinderGeometry(0.044, 0.044, 0.25, 6);
-  }
-  merged.computeVertexNormals();
-  return merged;
-}
 
 /**
  * Faceted jagged armor plate shard geometry for combat impacts & explosions.
@@ -139,27 +121,22 @@ function syncPoolToInstancedMesh(
 }
 
 export function ShellCasingsAndDebris({
+  casingMesh,
+  hideEmptyCasings,
   casingsPoolRef,
   debrisPoolRef,
   waterVfxPoolRef,
   resetNonce,
 }: ShellCasingsAndDebrisProps) {
   const { paused } = useSceneSimulation();
-  const casingsMeshRef = useRef<THREE.InstancedMesh>(null);
   const debrisMeshRef = useRef<THREE.InstancedMesh>(null);
   const hadActiveCasingsRef = useRef(false);
   const hadActiveDebrisRef = useRef(false);
   const prevResetNonceRef = useRef(resetNonce);
 
   const setup = useMemo(() => {
-    const casingGeom = createShellCasingGeometry();
     const debrisGeom = createArmorDebrisGeometry();
 
-    const casingMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.74,
-      roughness: 0.34,
-    });
     const debrisMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       metalness: 0.45,
@@ -167,21 +144,10 @@ export function ShellCasingsAndDebris({
       flatShading: true,
     });
 
-    return { casingGeom, debrisGeom, casingMat, debrisMat };
+    return { debrisGeom, debrisMat };
   }, []);
 
   useEffect(() => {
-    const cMesh = casingsMeshRef.current;
-    if (cMesh) {
-      cMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      for (let i = 0; i < MAX_CASING_INSTANCES; i++) {
-        cMesh.setMatrixAt(i, _zeroMat4);
-        cMesh.setColorAt(i, _color.setHex(0x9c7a3c));
-      }
-      cMesh.instanceMatrix.needsUpdate = true;
-      if (cMesh.instanceColor) cMesh.instanceColor.needsUpdate = true;
-    }
-
     const dMesh = debrisMeshRef.current;
     if (dMesh) {
       dMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -194,9 +160,7 @@ export function ShellCasingsAndDebris({
     }
 
     return () => {
-      setup.casingGeom.dispose();
       setup.debrisGeom.dispose();
-      setup.casingMat.dispose();
       setup.debrisMat.dispose();
     };
   }, [setup]);
@@ -219,8 +183,7 @@ export function ShellCasingsAndDebris({
 
     // 1) Shell Casings InstancedMesh (1 Draw Call)
     const cPool = casingsPoolRef.current;
-    const cMesh = casingsMeshRef.current;
-    if (cMesh && (cPool.activeCount > 0 || hadActiveCasingsRef.current || cPool.dirty)) {
+    if (cPool.activeCount > 0 || hadActiveCasingsRef.current || cPool.dirty) {
       const remCasings = stepBallisticPropPool(cPool, dt, _casingEvents);
       if (_casingEvents.dryBouncedCasings > 0) {
         combatAudio.playShellClink(_casingEvents.heavyDryBounce);
@@ -235,7 +198,8 @@ export function ShellCasingsAndDebris({
         );
       }
       if (cPool.dirty || remCasings > 0 || hadActiveCasingsRef.current) {
-        syncPoolToInstancedMesh(cPool, cMesh, true, camera);
+        syncPoolToInstancedMesh(cPool, casingMesh, true, camera);
+        casingMesh.visible = !hideEmptyCasings || casingMesh.count > 0;
         cPool.dirty = false;
       }
       hadActiveCasingsRef.current = remCasings > 0;
@@ -266,15 +230,7 @@ export function ShellCasingsAndDebris({
 
   return (
     <>
-      <instancedMesh
-        ref={casingsMeshRef}
-        name="shell-casings-pool"
-        count={0}
-        args={[setup.casingGeom, setup.casingMat, MAX_CASING_INSTANCES]}
-        frustumCulled={false}
-        castShadow={false}
-        receiveShadow
-      />
+      <primitive object={casingMesh} visible={!hideEmptyCasings} />
       <instancedMesh
         ref={debrisMeshRef}
         name="armor-debris-pool"

@@ -6,7 +6,7 @@ import {
   effectiveGraphics,
   type AdaptiveState,
 } from '../lod/adaptiveQuality';
-import { loadPlayerMech, type BattleScene } from './loadBattleScene';
+import { loadPlayerBattleEntry, type BattleScene } from './loadBattleScene';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -812,17 +812,20 @@ export function MapScene({
   );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
-  const [earlyMech, setEarlyMech] = useState<BattleScene['SovietMech'] | null>(null);
+  const [earlyPlayer, setEarlyPlayer] = useState<Awaited<ReturnType<typeof loadPlayerBattleEntry>> | null>(null);
   useEffect(() => {
-    if (!prepareMech || earlyMech) return;
+    if (!prepareMech || earlyPlayer) return;
     let active = true;
     // The details loader owns the retry UI if this shared import fails.
-    loadPlayerMech().then(({ SovietMech }) => {
-      if (active) setEarlyMech(() => SovietMech);
+    loadPlayerBattleEntry().then(player => {
+      if (active) setEarlyPlayer(player);
     }).catch(() => {});
     return () => { active = false; };
-  }, [prepareMech, earlyMech]);
-  const PlayerMech = battle?.SovietMech ?? earlyMech;
+  }, [prepareMech, earlyPlayer]);
+  const player = battle ?? earlyPlayer;
+  const PlayerMech = player?.SovietMech;
+  const ShellCasingMesh = player?.ShellCasingMesh;
+  const showCombat = battle && (level >= 10 || battleRequested);
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const query = useMemo(() => new URLSearchParams(
     typeof window === 'undefined' ? '' : window.location.search,
@@ -1057,64 +1060,72 @@ export function MapScene({
             shadowMapSize={shadowMapSize}
           />
         )}
-        {battle && (level >= 10 || battleRequested) && <group name="perf:combat">
-          {driveMode || focusedSite
-            ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
-            : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
-          <battle.CombatActors
-            combatRef={combatRef}
-            driveMode={driveMode}
-            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
-            waterVfxPoolRef={waterVfxPoolRef}
-            groundTrailsPoolRef={groundTrailsPoolRef}
-            muzzleFlashPoolRef={muzzleFlashPoolRef}
-            missileRibbonPoolRef={missileRibbonPoolRef}
-            debrisPoolRef={debrisPoolRef}
-            craterPoolRef={craterPoolRef}
-            heatShimmerPoolRef={heatShimmerPoolRef}
-          />
-          <battle.WaterEffects
-            poolRef={waterVfxPoolRef}
-            lightingPreset={lightingPreset}
-            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
-            resetNonce={resetNonce}
-          />
-          <battle.GroundTrails
-            poolRef={groundTrailsPoolRef}
-            isSoftwareGl={isSoftwareGl || quality.reducedParticles}
-            resetNonce={resetNonce}
-          />
-          <battle.MuzzleFlashes
-            poolRef={muzzleFlashPoolRef}
-            resetNonce={resetNonce}
-          />
-          <battle.MissileRibbons
-            poolRef={missileRibbonPoolRef}
-            lightingPreset={lightingPreset}
-            resetNonce={resetNonce}
-          />
-          <battle.ShellCasingsAndDebris
-            casingsPoolRef={casingsPoolRef}
-            debrisPoolRef={debrisPoolRef}
-            waterVfxPoolRef={waterVfxPoolRef}
-            resetNonce={resetNonce}
-          />
-          <battle.Tracers
-            poolRef={tracerPoolRef}
-            resetNonce={resetNonce}
-          />
-          <battle.CuttingLaserBeam
-            combatRef={combatRef}
-            craterPoolRef={craterPoolRef}
-            heatShimmerPoolRef={heatShimmerPoolRef}
-            resetNonce={resetNonce}
-          />
-          <battle.HeatShimmer
-            poolRef={heatShimmerPoolRef}
-            lightingPreset={lightingPreset}
-            resetNonce={resetNonce}
-          />
-        </group>}
+        {ShellCasingMesh && (prepareMech || showCombat) && (
+          <ShellCasingMesh>
+            {(casingMesh, hideEmptyCasings) => showCombat && (
+              <group name="perf:combat">
+                {driveMode || focusedSite
+                  ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+                  : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
+                <battle.CombatActors
+                  combatRef={combatRef}
+                  driveMode={driveMode}
+                  isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+                  waterVfxPoolRef={waterVfxPoolRef}
+                  groundTrailsPoolRef={groundTrailsPoolRef}
+                  muzzleFlashPoolRef={muzzleFlashPoolRef}
+                  missileRibbonPoolRef={missileRibbonPoolRef}
+                  debrisPoolRef={debrisPoolRef}
+                  craterPoolRef={craterPoolRef}
+                  heatShimmerPoolRef={heatShimmerPoolRef}
+                />
+                <battle.WaterEffects
+                  poolRef={waterVfxPoolRef}
+                  lightingPreset={lightingPreset}
+                  isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+                  resetNonce={resetNonce}
+                />
+                <battle.GroundTrails
+                  poolRef={groundTrailsPoolRef}
+                  isSoftwareGl={isSoftwareGl || quality.reducedParticles}
+                  resetNonce={resetNonce}
+                />
+                <battle.MuzzleFlashes
+                  poolRef={muzzleFlashPoolRef}
+                  resetNonce={resetNonce}
+                />
+                <battle.MissileRibbons
+                  poolRef={missileRibbonPoolRef}
+                  lightingPreset={lightingPreset}
+                  resetNonce={resetNonce}
+                />
+                <battle.ShellCasingsAndDebris
+                  casingMesh={casingMesh}
+                  hideEmptyCasings={hideEmptyCasings}
+                  casingsPoolRef={casingsPoolRef}
+                  debrisPoolRef={debrisPoolRef}
+                  waterVfxPoolRef={waterVfxPoolRef}
+                  resetNonce={resetNonce}
+                />
+                <battle.Tracers
+                  poolRef={tracerPoolRef}
+                  resetNonce={resetNonce}
+                />
+                <battle.CuttingLaserBeam
+                  combatRef={combatRef}
+                  craterPoolRef={craterPoolRef}
+                  heatShimmerPoolRef={heatShimmerPoolRef}
+                  resetNonce={resetNonce}
+                />
+                <battle.HeatShimmer
+                  poolRef={heatShimmerPoolRef}
+                  lightingPreset={lightingPreset}
+                  resetNonce={resetNonce}
+                />
+              </group>
+            )}
+          </ShellCasingMesh>
+        )}
 
         <group name="perf:foliage">
         {world && <FoliageAndUnits stage={level} grassMap={grassMap}
