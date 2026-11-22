@@ -2,7 +2,7 @@ import type { WorldAssets } from '../map/worldAssets';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { WorldLodDriver } from '../lod/WorldLodDriver';
 import { effectiveGraphics } from '../lod/adaptiveQuality';
-import type { BattleScene } from './loadBattleScene';
+import { loadPlayerMech, type BattleScene } from './loadBattleScene';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -708,6 +708,7 @@ export interface MapSceneProps {
   focusedSite: InfantrySite | null;
   world: WorldAssets | null;
   battle: BattleScene | null;
+  preparingBattle: boolean;
   grassMap: Uint8Array<ArrayBuffer> | null;
   onTerrainReady: () => void;
   activeSector: SectorId;
@@ -738,6 +739,7 @@ export function MapScene({
   focusedSite,
   world,
   battle,
+  preparingBattle,
   grassMap,
   onTerrainReady,
   activeSector,
@@ -778,6 +780,18 @@ export function MapScene({
   const step = preferences.autoQuality && adaptation.settings === preferences ? adaptation.step : 0;
   const graphics = useMemo(() => effectiveGraphics(preferences, step), [preferences, step]);
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
+  const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
+  const [earlyMech, setEarlyMech] = useState<BattleScene['SovietMech'] | null>(null);
+  useEffect(() => {
+    if (!prepareMech || earlyMech) return;
+    let active = true;
+    // The details loader owns the retry UI if this shared import fails.
+    loadPlayerMech().then(({ SovietMech }) => {
+      if (active) setEarlyMech(() => SovietMech);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [prepareMech, earlyMech]);
+  const PlayerMech = battle?.SovietMech ?? earlyMech;
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const query = useMemo(() => new URLSearchParams(
     typeof window === 'undefined' ? '' : window.location.search,
@@ -957,8 +971,9 @@ export function MapScene({
           />}
         </group>
 
-        {battle && (level >= 6 || battleRequested) && <group name="perf:mech">
-        <battle.SovietMech
+        {PlayerMech && (prepareMech || (battle && (level >= 6 || battleRequested))) && <group name="perf:mech">
+        <PlayerMech
+          prepareOnly={prepareMech}
           aimRef={aimRef}
           driveMode={driveMode}
           paused={paused}
