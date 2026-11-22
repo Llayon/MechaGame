@@ -1,5 +1,6 @@
 import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { useSceneSimulation } from '../SceneSimulation';
+import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -251,6 +252,7 @@ export function CombatActors({
   useEffect(() => {
     sharedGeoms.craterGeom.setAttribute('aDecalState', craterDecalState.attr);
   }, [sharedGeoms, craterDecalState]);
+  const hideEmptyCraters = useEmptyEffectWarmup(craterMeshRef);
 
   const sharedMats = useMemo(() => {
     const darkSteel = new THREE.MeshStandardMaterial({
@@ -1176,6 +1178,7 @@ export function CombatActors({
         count++;
       }
       craterInst.count = count;
+      craterInst.visible = !hideEmptyCraters || count > 0;
       craterInst.instanceMatrix.needsUpdate = true;
       craterDecalState.attr.needsUpdate = true;
       craterPoolRef.current.dirty = false;
@@ -1230,6 +1233,8 @@ export function CombatActors({
       <instancedMesh
         ref={craterMeshRef}
         args={[sharedGeoms.craterGeom, sharedMats.craterMat, MAX_CRATER_DECALS]}
+        count={0}
+        visible={!hideEmptyCraters}
         frustumCulled={false}
         receiveShadow
       />

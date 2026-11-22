@@ -17,8 +17,8 @@ The probe identified the first completed main-scene render containing both visib
 | Control to first detailed ground and roads | 3.730 s | 2.276 s |
 | First detailed ground and roads frame | 1,624 ms | 80 ms |
 | GPU timer on that render | 1,498 ms | 40 ms |
-| Longest frame after control and before the reveal | 825 ms | 837 ms |
-| Longest frame after control through the reveal | 1,624 ms | 837 ms |
+| Longest frame from the first controllable frame up to, excluding, the reveal | 825 ms | 837 ms |
+| Longest frame from the first controllable frame through the reveal | 1,624 ms | 837 ms |
 
 The reveal improved in all eight pairs. Earlier work has a cost. The median largest recorded stage-5 frame was 597 ms on main and 626 ms on the candidate, among runs that observed that stage after control. A separate early streaming frame still took about 0.84 s. These measurements cover one GPU and this startup replay.
 
