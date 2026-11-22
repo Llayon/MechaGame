@@ -4,6 +4,7 @@ import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { useSceneSimulation } from '../SceneSimulation';
+import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
 import { combatAudio } from '../../game/combatAudio';
 import {
   MAX_CASING_INSTANCES,
@@ -199,6 +200,7 @@ export function ShellCasingsAndDebris({
       setup.debrisMat.dispose();
     };
   }, [setup]);
+  const hideEmptyDebris = useEmptyEffectWarmup(debrisMeshRef);
 
   useEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;
@@ -255,6 +257,7 @@ export function ShellCasingsAndDebris({
       }
       if (dPool.dirty || remDebris > 0 || hadActiveDebrisRef.current) {
         syncPoolToInstancedMesh(dPool, dMesh, false, camera);
+        dMesh.visible = !hideEmptyDebris || dMesh.count > 0;
         dPool.dirty = false;
       }
       hadActiveDebrisRef.current = remDebris > 0;
@@ -275,6 +278,7 @@ export function ShellCasingsAndDebris({
       <instancedMesh
         ref={debrisMeshRef}
         name="armor-debris-pool"
+        visible={!hideEmptyDebris}
         count={0}
         args={[setup.debrisGeom, setup.debrisMat, MAX_DEBRIS_INSTANCES]}
         frustumCulled={false}

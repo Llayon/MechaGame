@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
+import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
 import {
   MAX_GROUND_TRAILS,
   computeGroundTrailTransform,
@@ -237,6 +238,7 @@ export function GroundTrails({
       setup.mat.dispose();
     };
   }, [setup]);
+  const hideEmpty = useEmptyEffectWarmup(meshRef);
 
   useEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;
@@ -293,6 +295,7 @@ export function GroundTrails({
     }
 
     mesh.count = rendered;
+    mesh.visible = !hideEmpty || rendered > 0;
     mesh.instanceMatrix.needsUpdate = true;
     pool.dirtyMatrices = false;
     setup.trailDataAttr.needsUpdate = true;
@@ -303,6 +306,7 @@ export function GroundTrails({
     <instancedMesh
       ref={meshRef}
       name="ground-splat-trails"
+      visible={!hideEmpty}
       count={0}
       args={[setup.geom, setup.mat, MAX_GROUND_TRAILS]}
       frustumCulled={false}
