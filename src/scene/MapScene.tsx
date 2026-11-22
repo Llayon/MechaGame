@@ -984,7 +984,10 @@ export function MapScene({
             {world && (waterReady || (!isSoftwareGl && stage >= 5)) && <RiverWater
               data={world.water} isSoftwareGl={isSoftwareGl} visible={waterReady}
             />}
-            {nearReady && world && <TerrainSlab near={nearReady} far={farReady} water={false} tiles={world.terrain} waterDepth={world.water} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />}
+            {world && (nearReady || (!isSoftwareGl && stage >= 5)) && <TerrainSlab
+              nearVisible={nearReady} far={farReady} water={false} tiles={world.terrain} waterDepth={world.water}
+              showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl}
+            />}
           </> : world && (stagedGround ? <OverviewGround tiles={world.terrain} /> : <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />)}
         </group>
 
