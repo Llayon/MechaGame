@@ -32,6 +32,7 @@ export function Structures({
   onSelectSector,
 }: StructuresProps) {
   const { gl } = useThree();
+  const prepareWrecks = stage === 4 && driveMode && !isSoftwareGl && gl.extensions.has('KHR_parallel_shader_compile');
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const helipadTex = useMemo(() => createHelipadTexture(maxAniso), [maxAniso]);
   const corrugatedTex = useMemo(() => createCorrugatedTexture(maxAniso), [maxAniso]);
@@ -68,7 +69,7 @@ export function Structures({
         onSelectSector={onSelectSector}
       />}
       {stage >= 5 && <HorizonLandmarks />}
-      {stage >= 5 && <TitanWrecks />}
+      {(stage >= 5 || prepareWrecks) && <TitanWrecks visible={stage >= 5} />}
       {stage >= 5 && <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
       {stage >= 5 && distantWar && <HorizonWarSystem
         lightingPreset={lightingPreset}

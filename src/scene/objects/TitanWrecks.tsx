@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   TITAN_BREACH_TREES,
@@ -51,7 +52,9 @@ function createMetalPlateBumpTexture(): THREE.CanvasTexture {
  *    soil/grass top-deposition + buried slope-skirt + worn metal tread shader.
  * 2) Curated weathered pine trees growing out of soil-filled hull breaches in 1 InstancedMesh.
  */
-export function TitanWrecks() {
+export function TitanWrecks({ visible }: { visible: boolean }) {
+  const { gl, scene, camera } = useThree();
+  const wrecksRef = useRef<THREE.Group>(null);
   const breachTreeRef = useRef<THREE.InstancedMesh>(null);
 
   const {
@@ -226,6 +229,14 @@ metalnessFactor = mix( metalnessFactor, 0.02, twDirtOverlay );`,
   }, []);
 
   useEffect(() => {
+    if (visible || !wrecksRef.current) return;
+    // Include the tree instance colors and the battle scene's lighting in the compiled variants.
+    void gl.compileAsync(wrecksRef.current, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Titan wreck shader warmup failed', error);
+    });
+  }, [visible, gl, camera, scene]);
+
+  useEffect(() => {
     return () => {
       hullGeometry.dispose();
       bumpTex.dispose();
@@ -236,7 +247,7 @@ metalnessFactor = mix( metalnessFactor, 0.02, twDirtOverlay );`,
   }, [hullGeometry, bumpTex, hullMaterial, treeGeometry, treeMaterial]);
 
   return (
-    <group name="titan-wrecks">
+    <group ref={wrecksRef} name="titan-wrecks" visible={visible}>
       <mesh
         geometry={hullGeometry}
         material={hullMaterial}
