@@ -6,7 +6,7 @@ import { prepareGroundMap } from './scene/terrain/OverviewGround';
 import { prepareCompactGround } from './scene/terrain/CompactGround';
 import { loadLandmarks } from './scene/LandmarkOverview';
 import { mapStartup } from './map/mapStartup';
-import { loadBattleScene, loadPlayerMech } from './scene/loadBattleScene';
+import { loadBattleScene, loadPlayerBattleEntry } from './scene/loadBattleScene';
 import './index.css';
 
 const { baked, streaming } = mapStartup;
@@ -31,7 +31,7 @@ function GameEntry() {
     setDrawn(true);
     // Start the mech transfer at the first overview draw. The details loader
     // awaits the same module and routes failures through the existing retry UI.
-    if (streaming) void loadPlayerMech().catch(() => {});
+    if (streaming) void loadPlayerBattleEntry().catch(() => {});
   }, []);
 
   useEffect(() => {
