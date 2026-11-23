@@ -27,7 +27,7 @@ The candidate began preparing the geometry 259–1,384 ms after control in these
 
 ## Entry-only follow-up
 
-Four more alternating cold pairs ended at the game's control mark. These used the same network and graphics settings, without per-frame or per-draw hooks. The machine continued to run other workloads. None of the eight starts met the pre-launch quiet condition of three recent samples with external CPU at or below 30% and external 3D at or below 8% within the 12-second wait.
+Four more alternating cold pairs ended at the game's control mark. These used the same network and graphics settings, without per-frame or per-draw hooks. The machine continued to run other workloads. The original harness misread Windows CRLF line endings in the load log. Its eight pre-launch quiet flags are unreliable. The elapsed entry measurements came from independent browser marks.
 
 | Pair in execution order | Main, ms (stage) | Candidate, ms (stage) |
 | --- | ---: | ---: |
@@ -39,3 +39,28 @@ Four more alternating cold pairs ended at the game's control mark. These used th
 Median entry time was 5.141 s on main and 5.152 s with preparation. The 199 ms difference in the route series fell to 11 ms in the follow-up. An idle-machine test is still needed to establish entry-time equivalence. The remaining peak on stage 14 merits a separate trace.
 
 Separate browser checks compared the rendered scene after reveal on main, on the candidate, and on the candidate with the parallel compilation extension disabled. The hull and pine geometry attributes and indices, eight tree instance matrices and colors, material program keys, and shadow flags matched across all three. The candidate mounted the hidden group early only with the extension available. All three completed the route without browser errors.
+
+## Entry retest under measured background load
+
+Both the earlier route builds were used again with cold independent Chrome profiles. The entry-only harness used browser performance marks, without WebGL draw timing. The corrected reader trimmed every PDH log line. Before launching Chrome it required at least three valid samples from the last three seconds, all with CPU at or below 30% and external 3D at or below 8%. During click-to-control, a run qualified with median external CPU at or below 30%, maximum sampled external 3D at or below 8% and coverage gaps of at most 1.3 s. CPU medians for the two sides had to be within ten percentage points. The sampler excluded the benchmark browser and its children.
+
+The first six pairs all started in quiet windows. Other GPU activity resumed during at least one run of every pair. In these six pairs, unfiltered entry medians were 5.192 s on main and 4.918 s on the candidate. Further pairs alternated build order and repeated an ineligible side up to four times. The acceptance decision used the load samples alone. [All entry attempts and eligibility](titan-wreck-entry-retest.csv)
+
+Four complete pairs qualified across 29 starts. Entry medians in these pairs were 4.745 s on main and 4.661 s on the candidate. The median of the four within-pair differences was −33 ms. When both builds reached control on stage 4, the differences were −106, +41 and +56 ms. The remaining pair reached control on stage 5 on main and stage 4 on the candidate and differed by −647 ms. This sample shows no consistent entry slowdown. It does not establish an entry speedup.
+
+## Stage 14 trace
+
+The streamed map's stage 14 selects foliage detail level 9. Three additional cold hardware traces timed individual draw submissions and WebGL calls. The table covers the longest frame on stage 14. Object totals sum calls taking at least 3 ms, grouped by the scene path, material key and component-specific color. Program-log waits occur inside those draw calls.
+
+| Milliseconds | Main, driving | Candidate, driving | Candidate, firing route |
+| --- | ---: | ---: | ---: |
+| Complete frame | 1,406 | 1,569 | 1,408 |
+| Inside the scene render | 1,201 | 1,342 | 1,200 |
+| Inside WebGL program info log queries | 1,120 | 1,274 | 1,136 |
+| Canyon waterfalls, including rocks and mist sprites | 476 | 513 | 474 |
+| Flank cover | 297 | 356 | 308 |
+| Hanging vines | 166 | 191 | 178 |
+| Atmospheric mist | 185 | 202 | 171 |
+| Sky birds | 35 | 44 | 36 |
+
+The renderer's program count increased by 11 during the measured frame in all three traces. The largest individual component was CanyonWaterfalls, which submitted its rocks, transparent two-sided curtain, splash and mist together. A targeted next experiment would prepare its materials before the reveal and compare the longest frame across stages 12–16. Wall time in the WebGL calls includes waiting for the driver.
