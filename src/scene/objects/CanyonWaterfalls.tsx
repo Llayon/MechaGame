@@ -1,7 +1,7 @@
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import type { LightingPreset } from '../../map/sectors';
 import { WATER_LEVEL } from '../../map/terrainMath';
 import {
@@ -15,6 +15,7 @@ import { createChiseledRockGeometry } from './rockGeometry';
 import { createMistTexture } from '../textures';
 
 export interface CanyonWaterfallsProps {
+  visible: boolean;
   lightingPreset: LightingPreset;
   showMist: boolean;
   isSoftwareGl: boolean;
@@ -79,10 +80,13 @@ float wfNoise( vec2 p ) {
 `;
 
 export function CanyonWaterfalls({
+  visible,
   lightingPreset,
   showMist,
   isSoftwareGl,
 }: CanyonWaterfallsProps) {
+  const { gl, scene, camera } = useThree();
+  const groupRef = useRef<THREE.Group>(null);
   const timeUniform = useRef({ value: 2.6 });
   const topColorUniform = useRef({ value: new THREE.Color(PRESET_PALETTES.dusk.top) });
   const bottomColorUniform = useRef({ value: new THREE.Color(PRESET_PALETTES.dusk.bottom) });
@@ -312,6 +316,13 @@ if ( diffuseColor.a < 0.015 ) discard;`,
     mesh.computeBoundingSphere();
   }, [rockSpecs]);
 
+  useEffect(() => {
+    if (visible || !groupRef.current) return;
+    void gl.compileAsync(groupRef.current, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Waterfall shader warmup failed', error);
+    });
+  }, [visible, gl, camera, scene]);
+
   // Sync water/foam tinting smoothly to Day / Dusk / Night presets
   useEffect(() => {
     const pal = PRESET_PALETTES[lightingPreset];
@@ -337,7 +348,7 @@ if ( diffuseColor.a < 0.015 ) discard;`,
 
   useFrame((state, delta) => {
     if (paused) return;
-    if (isSoftwareGl) return;
+    if (isSoftwareGl || !visible) return;
     timeUniform.current.value += Math.min(delta, 0.05);
 
     if (showMist && mistGroupRef.current) {
@@ -360,7 +371,7 @@ if ( diffuseColor.a < 0.015 ) discard;`,
   const mistPalette = PRESET_PALETTES[lightingPreset];
 
   return (
-    <group>
+    <group name="canyon-waterfalls" ref={groupRef} visible={visible}>
       {rockSpecs.length > 0 && (
         <instancedMesh
           ref={rockMeshRef}
