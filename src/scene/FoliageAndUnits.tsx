@@ -45,8 +45,8 @@ export function FoliageAndUnits({
   combatRef,
 }: FoliageAndUnitsProps) {
   const gl = useThree(state => state.gl);
-  const waterfallsVisible = stage >= 9;
-  const prepareWaterfalls = stage >= 7 && !waterfallsVisible && driveMode && !isSoftwareGl
+  const coverAndWaterfallsVisible = stage >= 9;
+  const prepareCoverAndWaterfalls = stage >= 7 && !coverAndWaterfallsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
   const simplified = isSoftwareGl || vegetation !== 'full';
   const showDecorativeFoliage = vegetation !== 'minimal';
@@ -73,11 +73,11 @@ export function FoliageAndUnits({
       />}
       {stage >= 8 && <RockOutcrops />}
       {showDecorativeFoliage && stage >= 9 && <HangingVines isSoftwareGl={simplified} />}
-      {stage >= 9 && <FlankCoverZone />}
+      {(coverAndWaterfallsVisible || prepareCoverAndWaterfalls) && <FlankCoverZone visible={coverAndWaterfallsVisible} />}
       {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
       {stage >= 9 && <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />}
-      {(waterfallsVisible || prepareWaterfalls) && <CanyonWaterfalls
-        visible={waterfallsVisible}
+      {(coverAndWaterfallsVisible || prepareCoverAndWaterfalls) && <CanyonWaterfalls
+        visible={coverAndWaterfallsVisible}
         lightingPreset={lightingPreset}
         showMist={mistVisible}
         isSoftwareGl={isSoftwareGl}
