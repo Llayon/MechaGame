@@ -1,0 +1,13 @@
+build,route,pair,click_to_control_ms,before_control_raf_peak_ms,stage5_peak_ms,render_in_stage5_peak_ms,postcontrol_peak_ms,postcontrol_peak_stage,reveal_stage,new_programs_in_stage5_peak,ready_before_first_draw_ms,external_cpu_median_pct,external_3d_peak_pct,refinery_reveal_frame_ms,new_programs_in_reveal_frame
+base,drive,4,4855,1250,656,516,656,5,5,2,,16.2,2.3,656,2
+base,drive,5,4817,1184,677,514,677,5,5,2,,10.0,1.8,677,2
+base,drive,6,4814,1217,680,530,680,5,5,2,,10.7,2.0,680,2
+base,shot,4,4738,1200,667,522,667,5,5,2,,9.1,1.8,667,2
+base,shot,5,4810,1183,686,526,686,5,5,2,,8.6,1.5,686,2
+base,shot,6,4786,1182,679,536,679,5,5,2,,8.2,1.8,679,2
+final,drive,4,4775,1183,149,17,523,10,5,0,898,11.0,2.3,149,0
+final,drive,5,4776,1183,151,19,530,10,5,0,543,9.4,2.0,151,0
+final,drive,6,4916,1183,146,19,518,10,5,0,868,7.3,1.8,146,0
+final,shot,4,4876,1217,149,21,520,10,5,0,866,9.1,1.8,149,0
+final,shot,5,4672,1167,368,357,532,10,5,2,780,8.6,2.2,170,0
+final,shot,6,4865,1167,165,18,582,10,5,0,919,6.6,1.7,165,0

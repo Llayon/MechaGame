@@ -1023,6 +1023,7 @@ export function MapScene({
         <group name="perf:structures">
           {level<4 && <LandmarkMeshes stage={level} select={onSelectSector}/>}
           {(!streamed || level >= 1) && <Structures stage={level} quarryDetails={!streamed || stage >= 4}
+            preparingBattle={preparingBattle}
             splitBridgeBatches={splitBridgeBatches}
             lightingPreset={lightingPreset}
             driveMode={driveMode}

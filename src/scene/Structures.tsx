@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
+import { Group, InstancedMesh, Mesh, MeshStandardMaterial } from 'three';
 import { LightingPreset, SectorId } from '../map/sectors';
 import { createCorrugatedTexture, createHelipadTexture } from './textures';
 import { AirfieldZone } from './zones/AirfieldZone';
@@ -17,6 +18,7 @@ interface StructuresProps {
   splitBridgeBatches: boolean;
   lightingPreset: LightingPreset;
   driveMode: boolean;
+  preparingBattle: boolean;
   distantWar: boolean;
   isSoftwareGl: boolean;
   onSelectSector: (id: SectorId) => void;
@@ -27,15 +29,38 @@ export function Structures({
   splitBridgeBatches,
   lightingPreset,
   driveMode,
+  preparingBattle,
   distantWar,
   isSoftwareGl,
   onSelectSector,
 }: StructuresProps) {
-  const { gl } = useThree();
+  const { gl, camera, scene } = useThree();
+  const refinery = useRef<Group>(null);
+  const prepareRefinery = stage === 2 && (preparingBattle || driveMode) && !isSoftwareGl
+    && gl.extensions.has('KHR_parallel_shader_compile');
   const prepareWrecks = stage === 4 && driveMode && !isSoftwareGl && gl.extensions.has('KHR_parallel_shader_compile');
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const helipadTex = useMemo(() => createHelipadTexture(maxAniso), [maxAniso]);
   const corrugatedTex = useMemo(() => createCorrugatedTexture(maxAniso), [maxAniso]);
+
+  useEffect(() => {
+    if (!prepareRefinery || !refinery.current) return;
+    // StaticStructure has batched the refinery. Warm one wall and roof draw using the corrugated texture.
+    const variants = new Set<string>();
+    for (const child of refinery.current.children) {
+      child.traverseVisible(mesh => {
+        if (!(mesh instanceof Mesh) || mesh instanceof InstancedMesh) return;
+        const material = mesh.material;
+        if (!(material instanceof MeshStandardMaterial) || material.bumpMap !== corrugatedTex) return;
+        const key = material.customProgramCacheKey();
+        if (variants.has(key)) return;
+        variants.add(key);
+        void gl.compileAsync(mesh, camera, scene).catch(error => {
+          if (!gl.getContext().isContextLost()) console.warn('Refinery shader warmup failed', error);
+        });
+      });
+    }
+  }, [prepareRefinery, corrugatedTex, gl, camera, scene]);
 
   useEffect(() => {
     return () => {
@@ -52,10 +77,9 @@ export function Structures({
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
       /></group>}
-      {stage >= 3 && <group name="bake-refinery"><RefineryIslandZone
-        corrugatedTex={corrugatedTex}
-        onSelectSector={onSelectSector}
-      /></group>}
+      {(stage >= 3 || prepareRefinery) && <group name="bake-refinery" ref={refinery} visible={!prepareRefinery}>
+        <RefineryIslandZone corrugatedTex={corrugatedTex} onSelectSector={prepareRefinery ? undefined : onSelectSector} />
+      </group>}
       {stage >= 4 && <group name="bake-citadel"><CitadelZone
         corrugatedTex={corrugatedTex}
         lightingPreset={lightingPreset}
