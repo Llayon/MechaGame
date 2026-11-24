@@ -1,5 +1,9 @@
 # Canyon waterfall reveal during battle entry
 
+## Release check with AgX
+
+Four cold pairs on Radeon 780M compared main at `894893f` with the waterfall change on the same revision. Both used the updated terrain, atmospheric scattering, default AgX and identical baked world assets. The two driving and two firing pairs used the route and settings below. The largest frame on stages 12–16 fell in every pair, with a median of 1,591 ms on main and 989 ms on the candidate. The falls appeared at stage 14 in all eight runs. The median time from click to control was 4.70 s on main and 4.68 s with preparation. The previous entry slowdown did not repeat in this sample. The subsequent Pages fix at `0d28b36` changed the release workflow only. [AgX measurements](waterfall-entry-agx.csv)
+
 The control is main at `9db8bd0`. In the candidate, hardware WebGL with parallel shader compilation prepares the actual waterfall group against the live scene during battle entry. The group stays hidden from foliage detail level 7 through level 8 and appears at level 9. On the streamed route those boundaries are map stages 12 and 14. Water and mist animation starts at reveal. Software rendering, overview mode and renderers without the extension retain the visible mount at level 9.
 
 ## Cold route comparison

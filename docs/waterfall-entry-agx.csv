@@ -1,0 +1,9 @@
+build,route,rep,entry_ms,window_peak_ms,peak_stage,reveal_ms,new_programs,postcontrol_peak_ms,cpu_pct,external_3d_peak_pct,warm_lead_ms
+base,drive,1,5935,1627,14,1627,11,1627,5.4,2.1,
+base,drive,2,4725,1586,14,1586,11,1586,6.3,1.8,
+base,shot,1,4630,1559,14,1559,11,1559,5.2,2.5,
+base,shot,2,4674,1596,14,1596,11,1596,5.9,2.0,
+candidate,drive,1,4664,1065,14,1065,6,1065,11.2,2.3,2865
+candidate,drive,2,4884,991,14,991,6,991,5.6,1.8,2669
+candidate,shot,1,4695,987,14,987,6,987,5.8,2.0,2685
+candidate,shot,2,4625,973,14,973,6,973,5.4,1.8,2615
