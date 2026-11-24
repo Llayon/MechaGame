@@ -11,6 +11,7 @@ import { combatAudio } from '../../game/combatAudio';
 import { createContactShadowTexture } from '../textures';
 import { PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
 import { createPineBatches } from './pineBatches';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import {
   checkFallingTreeCollisions,
   createFallingTreesState,
@@ -430,6 +431,8 @@ export function PineForest({
       if (!gl.getContext().isContextLost()) console.warn('Pine shader warmup failed', error);
     });
   }, [preparing, treeBatches, gl, camera, scene]);
+
+  useMeshShaderWarmup(shrubRef, preparing);
 
   const { paused } = useSceneSimulation();
 
