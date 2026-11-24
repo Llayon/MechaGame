@@ -45,8 +45,9 @@ export function FoliageAndUnits({
   combatRef,
 }: FoliageAndUnitsProps) {
   const gl = useThree(state => state.gl);
-  const prepareGrass = stage >= 6 && stage < 8 && driveMode && !isSoftwareGl
+  const prepareFoliage = stage >= 6 && stage < 8 && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
+  const preparePines = stage < 7 && prepareFoliage;
   const coverAndWaterfallsVisible = stage >= 9;
   const prepareCoverAndWaterfalls = stage >= 7 && !coverAndWaterfallsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
@@ -57,7 +58,8 @@ export function FoliageAndUnits({
   // Only decorative grass, small bushes and vines are optional.
   return (
     <group>
-      {stage >= 7 && <PineForest
+      {(stage >= 7 || preparePines) && <PineForest
+        preparing={preparePines}
         sunPos={sunPos}
         isSoftwareGl={simplified}
         driveMode={driveMode}
@@ -65,10 +67,10 @@ export function FoliageAndUnits({
         combatRef={combatRef}
       />}
       {showDecorativeFoliage && stage >= 8 && <GrassBushAccents isSoftwareGl={simplified} />}
-      {showDecorativeFoliage && (stage >= 8 || prepareGrass) && grassMap && <GrassField
+      {showDecorativeFoliage && (stage >= 8 || prepareFoliage) && grassMap && <GrassField
         data={grassMap}
         driveMode={driveMode}
-        preparing={prepareGrass}
+        preparing={prepareFoliage}
         mechPoseRef={mechPoseRef}
         lightingPreset={lightingPreset}
         sunPos={sunPos}
