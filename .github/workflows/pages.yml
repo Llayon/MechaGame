@@ -7,20 +7,18 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: github-pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Verify, build and publish
+  build:
+    name: Verify and upload site
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact_id }}
+      artifact_name: ${{ steps.upload_name.outputs.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,12 +34,49 @@ jobs:
         run: bun run build
         env:
           GITHUB_PAGES: 'true'
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - name: Name this build
+        id: upload_name
+        run: echo "name=github-pages-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
       - name: Upload dist
+        id: upload
         uses: actions/upload-pages-artifact@v4
         with:
+          name: ${{ steps.upload_name.outputs.name }}
           path: dist
+
+  deploy:
+    name: Publish verified site
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Wait for the uploaded artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+        run: |
+          : "${ARTIFACT_ID:?Missing artifact ID}" "${ARTIFACT_NAME:?Missing artifact name}"
+          for attempt in {1..7}; do
+            if id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$ARTIFACT_NAME" \
+                --jq '.artifacts[] | select(.expired == false) | .id') && [[ "$id" == "$ARTIFACT_ID" ]]; then
+              echo "Found $ARTIFACT_NAME ($id) in run $GITHUB_RUN_ID"
+              exit 0
+            fi
+            if (( attempt < 7 )); then sleep 5; fi
+          done
+          echo "::error::Artifact $ARTIFACT_NAME ($ARTIFACT_ID) was not visible in run $GITHUB_RUN_ID after 30 seconds"
+          exit 1
       - name: Deploy site
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}
