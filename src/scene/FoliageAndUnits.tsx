@@ -48,8 +48,8 @@ export function FoliageAndUnits({
   const prepareFoliage = stage >= 6 && stage < 8 && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
   const preparePines = stage < 7 && prepareFoliage;
-  const coverAndWaterfallsVisible = stage >= 9;
-  const prepareCoverAndWaterfalls = stage >= 7 && !coverAndWaterfallsVisible && driveMode && !isSoftwareGl
+  const lateDetailsVisible = stage >= 9;
+  const prepareLateDetails = stage >= 7 && !lateDetailsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
   const simplified = isSoftwareGl || vegetation !== 'full';
   const showDecorativeFoliage = vegetation !== 'minimal';
@@ -77,12 +77,15 @@ export function FoliageAndUnits({
         isSoftwareGl={simplified}
       />}
       {stage >= 8 && <RockOutcrops />}
-      {showDecorativeFoliage && stage >= 9 && <HangingVines isSoftwareGl={simplified} />}
-      {(coverAndWaterfallsVisible || prepareCoverAndWaterfalls) && <FlankCoverZone visible={coverAndWaterfallsVisible} />}
+      {showDecorativeFoliage && (lateDetailsVisible || prepareLateDetails) && <HangingVines
+        visible={lateDetailsVisible}
+        isSoftwareGl={simplified}
+      />}
+      {(lateDetailsVisible || prepareLateDetails) && <FlankCoverZone visible={lateDetailsVisible} />}
       {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
       {stage >= 9 && <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />}
-      {(coverAndWaterfallsVisible || prepareCoverAndWaterfalls) && <CanyonWaterfalls
-        visible={coverAndWaterfallsVisible}
+      {(lateDetailsVisible || prepareLateDetails) && <CanyonWaterfalls
+        visible={lateDetailsVisible}
         lightingPreset={lightingPreset}
         showMist={mistVisible}
         isSoftwareGl={isSoftwareGl}
