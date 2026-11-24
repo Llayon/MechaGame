@@ -18,7 +18,7 @@ import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
 
 export interface RefineryIslandZoneProps {
   corrugatedTex: THREE.Texture;
-  onSelectSector: (id: SectorId) => void;
+  onSelectSector?: (id: SectorId) => void;
 }
 
 export function RefineryIslandZone({
@@ -37,10 +37,10 @@ export function RefineryIslandZone({
   return (
     <StaticStructure
       position={[ISLAND_CENTER_X, islandY, ISLAND_CENTER_Z]}
-      onClick={(e) => {
+      onClick={onSelectSector ? (e) => {
         e.stopPropagation();
         onSelectSector('refinery');
-      }}
+      } : undefined}
     >
       {/* Expanded 230 m diameter concrete industrial deck slab (top at +0.70 above islandY) */}
       <mesh position={[0, 0.25, 0]} material={islandConcrete} receiveShadow castShadow>
