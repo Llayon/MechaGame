@@ -1,5 +1,8 @@
 import { StaticStructure } from '../objects/StaticStructure';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useThree } from '@react-three/fiber';
+import { Group, InstancedMesh, Mesh } from 'three';
+import { rockyLedgeGeometry } from '../../map/rockyFlankLedge';
 import {
   CITADEL_CENTER_X,
   CITADEL_CENTER_Z,
@@ -54,7 +57,30 @@ export {
  * bend industrial pier & rocky ledges, flank powerline corridors, rocky
  * water-ramp guides, and mountain jump-jet terrace cover) across contested flanks.
  */
-export function FlankCoverZone() {
+export function FlankCoverZone({ visible }: { visible: boolean }) {
+  const { gl, scene, camera } = useThree();
+  const root = useRef<Group>(null);
+
+  useEffect(() => {
+    if (visible || !root.current) return;
+    // StaticStructure has built its batches in a layout effect. Compile one actual draw
+    // for each cold variant, skipping the original meshes that batching hides.
+    const draws = root.current.getObjectByName('flank-cover')?.children;
+    if (!draws) return;
+    const ledge = draws.find(o => o.visible && o instanceof Mesh && o.geometry === rockyLedgeGeometry);
+    const rocks = draws.find(o => o.visible && o instanceof InstancedMesh && o.material.toneMapped
+      && o.geometry.hasAttribute('aAlbedoRough') && o.geometry.type === 'DodecahedronGeometry');
+    for (const draw of [ledge, rocks]) {
+      if (draw) void gl.compileAsync(draw, camera, scene).catch(error => {
+        if (!gl.getContext().isContextLost()) console.warn('Flank cover shader warmup failed', error);
+      });
+    }
+  }, [visible, gl, scene, camera]);
+
+  return <group ref={root} visible={visible}><FlankCoverStructures /></group>;
+}
+
+function FlankCoverStructures() {
   const bunkers = useMemo(
     () =>
       BUNKER_COORDS.map((b) => ({
