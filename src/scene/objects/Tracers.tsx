@@ -80,7 +80,7 @@ function createTracerMaterial(): THREE.ShaderMaterial {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     fog: false,
-    toneMapped: false,
+    toneMapped: true,
     side: THREE.DoubleSide,
     vertexShader: /* glsl */ `
 attribute vec3 aTracerState;
@@ -125,11 +125,14 @@ void main() {
   float alpha = clamp( widthEnv * tailFade * noseCap * lifeFade * 0.95, 0.0, 1.0 );
   if ( alpha < 0.012 ) discard;
 
-  vec3 hotCore = vec3( 1.0, 0.98, 0.88 );
-  vec3 col = mix( vTracerColor, hotCore, clamp( core * 0.85, 0.0, 1.0 ) );
-  float boost = isRicochet > 0.5 ? 2.1 : 1.7;
+  vec3 linearChroma = pow( max( vTracerColor, vec3( 0.0 ) ), vec3( 1.6 ) );
+  vec3 hotCore = vec3( 1.5, 1.38, 1.14 );
+  vec3 col = mix( linearChroma * 1.4, hotCore, clamp( core * 0.88, 0.0, 1.0 ) );
+  float boost = ( isRicochet > 0.5 ? 2.45 : 1.95 ) * ( 1.0 + core * 1.45 );
 
   gl_FragColor = vec4( col * boost * alpha, alpha );
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }
 `,
   });

@@ -127,7 +127,7 @@ function createMuzzleFlashMaterial(): THREE.ShaderMaterial {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     fog: false,
-    toneMapped: false,
+    toneMapped: true,
     side: THREE.DoubleSide,
     vertexShader: /* glsl */ `
 attribute float aIsCrown;
@@ -207,11 +207,15 @@ void main() {
   float alpha = shape * env * 0.95;
   if ( alpha < 0.012 ) discard;
 
-  vec3 whiteHot = vec3( 1.0, 0.98, 0.90 );
+  vec3 linearChroma = pow( max( vFlashColor, vec3( 0.0 ) ), vec3( 1.65 ) );
+  vec3 whiteHot = vec3( 1.45, 1.36, 1.16 );
   float coolShift = smoothstep( 0.0, 0.55, life );
-  vec3 col = mix( whiteHot, vFlashColor, coolShift * ( 1.0 - hotCore * 0.65 ) );
+  vec3 col = mix( whiteHot, linearChroma * 1.45, coolShift * ( 1.0 - hotCore * 0.72 ) );
+  float hdrRadiance = intensity * ( 1.15 + hotCore * 3.25 );
 
-  gl_FragColor = vec4( col * intensity * ( 0.85 + hotCore * 1.15 ) * alpha, alpha );
+  gl_FragColor = vec4( col * hdrRadiance * alpha, alpha );
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }
 `,
   });

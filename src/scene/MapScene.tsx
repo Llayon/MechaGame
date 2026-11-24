@@ -28,7 +28,12 @@ import { BRIDGE_SHADOW_LAYER } from './objects/bridgeBatches';
 import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
-import { installHeightFogShader } from './heightFog';
+import { installHeightFogShader, syncHeightFogScatter } from './heightFog';
+import {
+  getToneMappingExposure,
+  parseToneMappingMode,
+  type ToneMappingMode,
+} from './atmosphereToneMapping';
 import type { MechDriveInput } from './objects/MechState';
 import { DropshipFlyby } from './objects/DropshipFlyby';
 import { HologramSigns } from './objects/HologramSigns';
@@ -101,11 +106,6 @@ interface LightingConfig {
   bounceIntensity: number;
 }
 
-const TONE_EXPOSURE: Record<LightingPreset, number> = {
-  day: 1.14,
-  dusk: 0.92,
-  night: 0.92,
-};
 
 const LIGHTING_CONFIGS: Record<LightingPreset, LightingConfig> = {
   day: {
@@ -226,6 +226,7 @@ interface CameraRigProps {
   sunLightRef: React.RefObject<THREE.DirectionalLight | null>;
   sunPos: readonly [number, number, number];
   shadowMapSize: number;
+  toneMappingMode: ToneMappingMode;
 }
 
 function CameraRig({
@@ -244,6 +245,7 @@ function CameraRig({
   sunLightRef,
   sunPos,
   shadowMapSize,
+  toneMappingMode,
 }: CameraRigProps) {
   const { camera, scene, gl, invalidate, size } = useThree();
   useLayoutEffect(() => {
@@ -258,9 +260,17 @@ function CameraRig({
   const lastTrackedMechPos = useRef(new THREE.Vector3());
 
   useEffect(() => {
-    gl.toneMappingExposure = TONE_EXPOSURE[lightingPreset];
+    gl.toneMapping =
+      toneMappingMode === 'aces'
+        ? THREE.ACESFilmicToneMapping
+        : THREE.AgXToneMapping;
+    gl.toneMappingExposure = getToneMappingExposure(
+      toneMappingMode,
+      lightingPreset,
+    );
+    syncHeightFogScatter(lightingPreset, sunPos);
     invalidate();
-  }, [gl, lightingPreset, invalidate]);
+  }, [gl, toneMappingMode, lightingPreset, sunPos, invalidate]);
 
   useEffect(() => {
     const light = sunLightRef.current;
@@ -833,7 +843,15 @@ export function MapScene({
   const benchmarkContinuousFrames = query.get('benchmark') === '1';
   const splitBridgeBatches = query.get('bridgeCells') === '96';
   const halfRateShadows = preferences.preset === 'balanced' && query.get('shadowCadence') === '2';
+  const toneMappingMode = useMemo(
+    () =>
+      parseToneMappingMode(
+        typeof window === 'undefined' ? '' : window.location.search,
+      ),
+    [],
+  );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
+  syncHeightFogScatter(lightingPreset, lightCfg.keyPos);
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
   const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);
@@ -857,6 +875,7 @@ export function MapScene({
       data-landmark-stage={level}
       data-terrain-stage={stage}
       data-lighting={lightingPreset}
+      data-tone-mapping={toneMappingMode}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
       data-adaptive-step={activeAdaptation.cascadeStep}
@@ -888,8 +907,14 @@ export function MapScene({
         gl={{
           antialias: !isSoftwareGl,
           powerPreference: 'high-performance',
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 0.92,
+          toneMapping:
+            toneMappingMode === 'aces'
+              ? THREE.ACESFilmicToneMapping
+              : THREE.AgXToneMapping,
+          toneMappingExposure: getToneMappingExposure(
+            toneMappingMode,
+            lightingPreset,
+          ),
         }}
         onCreated={({ gl, camera, raycaster, scene }) => {
           performance.mark('canvas-created');
@@ -979,6 +1004,7 @@ export function MapScene({
           sunLightRef={sunLightRef}
           sunPos={lightCfg.keyPos}
           shadowMapSize={shadowMapSize}
+          toneMappingMode={toneMappingMode}
         />
 
         <group name="perf:terrain">
