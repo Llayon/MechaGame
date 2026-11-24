@@ -1,4 +1,5 @@
 import { useSceneSimulation } from '../SceneSimulation';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -15,6 +16,7 @@ import {
 } from '../../map/windTurbines';
 
 export interface WindTurbinesProps {
+  visible: boolean;
   lightingPreset: LightingPreset;
   isSoftwareGl: boolean;
 }
@@ -51,7 +53,7 @@ interface CachedTurbineRig {
  * Rendered in 3 batched InstancedMesh Draw Calls (towers/nacelles, rotating 3-blade hubs,
  * and pulsing aviation obstruction beacons) with zero shadow-pass overhead.
  */
-export function WindTurbines({ lightingPreset, isSoftwareGl }: WindTurbinesProps) {
+export function WindTurbines({ visible, lightingPreset, isSoftwareGl }: WindTurbinesProps) {
   const towerMeshRef = useRef<THREE.InstancedMesh>(null);
   const rotorMeshRef = useRef<THREE.InstancedMesh>(null);
   const beaconMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -168,6 +170,9 @@ export function WindTurbines({ lightingPreset, isSoftwareGl }: WindTurbinesProps
     if (beaconMesh.instanceColor) beaconMesh.instanceColor.needsUpdate = true;
   }, [turbines, lightingPreset]);
 
+  // Towers and rotors share the instanced, flat-shaded program.
+  useMeshShaderWarmup(towerMeshRef, !visible);
+
   useEffect(() => {
     return () => {
       towerGeo.dispose();
@@ -183,7 +188,7 @@ export function WindTurbines({ lightingPreset, isSoftwareGl }: WindTurbinesProps
 
   useFrame((_, delta) => {
     if (paused) return;
-    if (isSoftwareGl) return;
+    if (!visible || isSoftwareGl) return;
     const rotorMesh = rotorMeshRef.current;
     const beaconMesh = beaconMeshRef.current;
     const rigs = rigsRef.current;
@@ -223,7 +228,7 @@ export function WindTurbines({ lightingPreset, isSoftwareGl }: WindTurbinesProps
   });
 
   return (
-    <group>
+    <group visible={visible}>
       <instancedMesh
         ref={towerMeshRef}
         args={[towerGeo, towerMat, turbines.length]}

@@ -38,7 +38,8 @@ export function Structures({
   const refinery = useRef<Group>(null);
   const prepareRefinery = stage === 2 && (preparingBattle || driveMode) && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
-  const prepareWrecks = stage === 4 && driveMode && !isSoftwareGl && gl.extensions.has('KHR_parallel_shader_compile');
+  const horizonVisible = stage >= 5;
+  const prepareHorizon = stage === 4 && driveMode && !isSoftwareGl && gl.extensions.has('KHR_parallel_shader_compile');
   const maxAniso = useMemo(() => gl.capabilities.getMaxAnisotropy(), [gl]);
   const helipadTex = useMemo(() => createHelipadTexture(maxAniso), [maxAniso]);
   const corrugatedTex = useMemo(() => createCorrugatedTexture(maxAniso), [maxAniso]);
@@ -92,9 +93,11 @@ export function Structures({
         isSoftwareGl={isSoftwareGl}
         onSelectSector={onSelectSector}
       />}
-      {stage >= 5 && <HorizonLandmarks />}
-      {(stage >= 5 || prepareWrecks) && <TitanWrecks visible={stage >= 5} />}
-      {stage >= 5 && <WindTurbines lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl} />}
+      {(horizonVisible || prepareHorizon) && <HorizonLandmarks visible={horizonVisible} />}
+      {(horizonVisible || prepareHorizon) && <TitanWrecks visible={horizonVisible} />}
+      {(horizonVisible || prepareHorizon) && <WindTurbines
+        visible={horizonVisible} lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl}
+      />}
       {stage >= 5 && distantWar && <HorizonWarSystem
         lightingPreset={lightingPreset}
         driveMode={driveMode}

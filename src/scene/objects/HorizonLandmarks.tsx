@@ -1,12 +1,15 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { createHorizonLandmarksGeometry } from '../../map/horizonLandmarks';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 
 /**
  * Distant "Old World" horizon silhouettes (broken orbital spire, slumped colossus frame,
  * and collapsed canyon viaduct) placed outside the playable perimeter in 1 merged Draw Call.
  */
-export function HorizonLandmarks() {
+export function HorizonLandmarks({ visible }: { visible: boolean }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  useMeshShaderWarmup(mesh, !visible);
   const geometry = useMemo(() => createHorizonLandmarksGeometry(), []);
 
   const material = useMemo(
@@ -30,6 +33,8 @@ export function HorizonLandmarks() {
 
   return (
     <mesh
+      ref={mesh}
+      visible={visible}
       geometry={geometry}
       material={material}
       castShadow={false}
