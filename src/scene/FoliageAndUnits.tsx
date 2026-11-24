@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import { useThree } from '@react-three/fiber';
 import { PineForest } from './objects/PineForest';
 import { GrassField } from './objects/GrassField';
 import { GrassBushAccents } from './objects/GrassBushAccents';
@@ -43,6 +44,10 @@ export function FoliageAndUnits({
   mechPoseRef,
   combatRef,
 }: FoliageAndUnitsProps) {
+  const gl = useThree(state => state.gl);
+  const waterfallsVisible = stage >= 9;
+  const prepareWaterfalls = stage >= 7 && !waterfallsVisible && driveMode && !isSoftwareGl
+    && gl.extensions.has('KHR_parallel_shader_compile');
   const simplified = isSoftwareGl || vegetation !== 'full';
   const showDecorativeFoliage = vegetation !== 'minimal';
   const mistVisible = showMist && atmosphere !== 'off';
@@ -71,7 +76,8 @@ export function FoliageAndUnits({
       {stage >= 9 && <FlankCoverZone />}
       {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
       {stage >= 9 && <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />}
-      {stage >= 9 && <CanyonWaterfalls
+      {(waterfallsVisible || prepareWaterfalls) && <CanyonWaterfalls
+        visible={waterfallsVisible}
         lightingPreset={lightingPreset}
         showMist={mistVisible}
         isSoftwareGl={isSoftwareGl}
