@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
-import { worldAssetsPlugin } from './scripts/worldAssetsPlugin';
+import { worldAssetsPlugin } from './scripts/worldAssetsPlugin.ts';
 
 export default defineConfig(() => {
   return {
@@ -13,6 +13,9 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
       },
+    },
+    optimizeDeps: {
+      entries: ['index.html'],
     },
     server: {
       allowedHosts: true as const,

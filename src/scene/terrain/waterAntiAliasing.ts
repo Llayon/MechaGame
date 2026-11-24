@@ -39,10 +39,10 @@ export const WATER_AA_CONFIG = Object.freeze({
   clearcoatNormalDampStrength: 0.68,
 
   /** Nyquist attenuation for procedural micro-foam noise (freq 2.15) & surf sine wavelets. */
-  microFoamMin: 0.22,
-  microFoamMax: 0.90,
-  surfWaveMin: 0.42,
-  surfWaveMax: 2.05,
+  microFoamMin: 0.12,
+  microFoamMax: 0.42,
+  surfWaveMin: 0.28,
+  surfWaveMax: 1.25,
 
   /** Dense shoreline/pier foam target roughness (preserved above AA satin band). */
   foamRoughness: 0.84,

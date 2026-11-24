@@ -28,7 +28,7 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v6';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v7';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
@@ -149,11 +149,18 @@ float terrNY = clamp( terrN.y, 0.0, 1.0 );
 float terrSlopeDeg = acos( terrNY ) * 57.29578;
 float terrSlopeTan = sqrt( max( 0.0, 1.0 - terrNY * terrNY ) ) / max( 0.18, terrNY );
 
+vec2 terrWorldFootprint = fwidth( vTerrWorldPos.xz );
+float terrPixelSize = max( terrWorldFootprint.x, terrWorldFootprint.y );
+float terrMicroWeight = 1.0 - smoothstep( 0.05, 0.18, terrPixelSize );
+float terrFinePebWeight = 1.0 - smoothstep( 0.04, 0.14, terrPixelSize );
+float terrCoarsePebWeight = 1.0 - smoothstep( 0.09, 0.30, terrPixelSize );
+
 float terrMacro = terrFbm3( vTerrWorldPos.xz * 0.065 + vec2( 3.1, -2.4 ) );
 float terrMid = terrFbm2( vTerrWorldPos.xz * 0.26 + vec2( -5.2, 7.8 ) );
 float terrFine = terrNoise( vTerrWorldPos.xz * 1.25 + vec2( 1.7, 4.3 ) );
-float terrMicro = terrNoise( vTerrWorldPos.xz * 3.4 - vec2( 8.1, 2.9 ) );
-float terrDetailFade = 1.0 - smoothstep( 14.0, 42.0, length( vViewPosition ) );
+float terrMicroRaw = terrMicroWeight > 0.001 ? terrNoise( vTerrWorldPos.xz * 3.4 - vec2( 8.1, 2.9 ) ) : 0.5;
+float terrMicro = mix( 0.5, terrMicroRaw, terrMicroWeight );
+float terrDetailFade = ( 1.0 - smoothstep( 14.0, 42.0, length( vViewPosition ) ) ) * ( 1.0 - smoothstep( 0.02, 0.08, terrPixelSize ) );
 float terrDetailGrit = 0.5;
 if ( terrDetailFade > 0.001 ) {
   terrDetailGrit = puddleNoise( vTerrWorldPos.xz * 7.5 );
@@ -281,10 +288,14 @@ float cliffWetLimit = 1.0 - smoothstep( 38.0, 56.0, terrSlopeDeg );
 float shoreBand = ( 1.0 - smoothstep( 4.8, 8.2, distFromWaterM ) ) * terrRiverVicinity * cliffWetLimit * ( 1.0 - terrManmade );
 float underWaterMask = ( 1.0 - smoothstep( -0.45, 0.15, vTerrWorldPos.y ) ) * terrRiverVicinity * ( 1.0 - terrManmade );
 
-vec2 pebCoarse = terrPebbleCell( vTerrWorldPos.xz * 1.45 );
-vec2 pebFine = terrPebbleCell( vTerrWorldPos.xz * 3.6 + vec2( 11.4, -7.2 ) );
-float pebDome = max( pebCoarse.x, pebFine.x * 0.76 );
-float pebSpec = smoothstep( 0.14, 0.62, pebDome );
+vec2 pebCoarseRaw = terrCoarsePebWeight > 0.001 ? terrPebbleCell( vTerrWorldPos.xz * 1.45 ) : vec2( 0.26, 0.5 );
+vec2 pebFineRaw = terrFinePebWeight > 0.001 ? terrPebbleCell( vTerrWorldPos.xz * 3.6 + vec2( 11.4, -7.2 ) ) : vec2( 0.22, 0.5 );
+float pebRampCalm = mix( 1.0, 0.35, terrShoalRamp );
+float pebCoarseDome = mix( 0.26, pebCoarseRaw.x, terrCoarsePebWeight * pebRampCalm );
+float pebCoarseId = mix( 0.5, pebCoarseRaw.y, terrCoarsePebWeight * pebRampCalm );
+float pebFineDome = mix( 0.22, pebFineRaw.x, terrFinePebWeight * pebRampCalm );
+float pebDome = max( pebCoarseDome, pebFineDome * 0.76 );
+float pebSpec = smoothstep( 0.14, 0.62, pebDome ) * mix( 0.45, 1.0, terrCoarsePebWeight );
 
 vec3 colDarkSand = terrSrgb2Lin( vec3( 0.195, 0.175, 0.155 ) );
 vec3 colWetSand = terrSrgb2Lin( vec3( 0.145, 0.132, 0.118 ) );
@@ -292,12 +303,12 @@ vec3 colPebbleCool = terrSrgb2Lin( vec3( 0.340, 0.365, 0.390 ) );
 vec3 colPebbleWarm = terrSrgb2Lin( vec3( 0.435, 0.390, 0.330 ) );
 vec3 colDampGravel = terrSrgb2Lin( vec3( 0.365, 0.330, 0.285 ) );
 
-vec3 pebbleTint = mix( colPebbleCool, colPebbleWarm, pebCoarse.y );
+vec3 pebbleTint = mix( colPebbleCool, colPebbleWarm, pebCoarseId );
 float pebSandBlend = terrHeightBlend( 0.28, pebDome, pebSpec * 0.84, 0.65 );
 vec3 shoreMat = mix( colDarkSand, pebbleTint, pebSandBlend );
 shoreMat = mix( shoreMat, colDampGravel, smoothstep( 4.4, 7.8, distFromWaterM ) * 0.48 );
 float waterMoisture = ( 1.0 - smoothstep( 0.6, 5.8, distFromWaterM ) ) * smoothstep( -0.9, 0.05, vTerrWorldPos.y );
-shoreMat = mix( shoreMat, colWetSand * ( 0.78 + pebSpec * 0.65 ), waterMoisture * 0.56 );
+shoreMat = mix( shoreMat, colWetSand * ( 0.78 + pebSpec * 0.42 * terrCoarsePebWeight ), waterMoisture * 0.56 );
 
 // Apply riverbank wet pebble & dark sand strip via height-based pebble emergence
 float effectiveShore = clamp( max( shoreBand, underWaterMask * 0.55 ), 0.0, 1.0 );
@@ -342,11 +353,11 @@ float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - 
 float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );
 float terrMicroHeight =
   strataLedge * terrRockBlend * 0.58 +
-  pebDome * effectiveShore * 0.98 +
+  pebDome * effectiveShore * 0.88 * terrCoarsePebWeight * pebRampCalm +
   ( terrMicro - 0.5 ) * terrGrassWeight * 0.35 +
   ( terrDetailGrit - 0.5 ) * terrDetailFade * ( 1.0 - terrPuddleWater ) * 0.24;
 float terrMicroStrength =
-  mix( 0.12, 0.30, clamp( max( terrRockBlend * 0.85, effectiveShore ), 0.0, 1.0 ) ) *
+  mix( 0.12, 0.30, clamp( max( terrRockBlend * 0.85, effectiveShore * terrCoarsePebWeight * pebRampCalm ), 0.0, 1.0 ) ) *
   ( 1.0 - terrManmade * 0.55 ) *
   ( 1.0 - terrPuddleWater ) *
   clamp( 1.0 - length( vViewPosition ) / 480.0, 0.18, 1.0 );`,
@@ -358,7 +369,8 @@ float terrTargetRough = 0.93;
 terrTargetRough = mix( terrTargetRough, 0.84, terrRockBlend );
 terrTargetRough = mix( terrTargetRough, 0.86, terrQuarry * ( 1.0 - terrRockBlend ) );
 terrTargetRough = mix( terrTargetRough, 0.78, effectiveShore );
-terrTargetRough = mix( terrTargetRough, 0.34, terrWetness );
+float terrWetRough = mix( 0.34, 0.58, smoothstep( 0.08, 0.36, terrPixelSize ) );
+terrTargetRough = mix( terrTargetRough, terrWetRough, terrWetness );
 terrTargetRough = mix( terrTargetRough, 0.82, terrManmade );
 terrTargetRough = mix( terrTargetRough, 0.62, terrPuddleWetSoil );
 terrTargetRough = mix( terrTargetRough, 0.045, terrPuddleWater );
