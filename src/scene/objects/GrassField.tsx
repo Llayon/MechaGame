@@ -2,7 +2,7 @@ import { readWorldLod } from '../../lod/worldLod';
 import { createGrassBands } from './grassBands';
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { LightingPreset } from '../../map/sectors';
 import type { MechTelemetrySnapshot } from '../../map/mechKinematics';
@@ -26,6 +26,7 @@ const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
 export interface GrassFieldProps {
   data: Uint8Array<ArrayBuffer>;
   driveMode: boolean;
+  preparing: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
   sunPos: readonly [number, number, number];
@@ -35,6 +36,7 @@ export interface GrassFieldProps {
 interface GrassRuntimeProps {
   data: Uint8Array<ArrayBuffer>;
   visible: boolean;
+  preparing: boolean;
   mechPoseRef: React.MutableRefObject<MechTelemetrySnapshot>;
   lightingPreset: LightingPreset;
   sunPos: readonly [number, number, number];
@@ -44,6 +46,7 @@ interface GrassRuntimeProps {
 function GrassFieldMesh({
   data,
   visible,
+  preparing,
   mechPoseRef,
   lightingPreset,
   sunPos,
@@ -51,6 +54,8 @@ function GrassFieldMesh({
 }: GrassRuntimeProps) {
   const patchRadius = isSoftwareGl ? GRASS_PATCH_RADIUS_SW : GRASS_PATCH_RADIUS_GPU;
   const patchSize = patchRadius * 2;
+  const firstBand = useRef<THREE.Mesh>(null);
+  const { gl, camera, scene } = useThree();
 
   const uniformsRef = useRef({
     uTime: { value: 0.75 },
@@ -431,6 +436,14 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
   useEffect(() => () => material.dispose(), [material]);
   useEffect(() => () => terrainMap.dispose(), [terrainMap]);
 
+  useEffect(() => {
+    if (!preparing || !firstBand.current) return;
+    // All three distance bands share the same material and shader variant.
+    void gl.compileAsync(firstBand.current, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Grass shader warmup failed', error);
+    });
+  }, [preparing, gl, camera, scene, bands, material]);
+
   const { paused } = useSceneSimulation();
 
   useFrame(({ camera }, delta) => {
@@ -458,7 +471,7 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
   return (
     <group visible={visible}>
       {bands.geometries.map((geometry, level) => (
-        <mesh key={level} geometry={geometry} material={material}
+        <mesh key={level} ref={level === 0 ? firstBand : undefined} geometry={geometry} material={material}
           userData={{ lodLevel: level }} receiveShadow={!isSoftwareGl} frustumCulled={false} />
       ))}
     </group>
@@ -472,6 +485,7 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
 export function GrassField({
   data,
   driveMode,
+  preparing,
   mechPoseRef,
   lightingPreset,
   sunPos,
@@ -490,7 +504,8 @@ export function GrassField({
   return (
     <GrassFieldMesh
       data={data}
-      visible={driveMode}
+      visible={driveMode && !preparing}
+      preparing={preparing}
       mechPoseRef={mechPoseRef}
       lightingPreset={lightingPreset}
       sunPos={sunPos}

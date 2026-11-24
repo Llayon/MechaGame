@@ -45,6 +45,8 @@ export function FoliageAndUnits({
   combatRef,
 }: FoliageAndUnitsProps) {
   const gl = useThree(state => state.gl);
+  const prepareGrass = stage >= 6 && stage < 8 && driveMode && !isSoftwareGl
+    && gl.extensions.has('KHR_parallel_shader_compile');
   const coverAndWaterfallsVisible = stage >= 9;
   const prepareCoverAndWaterfalls = stage >= 7 && !coverAndWaterfallsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
@@ -63,9 +65,10 @@ export function FoliageAndUnits({
         combatRef={combatRef}
       />}
       {showDecorativeFoliage && stage >= 8 && <GrassBushAccents isSoftwareGl={simplified} />}
-      {showDecorativeFoliage && stage >= 8 && grassMap && <GrassField
+      {showDecorativeFoliage && (stage >= 8 || prepareGrass) && grassMap && <GrassField
         data={grassMap}
         driveMode={driveMode}
+        preparing={prepareGrass}
         mechPoseRef={mechPoseRef}
         lightingPreset={lightingPreset}
         sunPos={sunPos}
