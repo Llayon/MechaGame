@@ -1,7 +1,7 @@
 import { useSceneSimulation } from '../SceneSimulation';
 import type * as React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getAnalyticalTerrainNormal, getTerrainHeight } from '../../map/terrainMath';
 import { generatePineForestData } from '../../map/worldStructures';
@@ -22,6 +22,7 @@ import {
 } from './fallingTrees';
 
 export interface PineForestProps {
+  preparing?: boolean;
   isSoftwareGl?: boolean;
   sunPos: readonly [number, number, number];
   driveMode?: boolean;
@@ -112,12 +113,14 @@ function injectTreeWindSway(
 }
 
 export function PineForest({
+  preparing = false,
   isSoftwareGl = false,
   sunPos,
   driveMode = false,
   mechPoseRef,
   combatRef,
 }: PineForestProps) {
+  const { gl, scene, camera } = useThree();
   const lodElapsed = useRef(1);
   const contactShadowRef = useRef<THREE.InstancedMesh>(null);
   const shrubRef = useRef<THREE.InstancedMesh>(null);
@@ -419,10 +422,20 @@ export function PineForest({
     }
   }, [trees, shrubs, logs, rootRocks, treeBatches]);
 
+  useEffect(() => {
+    const batch = treeBatches.group.children[0];
+    if (!preparing || !batch) return;
+    // Each cell now has its instance colors and shares this color program.
+    void gl.compileAsync(batch, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Pine shader warmup failed', error);
+    });
+  }, [preparing, treeBatches, gl, camera, scene]);
+
   const { paused } = useSceneSimulation();
 
   useFrame(({ camera }, delta) => {
     if (paused) return;
+    if (preparing) return;
     lodElapsed.current += delta;
     if (lodElapsed.current >= .1) {
       treeBatches.update(camera, sunPos);
@@ -578,7 +591,7 @@ export function PineForest({
   });
 
   return (
-    <group>
+    <group visible={!preparing}>
       <instancedMesh
         ref={contactShadowRef}
         args={[contactGeo, contactShadowMaterial, trees.length]}

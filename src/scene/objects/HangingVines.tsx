@@ -1,7 +1,7 @@
 import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import {
   VINE_HEIGHT,
   createHangingVineGeometry,
@@ -9,6 +9,7 @@ import {
 } from '../../map/hangingVines';
 
 export interface HangingVinesProps {
+  visible: boolean;
   isSoftwareGl: boolean;
 }
 
@@ -96,7 +97,8 @@ function createHangingVinesTexture(): THREE.CanvasTexture {
  * the Central Island retaining rim, Citadel outer walls, and Outpost ruins.
  * Renders in 1 Draw Call using alphaTest cutout (zero mobile transparency overdraw).
  */
-export function HangingVines({ isSoftwareGl }: HangingVinesProps) {
+export function HangingVines({ visible, isSoftwareGl }: HangingVinesProps) {
+  const { gl, scene, camera } = useThree();
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const vines = useMemo(() => generateHangingVinesData(), []);
   const uTimeRef = useRef({ value: 1.1 });
@@ -163,6 +165,14 @@ transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
   }, [vines]);
 
   useEffect(() => {
+    if (visible || !meshRef.current) return;
+    // Instance colors select the program variant used by the first visible draw.
+    void gl.compileAsync(meshRef.current, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Hanging vine shader warmup failed', error);
+    });
+  }, [visible, gl, scene, camera]);
+
+  useEffect(() => {
     return () => {
       geometry.dispose();
       texture.dispose();
@@ -174,6 +184,7 @@ transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
 
   useFrame((_, delta) => {
     if (paused) return;
+    if (!visible) return;
     if (isSoftwareGl) {
       uTimeRef.current.value = 1.1;
       return;
@@ -184,6 +195,7 @@ transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
   return (
     <instancedMesh
       ref={meshRef}
+      visible={visible}
       args={[geometry, material, vines.length]}
       frustumCulled={false}
       castShadow={false}
