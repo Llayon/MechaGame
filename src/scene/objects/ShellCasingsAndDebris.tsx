@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
-import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import { combatAudio } from '../../game/combatAudio';
 import {
   MAX_DEBRIS_INSTANCES,
@@ -164,7 +164,7 @@ export function ShellCasingsAndDebris({
       setup.debrisMat.dispose();
     };
   }, [setup]);
-  const hideEmptyDebris = useEmptyEffectWarmup(debrisMeshRef);
+  const hideEmptyDebris = useMeshShaderWarmup(debrisMeshRef);
 
   useEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { useLazyRef } from '../../utils/useLazyRef';
 import { MAX_CASING_INSTANCES } from './debrisBallisticsPool';
-import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 
 /**
  * Low-poly 24-tri heavy autocannon/artillery casing with base extractor rim.
@@ -44,7 +44,7 @@ export function ShellCasingMesh({ children }: {
   children: (mesh: THREE.InstancedMesh, hideEmpty: boolean) => ReactNode;
 }) {
   const ref = useLazyRef(createShellCasingMesh);
-  const hideEmpty = useEmptyEffectWarmup(ref);
+  const hideEmpty = useMeshShaderWarmup(ref);
   useEffect(() => {
     const mesh = ref.current;
     return () => {

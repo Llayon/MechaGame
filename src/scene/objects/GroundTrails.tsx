@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { effectVisible } from '../../lod/worldLod';
 import { useFrame } from '@react-three/fiber';
 import { useSceneSimulation } from '../SceneSimulation';
-import { useEmptyEffectWarmup } from './useEmptyEffectWarmup';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import {
   MAX_GROUND_TRAILS,
   computeGroundTrailTransform,
@@ -238,7 +238,7 @@ export function GroundTrails({
       setup.mat.dispose();
     };
   }, [setup]);
-  const hideEmpty = useEmptyEffectWarmup(meshRef);
+  const hideEmpty = useMeshShaderWarmup(meshRef);
 
   useEffect(() => {
     if (prevResetNonceRef.current === resetNonce) return;
