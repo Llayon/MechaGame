@@ -2,6 +2,7 @@ import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import {
   createFernBushGeometry,
   generateGrassBushAccentsData,
@@ -9,6 +10,7 @@ import {
 
 export interface GrassBushAccentsProps {
   isSoftwareGl?: boolean;
+  preparing?: boolean;
 }
 
 const _dummy = new THREE.Object3D();
@@ -22,7 +24,7 @@ const RUIN_SAGE_HIGH = new THREE.Color('#778052');
 const ROAD_OCHRE_LOW = new THREE.Color('#6b6e3f');
 const ROAD_OCHRE_HIGH = new THREE.Color('#958246');
 
-export function GrassBushAccents({ isSoftwareGl = false }: GrassBushAccentsProps) {
+export function GrassBushAccents({ isSoftwareGl = false, preparing = false }: GrassBushAccentsProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const windUniform = useRef({ value: 0.65 });
 
@@ -88,6 +90,8 @@ transformed.z += cos( bPhase * 0.85 + 0.9 ) * 0.036 * bBend;`,
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, [bushes]);
 
+  useMeshShaderWarmup(meshRef, preparing);
+
   useEffect(() => {
     return () => {
       geometry.dispose();
@@ -99,6 +103,7 @@ transformed.z += cos( bPhase * 0.85 + 0.9 ) * 0.036 * bBend;`,
 
   useFrame((_, delta) => {
     if (paused) return;
+    if (preparing) return;
     if (!isSoftwareGl) {
       windUniform.current.value += Math.min(delta, 0.05);
     }
@@ -109,6 +114,7 @@ transformed.z += cos( bPhase * 0.85 + 0.9 ) * 0.036 * bBend;`,
   return (
     <instancedMesh
       ref={meshRef}
+      visible={!preparing}
       args={[geometry, material, bushes.length]}
       castShadow={false}
       receiveShadow={!isSoftwareGl}

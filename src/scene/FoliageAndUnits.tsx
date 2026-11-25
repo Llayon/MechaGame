@@ -48,6 +48,7 @@ export function FoliageAndUnits({
   const prepareFoliage = stage >= 6 && stage < 8 && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
   const preparePines = stage < 7 && prepareFoliage;
+  const prepareOutcropsAndFerns = stage === 7 && prepareFoliage;
   const lateDetailsVisible = stage >= 9;
   const prepareLateDetails = stage >= 7 && !lateDetailsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
@@ -66,7 +67,10 @@ export function FoliageAndUnits({
         mechPoseRef={mechPoseRef}
         combatRef={combatRef}
       />}
-      {showDecorativeFoliage && stage >= 8 && <GrassBushAccents isSoftwareGl={simplified} />}
+      {showDecorativeFoliage && (stage >= 8 || prepareOutcropsAndFerns) && <GrassBushAccents
+        preparing={prepareOutcropsAndFerns}
+        isSoftwareGl={simplified}
+      />}
       {showDecorativeFoliage && (stage >= 8 || prepareFoliage) && grassMap && <GrassField
         data={grassMap}
         driveMode={driveMode}
@@ -76,7 +80,7 @@ export function FoliageAndUnits({
         sunPos={sunPos}
         isSoftwareGl={simplified}
       />}
-      {stage >= 8 && <RockOutcrops />}
+      {(stage >= 8 || prepareOutcropsAndFerns) && <RockOutcrops preparing={prepareOutcropsAndFerns} />}
       {showDecorativeFoliage && (lateDetailsVisible || prepareLateDetails) && <HangingVines
         visible={lateDetailsVisible}
         isSoftwareGl={simplified}

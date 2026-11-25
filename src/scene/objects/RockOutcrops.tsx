@@ -5,6 +5,7 @@ import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import * as THREE from 'three';
 import { generateRockOutcropsData } from '../../map/worldStructures';
 import { createChiseledRockGeometry } from './rockGeometry';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 
 const _dummy = new THREE.Object3D();
 
@@ -13,7 +14,8 @@ function seededRand(seed: number): number {
   return n - Math.floor(n);
 }
 
-export function RockOutcrops() {
+export function RockOutcrops({ preparing = false }: { preparing?: boolean }) {
+  const firstBatch = useRef<THREE.InstancedMesh>(null);
   const lodElapsed = useRef(1);
   const { paused } = useSceneSimulation();
 
@@ -108,6 +110,8 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
     const meshes = [1, 0].map((detail, level) => {
       const mesh = new THREE.InstancedMesh(createChiseledRockGeometry(1, detail), material, rocks.length);
       mesh.count = 0;
+      // Both LODs use instance colors, including before the first camera selection.
+      if (rocks.length > 0) mesh.setColorAt(0, new THREE.Color());
       mesh.userData.lodLevel = level;
       mesh.castShadow = mesh.receiveShadow = true;
       return mesh;
@@ -169,8 +173,11 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
     };
   }, [rocks, material]);
 
+  useMeshShaderWarmup(firstBatch, preparing);
+
   useFrame(({ camera }, dt) => {
     if (paused) return;
+    if (preparing) return;
     lodElapsed.current += dt;
     if (lodElapsed.current < .15) return;
     lodElapsed.current = 0;
@@ -180,5 +187,11 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
     for (const mesh of batches.meshes) { mesh.dispose(); mesh.geometry.dispose(); }
     material.dispose();
   }, [batches, material]);
-  return <group>{batches.meshes.map((mesh, i) => <primitive key={i} object={mesh} />)}</group>;
+  return (
+    <group visible={!preparing}>
+      {batches.meshes.map((mesh, i) => (
+        <primitive key={i} ref={i === 0 ? firstBatch : undefined} object={mesh} />
+      ))}
+    </group>
+  );
 }
