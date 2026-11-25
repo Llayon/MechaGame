@@ -6,7 +6,7 @@ import {
   effectiveGraphics,
   type AdaptiveState,
 } from '../lod/adaptiveQuality';
-import { loadPlayerBattleEntry, type BattleScene } from './loadBattleScene';
+import { loadBattleScene, loadPlayerBattleEntry, type BattleScene } from './loadBattleScene';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
@@ -863,18 +863,23 @@ export function MapScene({
   const prepareHorizonEffects = streamed && driveMode && parallelBattleReady && stage >= 7 && level < 5;
   const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
   const [earlyPlayer, setEarlyPlayer] = useState<Awaited<ReturnType<typeof loadPlayerBattleEntry>> | null>(null);
+  const [earlyBattle, setEarlyBattle] = useState<BattleScene | null>(null);
   useEffect(() => {
-    if (!prepareMech || earlyPlayer) return;
+    if (!prepareMech) return;
     let active = true;
     // The details loader owns the retry UI if this shared import fails.
     loadPlayerBattleEntry().then(player => {
       if (active) setEarlyPlayer(player);
     }).catch(() => {});
+    loadBattleScene().then(actors => {
+      if (active) setEarlyBattle(actors);
+    }).catch(() => {});
     return () => { active = false; };
-  }, [prepareMech, earlyPlayer]);
+  }, [prepareMech]);
   const player = battle ?? earlyPlayer;
   const PlayerMech = player?.SovietMech;
   const ShellCasingMesh = player?.ShellCasingMesh;
+  const InfantryActors = (battle ?? earlyBattle)?.InfantryActors;
   const showCombat = battle && (level >= 10 || battleRequested);
   // CI benchmarking opts into a continuous frame loop on software renderers.
   const query = useMemo(() => new URLSearchParams(
@@ -1136,12 +1141,17 @@ export function MapScene({
           />
         )}
         {ShellCasingMesh && (prepareMech || showCombat) && (
-          <ShellCasingMesh>
-            {(casingMesh, hideEmptyCasings) => showCombat && (
-              <group name="perf:combat">
-                {driveMode || focusedSite
-                  ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} isSoftwareGl={isSoftwareGl} />
-                  : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
+          <group name="perf:combat">
+            {prepareMech || driveMode || focusedSite
+              ? InfantryActors && <InfantryActors
+                  combatRef={combatRef}
+                  visible={Boolean(showCombat && (driveMode || showUnits))}
+                  preparing={!showCombat}
+                  isSoftwareGl={isSoftwareGl}
+                />
+              : showCombat && showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
+            <ShellCasingMesh>
+              {(casingMesh, hideEmptyCasings) => showCombat && <>
                 <battle.CombatActors
                   combatRef={combatRef}
                   driveMode={driveMode}
@@ -1197,9 +1207,9 @@ export function MapScene({
                   lightingPreset={lightingPreset}
                   resetNonce={resetNonce}
                 />
-              </group>
-            )}
-          </ShellCasingMesh>
+              </>}
+            </ShellCasingMesh>
+          </group>
         )}
 
         <group name="perf:foliage">
