@@ -1092,7 +1092,7 @@ export function MapScene({
             {(casingMesh, hideEmptyCasings) => showCombat && (
               <group name="perf:combat">
                 {driveMode || focusedSite
-                  ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} />
+                  ? <battle.InfantryActors combatRef={combatRef} visible={driveMode || showUnits} isSoftwareGl={isSoftwareGl} />
                   : showUnits && <battle.InfantryCrowd combatRef={combatRef} />}
                 <battle.CombatActors
                   combatRef={combatRef}
