@@ -10,6 +10,7 @@ import {
   getTerrainHeight,
 } from '../../map/terrainMath';
 import { createMistTexture } from '../textures';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 
 export interface AtmosphereMistProps {
   visible: boolean;
@@ -18,6 +19,10 @@ export interface AtmosphereMistProps {
 
 export function AtmosphereMist({ visible, isSoftwareGl }: AtmosphereMistProps) {
   const smokeGroupRef = useRef<THREE.Group>(null);
+  const firstPlume = useRef<THREE.Mesh>(null);
+  const firstFogSheet = useRef<THREE.Mesh>(null);
+  useMeshShaderWarmup(firstPlume, !visible);
+  useMeshShaderWarmup(firstFogSheet, !visible);
   const mistTex = useMemo(() => createMistTexture(), []);
   const stackOrigin = useMemo(() => {
     const islandY = getTerrainHeight(ISLAND_CENTER_X, ISLAND_CENTER_Z);
@@ -47,15 +52,14 @@ export function AtmosphereMist({ visible, isSoftwareGl }: AtmosphereMistProps) {
     });
   });
 
-  if (!visible) return null;
-
   return (
-    <group>
+    <group visible={visible}>
       {/* Smokestack exhaust plumes */}
       <group ref={smokeGroupRef}>
         {[0, 1, 2, 3].map((i) => (
           <mesh
             key={i}
+            ref={i === 0 ? firstPlume : undefined}
             position={[stackOrigin.x + i * 1.1, stackOrigin.y + i * 2.4, stackOrigin.z]}
           >
             <dodecahedronGeometry args={[1.6, 1]} />
@@ -83,6 +87,7 @@ export function AtmosphereMist({ visible, isSoftwareGl }: AtmosphereMistProps) {
       ].map((sheet, idx) => (
         <mesh
           key={`river-fog-${idx}`}
+          ref={idx === 0 ? firstFogSheet : undefined}
           position={sheet.pos}
           rotation={[-Math.PI / 2, 0, sheet.rot]}
         >
