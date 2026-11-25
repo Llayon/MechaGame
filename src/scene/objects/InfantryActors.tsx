@@ -65,11 +65,14 @@ function createCrowd(capacity: number) {
   const markerScale = new THREE.Vector3();
   const crouchProxy = new THREE.Matrix4().makeScale(1, 2 / 3, 1).setPosition(-.025, 0, .05);
   let rig: Awaited<ReturnType<typeof loadInfantryRig>> | undefined;
+  let rigRequested = false;
   let disposed = false;
   group.add(proxies, tracers, markers);
   return {
     group,
     async load(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene, hardware: boolean) {
+      if (rigRequested) return;
+      rigRequested = true;
       const loaded = await loadInfantryRig(capacity);
       if (disposed) { loaded.dispose(); return; }
       rig = loaded;
@@ -145,32 +148,47 @@ function createCrowd(capacity: number) {
   };
 }
 
-export function InfantryActors({ combatRef, visible, isSoftwareGl }: {
+export function InfantryActors({ combatRef, visible, preparing, isSoftwareGl }: {
   combatRef: RefObject<CombatSimulationState>;
   visible: boolean;
+  preparing: boolean;
   isSoftwareGl: boolean;
 }) {
   const container = useRef<THREE.Group>(null);
   const crowd = useRef<ReturnType<typeof createCrowd> | null>(null);
   const { invalidate, gl, camera, scene } = useThree();
   const { paused } = useSceneSimulation();
+  const warmup = preparing && !isSoftwareGl && gl.extensions.has('KHR_parallel_shader_compile');
+  const mountCrowd = !preparing || warmup;
   useEffect(() => {
+    if (!mountCrowd) return;
     const parent = container.current!;
     const next = createCrowd(combatRef.current.infantry.soldiers.length);
     parent.add(next.group);
     crowd.current = next;
     next.draw(combatRef.current.infantry, camera);
-    void next.load(gl, camera, scene, !isSoftwareGl).then(() => {
-      if (crowd.current !== next) return;
-      next.draw(combatRef.current.infantry, camera);
-      invalidate();
-    }).catch(error => console.warn('Infantry model unavailable, using formation silhouettes.', error));
     return () => {
       crowd.current = null;
       parent.remove(next.group);
       next.dispose();
     };
-  }, [camera, combatRef, gl, invalidate, isSoftwareGl, scene]);
+  }, [camera, combatRef, gl, isSoftwareGl, mountCrowd, scene]);
+  useEffect(() => {
+    if (!warmup || !crowd.current) return;
+    // draw() has populated instance colors on the actual silhouette and marker batches.
+    void gl.compileAsync(crowd.current.group, camera, scene).catch(error => {
+      if (!gl.getContext().isContextLost()) console.warn('Infantry formation warmup failed', error);
+    });
+  }, [warmup, camera, scene, gl, combatRef]);
+  useEffect(() => {
+    const next = crowd.current;
+    if (preparing || !next) return;
+    void next.load(gl, camera, scene, !isSoftwareGl).then(() => {
+      if (crowd.current !== next) return;
+      next.draw(combatRef.current.infantry, camera);
+      invalidate();
+    }).catch(error => console.warn('Infantry model unavailable, using formation silhouettes.', error));
+  }, [preparing, camera, combatRef, gl, invalidate, isSoftwareGl, scene]);
   useFrame(() => {
     if (paused) return;
     if (visible) crowd.current?.draw(combatRef.current.infantry, camera);
