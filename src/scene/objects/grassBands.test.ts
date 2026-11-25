@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createGrassClumpGeometry, GRASS_INSTANCE_COUNT_SW, GRASS_PATCH_RADIUS_SW } from '../../map/grassField';
 import { createGrassBands } from './grassBands';
+import { lodJitter } from '../../lod/worldLod';
 
 test('cell repacks preserve each LOD through wrap ties, cache eviction and detail changes', () => {
   const radius = GRASS_PATCH_RADIUS_SW;
@@ -21,7 +22,7 @@ test('cell repacks preserve each LOD through wrap ties, cache eviction and detai
       const distance = Math.sqrt(dx * dx + dz * dz);
       if (distance > radius + .8) continue;
       const random = seeds[i+3] / (2 * Math.PI);
-      const lodDistance = distance / radius + (random - .5) * .06;
+      const lodDistance = distance / (radius * lodJitter(i / 4));
       const level = lodDistance < .47 * scale ? 0 : lodDistance < .8 * scale ? 1 : 2;
       if (random <= scale * (level === 2 ? .78 : 1)) expected[level].push(seeds[i+3]);
     }
