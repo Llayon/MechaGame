@@ -69,13 +69,23 @@ function createCrowd(capacity: number) {
   group.add(proxies, tracers, markers);
   return {
     group,
-    async load() {
+    async load(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene, hardware: boolean) {
       const loaded = await loadInfantryRig(capacity);
       if (disposed) { loaded.dispose(); return; }
       rig = loaded;
-      group.add(rig.root);
+      if (hardware && renderer.extensions.has('KHR_parallel_shader_compile')) {
+        try {
+          await renderer.compileAsync(loaded.root, camera, scene);
+        } catch (error) {
+          if (!disposed && !renderer.getContext().isContextLost()) console.warn('Infantry shader warmup failed', error);
+        }
+        if (disposed) return;
+      }
+      group.add(loaded.root);
     },
     draw(state: InfantrySkirmishes, camera: THREE.Camera) {
+      // Keep every soldier in the silhouette batch until the detailed rig is attached.
+      const visibleRig = rig?.root.parent === group ? rig : undefined;
       let nearCount = 0, farCount = 0, vertices = 0, spotters = 0;
       for (const soldier of state.soldiers) {
         if (soldier.hp <= 0) continue;
@@ -85,7 +95,7 @@ function createCrowd(capacity: number) {
         const color = ally ? friendly : hostile;
         const pose = getInfantryPose(soldier, state.elapsed);
         matrix.makeRotationY(yaw).setPosition(x, y, z);
-        if (rig && distanceSq < modelDistance ** 2) rig.set(nearCount++, soldier, pose, state.elapsed, matrix, color);
+        if (visibleRig && distanceSq < modelDistance ** 2) visibleRig.set(nearCount++, soldier, pose, state.elapsed, matrix, color);
         else {
           if (pose === 'crouch') matrix.multiply(crouchProxy);
           proxies.setMatrixAt(farCount, matrix);
@@ -110,7 +120,7 @@ function createCrowd(capacity: number) {
         colors.setXYZ(vertices + 1, light.r, light.g, light.b);
         vertices += 2;
       }
-      rig?.flush(nearCount);
+      visibleRig?.flush(nearCount);
       proxies.count = farCount;
       proxies.instanceMatrix.needsUpdate = true;
       if (proxies.instanceColor) proxies.instanceColor.needsUpdate = true;
@@ -135,10 +145,14 @@ function createCrowd(capacity: number) {
   };
 }
 
-export function InfantryActors({ combatRef, visible }: { combatRef: RefObject<CombatSimulationState>; visible: boolean }) {
+export function InfantryActors({ combatRef, visible, isSoftwareGl }: {
+  combatRef: RefObject<CombatSimulationState>;
+  visible: boolean;
+  isSoftwareGl: boolean;
+}) {
   const container = useRef<THREE.Group>(null);
   const crowd = useRef<ReturnType<typeof createCrowd> | null>(null);
-  const { invalidate, camera } = useThree();
+  const { invalidate, gl, camera, scene } = useThree();
   const { paused } = useSceneSimulation();
   useEffect(() => {
     const parent = container.current!;
@@ -146,7 +160,7 @@ export function InfantryActors({ combatRef, visible }: { combatRef: RefObject<Co
     parent.add(next.group);
     crowd.current = next;
     next.draw(combatRef.current.infantry, camera);
-    void next.load().then(() => {
+    void next.load(gl, camera, scene, !isSoftwareGl).then(() => {
       if (crowd.current !== next) return;
       next.draw(combatRef.current.infantry, camera);
       invalidate();
@@ -156,7 +170,7 @@ export function InfantryActors({ combatRef, visible }: { combatRef: RefObject<Co
       parent.remove(next.group);
       next.dispose();
     };
-  }, [camera, combatRef, invalidate]);
+  }, [camera, combatRef, gl, invalidate, isSoftwareGl, scene]);
   useFrame(() => {
     if (paused) return;
     if (visible) crowd.current?.draw(combatRef.current.infantry, camera);

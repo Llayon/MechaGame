@@ -147,6 +147,8 @@ export async function loadInfantryRig(capacity: number) {
       return batch;
     }
     const bodies = batch(body);
+    // Compile with the team-color attribute that the first visible soldier will use.
+    if (capacity > 0) bodies.setColorAt(0, new THREE.Color());
     bodies.userData.lodLevel = 0;
     const rifles = batch(gun, hand);
     rifles.instanceMatrix = bodies.instanceMatrix;
