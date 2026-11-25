@@ -17,7 +17,7 @@ import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
 import { frameInfantryEncounter } from './infantryCamera';
 import type { CombatAimState } from '../game/combatAim';
 import { resolveGraphicsRuntime } from '../game/graphicsSettings';
-import type { GraphicsSettings } from '../game/graphicsSettings';
+import type { GraphicsPreset, GraphicsSettings } from '../game/graphicsSettings';
 import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { LightingPreset, SECTORS, SectorId } from '../map/sectors';
@@ -29,6 +29,11 @@ import { FoliageAndUnits } from './FoliageAndUnits';
 import { TacticalMarkers } from './TacticalMarkers';
 import { ProceduralSky } from './ProceduralSky';
 import { installHeightFogShader, syncHeightFogScatter } from './heightFog';
+import {
+  advanceWaterCausticsTime,
+  installPbrMultiBounceAoShader,
+  syncWaterCausticsParams,
+} from './waterCausticsAndAo';
 import {
   getToneMappingExposure,
   parseToneMappingMode,
@@ -65,6 +70,7 @@ import {
 import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
+installPbrMultiBounceAoShader();
 
 let cachedSoftwareWebGL: boolean | null = null;
 
@@ -227,6 +233,7 @@ interface CameraRigProps {
   sunPos: readonly [number, number, number];
   shadowMapSize: number;
   toneMappingMode: ToneMappingMode;
+  graphicsPreset: GraphicsPreset;
 }
 
 function CameraRig({
@@ -246,6 +253,7 @@ function CameraRig({
   sunPos,
   shadowMapSize,
   toneMappingMode,
+  graphicsPreset,
 }: CameraRigProps) {
   const { camera, scene, gl, invalidate, size } = useThree();
   useLayoutEffect(() => {
@@ -269,8 +277,9 @@ function CameraRig({
       lightingPreset,
     );
     syncHeightFogScatter(lightingPreset, sunPos);
+    syncWaterCausticsParams(lightingPreset, graphicsPreset, sunPos);
     invalidate();
-  }, [gl, toneMappingMode, lightingPreset, sunPos, invalidate]);
+  }, [gl, toneMappingMode, lightingPreset, graphicsPreset, sunPos, invalidate]);
 
   useEffect(() => {
     const light = sunLightRef.current;
@@ -452,6 +461,9 @@ function CameraRig({
 
   useFrame((_, delta) => {
     if (paused) return;
+    if (!isSoftwareGl && graphicsPreset !== 'low') {
+      advanceWaterCausticsTime(delta);
+    }
     if (driveMode) return; // CombatCamera exclusively owns battle view.
     const status = combatRef.current.missionStatus;
     if (focusedSite && (status === 'idle' || status === 'playing')) {
@@ -852,6 +864,7 @@ export function MapScene({
   );
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   syncHeightFogScatter(lightingPreset, lightCfg.keyPos);
+  syncWaterCausticsParams(lightingPreset, graphics.preset, lightCfg.keyPos);
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
   const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);
@@ -876,6 +889,7 @@ export function MapScene({
       data-terrain-stage={stage}
       data-lighting={lightingPreset}
       data-tone-mapping={toneMappingMode}
+      data-caustics={graphics.preset === 'low' ? 'off' : 'on'}
       data-drive-mode={driveMode ? 'true' : 'false'}
       data-graphics-preset={graphics.preset}
       data-adaptive-step={activeAdaptation.cascadeStep}
@@ -1005,6 +1019,7 @@ export function MapScene({
           sunPos={lightCfg.keyPos}
           shadowMapSize={shadowMapSize}
           toneMappingMode={toneMappingMode}
+          graphicsPreset={graphics.preset}
         />
 
         <group name="perf:terrain">

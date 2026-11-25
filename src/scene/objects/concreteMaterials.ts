@@ -4,6 +4,10 @@ import {
   GLSL_FLYBY_SHADOW_PARS,
   bindFlybyShadowUniforms,
 } from '../flybyShadow';
+import {
+  GLSL_WATER_CAUSTICS_PARS,
+  bindWaterCausticsUniforms,
+} from '../waterCausticsAndAo';
 
 export type ConcreteMossPreset = 'bridge' | 'wall' | 'ruin';
 
@@ -62,13 +66,17 @@ export function getOvergrownConcreteMaterial(
   const mat = new THREE.MeshStandardMaterial(matParams);
 
   mat.userData.localConcrete = true;
-  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v2-${preset}`;
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v3-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
     shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
     shader.uniforms.uGrimeStrength = { value: cfg.grimeStrength };
     shader.uniforms.uWaterLevel = { value: WATER_LEVEL };
+    shader.uniforms.uWaterBounceMask = {
+      value: preset === 'bridge' || preset === 'ruin' ? 1.0 : 0.45,
+    };
     bindFlybyShadowUniforms(shader.uniforms);
+    bindWaterCausticsUniforms(shader.uniforms);
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -102,14 +110,17 @@ vConcWorldPos = cWp.xyz;`,
       .replace(
         '#include <common>',
         `#include <common>
+#define S7_CUSTOM_AO
 uniform float uWallMoss;
 uniform float uRoofMoss;
 uniform float uGrimeStrength;
 uniform float uWaterLevel;
+uniform float uWaterBounceMask;
 varying vec3 vConcWorldPos;
 varying vec3 vConcWorldNormal;
 varying vec3 vConcLocalPos;
 ${GLSL_FLYBY_SHADOW_PARS}
+${GLSL_WATER_CAUSTICS_PARS}
 
 vec3 concSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -175,7 +186,23 @@ diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.
 
 // 4. Overhead dropship flyby SDF shadow across roofs, bridge decks & concrete aprons
 float concFlyby = sampleFlybyShipShadow( vConcWorldPos ) * mix( 0.45, 1.0, smoothstep( 0.15, 0.75, vConcWorldNormal.y ) );
-diffuseColor.rgb *= ( 1.0 - concFlyby );`,
+diffuseColor.rgb *= ( 1.0 - concFlyby );
+
+// 5. Procedural foundation/waterline seam occlusion fed into global Multi-Bounce AO & Specular Occlusion
+float s7CustomAO = clamp( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18, 0.46, 1.0 );`,
+      )
+      .replace(
+        '#include <lights_fragment_end>',
+        `#include <lights_fragment_end>
+if ( uWaterBounceMask > 0.01 && vConcWorldPos.y > uWaterLevel - 2.65 && vConcWorldPos.y < uWaterLevel + 2.75 ) {
+  vec3 concN = normalize( vConcWorldNormal );
+  vec2 concFoot = fwidth( vConcWorldPos.xz );
+  float concPx = max( concFoot.x, concFoot.y );
+  float concCamDist = length( vViewPosition );
+  vec3 concWallBounce = s7ComputeWallBounceCaustics( vConcWorldPos, concN, uWaterBounceMask, concCamDist, concPx );
+  vec3 concSubCaust = s7ComputeUnderwaterCaustics( vConcWorldPos, concN, uWaterBounceMask, concCamDist, concPx );
+  reflectedLight.indirectDiffuse += diffuseColor.rgb * ( concWallBounce + concSubCaust );
+}`,
       );
   };
 

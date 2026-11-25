@@ -4,6 +4,10 @@ import {
   GLSL_FLYBY_SHADOW_PARS,
   bindFlybyShadowUniforms,
 } from '../flybyShadow';
+import {
+  GLSL_WATER_CAUSTICS_PARS,
+  bindWaterCausticsUniforms,
+} from '../waterCausticsAndAo';
 
 /**
  * Creates a PBR MeshStandardMaterial patched via onBeforeCompile with pixel-level
@@ -28,11 +32,12 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v7';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v8';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
     bindFlybyShadowUniforms(shader.uniforms);
+    bindWaterCausticsUniforms(shader.uniforms);
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
@@ -60,6 +65,7 @@ vPuddleUp = normalize( mat3( viewMatrix ) * vec3( 0.0, 1.0, 0.0 ) );`,
       .replace(
         '#include <common>',
         `#include <common>
+#define S7_CUSTOM_AO
 uniform float uPuddleTime;
 varying vec3 vTerrWorldPos;
 varying vec3 vTerrWorldNormal;
@@ -68,6 +74,7 @@ varying vec4 vTerrHint;
 varying vec3 vPuddleUp;
 ${GLSL_PUDDLE_HELPERS}
 ${GLSL_FLYBY_SHADOW_PARS}
+${GLSL_WATER_CAUSTICS_PARS}
 
 vec3 terrSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -349,6 +356,20 @@ if ( terrDetailFade > 0.001 ) {
 // 7. Analytical solar shadow cast by high-altitude dropship flyby (evaluated before lighting & fog)
 diffuseColor.rgb *= ( 1.0 - sampleFlybyShipShadow( vTerrWorldPos ) );
 
+// 8. Subtle Beer-Lambert spectral depth tint on submerged shoals & shallow riverbed
+if ( vTerrWorldPos.y < 0.02 && terrRiverVicinity > 0.05 ) {
+  float subDep = max( 0.0, -vTerrWorldPos.y );
+  vec3 beerTint = exp( -subDep * vec3( 0.22, 0.065, 0.045 ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * beerTint, clamp( terrRiverVicinity * smoothstep( 0.0, 0.45, subDep ), 0.0, 0.85 ) );
+}
+
+// 9. Procedural crevice occlusion fed into global GTAO Multi-Bounce AO & Specular Occlusion
+float terrCreviceOcc =
+  rockFissure * terrRockBlend * 0.34 +
+  ( 1.0 - pebDome ) * effectiveShore * terrCoarsePebWeight * pebRampCalm * 0.24 +
+  terrCitDark * 0.16;
+float s7CustomAO = clamp( 1.0 - terrCreviceOcc, 0.42, 1.0 );
+
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
 float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );
 float terrMicroHeight =
@@ -361,6 +382,16 @@ float terrMicroStrength =
   ( 1.0 - terrManmade * 0.55 ) *
   ( 1.0 - terrPuddleWater ) *
   clamp( 1.0 - length( vViewPosition ) / 480.0, 0.18, 1.0 );`,
+      )
+      .replace(
+        '#include <lights_fragment_end>',
+        `#include <lights_fragment_end>
+if ( terrRiverVicinity > 0.01 && vTerrWorldPos.y > -2.65 && vTerrWorldPos.y < 2.75 ) {
+  float terrCamDist = length( vViewPosition );
+  vec3 terrUnderwaterCaust = s7ComputeUnderwaterCaustics( vTerrWorldPos, terrN, terrRiverVicinity, terrCamDist, terrPixelSize );
+  vec3 terrWallBounce = s7ComputeWallBounceCaustics( vTerrWorldPos, terrN, terrRiverVicinity, terrCamDist, terrPixelSize );
+  reflectedLight.indirectDiffuse += diffuseColor.rgb * ( terrUnderwaterCaust + terrWallBounce );
+}`,
       )
       .replace(
         '#include <roughnessmap_fragment>',
