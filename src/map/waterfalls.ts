@@ -18,8 +18,8 @@ import {
   getQuarryPadMask,
   getRiverInfo,
   lerp,
-} from './terrainMath';
-import { WATER_SPAN_D, WATER_SPAN_W } from './waterDepth';
+} from './terrainMath.ts';
+import { WATER_SPAN_D, WATER_SPAN_W } from './waterDepth.ts';
 
 export interface WaterfallSite {
   id: string;

@@ -3,9 +3,11 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
+import { discoverWaterfallSites } from '../src/map/waterfalls.ts';
 
 const moduleId = 'virtual:world-asset-paths';
 const resolvedId = '\0' + moduleId;
+const waterfallSitesId = 'virtual:waterfall-sites';
 
 type WorldAssetKey = 'overview' | 'grass' | 'water' | 'terrain';
 type BakeTarget = WorldAssetKey | 'all';
@@ -176,8 +178,12 @@ export function worldAssetsPlugin(): Plugin {
     },
     resolveId(id) {
       if (id === moduleId) return resolvedId;
+      if (id === waterfallSitesId) return '\0' + waterfallSitesId;
     },
     async load(id) {
+      if (id === '\0' + waterfallSitesId) {
+        return 'export default ' + JSON.stringify(discoverWaterfallSites(4));
+      }
       if (id === resolvedId) {
         if (isServe) {
           return 'export default ' + JSON.stringify(DEV_ASSET_PATHS);
