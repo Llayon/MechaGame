@@ -13,6 +13,7 @@ import { HorizonWarSystem } from './objects/HorizonWarSystem';
 import { TitanWrecks } from './objects/TitanWrecks';
 
 interface StructuresProps {
+  prepareHorizonEffects: boolean;
   stage:number;
   quarryDetails:boolean;
   splitBridgeBatches: boolean;
@@ -25,7 +26,7 @@ interface StructuresProps {
 }
 
 export function Structures({
-  stage, quarryDetails,
+  stage, quarryDetails, prepareHorizonEffects,
   splitBridgeBatches,
   lightingPreset,
   driveMode,
@@ -98,7 +99,8 @@ export function Structures({
       {(horizonVisible || prepareHorizon) && <WindTurbines
         visible={horizonVisible} lightingPreset={lightingPreset} isSoftwareGl={isSoftwareGl}
       />}
-      {stage >= 5 && distantWar && <HorizonWarSystem
+      {(horizonVisible || prepareHorizonEffects) && distantWar && <HorizonWarSystem
+        visible={horizonVisible}
         lightingPreset={lightingPreset}
         driveMode={driveMode}
         isSoftwareGl={isSoftwareGl}
