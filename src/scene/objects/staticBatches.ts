@@ -57,7 +57,9 @@ export function batchStaticParts(root: THREE.Group, options: {
         mesh.children.length === 0 && !Array.isArray(mesh.material) &&
         !mesh.material.transparent && !mesh.customDepthMaterial && !mesh.customDistanceMaterial &&
         (mesh.material.type === 'MeshStandardMaterial' || mesh.material.type === 'MeshBasicMaterial') &&
-        (mesh.material.onBeforeCompile === THREE.Material.prototype.onBeforeCompile || mesh.material.userData.localConcrete) &&
+        (mesh.material.onBeforeCompile === THREE.Material.prototype.onBeforeCompile ||
+          mesh.material.userData.localConcrete ||
+          mesh.material.userData.staticBatchable) &&
         mesh.geometry.drawRange.start === 0 && mesh.geometry.drawRange.count === Infinity) {
       const transform = inverse.clone().multiply(mesh.matrixWorld);
       if (transform.determinant() <= 0) return;

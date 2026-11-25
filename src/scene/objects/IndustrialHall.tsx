@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { getOvergrownConcreteMaterial } from './concreteMaterials';
+import { getInteriorWindowMaterial } from '../visualPolish';
 
 export interface IndustrialHallProps {
   position: [number, number, number];
@@ -95,6 +96,13 @@ export function IndustrialHall({
           <mesh position={[side * (width * 0.5 + 0.03), bodyH * 0.85, 0]}>
             <boxGeometry args={[0.08, 0.22, length * 0.96]} />
             <meshStandardMaterial color="#8F5642" roughness={0.65} metalness={0.22} />
+          </mesh>
+          {/* Industrial clerestory window strip with 3D Interior Mapping */}
+          <mesh
+            position={[side * (width * 0.5 + 0.045), bodyH * 0.62 + 0.14, 0]}
+            material={getInteriorWindowMaterial()}
+          >
+            <boxGeometry args={[0.08, bodyH * 0.24, length * 0.88]} />
           </mesh>
         </group>
       ))}

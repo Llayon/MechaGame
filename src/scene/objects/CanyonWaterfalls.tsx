@@ -142,7 +142,7 @@ export function CanyonWaterfalls({
       side: THREE.DoubleSide,
       fog: true,
     });
-    cMat.customProgramCacheKey = () => 'sector7-waterfall-curtain-v2';
+    cMat.customProgramCacheKey = () => 'sector7-waterfall-curtain-v3';
     cMat.onBeforeCompile = (shader) => {
       shader.uniforms.uWfTime = timeUniform.current;
       shader.uniforms.uWfTopColor = topColorUniform.current;
@@ -195,28 +195,43 @@ ${WATERFALL_NOISE_GLSL}`,
 float widthScale = max( 0.85, vWfFallScale.x );
 float heightScale = max( 0.85, vWfFallScale.y );
 
-// Two parallax scrolling noise layers (major turbulent surges + fine spray streaks)
-vec2 streakUv1 = vec2( vWfUv.x * 10.5 * widthScale + vWfSeed, vWfUv.y * 3.1 * heightScale + uWfTime * 1.55 );
-vec2 streakUv2 = vec2( vWfUv.x * 20.0 * widthScale + 3.4 - vWfSeed * 0.5, vWfUv.y * 4.7 * heightScale + uWfTime * 1.02 );
+// Physical free-fall acceleration coordinate: tau = sqrt(h + 0.06)
+// Smooth slow sheet at the upper crest lip (vWfUv.y = 1) accelerating into stretched aerated ropes below
+float hTotal = 14.0 * heightScale;
+float hFall = clamp( 1.0 - vWfUv.y, 0.0, 1.0 ) * hTotal;
+float hRem = clamp( vWfUv.y, 0.0, 1.0 ) * hTotal;
+float wfTau = sqrt( hFall + 0.06 );
+
+// Gravitational parallax strands: primary accelerating surges, fine spray streaks, and cohesive ropes
+vec2 streakUv1 = vec2( vWfUv.x * 10.5 * widthScale + vWfSeed, wfTau * 1.65 - uWfTime * 1.45 );
+vec2 streakUv2 = vec2( vWfUv.x * 21.0 * widthScale + 3.4 - vWfSeed * 0.5, wfTau * 3.10 - uWfTime * 2.15 );
+vec2 ropeUv = vec2( vWfUv.x * 6.8 * widthScale - vWfSeed * 0.7, wfTau * 0.55 - uWfTime * 0.55 );
 
 float stream1 = wfNoise( streakUv1 );
 float stream2 = wfNoise( streakUv2 );
-float combinedStreams = stream1 * 0.6 + stream2 * 0.4;
+float strandRope = wfNoise( ropeUv );
+float combinedStreams = stream1 * 0.56 + stream2 * 0.44;
 
-// Crisp Horizon/Zelda-inspired foam ribbons along vertical plunge
-float foamStreaks = smoothstep( 0.44, 0.74, combinedStreams );
+// Sheet breaks up into elongated frothy strands as drop velocity builds
+float ropeGrow = smoothstep( 0.18, 3.8, hFall );
+float frothyRope = smoothstep( 0.44, 0.72, strandRope * 0.62 + stream2 * 0.38 ) * ropeGrow;
+float thinFilm = ( 1.0 - smoothstep( 0.32, 0.58, strandRope * 0.65 + stream1 * 0.35 ) ) * ropeGrow;
+float foamStreaks = max( smoothstep( 0.46, 0.76, combinedStreams ) * ( 0.45 + 0.55 * ropeGrow ), frothyRope );
 
-// Irregular eroded crest lip froth where water spills between headwall boulders
+// Irregular eroded crest lip froth where water spills smoothly between headwall boulders
 float crestBreakup = ( stream1 - 0.5 ) * 0.14;
-float topCrest = smoothstep( 0.82, 0.96, vWfUv.y + crestBreakup ) * 0.56;
+float topCrest = smoothstep( 0.82, 0.96, vWfUv.y + crestBreakup ) * 0.48;
 
-// Turbulent boiling spray cloud near river impact (softened at extreme bottom so splash ring dominates)
-float splashPulse = wfNoise( vec2( vWfUv.x * 13.5 * widthScale + vWfSeed, uWfTime * 2.7 + vWfUv.y * 4.0 ) );
-float bottomSplash = (1.0 - smoothstep( 0.04, 0.28, vWfUv.y )) * clamp( 0.48 + splashPulse * 0.58, 0.0, 1.0 );
+// Churning boiling spray cloud at plunge foot (softened at extreme bottom so splash ring dominates)
+float splashPulse = wfNoise( vec2( vWfUv.x * 13.5 * widthScale + vWfSeed, wfTau * 2.2 - uWfTime * 2.7 ) );
+float footChurn = ( 1.0 - smoothstep( 0.0, min( 3.4, 0.28 * hTotal ), hRem ) );
+float bottomSplash = max( ( 1.0 - smoothstep( 0.04, 0.28, vWfUv.y ) ), footChurn * 0.72 ) * clamp( 0.48 + splashPulse * 0.58, 0.0, 1.0 );
 
-float totalFoam = clamp( foamStreaks * 0.84 + topCrest + bottomSplash, 0.0, 1.0 );
+float totalFoam = clamp( foamStreaks * 0.86 + topCrest + bottomSplash, 0.0, 1.0 );
 
 vec3 waterBase = mix( uWfBottomColor, uWfTopColor, smoothstep( 0.06, 0.90, vWfUv.y ) );
+// Slightly darken thin water gaps between bright accelerating ropes for stronger depth relief
+waterBase *= ( 1.0 - 0.28 * thinFilm );
 vec3 viewDir = normalize( vWfViewPos );
 float fresnelRim = pow( clamp( 1.0 - abs( dot( normalize( vWfNormalView ), viewDir ) ), 0.0, 1.0 ), 2.2 );
 waterBase += uWfRimColor * fresnelRim * 0.30;

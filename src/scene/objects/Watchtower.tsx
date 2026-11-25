@@ -1,4 +1,5 @@
 import { LightingPreset } from '../../map/sectors';
+import { getInteriorWindowMaterial } from '../visualPolish';
 
 export interface WatchtowerProps {
   position: [number, number, number];
@@ -37,16 +38,9 @@ export function Watchtower({ position, lightingPreset }: WatchtowerProps) {
         <boxGeometry args={[0.88, 0.58, 0.88]} />
         <meshStandardMaterial color="#9BA1A6" roughness={0.8} metalness={0.1} />
       </mesh>
-      {/* Glass window band */}
-      <mesh position={[0, 2.04, 0]}>
+      {/* Glass window band with 3D Interior Mapping parallax */}
+      <mesh position={[0, 2.04, 0]} material={getInteriorWindowMaterial()}>
         <boxGeometry args={[0.91, 0.16, 0.91]} />
-        <meshStandardMaterial
-          color={lampOn ? '#ffd996' : '#1b2b34'}
-          emissive={lampOn ? '#ffaa44' : '#000000'}
-          emissiveIntensity={lampOn ? 1.4 : 0}
-          roughness={0.2}
-          metalness={0.2}
-        />
       </mesh>
       {/* Roof cap & beacon */}
       <mesh position={[0, 2.34, 0]} castShadow>

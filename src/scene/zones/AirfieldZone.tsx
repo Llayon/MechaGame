@@ -11,6 +11,7 @@ import { Helicopter } from '../objects/Helicopter';
 import { ArmoredVehicle } from '../objects/ArmoredVehicle';
 import { QuonsetHangar } from '../objects/QuonsetHangar';
 import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
+import { getInteriorWindowMaterial } from '../visualPolish';
 
 export interface AirfieldZoneProps {
   helipadTex: THREE.Texture;
@@ -199,11 +200,16 @@ export function AirfieldZone({
         corrugatedMap={corrugatedTex}
       />
 
-      {/* Concrete barracks & terracotta supply crates */}
+      {/* Concrete barracks / flight control blocks with 3D Interior Mapping windows */}
       {[-22.0, -15.5, -9.0].map((cx, i) => (
-        <mesh key={i} position={[cx, 1.9, 26.5]} material={airConcrete} castShadow receiveShadow>
-          <boxGeometry args={[5.0, 3.2, 7.2]} />
-        </mesh>
+        <group key={i} position={[cx, 0, 26.5]}>
+          <mesh position={[0, 1.9, 0]} material={airConcrete} castShadow receiveShadow>
+            <boxGeometry args={[5.0, 3.2, 7.2]} />
+          </mesh>
+          <mesh position={[0, 2.38, 0]} material={getInteriorWindowMaterial()}>
+            <boxGeometry args={[5.08, 0.64, 7.28]} />
+          </mesh>
+        </group>
       ))}
       {[
         [22.0, 14.0],

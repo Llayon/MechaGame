@@ -71,7 +71,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
       depthWrite: false,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v3';
+    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v4';
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uWaterDepthMap = { value: waterDepthTex };
@@ -99,6 +99,7 @@ vWaterWorldPos = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;`,
         .replace(
           '#include <common>',
           `#include <common>
+#define S7_SKIP_GLOBAL_SPECULAR_AA
 uniform sampler2D uWaterDepthMap;
 uniform vec2 uWaterSpan;
 uniform float uMaxWaterDepth;
@@ -172,7 +173,14 @@ float wPierFoam = ( wPierCollar * ( 0.58 + 0.42 * wLace ) + wPierRipple * 0.50 *
 float wFoam = clamp( max( wShoreFoam, wPierFoam ) * smoothstep( 0.005, 0.035, wDepth ), 0.0, 0.90 );
 vec3 wFoamCol = pow( vec3( 0.87, 0.92, 0.94 ), vec3( 2.2 ) );
 
-diffuseColor.rgb = mix( wBaseCol, wFoamCol, wFoam );
+// Waterline contact darkening along riverbanks, rocks & bridge piers + shallow cliff shadow damping
+float wContactShore = mix( 0.58, 1.0, smoothstep( 0.0, 0.34, wDepth ) );
+float wContactPier = mix( 0.68, 1.0, smoothstep( 0.0, 0.42, wObstDist ) );
+float wContactEdge = clamp( wContactShore * wContactPier, 0.42, 1.0 );
+float wShallowSpecDamp = mix( 0.76, 1.0, smoothstep( 0.0, 2.2, wDepth ) );
+
+diffuseColor.rgb = mix( wBaseCol * wContactEdge, wFoamCol, wFoam );
+diffuseColor.rgb *= mix( wContactEdge, 1.0, wFoam * 0.65 );
 diffuseColor.rgb *= ( 1.0 - sampleFlybyShipShadow( vWaterWorldPos ) * 0.85 );
 float wWaterAlpha = mix( 0.94, 0.24, pow( wShallowT, 1.35 ) );
 float wEdgeFeather = smoothstep( 0.0, 0.035, wDepth );
@@ -197,6 +205,15 @@ ${aaGlsl.clearcoatNormalCaptureAndDamp}`,
           '#include <lights_physical_fragment>',
           `#include <lights_physical_fragment>
 ${aaGlsl.applySpecularAa}`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+float wIblScale = wShallowSpecDamp * mix( 0.84, 1.0, wContactEdge );
+reflectedLight.indirectSpecular *= wIblScale;
+#ifdef USE_CLEARCOAT
+  clearcoatSpecularIndirect *= wIblScale;
+#endif`,
         );
     };
 

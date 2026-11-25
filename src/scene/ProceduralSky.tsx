@@ -5,6 +5,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Sky } from 'three/addons/objects/Sky.js';
 import type { LightingPreset } from '../map/sectors';
 import { GLSL_IGN_DITHER_SNIPPET } from './foliageLighting';
+import { createCanyonHorizonBandMesh } from './visualPolish';
 
 export interface ProceduralSkyProps {
   lightingPreset: LightingPreset;
@@ -218,10 +219,14 @@ export function ProceduralSky({
     groundMesh.position.y = -4;
     envScene.add(groundMesh);
 
+    const canyonBand = createCanyonHorizonBandMesh(lightingPreset);
+    envScene.add(canyonBand.mesh);
+
     const envRT = pmrem.fromScene(envScene, 0.003);
     scene.environment = envRT.texture;
     scene.environmentIntensity = cfg.envIntensity;
 
+    canyonBand.dispose();
     bakeSky.geometry.dispose();
     bakeSky.material.dispose();
     groundGeo.dispose();

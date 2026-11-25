@@ -19,6 +19,7 @@ import { CitadelCourtyardBunker } from '../objects/CitadelCourtyardBunker';
 import { CitadelEnergyGenerator } from '../objects/CitadelEnergyGenerator';
 import { VolumetricSearchlight } from '../objects/VolumetricSearchlight';
 import { getOvergrownConcreteMaterial } from '../objects/concreteMaterials';
+import { getInteriorWindowMaterial } from '../visualPolish';
 
 export interface CitadelZoneProps {
   corrugatedTex: THREE.Texture;
@@ -164,9 +165,17 @@ export function CitadelZone({
         <mesh position={[0, 1.45, 0]} material={citConc} castShadow receiveShadow>
           <cylinderGeometry args={[7.2, 8.2, 2.9, 8]} />
         </mesh>
+        {/* Lower command ops observation window band (3D Interior Mapping) */}
+        <mesh position={[0, 2.18, 0]} material={getInteriorWindowMaterial()}>
+          <cylinderGeometry args={[7.42, 7.67, 0.72, 8]} />
+        </mesh>
         <mesh position={[0, 3.25, 0]} castShadow receiveShadow>
           <cylinderGeometry args={[4.4, 5.2, 1.0, 8]} />
           <meshStandardMaterial color="#525B66" roughness={0.65} metalness={0.35} />
+        </mesh>
+        {/* Upper armored bridge glass band (3D Interior Mapping) */}
+        <mesh position={[0, 3.32, 0]} material={getInteriorWindowMaterial()}>
+          <cylinderGeometry args={[4.68, 5.02, 0.42, 8]} />
         </mesh>
         <group position={[1.8, 3.7, 0]} scale={3.6}>
           <RadarTower position={[0, 0, 0]} isSoftwareGl={isSoftwareGl} />

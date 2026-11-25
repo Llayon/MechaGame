@@ -40,6 +40,10 @@ import {
   syncFoliageLightingParams,
 } from './foliageLighting';
 import {
+  installGlobalSpecularAaShader,
+  syncInteriorWindowParams,
+} from './visualPolish';
+import {
   getToneMappingExposure,
   parseToneMappingMode,
   type ToneMappingMode,
@@ -76,6 +80,7 @@ import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
 installPbrMultiBounceAoShader();
+installGlobalSpecularAaShader();
 installGlobalDitheringShader();
 
 let cachedSoftwareWebGL: boolean | null = null;
@@ -285,6 +290,7 @@ function CameraRig({
     syncHeightFogScatter(lightingPreset, sunPos);
     syncWaterCausticsParams(lightingPreset, graphicsPreset, sunPos);
     syncFoliageLightingParams(lightingPreset, sunPos);
+    syncInteriorWindowParams(lightingPreset);
     invalidate();
   }, [gl, toneMappingMode, lightingPreset, graphicsPreset, sunPos, invalidate]);
 
@@ -887,6 +893,7 @@ export function MapScene({
   syncHeightFogScatter(lightingPreset, lightCfg.keyPos);
   syncWaterCausticsParams(lightingPreset, graphics.preset, lightCfg.keyPos);
   syncFoliageLightingParams(lightingPreset, lightCfg.keyPos);
+  syncInteriorWindowParams(lightingPreset);
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
   const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);
