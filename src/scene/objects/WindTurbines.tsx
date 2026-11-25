@@ -172,6 +172,7 @@ export function WindTurbines({ visible, lightingPreset, isSoftwareGl }: WindTurb
 
   // Towers and rotors share the instanced, flat-shaded program.
   useMeshShaderWarmup(towerMeshRef, !visible);
+  useMeshShaderWarmup(beaconMeshRef, !visible);
 
   useEffect(() => {
     return () => {

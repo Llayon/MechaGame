@@ -2,6 +2,7 @@ import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import type { LightingPreset } from '../../map/sectors';
 import type { CombatSimulationState } from '../../game/combatTypes';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../../map/hologramSigns';
 
 export interface HologramSignsProps {
+  visible: boolean;
   lightingPreset: LightingPreset;
   combatRef: MutableRefObject<CombatSimulationState>;
 }
@@ -115,7 +117,7 @@ function isCitadelThreatCleared(sim: CombatSimulationState): boolean {
  * warnings, command radar displays, and quarry/pier hazard stripes) in 1 Draw Call
  * using a procedural 2x2 CanvasTexture atlas and InstancedMesh.
  */
-export function HologramSigns({ lightingPreset, combatRef }: HologramSignsProps) {
+export function HologramSigns({ lightingPreset, combatRef, visible }: HologramSignsProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const lastClearedRef = useRef(false);
 
@@ -180,6 +182,8 @@ export function HologramSigns({ lightingPreset, combatRef }: HologramSignsProps)
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, [combatRef]);
 
+  useMeshShaderWarmup(meshRef, !visible);
+
   // Adapt brightness & backing tint cleanly per time-of-day preset
   useEffect(() => {
     const { brightness, backingAlpha } = getHologramLightingParams(lightingPreset);
@@ -200,6 +204,7 @@ export function HologramSigns({ lightingPreset, combatRef }: HologramSignsProps)
 
   useFrame(() => {
     if (paused) return;
+    if (!visible) return;
     uniforms.uTime.value = clockRef.current.elapsed;
 
     const cleared = isCitadelThreatCleared(combatRef.current);
@@ -223,6 +228,7 @@ export function HologramSigns({ lightingPreset, combatRef }: HologramSignsProps)
   return (
     <instancedMesh
       ref={meshRef}
+      visible={visible}
       args={[geometry, material, SECTOR7_HOLOGRAM_SIGNS.length]}
       frustumCulled={false}
       castShadow={false}

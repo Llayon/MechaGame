@@ -13,8 +13,10 @@ import {
   stepHorizonWar,
 } from '../../map/horizonWar';
 import { combatAudio } from '../../game/combatAudio';
+import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 
 export interface HorizonWarSystemProps {
+  visible: boolean;
   lightingPreset: LightingPreset;
   driveMode: boolean;
   isSoftwareGl: boolean;
@@ -241,6 +243,7 @@ function syncWarInstancesToGpu(
  *   4. Billboarded flak airburst & artillery horizon flashes (1 Draw Call)
  */
 export function HorizonWarSystem({
+  visible,
   lightingPreset,
   driveMode,
   isSoftwareGl,
@@ -381,6 +384,10 @@ export function HorizonWarSystem({
     syncWarInstancesToGpu(state, tracerMesh, flashMesh, camera, intensityMul);
   }, [camera, intensityMul, warFXBundle]);
 
+  useMeshShaderWarmup(smokeMeshRef, !visible);
+  useMeshShaderWarmup(tracerMeshRef, !visible);
+  useMeshShaderWarmup(flashMeshRef, !visible);
+
   useEffect(() => {
     return () => {
       cruiserBundle.geom.dispose();
@@ -400,6 +407,7 @@ export function HorizonWarSystem({
 
   useFrame((_, delta) => {
     if (paused) return;
+    if (!visible) return;
     const tracerMesh = tracerMeshRef.current;
     const flashMesh = flashMeshRef.current;
     const state = warStateRef.current;
@@ -422,7 +430,7 @@ export function HorizonWarSystem({
   });
 
   return (
-    <group>
+    <group visible={visible}>
       {/* Distant hovering Old-World sky cruisers (1 Draw Call) */}
       <mesh
         geometry={cruiserBundle.geom}

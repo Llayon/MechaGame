@@ -856,10 +856,11 @@ export function MapScene({
     [preferences, activeAdaptation],
   );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
-  const [earlyTerrain, setEarlyTerrain] = useState(false);
+  const [parallelBattleReady, setParallelBattleReady] = useState(false);
   const onBattleFrame = useCallback((renderer: THREE.WebGLRenderer) => {
-    if (!isSoftwareGl && renderer.extensions.has('KHR_parallel_shader_compile')) setEarlyTerrain(true);
+    if (!isSoftwareGl && renderer.extensions.has('KHR_parallel_shader_compile')) setParallelBattleReady(true);
   }, [isSoftwareGl]);
+  const prepareHorizonEffects = streamed && driveMode && parallelBattleReady && stage >= 7 && level < 5;
   const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
   const [earlyPlayer, setEarlyPlayer] = useState<Awaited<ReturnType<typeof loadPlayerBattleEntry>> | null>(null);
   useEffect(() => {
@@ -1057,7 +1058,7 @@ export function MapScene({
             {world && (waterReady || (!isSoftwareGl && stage >= 5)) && <RiverWater
               data={world.water} isSoftwareGl={isSoftwareGl} visible={waterReady}
             />}
-            {world && (nearReady || (driveMode && earlyTerrain) || (!isSoftwareGl && stage >= 5)) && <TerrainSlab
+            {world && (nearReady || (driveMode && parallelBattleReady) || (!isSoftwareGl && stage >= 5)) && <TerrainSlab
               nearVisible={nearReady} far={farReady} water={false} tiles={world.terrain} waterDepth={world.water}
               onCompilingChange={driveMode ? setTerrainCompiling : undefined}
               showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl}
@@ -1068,6 +1069,7 @@ export function MapScene({
         <group name="perf:structures">
           {level<4 && <LandmarkMeshes stage={level} select={onSelectSector}/>}
           {(!streamed || level >= 1) && <Structures stage={level} quarryDetails={!streamed || stage >= 4}
+            prepareHorizonEffects={prepareHorizonEffects}
             preparingBattle={preparingBattle}
             splitBridgeBatches={splitBridgeBatches}
             lightingPreset={lightingPreset}
@@ -1087,7 +1089,8 @@ export function MapScene({
             mechPoseRef={mechPoseRef}
             combatRef={combatRef}
           />}
-          {level >= 5 && <HologramSigns
+          {(level >= 5 || prepareHorizonEffects) && <HologramSigns
+            visible={level >= 5}
             lightingPreset={lightingPreset}
             combatRef={combatRef}
           />}
