@@ -87,7 +87,9 @@ export function FoliageAndUnits({
       />}
       {(lateDetailsVisible || prepareLateDetails) && <FlankCoverZone visible={lateDetailsVisible} />}
       {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
-      {stage >= 9 && <AtmosphereMist visible={mistVisible} isSoftwareGl={isSoftwareGl} />}
+      {mistVisible && (lateDetailsVisible || (stage === 8 && prepareLateDetails)) && (
+        <AtmosphereMist visible={lateDetailsVisible} isSoftwareGl={isSoftwareGl} />
+      )}
       {(lateDetailsVisible || prepareLateDetails) && <CanyonWaterfalls
         visible={lateDetailsVisible}
         lightingPreset={lightingPreset}
