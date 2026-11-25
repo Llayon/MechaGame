@@ -1,12 +1,16 @@
-import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useThree } from '@react-three/fiber';
 import {
   VINE_HEIGHT,
   createHangingVineGeometry,
   generateHangingVinesData,
 } from '../../map/hangingVines';
+import {
+  bindFoliageLightingUniforms,
+  GLSL_FOLIAGE_TRANSMITTANCE_PARS,
+  GLSL_FOLIAGE_WIND_PARS,
+} from '../foliageLighting';
 
 export interface HangingVinesProps {
   visible: boolean;
@@ -97,11 +101,10 @@ function createHangingVinesTexture(): THREE.CanvasTexture {
  * the Central Island retaining rim, Citadel outer walls, and Outpost ruins.
  * Renders in 1 Draw Call using alphaTest cutout (zero mobile transparency overdraw).
  */
-export function HangingVines({ visible, isSoftwareGl }: HangingVinesProps) {
+export function HangingVines({ visible }: HangingVinesProps) {
   const { gl, scene, camera } = useThree();
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const vines = useMemo(() => generateHangingVinesData(), []);
-  const uTimeRef = useRef({ value: 1.1 });
 
   const { geometry, texture, material } = useMemo(() => {
     const geo = createHangingVineGeometry();
@@ -121,24 +124,73 @@ export function HangingVines({ visible, isSoftwareGl }: HangingVinesProps) {
       fog: true,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-hanging-vines-v1';
+    mat.customProgramCacheKey = () => 'sector7-hanging-vines-v2';
     mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uTime = uTimeRef.current;
+      bindFoliageLightingUniforms(shader.uniforms);
 
       shader.vertexShader = shader.vertexShader
         .replace(
           '#include <common>',
           `#include <common>
+${GLSL_FOLIAGE_WIND_PARS}
 attribute float aVinePhase;
-uniform float uTime;`,
+varying vec3 vVineWorldPos;
+varying vec3 vVineWorldNormal;`,
         )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
 float swayFactor = clamp( -position.y / ${VINE_HEIGHT.toFixed(1)}, 0.0, 1.0 );
 float swayBend = swayFactor * swayFactor;
-transformed.z += sin( uTime * 1.9 + aVinePhase + position.y * 0.75 ) * 0.16 * swayBend;
-transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
+#ifdef USE_INSTANCING
+  mat4 vineInstWorld = modelMatrix * instanceMatrix;
+#else
+  mat4 vineInstWorld = modelMatrix;
+#endif
+vec3 vineRoot = ( vineInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+vec3 vineWindWorld = s7TravelingWindOffset(
+  vineRoot.xz,
+  swayFactor,
+  0.34,
+  aVinePhase + position.y * 0.06,
+  0.024
+);
+vec3 vineWindLocal = s7WorldToLocalOffset( mat3( vineInstWorld ), vineWindWorld );
+transformed.x += vineWindLocal.x;
+transformed.y += vineWindLocal.y;
+transformed.z += max( vineWindLocal.z, -0.025 * swayBend ) + sin( uFoliageSunTime.w * 1.9 + aVinePhase + position.y * 0.75 ) * 0.055 * swayBend;
+vVineWorldPos = ( vineInstWorld * vec4( transformed, 1.0 ) ).xyz;
+vVineWorldNormal = normalize( mat3( vineInstWorld ) * objectNormal );`,
+        );
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+${GLSL_FOLIAGE_TRANSMITTANCE_PARS}
+varying vec3 vVineWorldPos;
+varying vec3 vVineWorldNormal;`,
+        )
+        .replace(
+          '#include <alphatest_fragment>',
+          `#ifdef USE_ALPHATEST
+  #ifdef USE_MAP
+    vec2 vineTexel = vMapUv * vec2( 128.0, 256.0 );
+    vec2 vineDx = dFdx( vineTexel );
+    vec2 vineDy = dFdy( vineTexel );
+    float vineMipLod = max( 0.0, 0.5 * log2( max( max( dot( vineDx, vineDx ), dot( vineDy, vineDy ) ), 1e-8 ) ) );
+    float vineAlphaCutoff = clamp( alphaTest - 0.05 * min( vineMipLod, 4.0 ), 0.14, alphaTest );
+  #else
+    float vineAlphaCutoff = alphaTest;
+  #endif
+  if ( diffuseColor.a < vineAlphaCutoff ) discard;
+#endif`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+vec3 vineFaceN = normalize( vVineWorldNormal ) * ( gl_FrontFacing ? 1.0 : -1.0 );
+reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vVineWorldPos, vineFaceN, diffuseColor.rgb, 0.78 );`,
         );
     };
 
@@ -179,18 +231,6 @@ transformed.x += cos( uTime * 1.35 + aVinePhase * 1.3 ) * 0.08 * swayFactor;`,
       material.dispose();
     };
   }, [geometry, texture, material]);
-
-  const { paused } = useSceneSimulation();
-
-  useFrame((_, delta) => {
-    if (paused) return;
-    if (!visible) return;
-    if (isSoftwareGl) {
-      uTimeRef.current.value = 1.1;
-      return;
-    }
-    uTimeRef.current.value += Math.min(delta, 0.05);
-  });
 
   return (
     <instancedMesh

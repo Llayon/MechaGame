@@ -16,6 +16,10 @@ import {
 } from '../../map/grassField';
 
 import { WORLD_MAP_WIDTH as TEX_W, WORLD_MAP_HEIGHT as TEX_H } from '../../map/worldMapDimensions';
+import {
+  bindFoliageLightingUniforms,
+  GLSL_FOLIAGE_WIND_PARS,
+} from '../foliageLighting';
 
 const BACKLIGHT_COLORS: Record<LightingPreset, THREE.Color> = {
   day: new THREE.Color('#dce85c'),
@@ -58,7 +62,6 @@ function GrassFieldMesh({
   const { gl, camera, scene } = useThree();
 
   const uniformsRef = useRef({
-    uTime: { value: 0.75 },
     uWindowCenter: { value: new THREE.Vector2(mechPoseRef.current.x, mechPoseRef.current.z) },
     uMechPos: {
       value: new THREE.Vector3(
@@ -131,11 +134,11 @@ function GrassFieldMesh({
       side: THREE.DoubleSide,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-sliding-grass-v2';
+    mat.customProgramCacheKey = () => 'sector7-sliding-grass-v3';
 
     mat.onBeforeCompile = (shader) => {
       const u = uniformsRef.current;
-      shader.uniforms.uTime = u.uTime;
+      bindFoliageLightingUniforms(shader.uniforms);
       shader.uniforms.uWindowCenter = u.uWindowCenter;
       shader.uniforms.uMechPos = u.uMechPos;
       shader.uniforms.uFootL = u.uFootL;
@@ -153,10 +156,10 @@ function GrassFieldMesh({
         .replace(
           '#include <common>',
           `#include <common>
+${GLSL_FOLIAGE_WIND_PARS}
 attribute vec4 aOffset;
 attribute float aBudMask;
 
-uniform float uTime;
 uniform vec2 uWindowCenter;
 uniform vec3 uMechPos;
 uniform vec2 uFootL;
@@ -292,12 +295,9 @@ if ( finalScale <= 0.008 ) {
     bladeLocal.x * sy + bladeLocal.z * cy
   );
 
-  // World-space multi-frequency wind gust wave
+  // Coherent world-space traveling wind gust wave (synchronized with pine slopes & vines)
   float bend = hNorm * hNorm;
-  float gust = sin( uTime * 2.15 + grassWorldXZ.x * 0.34 + grassWorldXZ.y * 0.26 );
-  float flutter = sin( uTime * 4.6 + grassWorldXZ.x * 0.95 - grassWorldXZ.y * 0.72 );
-  bladeWorld.x += ( gust * 0.060 + flutter * 0.016 ) * bend * finalScale;
-  bladeWorld.z += ( cos( uTime * 1.85 + grassWorldXZ.y * 0.31 ) * 0.044 + flutter * 0.012 ) * bend * finalScale;
+  bladeWorld += s7TravelingWindOffset( grassWorldXZ, hNorm, 0.34 * finalScale, tintSeed, 0.016 * finalScale );
 
   // Dual-foot + chassis radial trampling under the 60-ton Soviet Mech
   float dyMech = abs( grassGroundY - uMechPos.y );
@@ -446,7 +446,7 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
 
   const { paused } = useSceneSimulation();
 
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera }) => {
     if (paused) return;
     if (!visible) return;
     const m = mechPoseRef.current;
@@ -463,9 +463,6 @@ totalEmissiveRadiance += uSunBacklightColor * backAlign * tipTranslucency * ( 0.
     u.uMechPos.value.set(m.x, m.y, m.z);
     u.uFootL.value.set(m.footLX ?? m.x, m.footLZ ?? m.z);
     u.uFootR.value.set(m.footRX ?? m.x, m.footRZ ?? m.z);
-    if (!isSoftwareGl) {
-      u.uTime.value += Math.min(delta, 0.05);
-    }
   });
 
   return (

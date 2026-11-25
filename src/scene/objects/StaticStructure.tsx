@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { useFrame, type ThreeElements } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSceneSimulation } from '../SceneSimulation';
-import { projectedPixels, readWorldLod } from '../../lod/worldLod';
+import { lodJitter, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { batchStaticParts } from './staticBatches';
 import { batchBridgeParts } from './bridgeBatches';
 
@@ -36,8 +36,10 @@ export function StaticStructure({
     const view = readWorldLod(camera);
     const { batches } = compiled.current;
     const colorOnlyCasters = 'colorOnlyCasters' in compiled.current ? compiled.current.colorOnlyCasters : undefined;
-    for (const part of batches) {
+    for (let i = 0; i < batches.length; i++) {
+      const part = batches[i];
       if (!part.fineShadow && !part.decorative) continue;
+      const jitter = lodJitter(i);
       center.copy(part.bounds.center).applyMatrix4(part.mesh.matrixWorld);
       const radius = part.bounds.radius * part.mesh.matrixWorld.getMaxScaleOnAxis();
       // The nearest edge and extra reach keep grazing-light shadows from popping at screen edges.
@@ -46,14 +48,14 @@ export function StaticStructure({
       const colorOnly = colorOnlyCasters?.has(part.mesh);
       let castsShadow = colorOnlyCasters?.get(part.mesh) ?? part.mesh.castShadow;
       if (part.fineShadow) {
-        castsShadow = extent > (castsShadow ? 3.5 : 4.5);
+        castsShadow = extent > (castsShadow ? 3.5 : 4.5) * jitter;
         if (colorOnly) colorOnlyCasters?.set(part.mesh, castsShadow);
         else part.mesh.castShadow = castsShadow;
       }
       if (part.decorative) {
         const depth = -center.applyMatrix4(camera.matrixWorldInverse).z - radius;
         const pixels = projectedPixels(part.featureRadius, depth, view);
-        const retained = castsShadow || pixels > (part.mesh.visible ? 1.6 : 2.3);
+        const retained = castsShadow || pixels > (part.mesh.visible ? 1.6 : 2.3) * jitter;
         part.mesh.visible = retained;
         part.mesh.userData.lodLevel = retained ? 0 : 1;
       }

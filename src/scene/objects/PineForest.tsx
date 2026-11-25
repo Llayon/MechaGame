@@ -13,6 +13,11 @@ import { PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
 import { createPineBatches } from './pineBatches';
 import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import {
+  bindFoliageLightingUniforms,
+  GLSL_FOLIAGE_TRANSMITTANCE_PARS,
+  GLSL_FOLIAGE_WIND_PARS,
+} from '../foliageLighting';
+import {
   checkFallingTreeCollisions,
   createFallingTreesState,
   resetFallingTrees,
@@ -82,34 +87,39 @@ function samplePineTint(t: number, out: THREE.Color): THREE.Color {
 
 const WIND_VERTEX_SWAY = `
   float hNorm = clamp( transformed.y / ${PINE_TREE_TOTAL_HEIGHT.toFixed(2)}, 0.0, 1.0 );
-  float bend = hNorm * hNorm * aTreeSway;
   #ifdef USE_INSTANCING
-    vec3 instRoot = ( modelMatrix * instanceMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+    mat4 pineInstWorld = modelMatrix * instanceMatrix;
   #else
-    vec3 instRoot = ( modelMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+    mat4 pineInstWorld = modelMatrix;
   #endif
-  float gustPhase = uWindTime * 1.55 + instRoot.x * 0.13 + instRoot.z * 0.09;
-  float flutterPhase = uWindTime * 2.75 + instRoot.x * 0.37 - instRoot.z * 0.29;
-  transformed.x += ( sin( gustPhase ) * 0.090 + sin( flutterPhase ) * 0.028 ) * bend;
-  transformed.z += ( cos( gustPhase * 0.85 + 1.1 ) * 0.068 + sin( flutterPhase * 1.15 ) * 0.022 ) * bend;
+  vec3 instRoot = ( pineInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+  vec3 windWorld = s7TravelingWindOffset(
+    instRoot.xz,
+    hNorm,
+    0.58 * aTreeSway,
+    instRoot.x * 0.13 + instRoot.z * 0.19,
+    0.022 * aTreeSway
+  );
+  transformed += s7WorldToLocalOffset( mat3( pineInstWorld ), windWorld );
 `;
 
 function injectTreeWindSway(
   shader: THREE.WebGLProgramParametersWithUniforms,
-  windTimeUniform: { value: number },
+  extraBeginVertex = '',
 ) {
-  shader.uniforms.uWindTime = windTimeUniform;
+  bindFoliageLightingUniforms(shader.uniforms);
   shader.vertexShader = shader.vertexShader
     .replace(
       '#include <common>',
       `#include <common>
-      uniform float uWindTime;
+      ${GLSL_FOLIAGE_WIND_PARS}
       attribute float aTreeSway;`,
     )
     .replace(
       '#include <begin_vertex>',
       `#include <begin_vertex>
-      ${WIND_VERTEX_SWAY}`,
+      ${WIND_VERTEX_SWAY}
+      ${extraBeginVertex}`,
     );
 }
 
@@ -129,7 +139,6 @@ export function PineForest({
   const rootRockRef = useRef<THREE.InstancedMesh>(null);
   const chipMeshRef = useRef<THREE.InstancedMesh>(null);
 
-  const windTimeUniform = useRef({ value: 0.85 });
   const prevElapsedRef = useRef(0);
 
   const { trees, shrubs, logs, rootRocks } = useMemo(() => generatePineForestData(), []);
@@ -179,71 +188,104 @@ export function PineForest({
       roughness: 0.87,
       metalness: 0.02,
     });
-    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v3';
+    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v4';
     tMat.onBeforeCompile = (shader) => {
-      injectTreeWindSway(shader, windTimeUniform.current);
-      shader.vertexShader = shader.vertexShader
-        .replace(
-          '#include <common>',
-          `#include <common>
-          attribute float aNeedleTip;
-          varying float vNeedleTip;`,
-        )
-        .replace(
-          '#include <begin_vertex>',
-          `#include <begin_vertex>
-          vNeedleTip = aNeedleTip;`,
-        );
+      injectTreeWindSway(
+        shader,
+        `vNeedleTip = aNeedleTip;
+        vPineHeightNorm = hNorm;
+        vPineWorldPos = ( pineInstWorld * vec4( transformed, 1.0 ) ).xyz;
+        vPineWorldNormal = normalize( mat3( pineInstWorld ) * objectNormal );`,
+      );
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `#include <common>
+        attribute float aNeedleTip;
+        varying float vNeedleTip;
+        varying float vPineHeightNorm;
+        varying vec3 vPineWorldPos;
+        varying vec3 vPineWorldNormal;`,
+      );
 
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
           `#include <common>
-          varying float vNeedleTip;`,
+          ${GLSL_FOLIAGE_TRANSMITTANCE_PARS}
+          varying float vNeedleTip;
+          varying float vPineHeightNorm;
+          varying vec3 vPineWorldPos;
+          varying vec3 vPineWorldNormal;`,
         )
         .replace(
           '#include <lights_fragment_end>',
           `#include <lights_fragment_end>
           float needleFresnel = pow( clamp( 1.0 - abs( dot( normalize( vViewPosition ), normal ) ), 0.0, 1.0 ), 2.2 );
           float tipTranslucency = needleFresnel * clamp( vNeedleTip, 0.0, 1.0 );
-          reflectedLight.directDiffuse *= 1.0 + tipTranslucency * 0.58;
-          reflectedLight.indirectDiffuse += diffuseColor.rgb * tipTranslucency * 0.24;`,
+          reflectedLight.directDiffuse *= 1.0 + tipTranslucency * 0.42;
+          reflectedLight.indirectDiffuse += diffuseColor.rgb * tipTranslucency * 0.18;
+          float pineTrans = clamp( max( vNeedleTip * 0.92, smoothstep( 0.20, 0.72, vPineHeightNorm ) * 0.65 ), 0.0, 1.0 );
+          reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vPineWorldPos, vPineWorldNormal, diffuseColor.rgb, pineTrans );`,
         );
     };
 
     const tDepthMat = new THREE.MeshDepthMaterial({
       depthPacking: THREE.RGBADepthPacking,
     });
-    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v2';
+    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v3';
     tDepthMat.onBeforeCompile = (shader) => {
-      injectTreeWindSway(shader, windTimeUniform.current);
+      injectTreeWindSway(shader);
     };
 
     const sMat = new THREE.MeshStandardMaterial({
       roughness: 0.92,
       metalness: 0.01,
     });
-    sMat.customProgramCacheKey = () => 'sector7-shrub-wind-v1';
+    sMat.customProgramCacheKey = () => 'sector7-shrub-wind-v2';
     sMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uWindTime = windTimeUniform.current;
+      bindFoliageLightingUniforms(shader.uniforms);
       shader.vertexShader = shader.vertexShader
         .replace(
           '#include <common>',
           `#include <common>
-          uniform float uWindTime;`,
+          ${GLSL_FOLIAGE_WIND_PARS}
+          varying vec3 vShrubWorldPos;
+          varying vec3 vShrubWorldNormal;`,
         )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
           float sH = clamp( ( transformed.y + 0.35 ) / 0.87, 0.0, 1.0 );
-          float sBend = sH * sH;
           #ifdef USE_INSTANCING
-            vec3 sRoot = ( modelMatrix * instanceMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+            mat4 shrubInstWorld = modelMatrix * instanceMatrix;
           #else
-            vec3 sRoot = ( modelMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+            mat4 shrubInstWorld = modelMatrix;
           #endif
-          transformed.x += sin( uWindTime * 2.1 + sRoot.x * 0.25 + sRoot.z * 0.18 ) * 0.042 * sBend;
-          transformed.z += cos( uWindTime * 1.8 + sRoot.z * 0.27 ) * 0.032 * sBend;`,
+          vec3 sRoot = ( shrubInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+          vec3 sWind = s7TravelingWindOffset(
+            sRoot.xz,
+            sH,
+            0.22,
+            sRoot.x * 0.25 + sRoot.z * 0.18,
+            0.012
+          );
+          transformed += s7WorldToLocalOffset( mat3( shrubInstWorld ), sWind );
+          vShrubWorldPos = ( shrubInstWorld * vec4( transformed, 1.0 ) ).xyz;
+          vShrubWorldNormal = normalize( mat3( shrubInstWorld ) * objectNormal );`,
+        );
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+          ${GLSL_FOLIAGE_TRANSMITTANCE_PARS}
+          varying vec3 vShrubWorldPos;
+          varying vec3 vShrubWorldNormal;`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+          reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vShrubWorldPos, vShrubWorldNormal, diffuseColor.rgb, 0.65 );`,
         );
     };
 
@@ -445,9 +487,6 @@ export function PineForest({
       lodElapsed.current = 0;
     }
     const dt = Math.min(delta, 0.05);
-    if (!isSoftwareGl) {
-      windTimeUniform.current.value += dt;
-    }
 
     const tMesh = treeBatches;
     const csMesh = contactShadowRef.current;

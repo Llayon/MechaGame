@@ -34,14 +34,34 @@ export function effectVisible(camera: Camera, x: number, y: number, z: number, r
   return depth >= -radius && projectedPixels(radius, depth, readWorldLod(camera)) >= minPixels;
 }
 
+/** Plastic/golden-ratio low-discrepancy constant matching Atlantis anti-ring LOD jitter (+/-13%). */
+export const LOD_JITTER_CONSTANT = 0.7548777;
+
+/**
+ * Deterministic per-instance/per-cell LOD threshold multiplier in [0.87, 1.13).
+ * Breaks up concentric LOD pop rings around the moving camera.
+ */
+export function lodJitter(id: number): number {
+  const raw = id * LOD_JITTER_CONSTANT;
+  const frac = raw - Math.floor(raw);
+  return 0.87 + 0.26 * frac;
+}
+
 /** Thresholds are ordered from largest to smallest. A negative previous level initializes without hysteresis. */
-export function chooseLod(pixels: number, previous: number, thresholds: readonly number[]) {
+export function chooseLod(
+  pixels: number,
+  previous: number,
+  thresholds: readonly number[],
+  jitterId?: number,
+) {
+  const effectivePixels =
+    jitterId === undefined ? pixels : pixels / lodJitter(jitterId);
   if (previous < 0 || previous > thresholds.length) {
-    const index = thresholds.findIndex(threshold => pixels >= threshold);
+    const index = thresholds.findIndex((threshold) => effectivePixels >= threshold);
     return index < 0 ? thresholds.length : index;
   }
   let level = previous;
-  while (level > 0 && pixels >= thresholds[level - 1] * 1.15) level--;
-  while (level < thresholds.length && pixels < thresholds[level] * 0.85) level++;
+  while (level > 0 && effectivePixels >= thresholds[level - 1] * 1.15) level--;
+  while (level < thresholds.length && effectivePixels < thresholds[level] * 0.85) level++;
   return level;
 }

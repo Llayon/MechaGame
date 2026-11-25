@@ -35,6 +35,11 @@ import {
   syncWaterCausticsParams,
 } from './waterCausticsAndAo';
 import {
+  advanceFoliageWindTime,
+  installGlobalDitheringShader,
+  syncFoliageLightingParams,
+} from './foliageLighting';
+import {
   getToneMappingExposure,
   parseToneMappingMode,
   type ToneMappingMode,
@@ -71,6 +76,7 @@ import type { CombatSimulationState } from '../game/combatTypes';
 
 installHeightFogShader();
 installPbrMultiBounceAoShader();
+installGlobalDitheringShader();
 
 let cachedSoftwareWebGL: boolean | null = null;
 
@@ -278,6 +284,7 @@ function CameraRig({
     );
     syncHeightFogScatter(lightingPreset, sunPos);
     syncWaterCausticsParams(lightingPreset, graphicsPreset, sunPos);
+    syncFoliageLightingParams(lightingPreset, sunPos);
     invalidate();
   }, [gl, toneMappingMode, lightingPreset, graphicsPreset, sunPos, invalidate]);
 
@@ -461,8 +468,11 @@ function CameraRig({
 
   useFrame((_, delta) => {
     if (paused) return;
-    if (!isSoftwareGl && graphicsPreset !== 'low') {
-      advanceWaterCausticsTime(delta);
+    if (!isSoftwareGl) {
+      advanceFoliageWindTime(delta);
+      if (graphicsPreset !== 'low') {
+        advanceWaterCausticsTime(delta);
+      }
     }
     if (driveMode) return; // CombatCamera exclusively owns battle view.
     const status = combatRef.current.missionStatus;
@@ -865,6 +875,7 @@ export function MapScene({
   const lightCfg = LIGHTING_CONFIGS[lightingPreset];
   syncHeightFogScatter(lightingPreset, lightCfg.keyPos);
   syncWaterCausticsParams(lightingPreset, graphics.preset, lightCfg.keyPos);
+  syncFoliageLightingParams(lightingPreset, lightCfg.keyPos);
   const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
   const waterVfxPoolRef = useLazyRef(createWaterVfxPool);
   const groundTrailsPoolRef = useLazyRef(createGroundTrailsPool);

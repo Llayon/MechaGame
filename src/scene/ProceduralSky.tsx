@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Sky } from 'three/addons/objects/Sky.js';
 import type { LightingPreset } from '../map/sectors';
+import { GLSL_IGN_DITHER_SNIPPET } from './foliageLighting';
 
 export interface ProceduralSkyProps {
   lightingPreset: LightingPreset;
@@ -124,6 +125,11 @@ function configureSkyShader(sky: Sky): void {
       float preethamWeight = smoothstep( -0.05, 0.20, direction.y ) * uPreethamMix;
       vec3 skyOut = mix( gradColor, skyPreetham, preethamWeight );
       gl_FragColor = vec4( skyOut, 1.0 );`,
+    )
+    .replace(
+      '#include <colorspace_fragment>',
+      `#include <colorspace_fragment>
+      ${GLSL_IGN_DITHER_SNIPPET}`,
     );
   mat.needsUpdate = true;
 }

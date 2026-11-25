@@ -1,12 +1,15 @@
-import { useSceneSimulation } from '../SceneSimulation';
 import { useEffect, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useMeshShaderWarmup } from './useMeshShaderWarmup';
 import {
   createFernBushGeometry,
   generateGrassBushAccentsData,
 } from '../../map/grassField';
+import {
+  bindFoliageLightingUniforms,
+  GLSL_FOLIAGE_TRANSMITTANCE_PARS,
+  GLSL_FOLIAGE_WIND_PARS,
+} from '../foliageLighting';
 
 export interface GrassBushAccentsProps {
   isSoftwareGl?: boolean;
@@ -26,7 +29,6 @@ const ROAD_OCHRE_HIGH = new THREE.Color('#958246');
 
 export function GrassBushAccents({ isSoftwareGl = false, preparing = false }: GrassBushAccentsProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const windUniform = useRef({ value: 0.65 });
 
   const { bushes, geometry, material } = useMemo(() => {
     const items = generateGrassBushAccentsData(isSoftwareGl ? 96 : 184);
@@ -37,28 +39,52 @@ export function GrassBushAccents({ isSoftwareGl = false, preparing = false }: Gr
       metalness: 0.02,
       side: THREE.DoubleSide,
     });
-    mat.customProgramCacheKey = () => 'sector7-fern-bushes-v1';
+    mat.customProgramCacheKey = () => 'sector7-fern-bushes-v2';
     mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uWindTime = windUniform.current;
+      bindFoliageLightingUniforms(shader.uniforms);
       shader.vertexShader = shader.vertexShader
         .replace(
           '#include <common>',
           `#include <common>
-uniform float uWindTime;`,
+${GLSL_FOLIAGE_WIND_PARS}
+varying vec3 vFernWorldPos;
+varying vec3 vFernWorldNormal;`,
         )
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
 float bH = clamp( transformed.y / 0.68, 0.0, 1.0 );
-float bBend = bH * bH;
 #ifdef USE_INSTANCING
-  vec3 bRoot = ( modelMatrix * instanceMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+  mat4 fernInstWorld = modelMatrix * instanceMatrix;
 #else
-  vec3 bRoot = ( modelMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+  mat4 fernInstWorld = modelMatrix;
 #endif
-float bPhase = uWindTime * 1.9 + bRoot.x * 0.27 + bRoot.z * 0.21;
-transformed.x += sin( bPhase ) * 0.045 * bBend;
-transformed.z += cos( bPhase * 0.85 + 0.9 ) * 0.036 * bBend;`,
+vec3 bRoot = ( fernInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+vec3 bWind = s7TravelingWindOffset(
+  bRoot.xz,
+  bH,
+  0.26,
+  bRoot.x * 0.27 + bRoot.z * 0.21,
+  0.015
+);
+transformed += s7WorldToLocalOffset( mat3( fernInstWorld ), bWind );
+vFernWorldPos = ( fernInstWorld * vec4( transformed, 1.0 ) ).xyz;
+vFernWorldNormal = normalize( mat3( fernInstWorld ) * objectNormal );`,
+        );
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+${GLSL_FOLIAGE_TRANSMITTANCE_PARS}
+varying vec3 vFernWorldPos;
+varying vec3 vFernWorldNormal;`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+vec3 fernFaceN = normalize( vFernWorldNormal ) * ( gl_FrontFacing ? 1.0 : -1.0 );
+reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vFernWorldPos, fernFaceN, diffuseColor.rgb, 0.72 );`,
         );
     };
     return { bushes: items, geometry: geo, material: mat };
@@ -98,16 +124,6 @@ transformed.z += cos( bPhase * 0.85 + 0.9 ) * 0.036 * bBend;`,
       material.dispose();
     };
   }, [geometry, material]);
-
-  const { paused } = useSceneSimulation();
-
-  useFrame((_, delta) => {
-    if (paused) return;
-    if (preparing) return;
-    if (!isSoftwareGl) {
-      windUniform.current.value += Math.min(delta, 0.05);
-    }
-  });
 
   if (bushes.length === 0) return null;
 

@@ -247,11 +247,12 @@ export async function loadCrowdRenderer() {
           point.set(actor.x, actor.y + 0.24, actor.z).applyMatrix4(camera.matrixWorldInverse);
           const depth = point.z < 0 ? Math.max(-point.z, point.length() * 0.4) : point.length();
           const px = projectedPixels(0.24, depth, view);
-          previous[actor.id] = chooseLod(px, previous[actor.id], thresholds);
+          previous[actor.id] = chooseLod(px, previous[actor.id], thresholds, actor.id);
           shadowLevels[actor.id] = chooseLod(
             (px * view.shadowScale) / Math.max(0.01, view.detailScale),
             shadowLevels[actor.id],
             [24, 8],
+            actor.id,
           );
         }
         const squad = squads[actor.siteIndex];

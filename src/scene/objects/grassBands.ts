@@ -1,9 +1,10 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import {
   createGrassClumpGeometry, GRASS_INSTANCE_COUNT_GPU, GRASS_INSTANCE_COUNT_SW,
   GRASS_PATCH_RADIUS_GPU, GRASS_PATCH_RADIUS_SW, GRASS_SPAN_W, GRASS_SPAN_D,
 } from '../../map/grassField';
 import { createGrassCells } from './grassCells';
+import { lodJitter } from '../../lod/worldLod';
 
 /** Compact the original world-locked seed population. The shader still handles
  * smooth growth, slope, wind and trampling. Only eligible seeds reach the GPU. */
@@ -81,8 +82,9 @@ export function createGrassBands(reduced: boolean, samples: Uint8Array, width: n
             const distSq = dx * dx + dz * dz;
             if (distSq > guardSq) continue;
             const rand = seeds[src+3] / (2*Math.PI);
-            const distance = Math.sqrt(distSq) / radius + (rand - .5) * .06;
-            const level = distance < .47 * scale ? 0 : distance < .80 * scale ? 1 : 2;
+            const jitter = lodJitter(cell.ids[i]);
+            const distance = Math.sqrt(distSq) / radius;
+            const level = distance < .47 * scale * jitter ? 0 : distance < .80 * scale * jitter ? 1 : 2;
             if (rand > (level === 2 ? .78 : 1) * scale) continue;
             const { geo, offsets } = bands[level];
             offsets.setXYZW(geo.instanceCount++, seeds[src], seeds[src+1], seeds[src+2], seeds[src+3]);

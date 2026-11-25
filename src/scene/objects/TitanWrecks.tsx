@@ -5,7 +5,12 @@ import {
   TITAN_BREACH_TREES,
   createTitanWrecksGeometry,
 } from '../../map/titanWrecks';
-import { createUnifiedPineTreeGeometry } from './pineGeometry';
+import { createUnifiedPineTreeGeometry, PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
+import {
+  bindFoliageLightingUniforms,
+  GLSL_FOLIAGE_TRANSMITTANCE_PARS,
+  GLSL_FOLIAGE_WIND_PARS,
+} from '../foliageLighting';
 
 const _dummy = new THREE.Object3D();
 const _tmpCol = new THREE.Color();
@@ -195,6 +200,61 @@ metalnessFactor = mix( metalnessFactor, 0.02, twDirtOverlay );`,
       roughness: 0.87,
       metalness: 0.02,
     });
+    tMat.customProgramCacheKey = () => 'sector7-titan-breach-pine-v1';
+    tMat.onBeforeCompile = (shader) => {
+      bindFoliageLightingUniforms(shader.uniforms);
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+${GLSL_FOLIAGE_WIND_PARS}
+attribute float aNeedleTip;
+varying float vBreachNeedleTip;
+varying float vBreachHeightNorm;
+varying vec3 vBreachWorldPos;
+varying vec3 vBreachWorldNormal;`,
+        )
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+float bHNorm = clamp( transformed.y / ${PINE_TREE_TOTAL_HEIGHT.toFixed(2)}, 0.0, 1.0 );
+#ifdef USE_INSTANCING
+  mat4 bInstWorld = modelMatrix * instanceMatrix;
+#else
+  mat4 bInstWorld = modelMatrix;
+#endif
+vec3 bInstRoot = ( bInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+vec3 bWindWorld = s7TravelingWindOffset(
+  bInstRoot.xz,
+  bHNorm,
+  0.54,
+  bInstRoot.x * 0.13 + bInstRoot.z * 0.19,
+  0.020
+);
+transformed += s7WorldToLocalOffset( mat3( bInstWorld ), bWindWorld );
+vBreachNeedleTip = aNeedleTip;
+vBreachHeightNorm = bHNorm;
+vBreachWorldPos = ( bInstWorld * vec4( transformed, 1.0 ) ).xyz;
+vBreachWorldNormal = normalize( mat3( bInstWorld ) * objectNormal );`,
+        );
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+${GLSL_FOLIAGE_TRANSMITTANCE_PARS}
+varying float vBreachNeedleTip;
+varying float vBreachHeightNorm;
+varying vec3 vBreachWorldPos;
+varying vec3 vBreachWorldNormal;`,
+        )
+        .replace(
+          '#include <lights_fragment_end>',
+          `#include <lights_fragment_end>
+float breachTrans = clamp( max( vBreachNeedleTip * 0.92, smoothstep( 0.20, 0.72, vBreachHeightNorm ) * 0.65 ), 0.0, 1.0 );
+reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vBreachWorldPos, vBreachWorldNormal, diffuseColor.rgb, breachTrans );`,
+        );
+    };
 
     return {
       hullGeometry: hGeo,

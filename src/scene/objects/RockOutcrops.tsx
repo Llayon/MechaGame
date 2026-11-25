@@ -153,7 +153,7 @@ diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
           const r = rocks[i];
           const depth = -(m[2]*r.x + m[6]*r.y + m[10]*r.z + m[14]);
           const level = depth < -radius[i] ? 1 :
-            chooseLod(projectedPixels(radius[i], depth - radius[i], view), selection[i], thresholds);
+            chooseLod(projectedPixels(radius[i], depth - radius[i], view), selection[i], thresholds, i);
           if (selection[i] !== level) { dirty = true; selection[i] = level; }
         }
         if (!dirty) return;

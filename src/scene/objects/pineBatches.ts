@@ -1,6 +1,6 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { chooseLod, projectedPixels, readWorldLod } from '../../lod/worldLod';
+import { chooseLod, lodJitter, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { SLAB_BASE_Y } from '../../map/terrainMath';
 import type { PineTreeInstance } from '../../map/worldStructures';
 import { createUnifiedPineTreeGeometry, PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
@@ -96,10 +96,10 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
         const z2 = axis[10] >= 0 ? bounds.max.z : bounds.min.z;
         const nearDepth = -(axis[2] * z0 + axis[6] * z1 + axis[10] * z2 + axis[14]);
         const px = projectedPixels(radius * .45, nearDepth > 0 ? nearDepth : dist, view);
-        const level = chooseLod(px, mesh.userData.lodLevel, thresholds);
+        const level = chooseLod(px, mesh.userData.lodLevel, thresholds, i);
         mesh.userData.lodLevel = level;
         setRange(level);
-        shadowLevel = Math.max(level, chooseLod(px * view.shadowScale, shadowLevel, [100, 32]));
+        shadowLevel = Math.max(level, chooseLod(px * view.shadowScale, shadowLevel, [100, 32], i));
         mesh.castShadow = view.shadowScale > 0;
         if (mesh.castShadow && level === 2 && sun[1] > 0) {
           // Project the entire cell down to the slab floor. A caster outside
@@ -115,7 +115,7 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
           const receiverDist = Math.max(1, shadowFootprint.distanceToPoint(camera.position));
           const stretch = 1 + Math.hypot(sun[0], sun[2]) / sun[1];
           const shadowPixels = projectedPixels(radius * .45 * stretch, receiverDist, view) * view.shadowScale;
-          mesh.castShadow = shadowPixels >= 12 && frustum.intersectsBox(shadowFootprint);
+          mesh.castShadow = shadowPixels >= 12 * lodJitter(i) && frustum.intersectsBox(shadowFootprint);
         }
       },
     };
