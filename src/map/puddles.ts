@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import {
+  GLSL_CANYON_LIGHTING_PARS,
+  bindCanyonLightingUniforms,
+} from '../scene/canyonLighting';
 
 export interface PuddleSample {
   wetness: number;
@@ -124,10 +128,11 @@ export function createRoadPuddleMaterial(
     polygonOffsetUnits: -1,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-road-puddles-v2';
+  mat.customProgramCacheKey = () => 'sector7-road-puddles-v3';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
+    bindCanyonLightingUniforms(shader.uniforms);
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -151,12 +156,14 @@ vPuddleUp = normalize( mat3( viewMatrix ) * vec3( 0.0, 1.0, 0.0 ) );`,
       .replace(
         '#include <common>',
         `#include <common>
+#define S7_CUSTOM_AO
 uniform float uPuddleTime;
 varying vec2 vRoadUv;
 varying vec3 vPuddleWorldPos;
 varying vec3 vPuddleWorldNormal;
 varying vec3 vPuddleUp;
-${GLSL_PUDDLE_HELPERS}`,
+${GLSL_PUDDLE_HELPERS}
+${GLSL_CANYON_LIGHTING_PARS}`,
       )
       .replace(
         '#include <color_fragment>',
@@ -202,7 +209,11 @@ if ( vPuddleWorldPos.y > 1.35 && vPuddleWorldPos.y < 14.5 && puddleNY > 0.962 ) 
   puddleWater = smoothstep( 0.16, 0.195, pWetness );
   diffuseColor.rgb *= mix( 1.0, 0.42, puddleWetSoil );
   diffuseColor.rgb *= mix( 1.0, 0.66, puddleWater );
-}`,
+}
+float s7SkyVis = s7SampleCanyonSkyVis( vPuddleWorldPos );
+float s7BakedFarShadow = s7SampleBakedFarShadow( vPuddleWorldPos );
+float s7CascadeFade = s7ComputeCascadeFade( vPuddleWorldPos );
+float s7CustomAO = clamp( s7SkyVis, 0.26, 1.0 );`,
       )
       .replace(
         '#include <roughnessmap_fragment>',

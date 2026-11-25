@@ -8,6 +8,10 @@ import {
   GLSL_WATER_CAUSTICS_PARS,
   bindWaterCausticsUniforms,
 } from '../waterCausticsAndAo';
+import {
+  GLSL_CANYON_LIGHTING_PARS,
+  bindCanyonLightingUniforms,
+} from '../canyonLighting';
 
 /**
  * Creates a PBR MeshStandardMaterial patched via onBeforeCompile with pixel-level
@@ -32,12 +36,13 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v8';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v9';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
     bindFlybyShadowUniforms(shader.uniforms);
     bindWaterCausticsUniforms(shader.uniforms);
+    bindCanyonLightingUniforms(shader.uniforms);
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
@@ -75,6 +80,7 @@ varying vec3 vPuddleUp;
 ${GLSL_PUDDLE_HELPERS}
 ${GLSL_FLYBY_SHADOW_PARS}
 ${GLSL_WATER_CAUSTICS_PARS}
+${GLSL_CANYON_LIGHTING_PARS}
 
 vec3 terrSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -363,12 +369,15 @@ if ( vTerrWorldPos.y < 0.02 && terrRiverVicinity > 0.05 ) {
   diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * beerTint, clamp( terrRiverVicinity * smoothstep( 0.0, 0.45, subDep ), 0.0, 0.85 ) );
 }
 
-// 9. Procedural crevice occlusion fed into global GTAO Multi-Bounce AO & Specular Occlusion
+// 9. Procedural crevice occlusion + heightmap-mip canyon skyVis & hybrid far mountain shadow
 float terrCreviceOcc =
   rockFissure * terrRockBlend * 0.34 +
   ( 1.0 - pebDome ) * effectiveShore * terrCoarsePebWeight * pebRampCalm * 0.24 +
   terrCitDark * 0.16;
-float s7CustomAO = clamp( 1.0 - terrCreviceOcc, 0.42, 1.0 );
+float s7SkyVis = s7SampleCanyonSkyVis( vTerrWorldPos );
+float s7BakedFarShadow = s7SampleBakedFarShadow( vTerrWorldPos );
+float s7CascadeFade = s7ComputeCascadeFade( vTerrWorldPos );
+float s7CustomAO = clamp( ( 1.0 - terrCreviceOcc ) * s7SkyVis, 0.24, 1.0 );
 
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
 float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );

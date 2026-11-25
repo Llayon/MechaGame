@@ -44,6 +44,12 @@ import {
   syncInteriorWindowParams,
 } from './visualPolish';
 import {
+  installHybridTerrainShadowShader,
+  syncCanyonLightingPreset,
+  syncHybridShadowCascade,
+} from './canyonLighting';
+import { computeHybridShadowHalfExtent } from './canyonLightingMath';
+import {
   getToneMappingExposure,
   parseToneMappingMode,
   type ToneMappingMode,
@@ -82,6 +88,7 @@ installHeightFogShader();
 installPbrMultiBounceAoShader();
 installGlobalSpecularAaShader();
 installGlobalDitheringShader();
+installHybridTerrainShadowShader();
 
 let cachedSoftwareWebGL: boolean | null = null;
 
@@ -188,11 +195,14 @@ function syncShadowFrustum(
   focus: THREE.Vector3,
   sunPos: readonly [number, number, number],
   shadowMapSize: number,
+  driveMode = false,
+  shadowsEnabled = true,
 ) {
+  const camDist = camera.position.distanceTo(focus);
+  const halfExtent = computeHybridShadowHalfExtent(camDist, driveMode);
+  syncHybridShadowCascade(focus.x, focus.z, halfExtent, shadowsEnabled);
   if (!light) return;
   _sunDir.set(sunPos[0], sunPos[1], sunPos[2]).normalize();
-  const camDist = camera.position.distanceTo(focus);
-  const halfExtent = THREE.MathUtils.clamp(camDist * 0.44, 32, 210);
   const halfH = halfExtent * 0.92;
 
   _lightRight.crossVectors(_worldUp, _sunDir).normalize();
@@ -206,6 +216,8 @@ function syncShadowFrustum(
     .multiplyScalar(u)
     .addScaledVector(_lightUp, v)
     .addScaledVector(_sunDir, w);
+
+  syncHybridShadowCascade(_snappedFocus.x, _snappedFocus.z, halfExtent, shadowsEnabled);
 
   light.target.position.copy(_snappedFocus);
   light.target.updateMatrixWorld();
@@ -243,6 +255,7 @@ interface CameraRigProps {
   sunLightRef: React.RefObject<THREE.DirectionalLight | null>;
   sunPos: readonly [number, number, number];
   shadowMapSize: number;
+  shadowsEnabled: boolean;
   toneMappingMode: ToneMappingMode;
   graphicsPreset: GraphicsPreset;
 }
@@ -263,6 +276,7 @@ function CameraRig({
   sunLightRef,
   sunPos,
   shadowMapSize,
+  shadowsEnabled,
   toneMappingMode,
   graphicsPreset,
 }: CameraRigProps) {
@@ -291,8 +305,9 @@ function CameraRig({
     syncWaterCausticsParams(lightingPreset, graphicsPreset, sunPos);
     syncFoliageLightingParams(lightingPreset, sunPos);
     syncInteriorWindowParams(lightingPreset);
+    syncCanyonLightingPreset(lightingPreset, sunPos, shadowsEnabled);
     invalidate();
-  }, [gl, toneMappingMode, lightingPreset, graphicsPreset, sunPos, invalidate]);
+  }, [gl, toneMappingMode, lightingPreset, graphicsPreset, sunPos, shadowsEnabled, invalidate]);
 
   useEffect(() => {
     const light = sunLightRef.current;
@@ -305,9 +320,9 @@ function CameraRig({
 
   useEffect(() => {
     const focus = controlsRef.current?.target ?? _goalTarget;
-    syncShadowFrustum(sunLightRef.current, camera, focus, sunPos, shadowMapSize);
+    syncShadowFrustum(sunLightRef.current, camera, focus, sunPos, shadowMapSize, driveMode, shadowsEnabled);
     invalidate();
-  }, [sunPos, shadowMapSize, camera, sunLightRef, invalidate]);
+  }, [sunPos, shadowMapSize, driveMode, shadowsEnabled, camera, sunLightRef, invalidate]);
 
   useEffect(() => {
     if (!isSoftwareGl || paused) return;
@@ -417,6 +432,8 @@ function CameraRig({
             _goalTarget,
             sunPos,
             shadowMapSize,
+            driveMode,
+            shadowsEnabled,
           );
           transitioningRef.current = false;
         } else {
@@ -448,7 +465,7 @@ function CameraRig({
       } else {
         camera.lookAt(_goalTarget);
       }
-      syncShadowFrustum(sunLightRef.current, camera, _goalTarget, sunPos, shadowMapSize);
+      syncShadowFrustum(sunLightRef.current, camera, _goalTarget, sunPos, shadowMapSize, driveMode, shadowsEnabled);
       transitioningRef.current = false;
       invalidate();
       return;
@@ -469,6 +486,7 @@ function CameraRig({
     sunLightRef,
     sunPos,
     shadowMapSize,
+    shadowsEnabled,
     mechPoseRef,
   ]);
 
@@ -569,7 +587,7 @@ function CameraRig({
         camera.position.y += Math.cos(t * 1.37) * shake * 0.28;
       }
 
-      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
+      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize, driveMode, shadowsEnabled);
       return;
     }
 
@@ -618,7 +636,7 @@ function CameraRig({
       programmaticUpdateRef.current = true;
       controls.update();
       programmaticUpdateRef.current = false;
-      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
+      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize, driveMode, shadowsEnabled);
       if (isSoftwareGl) invalidate();
       return;
     }
@@ -637,7 +655,7 @@ function CameraRig({
     controls.update();
     programmaticUpdateRef.current = false;
 
-    syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
+    syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize, driveMode, shadowsEnabled);
 
     const posDist = camera.position.distanceTo(_goalPos);
     const tgtDist = controls.target.distanceTo(_goalTarget);
@@ -647,7 +665,7 @@ function CameraRig({
       programmaticUpdateRef.current = true;
       controls.update();
       programmaticUpdateRef.current = false;
-      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize);
+      syncShadowFrustum(sunLightRef.current, camera, controls.target, sunPos, shadowMapSize, driveMode, shadowsEnabled);
       transitioningRef.current = false;
     }
   });
@@ -675,6 +693,8 @@ function CameraRig({
             controlsRef.current.target,
             sunPos,
             shadowMapSize,
+            driveMode,
+            shadowsEnabled,
           );
         }
         if (isSoftwareGl) invalidate();
@@ -908,6 +928,7 @@ export function MapScene({
   const quality = useMemo(() => resolveGraphicsRuntime(
     graphics, typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1, isSoftwareGl,
   ), [graphics, isSoftwareGl]);
+  syncCanyonLightingPreset(lightingPreset, lightCfg.keyPos, quality.shadowEnabled);
   // Keep valid map dimensions when shadows are disabled.
   const shadowMapSize = quality.shadowMapSize || 512;
 
@@ -1011,10 +1032,10 @@ export function MapScene({
           shadow-camera-near={20}
           shadow-camera-layers-mask={1 | (1 << BRIDGE_SHADOW_LAYER) | (1 << PLAYER_MODEL_LAYER)}
           shadow-camera-far={680}
-          shadow-camera-left={-210}
-          shadow-camera-right={210}
-          shadow-camera-top={195}
-          shadow-camera-bottom={-195}
+          shadow-camera-left={-105}
+          shadow-camera-right={105}
+          shadow-camera-top={96.6}
+          shadow-camera-bottom={-96.6}
           shadow-radius={1.15}
           shadow-bias={-0.00022}
           shadow-normalBias={0.03}
@@ -1048,6 +1069,7 @@ export function MapScene({
           sunLightRef={sunLightRef}
           sunPos={lightCfg.keyPos}
           shadowMapSize={shadowMapSize}
+          shadowsEnabled={quality.shadowEnabled}
           toneMappingMode={toneMappingMode}
           graphicsPreset={graphics.preset}
         />
@@ -1115,7 +1137,7 @@ export function MapScene({
           casingsPoolRef={casingsPoolRef}
           tracerPoolRef={tracerPoolRef}
           onShadowFocus={(focus, cam) => syncShadowFrustum(
-            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize)}
+            sunLightRef.current, cam, focus, lightCfg.keyPos, shadowMapSize, driveMode, quality.shadowEnabled)}
           heatShimmerPoolRef={heatShimmerPoolRef}
           onSelectMech={onEnterDriveMode}
           onMissionEnded={onMissionEnded}

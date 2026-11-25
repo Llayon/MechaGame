@@ -6,6 +6,10 @@ import * as THREE from 'three';
 import { generateRockOutcropsData } from '../../map/worldStructures';
 import { createChiseledRockGeometry } from './rockGeometry';
 import { useMeshShaderWarmup } from './useMeshShaderWarmup';
+import {
+  GLSL_CANYON_LIGHTING_PARS,
+  bindCanyonLightingUniforms,
+} from '../canyonLighting';
 
 const _dummy = new THREE.Object3D();
 
@@ -29,8 +33,9 @@ export function RockOutcrops({ preparing = false }: { preparing?: boolean }) {
       flatShading: true,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-smart-rock-v1';
+    mat.customProgramCacheKey = () => 'sector7-smart-rock-v2';
     mat.onBeforeCompile = (shader) => {
+      bindCanyonLightingUniforms(shader.uniforms);
       shader.vertexShader = shader.vertexShader
         .replace(
           '#include <common>',
@@ -57,9 +62,11 @@ vRockWorldPos = rWp.xyz;`,
         .replace(
           '#include <common>',
           `#include <common>
+#define S7_CUSTOM_AO
 varying float vRockLocalY;
 varying vec3 vRockWorldPos;
 varying vec3 vRockWorldNormal;
+${GLSL_CANYON_LIGHTING_PARS}
 
 vec3 rockSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -99,7 +106,12 @@ diffuseColor.rgb = mix( groundSeamCol * 0.88, diffuseColor.rgb, bottomBlend );
 
 // Subtle weathered moss / lichen patina on flat upward-facing stone ledges
 float topMoss = smoothstep( 0.62, 0.90, vRockWorldNormal.y ) * smoothstep( 0.25, 0.80, rNoise );
-diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );`,
+diffuseColor.rgb = mix( diffuseColor.rgb, seamMoss * 1.12, topMoss * 0.44 );
+
+float s7SkyVis = s7SampleCanyonSkyVis( vRockWorldPos );
+float s7BakedFarShadow = s7SampleBakedFarShadow( vRockWorldPos );
+float s7CascadeFade = s7ComputeCascadeFade( vRockWorldPos );
+float s7CustomAO = clamp( s7SkyVis, 0.26, 1.0 );`,
         );
     };
 

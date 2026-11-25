@@ -8,6 +8,10 @@ import {
   GLSL_WATER_CAUSTICS_PARS,
   bindWaterCausticsUniforms,
 } from '../waterCausticsAndAo';
+import {
+  GLSL_CANYON_LIGHTING_PARS,
+  bindCanyonLightingUniforms,
+} from '../canyonLighting';
 
 export type ConcreteMossPreset = 'bridge' | 'wall' | 'ruin';
 
@@ -66,7 +70,7 @@ export function getOvergrownConcreteMaterial(
   const mat = new THREE.MeshStandardMaterial(matParams);
 
   mat.userData.localConcrete = true;
-  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v3-${preset}`;
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v4-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
     shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
@@ -77,6 +81,7 @@ export function getOvergrownConcreteMaterial(
     };
     bindFlybyShadowUniforms(shader.uniforms);
     bindWaterCausticsUniforms(shader.uniforms);
+    bindCanyonLightingUniforms(shader.uniforms);
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -121,6 +126,7 @@ varying vec3 vConcWorldNormal;
 varying vec3 vConcLocalPos;
 ${GLSL_FLYBY_SHADOW_PARS}
 ${GLSL_WATER_CAUSTICS_PARS}
+${GLSL_CANYON_LIGHTING_PARS}
 
 vec3 concSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -188,8 +194,11 @@ diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.
 float concFlyby = sampleFlybyShipShadow( vConcWorldPos ) * mix( 0.45, 1.0, smoothstep( 0.15, 0.75, vConcWorldNormal.y ) );
 diffuseColor.rgb *= ( 1.0 - concFlyby );
 
-// 5. Procedural foundation/waterline seam occlusion fed into global Multi-Bounce AO & Specular Occlusion
-float s7CustomAO = clamp( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18, 0.46, 1.0 );`,
+// 5. Procedural foundation/waterline seam occlusion + heightmap canyon skyVis & hybrid far shadow
+float s7SkyVis = s7SampleCanyonSkyVis( vConcWorldPos );
+float s7BakedFarShadow = s7SampleBakedFarShadow( vConcWorldPos );
+float s7CascadeFade = s7ComputeCascadeFade( vConcWorldPos );
+float s7CustomAO = clamp( ( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18 ) * s7SkyVis, 0.26, 1.0 );`,
       )
       .replace(
         '#include <lights_fragment_end>',
