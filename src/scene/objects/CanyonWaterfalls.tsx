@@ -4,10 +4,10 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { LightingPreset } from '../../map/sectors';
 import { WATER_LEVEL } from '../../map/terrainMath';
+import sites from 'virtual:waterfall-sites';
 import {
   buildBatchedSplashRingGeometry,
   buildBatchedWaterfallGeometry,
-  discoverWaterfallSites,
   evaluateWaterfallPoint,
   getWaterfallRockSpecs,
 } from '../../map/waterfalls';
@@ -95,10 +95,9 @@ export function CanyonWaterfalls({
   const mistGroupRef = useRef<THREE.Group>(null);
   const rockMeshRef = useRef<THREE.InstancedMesh>(null);
 
-  const sites = useMemo(() => discoverWaterfallSites(4), []);
-  const rockSpecs = useMemo(() => getWaterfallRockSpecs(sites), [sites]);
-  const curtainGeo = useMemo(() => buildBatchedWaterfallGeometry(sites), [sites]);
-  const splashGeo = useMemo(() => buildBatchedSplashRingGeometry(sites), [sites]);
+  const rockSpecs = useMemo(() => getWaterfallRockSpecs(sites), []);
+  const curtainGeo = useMemo(() => buildBatchedWaterfallGeometry(sites), []);
+  const splashGeo = useMemo(() => buildBatchedSplashRingGeometry(sites), []);
   const rockGeo = useMemo(() => createChiseledRockGeometry(1), []);
   const mistTex = useMemo(() => createMistTexture(), []);
 
@@ -131,7 +130,7 @@ export function CanyonWaterfalls({
           },
         ];
       }),
-    [sites],
+    [],
   );
 
   const { curtainMaterial, splashMaterial, rockMaterial } = useMemo(() => {

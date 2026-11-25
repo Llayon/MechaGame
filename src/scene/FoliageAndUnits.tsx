@@ -52,6 +52,8 @@ export function FoliageAndUnits({
   const lateDetailsVisible = stage >= 9;
   const prepareLateDetails = stage >= 7 && !lateDetailsVisible && driveMode && !isSoftwareGl
     && gl.extensions.has('KHR_parallel_shader_compile');
+  // Stage 13 leaves one streaming step to warm these groups before their reveal.
+  const prepareMistAndCover = stage === 8 && prepareLateDetails;
   const simplified = isSoftwareGl || vegetation !== 'full';
   const showDecorativeFoliage = vegetation !== 'minimal';
   const mistVisible = showMist && atmosphere !== 'off';
@@ -85,9 +87,9 @@ export function FoliageAndUnits({
         visible={lateDetailsVisible}
         isSoftwareGl={simplified}
       />}
-      {(lateDetailsVisible || prepareLateDetails) && <FlankCoverZone visible={lateDetailsVisible} />}
+      {(lateDetailsVisible || prepareMistAndCover) && <FlankCoverZone visible={lateDetailsVisible} />}
       {stage >= 9 && <PatrolConvoy visible={showUnits} isSoftwareGl={isSoftwareGl} />}
-      {mistVisible && (lateDetailsVisible || (stage === 8 && prepareLateDetails)) && (
+      {mistVisible && (lateDetailsVisible || prepareMistAndCover) && (
         <AtmosphereMist visible={lateDetailsVisible} isSoftwareGl={isSoftwareGl} />
       )}
       {(lateDetailsVisible || prepareLateDetails) && <CanyonWaterfalls

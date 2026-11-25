@@ -12,8 +12,8 @@ import {
   getExtendedTerrainHeight,
   getRiverInfo,
   lerp,
-} from './terrainMath';
-import { getFloodedRuinWaterObstacles } from './floodedRuins';
+} from './terrainMath.ts';
+import { getFloodedRuinWaterObstacles } from './floodedRuins.ts';
 
 export const WATER_SPAN_W = MAP_WIDTH + 160; // 560 units
 export const WATER_SPAN_D = MAP_DEPTH + 160; // 492 units

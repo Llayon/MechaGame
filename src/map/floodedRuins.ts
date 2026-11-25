@@ -3,7 +3,7 @@ import {
   WATER_LEVEL,
   distToSegment,
   getTerrainHeight,
-} from './terrainMath';
+} from './terrainMath.ts';
 import type { BoxCollider, CircleCollider, WorldCollider } from './worldColliders';
 
 export const EAST_CROSSING_WEST_ABUTMENT: readonly [number, number] = [32.0, 72.4];
