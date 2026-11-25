@@ -3,6 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { Group, InstancedMesh, Mesh, MeshStandardMaterial } from 'three';
 import { LightingPreset, SectorId } from '../map/sectors';
 import { createCorrugatedTexture, createHelipadTexture } from './textures';
+import { getInteriorWindowMaterial } from './visualPolish';
 import { AirfieldZone } from './zones/AirfieldZone';
 import { RefineryIslandZone } from './zones/RefineryIslandZone';
 import { CitadelZone } from './zones/CitadelZone';
@@ -47,13 +48,15 @@ export function Structures({
 
   useEffect(() => {
     if (!prepareRefinery || !refinery.current) return;
-    // StaticStructure has batched the refinery. Warm one wall and roof draw using the corrugated texture.
+    // Warm each corrugated wall/roof variant and the merged interior windows after batching.
+    const windows = getInteriorWindowMaterial();
     const variants = new Set<string>();
     for (const child of refinery.current.children) {
       child.traverseVisible(mesh => {
         if (!(mesh instanceof Mesh) || mesh instanceof InstancedMesh) return;
         const material = mesh.material;
-        if (!(material instanceof MeshStandardMaterial) || material.bumpMap !== corrugatedTex) return;
+        if (!(material instanceof MeshStandardMaterial)) return;
+        if (material !== windows && material.bumpMap !== corrugatedTex) return;
         const key = material.customProgramCacheKey();
         if (variants.has(key)) return;
         variants.add(key);
