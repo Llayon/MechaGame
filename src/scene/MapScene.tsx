@@ -721,7 +721,11 @@ function BalancedShadowCadence({
   return null;
 }
 
-function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void; driveMode: boolean }) {
+function ReportFirstTerrainRender({ onReady, onBattleFrame, driveMode }: {
+  onReady: () => void;
+  onBattleFrame: (renderer: THREE.WebGLRenderer) => void;
+  driveMode: boolean;
+}) {
   const scene = useThree((state) => state.scene);
   const terrainReported = useRef(false);
   const combatReported = useRef(false);
@@ -739,13 +743,14 @@ function ReportFirstTerrainRender({ onReady, driveMode }: { onReady: () => void;
       if (driveMode && !combatReported.current) {
         combatReported.current = true;
         performance.mark('mecha-first-controllable-frame');
+        onBattleFrame(args[0]);
       }
     };
     scene.onAfterRender = report;
     return () => {
       if (scene.onAfterRender === report) scene.onAfterRender = previous;
     };
-  }, [scene, onReady, driveMode]);
+  }, [scene, onReady, onBattleFrame, driveMode]);
   return null;
 }
 
@@ -823,8 +828,10 @@ export function MapScene({
   const streamed = compactReady() && landmarksReady();
   const detailLevels = [0,0,1,2,2,3,4,4,4,4,5,6,7,8,9,10,11];
   const waterReady = Boolean(world) && stage >= 7;
-  const nearReady = Boolean(world) && stage >= 8;
-  const farReady = Boolean(world) && stage >= 9;
+  const [terrainCompiling, setTerrainCompiling] = useState(false);
+  // The horizon shares the ground program, so neither region should force its first draw while it compiles.
+  const nearReady = Boolean(world) && stage >= 8 && !(driveMode && terrainCompiling);
+  const farReady = nearReady && stage >= 9;
   const level = streamed ? detailLevels[Math.min(stage, detailLevels.length - 1)] : optimized ? Math.max(0, stage - (stage >= 2 ? 1 : 0) - (stage >= 5 ? 1 : 0)) : stage;
   const stagedSky = optimized && deferSky && stage < (streamed ? 1 : 2) && !driveMode;
   const stagedGround = optimized && hasGroundMap() && stage < 5 && !driveMode;
@@ -843,6 +850,10 @@ export function MapScene({
     [preferences, activeAdaptation],
   );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
+  const [earlyTerrain, setEarlyTerrain] = useState(false);
+  const onBattleFrame = useCallback((renderer: THREE.WebGLRenderer) => {
+    if (!isSoftwareGl && renderer.extensions.has('KHR_parallel_shader_compile')) setEarlyTerrain(true);
+  }, [isSoftwareGl]);
   const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
   const [earlyPlayer, setEarlyPlayer] = useState<Awaited<ReturnType<typeof loadPlayerBattleEntry>> | null>(null);
   useEffect(() => {
@@ -959,7 +970,7 @@ export function MapScene({
       >
         <SceneSimulationProvider paused={paused}>
         <StageDriver limit={streamed ? lastStage + 5 : optimized ? lastStage + 2 : lastStage} stage={stage} advance={advance} paused={paused || (streamed && !world && stage >= 6)} />
-        <ReportFirstTerrainRender onReady={onTerrainReady} driveMode={driveMode} />
+        <ReportFirstTerrainRender onReady={onTerrainReady} onBattleFrame={onBattleFrame} driveMode={driveMode} />
         <WorldLodDriver
           settings={preferences}
           paused={paused || drsSamplingPaused}
@@ -1039,8 +1050,9 @@ export function MapScene({
             {world && (waterReady || (!isSoftwareGl && stage >= 5)) && <RiverWater
               data={world.water} isSoftwareGl={isSoftwareGl} visible={waterReady}
             />}
-            {world && (nearReady || (!isSoftwareGl && stage >= 5)) && <TerrainSlab
+            {world && (nearReady || (driveMode && earlyTerrain) || (!isSoftwareGl && stage >= 5)) && <TerrainSlab
               nearVisible={nearReady} far={farReady} water={false} tiles={world.terrain} waterDepth={world.water}
+              onCompilingChange={driveMode ? setTerrainCompiling : undefined}
               showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl}
             />}
           </> : world && (stagedGround ? <OverviewGround tiles={world.terrain} /> : <TerrainSlab waterDepth={world.water} tiles={world.terrain} showWireframeGrid={showWireframeGrid} isSoftwareGl={isSoftwareGl} />)}

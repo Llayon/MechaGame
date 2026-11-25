@@ -12,6 +12,7 @@ import type { TerrainTiles } from './terrain/terrainTileCodec';
 import { RiverWater } from './terrain/RiverWater';
 
 interface TerrainSlabProps {
+  onCompilingChange?: (compiling: boolean) => void;
   nearVisible?: boolean;
   far?: boolean;
   water?: boolean;
@@ -21,7 +22,7 @@ interface TerrainSlabProps {
   isSoftwareGl: boolean;
 }
 
-export function TerrainSlab({ showWireframeGrid, isSoftwareGl, waterDepth, tiles, nearVisible=true, far=true, water=true }: TerrainSlabProps) {
+export function TerrainSlab({ showWireframeGrid, isSoftwareGl, waterDepth, tiles, onCompilingChange, nearVisible=true, far=true, water=true }: TerrainSlabProps) {
   const { gl, scene, camera } = useThree();
   const surfaces = useRef<Group>(null);
   const prepareSurfaces = !nearVisible && gl.extensions.has('KHR_parallel_shader_compile');
@@ -38,10 +39,23 @@ export function TerrainSlab({ showWireframeGrid, isSoftwareGl, waterDepth, tiles
   useEffect(() => {
     if (!prepareSurfaces || !surfaces.current || !scene.environment) return;
     // Compile the actual materials with the live lighting while CompactGround covers these meshes.
-    void gl.compileAsync(surfaces.current, camera, scene).catch(error => {
-      if (!gl.getContext().isContextLost()) console.warn('Terrain shader warmup failed', error);
-    });
-  }, [prepareSurfaces, gl, camera, scene, tiles]);
+    const group = surfaces.current;
+    let active = true;
+    onCompilingChange?.(true);
+    void (async () => {
+      try {
+        await gl.compileAsync(group, camera, scene);
+      } catch (error) {
+        if (!gl.getContext().isContextLost()) console.warn('Terrain shader warmup failed', error);
+      } finally {
+        if (active) onCompilingChange?.(false);
+      }
+    })();
+    return () => {
+      active = false;
+      onCompilingChange?.(false);
+    };
+  }, [prepareSurfaces, gl, camera, scene, tiles, onCompilingChange]);
 
   useFrame((_, delta) => {
     if (paused) return;
