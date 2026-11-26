@@ -14,6 +14,7 @@ import { HorizonWarSystem } from './objects/HorizonWarSystem';
 import { TitanWrecks } from './objects/TitanWrecks';
 
 interface StructuresProps {
+  onCrossingReady?: () => void;
   prepareQuarryDetails: boolean;
   prepareHorizonEffects: boolean;
   stage:number;
@@ -28,7 +29,7 @@ interface StructuresProps {
 }
 
 export function Structures({
-  stage, quarryDetails, prepareQuarryDetails, prepareHorizonEffects,
+  stage, quarryDetails, prepareQuarryDetails, prepareHorizonEffects, onCrossingReady,
   splitBridgeBatches,
   lightingPreset,
   driveMode,
@@ -93,6 +94,7 @@ export function Structures({
         onSelectSector={onSelectSector}
       /></group>}
       {stage >= 2 && <QuarryAndPassZone details={quarryDetails}
+        onCrossingReady={onCrossingReady}
         prepareDetails={prepareQuarryDetails}
         splitBridgeBatches={splitBridgeBatches}
         lightingPreset={lightingPreset}

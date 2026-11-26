@@ -877,9 +877,13 @@ export function MapScene({
   );
   const isSoftwareGl = useMemo(() => detectSoftwareWebGL(), []);
   const [parallelBattleReady, setParallelBattleReady] = useState(false);
+  const [preparingCrossing, setPreparingCrossing] = useState(false);
+  const onCrossingReady = useCallback(() => setPreparingCrossing(false), []);
   const onBattleFrame = useCallback((renderer: THREE.WebGLRenderer) => {
-    if (!isSoftwareGl && renderer.extensions.has('KHR_parallel_shader_compile')) setParallelBattleReady(true);
-  }, [isSoftwareGl]);
+    if (isSoftwareGl || !renderer.extensions.has('KHR_parallel_shader_compile')) return;
+    setParallelBattleReady(true);
+    if (streamed && stage < 3) setPreparingCrossing(true);
+  }, [isSoftwareGl, streamed, stage]);
   const prepareHorizonEffects = streamed && driveMode && parallelBattleReady && stage >= 7 && level < 5;
   const prepareMech = preparingBattle && !isSoftwareGl && !stagedSky;
   const [earlyPlayer, setEarlyPlayer] = useState<Awaited<ReturnType<typeof loadPlayerBattleEntry>> | null>(null);
@@ -1094,8 +1098,9 @@ export function MapScene({
         </group>
 
         <group name="perf:structures">
-          {level<4 && <LandmarkMeshes stage={level} select={onSelectSector}/>}
+          {(level < 4 || preparingCrossing) && <LandmarkMeshes stage={level} keepCrossing={preparingCrossing} select={onSelectSector}/>}
           {(!streamed || level >= 1) && <Structures stage={level} quarryDetails={!streamed || stage >= 4}
+            onCrossingReady={preparingCrossing ? onCrossingReady : undefined}
             prepareQuarryDetails={streamed && driveMode && parallelBattleReady && (stage === 3 || stage === 4)}
             prepareHorizonEffects={prepareHorizonEffects}
             preparingBattle={preparingBattle}

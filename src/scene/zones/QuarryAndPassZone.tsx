@@ -1,5 +1,5 @@
 import { StaticStructure } from '../objects/StaticStructure';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Group, InstancedMesh, LineSegments, Mesh } from 'three';
 import {
@@ -17,6 +17,7 @@ import { FloodedRuins } from '../objects/FloodedRuins';
 import { PowerlineNetwork } from '../objects/PowerlineNetwork';
 
 export interface QuarryAndPassZoneProps {
+  onCrossingReady?: () => void;
   details: boolean;
   prepareDetails: boolean;
   splitBridgeBatches: boolean;
@@ -26,6 +27,7 @@ export interface QuarryAndPassZoneProps {
 }
 
 export function QuarryAndPassZone({
+  onCrossingReady,
   details,
   prepareDetails,
   splitBridgeBatches,
@@ -34,7 +36,31 @@ export function QuarryAndPassZone({
   onSelectSector,
 }: QuarryAndPassZoneProps) {
   const detailGroup = useRef<Group>(null);
+  const crossing = useRef<Group>(null);
   const { gl, camera, scene } = useThree();
+  // The ruins submit their stage 4 programs in the layout effect first.
+  useEffect(() => {
+    if (!onCrossingReady || !crossing.current) return;
+    let active = true;
+    const reveal = () => {
+      if (!active) return;
+      active = false;
+      onCrossingReady();
+    };
+    // Keep the overview crossing visible while the detailed bridge programs link.
+    const timeout = window.setTimeout(reveal, 1500);
+    async function prepare(group: Group) {
+      try {
+        await gl.compileAsync(group, camera, scene);
+      } catch (error) {
+        if (!gl.getContext().isContextLost()) console.warn('Bridge shader warmup failed', error);
+      } finally {
+        reveal();
+      }
+    }
+    void prepare(crossing.current);
+    return () => { active = false; window.clearTimeout(timeout); };
+  }, [onCrossingReady, gl, camera, scene]);
   const [ready, setReady] = useState(false);
   const mounted = details || prepareDetails;
   const visible = details && (ready || !prepareDetails);
@@ -64,13 +90,17 @@ export function QuarryAndPassZone({
         }));
       });
     }
-    // Keep the reveal bounded even when the driver never reports completion.
     let active = true;
     const release = () => { if (active) setReady(true); };
-    const timer = window.setTimeout(release, 120);
     void Promise.all(pending).then(release);
-    return () => { active = false; window.clearTimeout(timer); };
+    return () => { active = false; };
   }, [mounted, prepareDetails, ready, gl, camera, scene]);
+  useLayoutEffect(() => {
+    // Avoid forcing a synchronous ruins draw while the early bridge batch is linking.
+    if (!prepareDetails || ready || onCrossingReady) return;
+    const timer = window.setTimeout(() => setReady(true), 120);
+    return () => window.clearTimeout(timer);
+  }, [prepareDetails, ready, onCrossingReady]);
   const pointBX = -1.8 * SCALE_X;
   const pointBZ = -10.5 * SCALE_Z;
   const quarryExcX = QUARRY_CENTER_X - 1.5;
@@ -91,7 +121,7 @@ export function QuarryAndPassZone({
   return (
     <group>
       {/* Bridges & Elevated Viaduct */}
-      <group name="bake-crossing">{BRIDGE_SPECS.map((spec) => (
+      <group name="bake-crossing" ref={crossing} visible={!onCrossingReady}>{BRIDGE_SPECS.map((spec) => (
         <BridgeSpan
           splitBridgeBatches={splitBridgeBatches}
           key={spec.id}

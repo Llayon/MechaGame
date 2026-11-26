@@ -63,8 +63,8 @@ export async function loadLandmarks(signal: AbortSignal) {
   } else {image.close();groups.forEach(g=>g.dispose());}
 }
 
-export function LandmarkMeshes({stage, select}:{stage:number;select:(v:SectorId)=>void}) {
-  return <group name="overview-landmarks" dispose={null}>{geometry?.map((g,i)=>stage < i+1 &&
+export function LandmarkMeshes({stage, keepCrossing, select}:{stage:number;keepCrossing:boolean;select:(v:SectorId)=>void}) {
+  return <group name="overview-landmarks" dispose={null}>{geometry?.map((g,i)=>(stage < i+1 || (keepCrossing && sectors[i] === 'crossing')) &&
     <mesh key={i} geometry={g} material={material} onClick={e=>{e.stopPropagation();select(sectors[i]);}} />
   )}</group>;
 }
