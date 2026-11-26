@@ -1096,6 +1096,7 @@ export function MapScene({
         <group name="perf:structures">
           {level<4 && <LandmarkMeshes stage={level} select={onSelectSector}/>}
           {(!streamed || level >= 1) && <Structures stage={level} quarryDetails={!streamed || stage >= 4}
+            prepareQuarryDetails={streamed && driveMode && parallelBattleReady && stage === 3}
             prepareHorizonEffects={prepareHorizonEffects}
             preparingBattle={preparingBattle}
             splitBridgeBatches={splitBridgeBatches}
