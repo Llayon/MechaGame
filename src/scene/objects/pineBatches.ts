@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { chooseLod, lodJitter, projectedPixels, readWorldLod } from '../../lod/worldLod';
 import { SLAB_BASE_Y } from '../../map/terrainMath';
 import type { PineTreeInstance } from '../../map/worldStructures';
+import { computePineLodCrossFade } from '../renderPerfAndVfxMath';
 import { createUnifiedPineTreeGeometry, PINE_TREE_TOTAL_HEIGHT } from './pineGeometry';
 
 /** Two crossed, two-sided pine silhouettes. Geometry follows the root matrix
@@ -54,17 +55,39 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
   }
   const cellOf = new Uint16Array(trees.length), slotOf = new Uint16Array(trees.length);
   const group = new THREE.Group();
+  const fadeGroup = new THREE.Group();
   const batches = Array.from(cells.values(), (ids, i) => {
     const geo = new THREE.BufferGeometry();
     for (const [name, attr] of Object.entries(geometry.attributes)) geo.setAttribute(name, attr);
     const sway = new THREE.InstancedBufferAttribute(new Float32Array(ids.length).fill(1), 1);
     sway.setUsage(THREE.DynamicDrawUsage);
     geo.setAttribute('aTreeSway', sway);
+    // Single-float divisor attribute feeds per-cell dither fade to all instances without material clones.
+    const primaryFade = new THREE.InstancedBufferAttribute(new Float32Array([0]), 1, false, 65535);
+    primaryFade.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('aPineLodFade', primaryFade);
+
     const mesh = new THREE.InstancedMesh(geo, material, ids.length);
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     mesh.customDepthMaterial = depth;
     mesh.castShadow = mesh.receiveShadow = true;
     mesh.userData.lodLevel = 0;
+
+    // Companion card mesh sharing all vertex/instance buffers, visible ONLY inside the 14% LOD 1 <-> LOD 2 band.
+    const cardGeo = new THREE.BufferGeometry();
+    for (const [name, attr] of Object.entries(geometry.attributes)) cardGeo.setAttribute(name, attr);
+    cardGeo.setAttribute('aTreeSway', sway);
+    const cardFade = new THREE.InstancedBufferAttribute(new Float32Array([0]), 1, false, 65535);
+    cardFade.setUsage(THREE.DynamicDrawUsage);
+    cardGeo.setAttribute('aPineLodFade', cardFade);
+    cardGeo.setDrawRange(ranges[2].start, ranges[2].count);
+
+    const fadeMesh = new THREE.InstancedMesh(cardGeo, material, ids.length);
+    fadeMesh.instanceMatrix = mesh.instanceMatrix;
+    fadeMesh.castShadow = false;
+    fadeMesh.receiveShadow = false;
+    fadeMesh.visible = false;
+
     const bounds = new THREE.Box3();
     const shadowFootprint = new THREE.Box3();
     const point = new THREE.Vector3();
@@ -80,15 +103,24 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
     bounds.expandByScalar(radius);
     mesh.boundingBox = bounds;
     mesh.boundingSphere = bounds.getBoundingSphere(new THREE.Sphere());
+    fadeMesh.boundingBox = bounds;
+    fadeMesh.boundingSphere = mesh.boundingSphere;
     let shadowLevel = 0;
     const setRange = (n: number) => geo.setDrawRange(ranges[n].start, ranges[n].count);
     setRange(0);
     mesh.onBeforeShadow = () => setRange(shadowLevel);
     mesh.onAfterShadow = () => setRange(mesh.userData.lodLevel);
     group.add(mesh);
+    fadeGroup.add(fadeMesh);
     return {
-      mesh, sway,
-      update(camera: THREE.Camera, view: ReturnType<typeof readWorldLod>, frustum: THREE.Frustum, sun: readonly number[]) {
+      mesh, fadeMesh, sway, primaryFade, cardFade,
+      update(
+        camera: THREE.Camera,
+        view: ReturnType<typeof readWorldLod>,
+        frustum: THREE.Frustum,
+        sun: readonly number[],
+        ditherEnabled: boolean,
+      ) {
         const dist = Math.max(1, bounds.distanceToPoint(camera.position));
         const axis = camera.matrixWorldInverse.elements;
         const z0 = axis[2] >= 0 ? bounds.max.x : bounds.min.x;
@@ -96,12 +128,34 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
         const z2 = axis[10] >= 0 ? bounds.max.z : bounds.min.z;
         const nearDepth = -(axis[2] * z0 + axis[6] * z1 + axis[10] * z2 + axis[14]);
         const px = projectedPixels(radius * .45, nearDepth > 0 ? nearDepth : dist, view);
-        const level = chooseLod(px, mesh.userData.lodLevel, thresholds, i);
-        mesh.userData.lodLevel = level;
-        setRange(level);
-        shadowLevel = Math.max(level, chooseLod(px * view.shadowScale, shadowLevel, [100, 32], i));
+        const lodState = computePineLodCrossFade(px, mesh.userData.lodLevel, thresholds, i, ditherEnabled);
+        mesh.userData.lodLevel = lodState.primaryLevel;
+        setRange(lodState.primaryLevel);
+
+        if (Math.abs(primaryFade.getX(0) - lodState.fadeOut) > 1e-4) {
+          primaryFade.setX(0, lodState.fadeOut);
+          primaryFade.needsUpdate = true;
+        }
+        const showCards = lodState.cardFadeIn > 0.001;
+        fadeMesh.visible = showCards;
+        if (showCards) {
+          if (mesh.instanceColor && fadeMesh.instanceColor !== mesh.instanceColor) {
+            fadeMesh.instanceColor = mesh.instanceColor;
+          }
+          const negFade = -lodState.cardFadeIn;
+          if (Math.abs(cardFade.getX(0) - negFade) > 1e-4) {
+            cardFade.setX(0, negFade);
+            cardFade.needsUpdate = true;
+          }
+        }
+
+        // Shadow pass remains strictly discrete (zero dither noise in PCF shadows).
+        shadowLevel = Math.max(
+          lodState.discreteShadowLevel,
+          chooseLod(px * view.shadowScale, shadowLevel, [100, 32], i),
+        );
         mesh.castShadow = view.shadowScale > 0;
-        if (mesh.castShadow && level === 2 && sun[1] > 0) {
+        if (mesh.castShadow && lodState.discreteShadowLevel === 2 && sun[1] > 0) {
           // Project the entire cell down to the slab floor. A caster outside
           // the eye frustum can still have a long visible shadow at dusk.
           const reach = (bounds.max.y - SLAB_BASE_Y) / sun[1];
@@ -124,31 +178,39 @@ export function createPineBatches(trees: readonly PineTreeInstance[], material: 
   const projection = new THREE.Matrix4();
   return {
     group,
+    fadeGroup,
     setMatrixAt(id: number, matrix: THREE.Matrix4) {
       const mesh = batches[cellOf[id]].mesh;
       mesh.setMatrixAt(slotOf[id], matrix);
       mesh.instanceMatrix.needsUpdate = true;
     },
     setColorAt(id: number, color: THREE.Color) {
-      const mesh = batches[cellOf[id]].mesh;
-      mesh.setColorAt(slotOf[id], color);
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      const batch = batches[cellOf[id]];
+      batch.mesh.setColorAt(slotOf[id], color);
+      if (batch.mesh.instanceColor) {
+        batch.mesh.instanceColor.needsUpdate = true;
+        if (batch.fadeMesh.instanceColor !== batch.mesh.instanceColor) {
+          batch.fadeMesh.instanceColor = batch.mesh.instanceColor;
+        }
+      }
     },
     setSway(id: number, amount: number) {
       const sway = batches[cellOf[id]].sway;
       sway.setX(slotOf[id], amount);
       sway.needsUpdate = true;
     },
-    update(camera: THREE.Camera, sun: readonly number[]) {
+    update(camera: THREE.Camera, sun: readonly number[], ditherEnabled = true) {
       const view = readWorldLod(camera);
       projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
       frustum.setFromProjectionMatrix(projection);
-      for (const batch of batches) batch.update(camera, view, frustum, sun);
+      for (const batch of batches) batch.update(camera, view, frustum, sun, ditherEnabled);
     },
     dispose() {
-      for (const { mesh } of batches) {
+      for (const { mesh, fadeMesh } of batches) {
         mesh.dispose();
         mesh.geometry.dispose();
+        fadeMesh.dispose();
+        fadeMesh.geometry.dispose();
       }
       geometry.dispose();
     },

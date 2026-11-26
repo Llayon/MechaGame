@@ -1,7 +1,8 @@
 import { useSceneSimulation } from '../SceneSimulation';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import { getCheckerboardShadowMaterial } from '../surfaceDetail';
 
 export interface HelicopterProps {
   position: [number, number, number];
@@ -16,6 +17,7 @@ export function Helicopter({
 }: HelicopterProps) {
   const mainRotorRef = useRef<THREE.Group>(null);
   const tailRotorRef = useRef<THREE.Group>(null);
+  const glassShadowMat = useMemo(() => getCheckerboardShadowMaterial('glass25'), []);
 
   const { paused } = useSceneSimulation();
 
@@ -106,12 +108,12 @@ export function Helicopter({
 
       {/* Бронированный ступенчатый кокпит (тандемная посадка пилота и стрелка) */}
       {/* Передняя кабина стрелка */}
-      <mesh position={[0, 0.78, 0.82]} rotation={[0.42, 0, 0]} castShadow>
+      <mesh position={[0, 0.78, 0.82]} rotation={[0.42, 0, 0]} castShadow customDepthMaterial={glassShadowMat}>
         <boxGeometry args={[0.46, 0.28, 0.48]} />
         <meshPhysicalMaterial color="#10222e" roughness={0.1} metalness={0.25} clearcoat={1} />
       </mesh>
       {/* Верхняя кабина пилота */}
-      <mesh position={[0, 0.94, 0.42]} rotation={[0.25, 0, 0]} castShadow>
+      <mesh position={[0, 0.94, 0.42]} rotation={[0.25, 0, 0]} castShadow customDepthMaterial={glassShadowMat}>
         <boxGeometry args={[0.48, 0.28, 0.54]} />
         <meshPhysicalMaterial color="#10222e" roughness={0.1} metalness={0.25} clearcoat={1} />
       </mesh>

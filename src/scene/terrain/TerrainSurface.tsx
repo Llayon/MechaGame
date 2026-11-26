@@ -1,6 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { MAP_DEPTH, MAP_WIDTH, getTerrainHeight } from '../../map/terrainMath';
+import {
+  getGroundLastEnabled,
+  subscribeGroundLastEnabled,
+} from '../renderPerfAndVfx';
 import type { TerrainTile } from './terrainChunks';
 import { TerrainTileSet } from './TerrainTileSet';
 import { createTerrainSurfaceMaterial } from './terrainShader';
@@ -18,6 +22,13 @@ export function TerrainSurface({
   showWireframeGrid,
   puddleTimeUniform,
 }: TerrainSurfaceProps) {
+  const [groundLast, setGroundLast] = useState(getGroundLastEnabled);
+
+  useEffect(() => {
+    setGroundLast(getGroundLastEnabled());
+    return subscribeGroundLastEnabled(setGroundLast);
+  }, []);
+
   const terrainMaterial = useMemo(
     () => createTerrainSurfaceMaterial(terrainBump, 0.28, puddleTimeUniform),
     [terrainBump, puddleTimeUniform],
@@ -44,7 +55,12 @@ export function TerrainSurface({
 
   return (
     <group>
-      <TerrainTileSet name="terrain-ground" tiles={tiles} material={terrainMaterial} />
+      <TerrainTileSet
+        name="terrain-ground"
+        tiles={tiles}
+        material={terrainMaterial}
+        renderOrder={groundLast ? 10 : 0}
+      />
 
       {showWireframeGrid && (
         <mesh geometry={wireframeGeometry}>

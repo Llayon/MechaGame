@@ -1,14 +1,17 @@
-﻿import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type * as THREE from 'three';
 import { readWorldLod } from '../../lod/worldLod';
 import { useSceneSimulation } from '../SceneSimulation';
 import { createTileMesh, type TerrainTile } from './terrainChunks';
 
-export function TerrainTileSet({ tiles, material, name }: {
-  tiles: TerrainTile[]; material: THREE.Material; name: string;
+export function TerrainTileSet({ tiles, material, name, renderOrder = 0 }: {
+  tiles: TerrainTile[]; material: THREE.Material; name: string; renderOrder?: number;
 }) {
   const batches = useMemo(() => tiles.map(tile => createTileMesh(tile, material)), [tiles, material]);
+  useEffect(() => {
+    for (const { mesh } of batches) mesh.renderOrder = renderOrder;
+  }, [batches, renderOrder]);
   const { paused } = useSceneSimulation();
   const elapsed = useRef(1);
   useFrame(({ camera }, dt) => {

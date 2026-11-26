@@ -1,9 +1,14 @@
+import { useMemo } from 'react';
+import { getCheckerboardShadowMaterial } from '../surfaceDetail';
+
 export interface ExcavatorProps {
   position: [number, number, number];
   rotationY?: number;
 }
 
 export function Excavator({ position, rotationY = 0 }: ExcavatorProps) {
+  const glassShadowMat = useMemo(() => getCheckerboardShadowMaterial('glass25'), []);
+
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       {/* Undercarriage tracks */}
@@ -21,7 +26,7 @@ export function Excavator({ position, rotationY = 0 }: ExcavatorProps) {
         <meshStandardMaterial color="#c99326" roughness={0.48} metalness={0.28} />
       </mesh>
       {/* Operator cab */}
-      <mesh position={[-0.18, 0.62, 0.08]} castShadow>
+      <mesh position={[-0.18, 0.62, 0.08]} castShadow customDepthMaterial={glassShadowMat}>
         <boxGeometry args={[0.34, 0.38, 0.42]} />
         <meshPhysicalMaterial color="#1f2c33" roughness={0.18} metalness={0.2} clearcoat={0.8} />
       </mesh>

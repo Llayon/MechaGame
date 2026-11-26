@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { SceneSimulationProvider } from './SceneSimulation';
 import { ScenePerformanceProbe } from '../perf/ScenePerformanceProbe';
+import { Sector7PerfBridge } from './Sector7PerfBridge';
 import { PLAYER_MODEL_LAYER } from './playerModelLayer';
 import { stepInfantrySkirmishes } from '../game/infantrySkirmishes';
 import { INFANTRY_SITES, type InfantrySite } from '../map/infantryEncounters';
@@ -1246,6 +1247,7 @@ export function MapScene({
           showMist={showMist}
           vegetation={graphics.vegetation}
           atmosphere={graphics.atmosphere}
+          allowPineDither={graphics.preset !== 'low' && graphics.objectDetail !== 'low'}
           isSoftwareGl={isSoftwareGl}
           driveMode={driveMode}
           lightingPreset={lightingPreset}
@@ -1290,6 +1292,7 @@ export function MapScene({
           isSoftwareGl={isSoftwareGl}
           benchmarkContinuousFrames={benchmarkContinuousFrames}
         />
+        <Sector7PerfBridge waterVfxPoolRef={waterVfxPoolRef} />
         </SceneSimulationProvider>
       </Canvas>
     </div>

@@ -15,6 +15,10 @@ import {
   type SplashTransform,
   type WaterVfxPoolState,
 } from './waterVfxPool';
+import {
+  clearRiverRipples,
+  syncWaterRipplesToRiver,
+} from '../renderPerfAndVfx';
 
 export interface WaterEffectsProps {
   poolRef: React.MutableRefObject<WaterVfxPoolState>;
@@ -240,6 +244,7 @@ export function WaterEffects({
       splashSetup.progressAttr.needsUpdate = true;
     }
     return () => {
+      clearRiverRipples();
       rippleSetup.geom.dispose();
       rippleSetup.mat.dispose();
       splashSetup.geom.dispose();
@@ -251,6 +256,7 @@ export function WaterEffects({
     if (prevResetNonceRef.current === resetNonce) return;
     prevResetNonceRef.current = resetNonce;
     resetWaterVfxPool(poolRef.current);
+    clearRiverRipples();
     hadActiveRipplesRef.current = true;
     hadActiveSplashesRef.current = true;
   }, [resetNonce, poolRef]);
@@ -286,6 +292,7 @@ export function WaterEffects({
       rippleSetup.alphaAttr.needsUpdate = true;
       rippleSetup.progressAttr.needsUpdate = true;
       hadActiveRipplesRef.current = activeRipples > 0;
+      syncWaterRipplesToRiver(pool, camera.position.x, camera.position.z);
     }
 
     const sMesh = splashMeshRef.current;

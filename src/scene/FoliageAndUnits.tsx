@@ -22,6 +22,7 @@ interface FoliageAndUnitsProps {
   showMist: boolean;
   vegetation: VegetationQuality;
   atmosphere: AtmosphereQuality;
+  allowPineDither?: boolean;
   isSoftwareGl: boolean;
   driveMode: boolean;
   lightingPreset: LightingPreset;
@@ -37,6 +38,7 @@ export function FoliageAndUnits({
   showMist,
   vegetation,
   atmosphere,
+  allowPineDither = true,
   isSoftwareGl,
   driveMode,
   lightingPreset,
@@ -63,6 +65,7 @@ export function FoliageAndUnits({
     <group>
       {(stage >= 7 || preparePines) && <PineForest
         preparing={preparePines}
+        allowPineDither={allowPineDither}
         sunPos={sunPos}
         isSoftwareGl={simplified}
         driveMode={driveMode}

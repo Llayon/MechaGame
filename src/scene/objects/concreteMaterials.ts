@@ -12,6 +12,7 @@ import {
   GLSL_CANYON_LIGHTING_PARS,
   bindCanyonLightingUniforms,
 } from '../canyonLighting';
+import { GLSL_ANALYTIC_LINE_PARS } from '../surfaceDetail';
 
 export type ConcreteMossPreset = 'bridge' | 'wall' | 'ruin';
 
@@ -70,7 +71,7 @@ export function getOvergrownConcreteMaterial(
   const mat = new THREE.MeshStandardMaterial(matParams);
 
   mat.userData.localConcrete = true;
-  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v4-${preset}`;
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v5-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
     shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
@@ -78,6 +79,9 @@ export function getOvergrownConcreteMaterial(
     shader.uniforms.uWaterLevel = { value: WATER_LEVEL };
     shader.uniforms.uWaterBounceMask = {
       value: preset === 'bridge' || preset === 'ruin' ? 1.0 : 0.45,
+    };
+    shader.uniforms.uWallJointStrength = {
+      value: preset === 'bridge' ? 0.0 : preset === 'ruin' ? 0.62 : 0.76,
     };
     bindFlybyShadowUniforms(shader.uniforms);
     bindWaterCausticsUniforms(shader.uniforms);
@@ -121,12 +125,14 @@ uniform float uRoofMoss;
 uniform float uGrimeStrength;
 uniform float uWaterLevel;
 uniform float uWaterBounceMask;
+uniform float uWallJointStrength;
 varying vec3 vConcWorldPos;
 varying vec3 vConcWorldNormal;
 varying vec3 vConcLocalPos;
 ${GLSL_FLYBY_SHADOW_PARS}
 ${GLSL_WATER_CAUSTICS_PARS}
 ${GLSL_CANYON_LIGHTING_PARS}
+${GLSL_ANALYTIC_LINE_PARS}
 
 vec3 concSrgb2Lin( vec3 c ) {
   return pow( max( c, vec3( 0.0 ) ), vec3( 2.2 ) );
@@ -190,6 +196,22 @@ float topFactor = smoothstep( 0.70, 0.92, vConcWorldNormal.y );
 float roofMask = smoothstep( 0.44, 0.72, cOrganic ) * topFactor * uRoofMoss;
 diffuseColor.rgb = mix( diffuseColor.rgb, mix( cTurfCol, cMossBright, cFine * 0.6 ), roofMask );
 
+// 3b. Analytic pixel-footprint formwork course lines & expansion seams on building walls (zero moire)
+float concSeamMask = 0.0;
+if ( uWallJointStrength > 0.01 ) {
+  vec3 cAbsN = abs( normalize( vConcWorldNormal ) );
+  float wallAxis = cAbsN.x > cAbsN.z ? vConcWorldPos.z : vConcWorldPos.x;
+  float fwY = max( fwidth( vConcWorldPos.y ), 1e-4 );
+  float fwH = max( fwidth( wallAxis ), 1e-4 );
+  float courseH = s7PeriodicLine( vConcWorldPos.y, 1.85, 0.028, fwY );
+  float panelV = s7PeriodicLine( wallAxis, 3.70, 0.026, fwH );
+  float wallJoint = max( courseH * 0.92, panelV * 0.68 ) * wallFactor;
+  float roofJoint = s7GridJointMask( vConcWorldPos.xz, vec2( 4.2, 4.2 ), 0.032 ) * topFactor * 0.58;
+  float mossCover = clamp( max( max( wallMoss, roofMask ), algaeMask * 0.8 ), 0.0, 1.0 );
+  concSeamMask = clamp( max( wallJoint, roofJoint ) * uWallJointStrength * ( 1.0 - mossCover * 0.72 ), 0.0, 1.0 );
+  diffuseColor.rgb *= mix( 1.0, 0.66, concSeamMask );
+}
+
 // 4. Overhead dropship flyby SDF shadow across roofs, bridge decks & concrete aprons
 float concFlyby = sampleFlybyShipShadow( vConcWorldPos ) * mix( 0.45, 1.0, smoothstep( 0.15, 0.75, vConcWorldNormal.y ) );
 diffuseColor.rgb *= ( 1.0 - concFlyby );
@@ -198,7 +220,7 @@ diffuseColor.rgb *= ( 1.0 - concFlyby );
 float s7SkyVis = s7SampleCanyonSkyVis( vConcWorldPos );
 float s7BakedFarShadow = s7SampleBakedFarShadow( vConcWorldPos );
 float s7CascadeFade = s7ComputeCascadeFade( vConcWorldPos );
-float s7CustomAO = clamp( ( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18 ) * s7SkyVis, 0.26, 1.0 );`,
+float s7CustomAO = clamp( ( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18 - concSeamMask * 0.24 ) * s7SkyVis, 0.26, 1.0 );`,
       )
       .replace(
         '#include <lights_fragment_end>',

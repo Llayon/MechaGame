@@ -11,6 +11,7 @@ import {
   GLSL_FOLIAGE_TRANSMITTANCE_PARS,
   GLSL_FOLIAGE_WIND_PARS,
 } from '../foliageLighting';
+import { createStabilizedVineDepthMaterial } from '../surfaceDetail';
 
 export interface HangingVinesProps {
   visible: boolean;
@@ -106,7 +107,7 @@ export function HangingVines({ visible }: HangingVinesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const vines = useMemo(() => generateHangingVinesData(), []);
 
-  const { geometry, texture, material } = useMemo(() => {
+  const { geometry, texture, material, depthMaterial } = useMemo(() => {
     const geo = createHangingVineGeometry();
     const phases = new Float32Array(vines.length);
     for (let i = 0; i < vines.length; i++) {
@@ -194,7 +195,9 @@ reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vVineWorldPos, vi
         );
     };
 
-    return { geometry: geo, texture: tex, material: mat };
+    const dMat = createStabilizedVineDepthMaterial(tex, 0.34, VINE_HEIGHT);
+
+    return { geometry: geo, texture: tex, material: mat, depthMaterial: dMat };
   }, [vines]);
 
   useEffect(() => {
@@ -229,16 +232,18 @@ reflectedLight.directDiffuse += s7ComputeFoliageTransmittance( vVineWorldPos, vi
       geometry.dispose();
       texture.dispose();
       material.dispose();
+      depthMaterial.dispose();
     };
-  }, [geometry, texture, material]);
+  }, [geometry, texture, material, depthMaterial]);
 
   return (
     <instancedMesh
       ref={meshRef}
       visible={visible}
       args={[geometry, material, vines.length]}
+      customDepthMaterial={depthMaterial}
       frustumCulled={false}
-      castShadow={false}
+      castShadow
       receiveShadow={false}
     />
   );

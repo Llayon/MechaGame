@@ -17,6 +17,7 @@ import {
   GLSL_FOLIAGE_TRANSMITTANCE_PARS,
   GLSL_FOLIAGE_WIND_PARS,
 } from '../foliageLighting';
+import { SHADOW_STABILITY_CONFIG } from '../surfaceDetailMath';
 import {
   checkFallingTreeCollisions,
   createFallingTreesState,
@@ -30,6 +31,7 @@ import {
 export interface PineForestProps {
   preparing?: boolean;
   isSoftwareGl?: boolean;
+  allowPineDither?: boolean;
   sunPos: readonly [number, number, number];
   driveMode?: boolean;
   mechPoseRef?: React.MutableRefObject<MechTelemetrySnapshot>;
@@ -103,9 +105,28 @@ const WIND_VERTEX_SWAY = `
   transformed += s7WorldToLocalOffset( mat3( pineInstWorld ), windWorld );
 `;
 
+const WIND_SHADOW_VERTEX_SWAY = `
+  float hNorm = clamp( transformed.y / ${PINE_TREE_TOTAL_HEIGHT.toFixed(2)}, 0.0, 1.0 );
+  #ifdef USE_INSTANCING
+    mat4 pineInstWorld = modelMatrix * instanceMatrix;
+  #else
+    mat4 pineInstWorld = modelMatrix;
+  #endif
+  vec3 instRoot = ( pineInstWorld * vec4( 0.0, 0.0, 0.0, 1.0 ) ).xyz;
+  vec3 windWorld = s7TravelingWindOffset(
+    instRoot.xz,
+    hNorm,
+    ${(0.58 * SHADOW_STABILITY_CONFIG.pineShadowSwayScale).toFixed(4)} * aTreeSway,
+    instRoot.x * 0.13 + instRoot.z * 0.19,
+    ${(0.022 * SHADOW_STABILITY_CONFIG.pineShadowFlutterScale).toFixed(4)} * aTreeSway
+  );
+  transformed += s7WorldToLocalOffset( mat3( pineInstWorld ), windWorld );
+`;
+
 function injectTreeWindSway(
   shader: THREE.WebGLProgramParametersWithUniforms,
   extraBeginVertex = '',
+  shadowPass = false,
 ) {
   bindFoliageLightingUniforms(shader.uniforms);
   shader.vertexShader = shader.vertexShader
@@ -118,7 +139,7 @@ function injectTreeWindSway(
     .replace(
       '#include <begin_vertex>',
       `#include <begin_vertex>
-      ${WIND_VERTEX_SWAY}
+      ${shadowPass ? WIND_SHADOW_VERTEX_SWAY : WIND_VERTEX_SWAY}
       ${extraBeginVertex}`,
     );
 }
@@ -126,6 +147,7 @@ function injectTreeWindSway(
 export function PineForest({
   preparing = false,
   isSoftwareGl = false,
+  allowPineDither = true,
   sunPos,
   driveMode = false,
   mechPoseRef,
@@ -188,23 +210,26 @@ export function PineForest({
       roughness: 0.87,
       metalness: 0.02,
     });
-    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v4';
+    tMat.customProgramCacheKey = () => 'sector7-pine-merged-v5';
     tMat.onBeforeCompile = (shader) => {
       injectTreeWindSway(
         shader,
         `vNeedleTip = aNeedleTip;
         vPineHeightNorm = hNorm;
         vPineWorldPos = ( pineInstWorld * vec4( transformed, 1.0 ) ).xyz;
-        vPineWorldNormal = normalize( mat3( pineInstWorld ) * objectNormal );`,
+        vPineWorldNormal = normalize( mat3( pineInstWorld ) * objectNormal );
+        vPineLodFade = aPineLodFade;`,
       );
       shader.vertexShader = shader.vertexShader.replace(
         '#include <common>',
         `#include <common>
         attribute float aNeedleTip;
+        attribute float aPineLodFade;
         varying float vNeedleTip;
         varying float vPineHeightNorm;
         varying vec3 vPineWorldPos;
-        varying vec3 vPineWorldNormal;`,
+        varying vec3 vPineWorldNormal;
+        varying float vPineLodFade;`,
       );
 
       shader.fragmentShader = shader.fragmentShader
@@ -215,7 +240,20 @@ export function PineForest({
           varying float vNeedleTip;
           varying float vPineHeightNorm;
           varying vec3 vPineWorldPos;
-          varying vec3 vPineWorldNormal;`,
+          varying vec3 vPineWorldNormal;
+          varying float vPineLodFade;`,
+        )
+        .replace(
+          '#include <clipping_planes_fragment>',
+          `#include <clipping_planes_fragment>
+          if ( abs( vPineLodFade ) > 0.001 ) {
+            float pineIgn = fract( 52.9829189 * fract( dot( gl_FragCoord.xy, vec2( 0.06711056, 0.00583715 ) ) ) );
+            if ( vPineLodFade > 0.0 ) {
+              if ( pineIgn < vPineLodFade ) discard;
+            } else {
+              if ( pineIgn >= -vPineLodFade ) discard;
+            }
+          }`,
         )
         .replace(
           '#include <lights_fragment_end>',
@@ -232,9 +270,9 @@ export function PineForest({
     const tDepthMat = new THREE.MeshDepthMaterial({
       depthPacking: THREE.RGBADepthPacking,
     });
-    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v3';
+    tDepthMat.customProgramCacheKey = () => 'sector7-pine-merged-depth-v4';
     tDepthMat.onBeforeCompile = (shader) => {
-      injectTreeWindSway(shader);
+      injectTreeWindSway(shader, '', true);
     };
 
     const sMat = new THREE.MeshStandardMaterial({
@@ -478,12 +516,17 @@ export function PineForest({
 
   const { paused } = useSceneSimulation();
 
+  useEffect(() => {
+    if (preparing) return;
+    treeBatches.update(camera, sunPos, allowPineDither);
+  }, [allowPineDither, preparing, treeBatches, camera, sunPos]);
+
   useFrame(({ camera }, delta) => {
     if (paused) return;
     if (preparing) return;
     lodElapsed.current += delta;
     if (lodElapsed.current >= .1) {
-      treeBatches.update(camera, sunPos);
+      treeBatches.update(camera, sunPos, allowPineDither);
       lodElapsed.current = 0;
     }
     const dt = Math.min(delta, 0.05);
@@ -640,6 +683,7 @@ export function PineForest({
         renderOrder={1}
       />
       <primitive object={treeBatches.group} />
+      <primitive object={treeBatches.fadeGroup} />
       <instancedMesh
         ref={shrubRef}
         args={[undefined, shrubMaterial, shrubs.length]}

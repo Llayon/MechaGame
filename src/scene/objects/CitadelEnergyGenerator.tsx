@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { getCheckerboardShadowMaterial } from '../surfaceDetail';
+
 export interface CitadelEnergyGeneratorProps {
   position: readonly [number, number, number];
   rotationY?: number;
@@ -13,6 +16,8 @@ export function CitadelEnergyGenerator({
   rotationY = 0,
   scale = 1,
 }: CitadelEnergyGeneratorProps) {
+  const energyShadowMat = useMemo(() => getCheckerboardShadowMaterial('lattice50'), []);
+
   return (
     <group
       position={[position[0], position[1], position[2]]}
@@ -37,7 +42,7 @@ export function CitadelEnergyGenerator({
             <meshStandardMaterial color="#374049" roughness={0.48} metalness={0.65} />
           </mesh>
           {/* Ice-cyan plasma containment ring */}
-          <mesh position={[0, 0.85, 0]}>
+          <mesh position={[0, 0.85, 0]} castShadow customDepthMaterial={energyShadowMat}>
             <cylinderGeometry args={[1.14, 1.14, 0.18, 12]} />
             <meshStandardMaterial
               color="#00E5FF"

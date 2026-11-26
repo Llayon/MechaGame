@@ -17,6 +17,11 @@ import {
 
 import { WORLD_MAP_WIDTH as DEPTH_TEX_W, WORLD_MAP_HEIGHT as DEPTH_TEX_H } from '../../map/worldMapDimensions';
 import { WATER_AA_CONFIG, buildWaterAntiAliasingGlsl } from './waterAntiAliasing';
+import { buildWater3OctaveGlsl } from '../surfaceDetail';
+import {
+  GLSL_WATER_RIPPLE_PARS,
+  bindWaterRippleUniforms,
+} from '../renderPerfAndVfx';
 
 export interface RiverWaterProps {
   data: Uint8Array<ArrayBuffer>;
@@ -54,6 +59,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
 
   const waterMaterial = useMemo(() => {
     const aaGlsl = buildWaterAntiAliasingGlsl();
+    const wave3Glsl = buildWater3OctaveGlsl();
     const mat = new THREE.MeshPhysicalMaterial({
       color: '#0C2232',
       roughness: 0.08,
@@ -71,7 +77,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
       depthWrite: false,
     });
 
-    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v4';
+    mat.customProgramCacheKey = () => 'sector7-shoreline-water-v6';
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uWaterDepthMap = { value: waterDepthTex };
@@ -82,6 +88,7 @@ export function RiverWater({ isSoftwareGl, data, visible = true }: RiverWaterPro
       shader.uniforms.uMaxObstDist = { value: MAX_OBSTACLE_DIST };
       shader.uniforms.uWaterTime = timeUniformRef.current;
       bindFlybyShadowUniforms(shader.uniforms);
+      bindWaterRippleUniforms(shader.uniforms);
 
       shader.vertexShader = shader.vertexShader
         .replace(
@@ -132,7 +139,9 @@ float waterFbm( vec2 p ) {
     a *= 0.5;
   }
   return v / 0.75;
-}`,
+}
+${wave3Glsl.helpers}
+${GLSL_WATER_RIPPLE_PARS}`,
         )
         .replace(
           '#include <color_fragment>',
@@ -194,17 +203,29 @@ roughnessFactor = mix( roughnessFactor, ${WATER_AA_CONFIG.foamRoughness.toFixed(
         .replace(
           '#include <normal_fragment_maps>',
           `#include <normal_fragment_maps>
+${wave3Glsl.normalEvaluate}
+#ifdef USE_NORMALMAP_TANGENTSPACE
+  if ( uWaterRippleCount > 0.5 ) {
+    vec2 wRippleSlope = s7SampleInteractiveRipples( vWaterWorldPos.xz, wPixelSize );
+    if ( dot( wRippleSlope, wRippleSlope ) > 1e-7 ) {
+      wCombinedSlope += wRippleSlope * ( 1.0 - wFoam * 0.45 );
+      vec3 wRipMapN = normalize( vec3( wCombinedSlope * normalScale, 1.0 ) );
+      normal = normalize( tbn * wRipMapN );
+    }
+  }
+#endif
 ${aaGlsl.normalCaptureAndDamp}`,
         )
         .replace(
           '#include <clearcoat_normal_fragment_maps>',
           `#include <clearcoat_normal_fragment_maps>
+${wave3Glsl.clearcoatEvaluate}
 ${aaGlsl.clearcoatNormalCaptureAndDamp}`,
         )
         .replace(
           '#include <lights_physical_fragment>',
           `#include <lights_physical_fragment>
-${aaGlsl.applySpecularAa}`,
+${wave3Glsl.applyLostVariance}`,
         )
         .replace(
           '#include <lights_fragment_end>',

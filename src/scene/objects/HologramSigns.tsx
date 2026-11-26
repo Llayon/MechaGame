@@ -11,6 +11,7 @@ import {
   getHologramLightingParams,
   resolveHologramColorHex,
 } from '../../map/hologramSigns';
+import { getCheckerboardShadowMaterial } from '../surfaceDetail';
 
 export interface HologramSignsProps {
   visible: boolean;
@@ -121,6 +122,11 @@ export function HologramSigns({ lightingPreset, combatRef, visible }: HologramSi
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const lastClearedRef = useRef(false);
 
+  const holoDepthMaterial = useMemo(
+    () => getCheckerboardShadowMaterial('glass25', THREE.DoubleSide),
+    [],
+  );
+
   const { geometry, material, atlasTex, uniforms } = useMemo(() => {
     const tex = createHologramAtlasTexture();
     const geom = new THREE.PlaneGeometry(1, 1);
@@ -230,8 +236,9 @@ export function HologramSigns({ lightingPreset, combatRef, visible }: HologramSi
       ref={meshRef}
       visible={visible}
       args={[geometry, material, SECTOR7_HOLOGRAM_SIGNS.length]}
+      customDepthMaterial={holoDepthMaterial}
       frustumCulled={false}
-      castShadow={false}
+      castShadow
       receiveShadow={false}
     />
   );

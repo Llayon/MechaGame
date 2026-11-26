@@ -12,6 +12,10 @@ import {
   GLSL_CANYON_LIGHTING_PARS,
   bindCanyonLightingUniforms,
 } from '../canyonLighting';
+import {
+  GLSL_ALPINE_TRIPLANAR_PARS,
+  GLSL_ANALYTIC_LINE_PARS,
+} from '../surfaceDetail';
 
 /**
  * Creates a PBR MeshStandardMaterial patched via onBeforeCompile with pixel-level
@@ -36,7 +40,7 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v9';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v10';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
@@ -152,7 +156,9 @@ vec2 terrPebbleCell( vec2 p ) {
   }
   float dome = clamp( 1.0 - sqrt( minD ) * 1.45, 0.0, 1.0 );
   return vec2( dome * dome, bestId );
-}`,
+}
+${GLSL_ANALYTIC_LINE_PARS}
+${GLSL_ALPINE_TRIPLANAR_PARS}`,
       )
       .replace(
         '#include <color_fragment>',
@@ -219,66 +225,103 @@ float citMtnDist = length( ( vTerrWorldPos.xz - vec2( 122.0, -78.0 ) ) / vec2( 8
 float citDarkBase = clamp( ( 1.08 - citMtnDist ) * 1.65, 0.0, 1.0 ) * clamp( ( vTerrWorldPos.y - 6.5 ) / 5.5, 0.0, 1.0 );
 float terrCitDark = citDarkBase * mix( 0.85, 0.45, terrRoad ) * ( 1.0 - terrConcrete );
 
-// 1. Gentle slope biome: organic moss, tactical alpine grass & peat flecks (matte, non-plastic)
-vec3 colMossDeep = terrSrgb2Lin( vec3( 0.165, 0.245, 0.180 ) );
-vec3 colMossRich = terrSrgb2Lin( vec3( 0.235, 0.325, 0.220 ) );
-vec3 colGrassOlive = terrSrgb2Lin( vec3( 0.285, 0.345, 0.245 ) );
-vec3 colGrassDry = terrSrgb2Lin( vec3( 0.340, 0.375, 0.305 ) );
+// 1. Gentle slope biome: alpine hollow/crest contrast (lush emerald hollows & river meadows vs dry golden-olive crests)
+vec3 colMossDeep = terrSrgb2Lin( vec3( 0.145, 0.242, 0.168 ) );
+vec3 colMossRich = terrSrgb2Lin( vec3( 0.222, 0.338, 0.212 ) );
+vec3 colGrassOlive = terrSrgb2Lin( vec3( 0.298, 0.358, 0.242 ) );
+vec3 colGrassDry = terrSrgb2Lin( vec3( 0.422, 0.415, 0.295 ) );
 vec3 colPeatSoil = terrSrgb2Lin( vec3( 0.185, 0.180, 0.155 ) );
 
-float mossPatch = smoothstep( 0.32, 0.72, terrMacro * 0.65 + terrMid * 0.35 );
-vec3 naturalGrassCol = mix( colMossDeep, colMossRich, smoothstep( 0.25, 0.78, terrMid ) );
-vec3 oliveGrassCol = mix( colGrassOlive, colGrassDry, smoothstep( 0.38, 0.85, terrMacro ) );
+float terrHollowCrest = s7SampleHollowCrest( vTerrWorldPos, terrRiverVicinity );
+float hollowFactor = clamp( -terrHollowCrest, 0.0, 1.0 );
+float crestFactor = clamp( terrHollowCrest, 0.0, 1.0 );
+
+float mossPatch = smoothstep( 0.30, 0.72, terrMacro * 0.62 + terrMid * 0.38 + terrHollowCrest * 0.22 );
+vec3 naturalGrassCol = mix( colMossDeep, colMossRich, smoothstep( 0.22, 0.78, terrMid ) );
+vec3 oliveGrassCol = mix( colGrassOlive, colGrassDry, smoothstep( 0.32, 0.82, terrMacro * 0.7 + crestFactor * 0.35 ) );
 naturalGrassCol = mix( naturalGrassCol, oliveGrassCol, mossPatch );
-float peatMask = smoothstep( 0.68, 0.90, terrFine * 0.55 + ( 1.0 - terrMid ) * 0.45 ) * 0.45;
+// Damp hollows stay lusher & deeper green; exposed ridge crests bleach toward dry alpine gold
+naturalGrassCol = mix( naturalGrassCol, colMossRich * ( 0.88 + terrMid * 0.22 ), hollowFactor * 0.48 );
+naturalGrassCol = mix( naturalGrassCol, colGrassDry * ( 0.90 + terrFine * 0.20 ), crestFactor * 0.56 );
+float peatMask = smoothstep( 0.68, 0.90, terrFine * 0.55 + ( 1.0 - terrMid ) * 0.45 ) * 0.42;
 naturalGrassCol = mix( naturalGrassCol, colPeatSoil, peatMask );
 naturalGrassCol *= 0.88 + terrMicro * 0.24;
-float highAltDry = smoothstep( 9.5, 19.0, vTerrWorldPos.y );
-naturalGrassCol = mix( naturalGrassCol, colGrassDry * ( 0.90 + terrFine * 0.20 ), highAltDry * 0.52 );
 
 // Subtle dry sandy-shore blend near waterline (below 1.12 units) before river pebbles
 vec3 colShoreSand = terrSrgb2Lin( vec3( 0.435, 0.416, 0.380 ) );
 float lowSandMask = ( 1.0 - smoothstep( 0.75, 1.35, vTerrWorldPos.y + ( terrMid - 0.5 ) * 0.35 ) ) * ( 1.0 - smoothstep( 26.0, 34.0, terrSlopeDeg ) );
 naturalGrassCol = mix( naturalGrassCol, colShoreSand * ( 0.90 + terrFine * 0.18 ), lowSandMask * 0.45 );
 
-// 2. Steep slopes (> 26-32 deg), rock terraces & upper alpine cliffs -> bare fractured slate rock
-float terrSlopeRock = smoothstep( 25.5, 32.5, terrSlopeDeg + ( terrMacro - 0.5 ) * 5.8 + ( terrMid - 0.5 ) * 3.4 + ( terrFine - 0.5 ) * 1.4 );
-float terrHighRock = smoothstep( 23.0, 31.0, vTerrWorldPos.y + ( terrMacro - 0.5 ) * 5.0 );
+// 2. Contrasty Alpine Slopes: multi-scale ragged edge -> bright limestone/slate scree -> triplanar stratified cliffs
+float terrRaggedShift = ( terrMacro - 0.5 ) * 7.4 + ( terrMid - 0.5 ) * 4.6 + ( terrFine - 0.5 ) * 2.2;
+float terrEffSlope = terrSlopeDeg + terrRaggedShift;
+float terrSlopeRock = smoothstep( 26.4, 30.6, terrEffSlope );
+float terrHighRock = smoothstep( 22.5, 29.0, vTerrWorldPos.y + ( terrMacro - 0.5 ) * 6.0 + ( terrMid - 0.5 ) * 2.4 );
 float terrRockWeight = clamp( max( max( terrSlopeRock, terrHighRock ), terrRockPad ), 0.0, 1.0 ) * ( 1.0 - terrManmade );
 
-float rockGrain = terrFbm3( vec2( vTerrWorldPos.x * 0.14 + vTerrWorldPos.z * 0.07, vTerrWorldPos.y * 0.28 + terrMacro * 2.4 ) );
-float rockDetail = terrFbm2( vTerrWorldPos.xz * 0.34 + vec2( vTerrWorldPos.y * 0.18, -vTerrWorldPos.y * 0.12 ) );
-float strataLedge = mix( rockGrain, rockDetail, 0.45 );
-float strataDistFade = clamp( 1.0 - length( vViewPosition ) / 460.0, 0.25, 1.0 );
-float strataContrast = mix( 0.5, strataLedge, 0.48 * strataDistFade + 0.18 );
-float rockFissure = ( 1.0 - smoothstep( 0.06, 0.24, abs( terrMid - 0.5 ) ) ) * ( 0.45 + 0.55 * terrFine );
+float terrScreeEnter = smoothstep( 17.8, 22.8, terrEffSlope );
+float terrScreeAlt = smoothstep( 14.0, 21.5, vTerrWorldPos.y + ( terrMacro - 0.5 ) * 5.0 ) * smoothstep( 10.5, 17.5, terrEffSlope );
+float terrScreeWeight = clamp( max( terrScreeEnter, terrScreeAlt * 0.85 ) * ( 1.0 - terrRockWeight * 0.92 ), 0.0, 1.0 ) * ( 1.0 - terrManmade );
 
-vec3 colRockBase = terrSrgb2Lin( vec3( 0.322, 0.357, 0.400 ) );
-vec3 colRockDark = terrSrgb2Lin( vec3( 0.225, 0.255, 0.292 ) );
-vec3 colRockLight = terrSrgb2Lin( vec3( 0.388, 0.428, 0.472 ) );
-vec3 colRockCrevice = terrSrgb2Lin( vec3( 0.165, 0.190, 0.222 ) );
+// Conditional 3-axis triplanar rock sampling gated strictly on steep/rocky faces (zero cost on flat grass)
+float strataLedge = 0.5;
+float rockFissure = 0.0;
+float triRockBump = 0.5;
+if ( terrNY < 0.78 || terrRockWeight > 0.02 ) {
+  vec3 triW = s7TriplanarWeights( terrN );
+  vec3 triRock = s7SampleTriplanarAlpineRock( vTerrWorldPos, triW, terrMacro, terrPixelSize );
+  strataLedge = triRock.x;
+  rockFissure = triRock.y;
+  triRockBump = triRock.z;
+} else {
+  strataLedge = mix( terrMid, terrFine, 0.45 );
+  rockFissure = ( 1.0 - smoothstep( 0.06, 0.24, abs( terrMid - 0.5 ) ) ) * ( 0.45 + 0.55 * terrFine );
+  triRockBump = strataLedge;
+}
 
-vec3 rockCol = mix( colRockDark, colRockBase, smoothstep( 0.22, 0.78, strataContrast ) );
-rockCol = mix( rockCol, colRockLight, smoothstep( 0.62, 0.94, strataContrast ) * 0.42 );
-rockCol = mix( rockCol, colRockCrevice, rockFissure * 0.52 );
+float strataDistFade = clamp( 1.0 - length( vViewPosition ) / 540.0, 0.34, 1.0 );
+float strataContrast = mix( 0.5, strataLedge, 0.64 * strataDistFade + 0.24 );
+
+// Contrasty alpine limestone-slate cliff palette with crisp light beds & deep dark undercuts
+vec3 colRockBase = terrSrgb2Lin( vec3( 0.355, 0.392, 0.436 ) );
+vec3 colRockDark = terrSrgb2Lin( vec3( 0.205, 0.236, 0.274 ) );
+vec3 colRockLight = terrSrgb2Lin( vec3( 0.485, 0.518, 0.555 ) );
+vec3 colRockCrevice = terrSrgb2Lin( vec3( 0.135, 0.160, 0.192 ) );
+
+vec3 rockCol = mix( colRockDark, colRockBase, smoothstep( 0.18, 0.76, strataContrast ) );
+rockCol = mix( rockCol, colRockLight, smoothstep( 0.56, 0.92, strataContrast ) * 0.56 );
+rockCol = mix( rockCol, colRockCrevice, rockFissure * 0.66 );
 rockCol *= 0.89 + terrMicro * 0.22;
+
+// Bright alpine scree / talus rubble apron between meadow turf and solid cliff faces
+vec3 colScreeLight = terrSrgb2Lin( vec3( 0.535, 0.545, 0.542 ) );
+vec3 colScreeMid = terrSrgb2Lin( vec3( 0.405, 0.418, 0.425 ) );
+vec3 colScreeDark = terrSrgb2Lin( vec3( 0.295, 0.305, 0.312 ) );
+float screeRubble = terrFine * 0.58 + terrMicro * 0.42;
+vec3 screeCol = mix( colScreeDark, colScreeMid, smoothstep( 0.20, 0.72, terrMid ) );
+screeCol = mix( screeCol, colScreeLight, smoothstep( 0.42, 0.86, screeRubble ) * 0.78 );
 
 // Preserve quarry terracotta ochre on gentle quarry ground & ironstone strata on steep pit walls
 vec3 colQuarryEarth = terrSrgb2Lin( vec3( 0.561, 0.337, 0.259 ) );
 vec3 colQuarryDeep = terrSrgb2Lin( vec3( 0.415, 0.245, 0.185 ) );
 vec3 quarryTone = mix( colQuarryDeep, colQuarryEarth, 0.35 + terrMid * 0.55 ) * ( 0.92 + terrFine * 0.16 );
 naturalGrassCol = mix( naturalGrassCol, quarryTone, terrQuarry * 0.92 );
+screeCol = mix( screeCol, mix( screeCol, quarryTone * 1.08, 0.66 ), terrQuarry );
 rockCol = mix( rockCol, mix( rockCol, quarryTone, 0.62 ), terrQuarry );
 
 // Darken cliffs directly supporting the Citadel so its concrete walls pop cleanly
 rockCol *= mix( 1.0, 0.76, terrCitDark * 0.82 );
+screeCol *= mix( 1.0, 0.80, terrCitDark * 0.65 );
 naturalGrassCol *= mix( 1.0, 0.80, terrCitDark * 0.65 );
 
-// Height-based blend: grass/soil settles into rock fissures while rock ledges stay sharp
+// Ragged multi-scale height blend: grass -> bright alpine scree -> sharp stratified cliff rock
 float terrGrassHeight = terrFine * 0.55 + ( 1.0 - peatMask ) * 0.45;
+float terrScreeHeight = screeRubble * 0.68 + terrMid * 0.32;
 float terrRockHeight = strataLedge * 0.65 + ( 1.0 - rockFissure ) * 0.35;
-float terrRockBlend = terrHeightBlend( terrGrassHeight, terrRockHeight, terrRockWeight, 0.75 );
-vec3 terrCol = mix( naturalGrassCol, rockCol, terrRockBlend );
+float terrScreeBlend = terrHeightBlend( terrGrassHeight, terrScreeHeight, terrScreeWeight, 0.78 );
+vec3 terrMeadowScree = mix( naturalGrassCol, screeCol, terrScreeBlend );
+float terrRockBlend = terrHeightBlend( mix( terrGrassHeight, terrScreeHeight, terrScreeBlend ), terrRockHeight, terrRockWeight, 0.86 );
+vec3 terrCol = mix( terrMeadowScree, rockCol, terrRockBlend );
 
 // Per-pixel sandy-gravel shoal ramp tinting
 vec3 colSandDry = terrSrgb2Lin( vec3( 0.639, 0.576, 0.478 ) );
@@ -335,6 +378,19 @@ terrCol = mix( terrCol, mix( colDeepRiverbed, shoreMat, 0.28 ), deepBedFade );
 vec3 colConcreteBase = terrSrgb2Lin( vec3( 0.608, 0.631, 0.651 ) );
 vec3 colRoadDirt = terrSrgb2Lin( vec3( 0.341, 0.369, 0.400 ) );
 vec3 concreteCol = mix( colConcreteBase, colRockBase, terrMacro * 0.14 ) * ( 0.94 + terrFine * 0.12 );
+// Analytic pixel-footprint expansion joints on concrete pads (zero moire at any distance)
+float terrPadJoint = 0.0;
+if ( terrConcrete > 0.02 ) {
+  vec2 slabCoord = airConcrete > 0.5 ? airL : vTerrWorldPos.xz;
+  float slabMinor = s7GridJointMask( slabCoord, vec2( 6.0, 6.0 ), 0.042 );
+  float slabMajor = s7GridJointMask( slabCoord, vec2( 18.0, 18.0 ), 0.068 );
+  terrPadJoint = clamp( max( slabMinor * 0.72, slabMajor ), 0.0, 1.0 ) * terrConcrete;
+  // Subtle per-slab tonal variation so modular plates feel cast individually
+  vec2 slabId = floor( slabCoord / 6.0 );
+  float slabTone = 0.97 + terrHash( slabId ) * 0.06;
+  concreteCol *= slabTone;
+  concreteCol *= mix( 1.0, 0.68, terrPadJoint );
+}
 vec3 roadCol = mix( colRoadDirt, colRockDark, terrMid * 0.22 ) * ( 0.94 + terrFine * 0.12 );
 vec3 manmadeCol = mix( roadCol, concreteCol, clamp( terrConcrete / max( 0.001, terrManmade ), 0.0, 1.0 ) );
 diffuseColor.rgb = mix( terrCol, manmadeCol, terrManmade );
@@ -371,7 +427,8 @@ if ( vTerrWorldPos.y < 0.02 && terrRiverVicinity > 0.05 ) {
 
 // 9. Procedural crevice occlusion + heightmap-mip canyon skyVis & hybrid far mountain shadow
 float terrCreviceOcc =
-  rockFissure * terrRockBlend * 0.34 +
+  rockFissure * terrRockBlend * 0.38 +
+  terrPadJoint * 0.22 +
   ( 1.0 - pebDome ) * effectiveShore * terrCoarsePebWeight * pebRampCalm * 0.24 +
   terrCitDark * 0.16;
 float s7SkyVis = s7SampleCanyonSkyVis( vTerrWorldPos );
@@ -382,13 +439,15 @@ float s7CustomAO = clamp( ( 1.0 - terrCreviceOcc ) * s7SkyVis, 0.24, 1.0 );
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
 float terrGrassWeight = ( 1.0 - terrRockBlend ) * ( 1.0 - effectiveShore ) * ( 1.0 - terrManmade ) * ( 1.0 - terrQuarry );
 float terrMicroHeight =
-  strataLedge * terrRockBlend * 0.58 +
+  triRockBump * terrRockBlend * 0.66 +
+  screeRubble * terrScreeBlend * ( 1.0 - terrRockBlend ) * 0.44 +
   pebDome * effectiveShore * 0.88 * terrCoarsePebWeight * pebRampCalm +
   ( terrMicro - 0.5 ) * terrGrassWeight * 0.35 +
-  ( terrDetailGrit - 0.5 ) * terrDetailFade * ( 1.0 - terrPuddleWater ) * 0.24;
+  ( terrDetailGrit - 0.5 ) * terrDetailFade * ( 1.0 - terrPuddleWater ) * 0.24 -
+  terrPadJoint * 0.28;
 float terrMicroStrength =
-  mix( 0.12, 0.30, clamp( max( terrRockBlend * 0.85, effectiveShore * terrCoarsePebWeight * pebRampCalm ), 0.0, 1.0 ) ) *
-  ( 1.0 - terrManmade * 0.55 ) *
+  mix( 0.12, 0.32, clamp( max( max( terrRockBlend * 0.90, terrScreeBlend * 0.52 ), effectiveShore * terrCoarsePebWeight * pebRampCalm ), 0.0, 1.0 ) ) *
+  ( 1.0 - terrManmade * 0.45 ) *
   ( 1.0 - terrPuddleWater ) *
   clamp( 1.0 - length( vViewPosition ) / 480.0, 0.18, 1.0 );`,
       )
