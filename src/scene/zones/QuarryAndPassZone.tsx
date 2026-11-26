@@ -1,5 +1,5 @@
 import { StaticStructure } from '../objects/StaticStructure';
-import { useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Group, InstancedMesh, LineSegments, Mesh } from 'three';
 import {
@@ -35,10 +35,22 @@ export function QuarryAndPassZone({
 }: QuarryAndPassZoneProps) {
   const detailGroup = useRef<Group>(null);
   const { gl, camera, scene } = useThree();
-  useEffect(() => {
-    if (!prepareDetails || !detailGroup.current) return;
+  const [ready, setReady] = useState(false);
+  const mounted = details || prepareDetails;
+  const visible = details && (ready || !prepareDetails);
+  useLayoutEffect(() => {
+    if (!mounted) {
+      if (ready) setReady(false);
+      return;
+    }
+    if (!detailGroup.current || ready) return;
+    if (!prepareDetails) {
+      setReady(true);
+      return;
+    }
     // StaticStructure has already merged or instanced the visible concrete draws.
     const submitted = new Set<string>();
+    const pending: Promise<unknown>[] = [];
     for (const child of detailGroup.current.children) {
       child.traverseVisible(draw => {
         if (!(draw instanceof Mesh || draw instanceof LineSegments)) return;
@@ -47,12 +59,18 @@ export function QuarryAndPassZone({
         const variant = `${material.id}:${draw instanceof InstancedMesh}`;
         if (submitted.has(variant)) return;
         submitted.add(variant);
-        void gl.compileAsync(draw, camera, scene).catch(error => {
+        pending.push(gl.compileAsync(draw, camera, scene).catch(error => {
           if (!gl.getContext().isContextLost()) console.warn('Quarry shader warmup failed', error);
-        });
+        }));
       });
     }
-  }, [prepareDetails, gl, camera, scene]);
+    // Keep the reveal bounded even when the driver never reports completion.
+    let active = true;
+    const release = () => { if (active) setReady(true); };
+    const timer = window.setTimeout(release, 120);
+    void Promise.all(pending).then(release);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [mounted, prepareDetails, ready, gl, camera, scene]);
   const pointBX = -1.8 * SCALE_X;
   const pointBZ = -10.5 * SCALE_Z;
   const quarryExcX = QUARRY_CENTER_X - 1.5;
@@ -84,12 +102,12 @@ export function QuarryAndPassZone({
       ))}</group>
 
       {/* Flooded Eastern River Ruins & Collapsed Bridge Abutments */}
-      {(details || prepareDetails) && <group ref={detailGroup} visible={details} name="quarry-details">
+      {mounted && <group ref={detailGroup} visible={visible} name="quarry-details">
         <FloodedRuins lightingPreset={lightingPreset} />
 
         {/* Northern Canyon Pass (Point B Excavator kept small 1.35x + Powerline Poles) */}
         <StaticStructure
-          onClick={details ? (e) => {
+          onClick={visible ? (e) => {
             e.stopPropagation();
             onSelectSector('crossing');
           } : undefined}
@@ -102,7 +120,7 @@ export function QuarryAndPassZone({
 
         {/* East Quarry Excavator (1.35x small scale) & Site Shed */}
         <StaticStructure
-          onClick={details ? (e) => {
+          onClick={visible ? (e) => {
             e.stopPropagation();
             onSelectSector('quarry');
           } : undefined}
