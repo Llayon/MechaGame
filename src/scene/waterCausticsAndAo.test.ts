@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   CAUSTICS_CONFIG,
   CAUSTICS_PRESETS,
+  computeConcreteWaterlineState,
   computeMultiBounceAO,
   computeSpecularOcclusion,
   computeUnderwaterCaustics,
@@ -169,3 +170,38 @@ test('computeSpecularOcclusion suppresses indirect specular in cavities and at g
   assert.ok(deepCavity < smoothOccludedFront);
   assert.ok(deepCavity >= 0 && deepCavity <= 1);
 });
+
+test('computeConcreteWaterlineState darkens capillary waterline, drops wet concrete roughness, and raises mossy collar roughness', () => {
+  const dryHighWall = computeConcreteWaterlineState({
+    worldY: 3.5,
+    organicNoise: 0.5,
+    medNoise: 0.5,
+    fineNoise: 0.5,
+  });
+  assert.equal(dryHighWall.wetZone, 0);
+  assert.equal(dryHighWall.capillaryRim, 0);
+  assert.equal(dryHighWall.algaeMask, 0);
+  assert.equal(dryHighWall.albedoDarkenMultiplier, 1);
+  assert.equal(dryHighWall.roughness, 0.84);
+
+  const wetBareWaterline = computeConcreteWaterlineState({
+    worldY: 0.04,
+    organicNoise: 0.1,
+    medNoise: 0.9,
+    fineNoise: 0.0,
+  });
+  assert.ok(wetBareWaterline.wetZone > 0.7);
+  assert.ok(wetBareWaterline.capillaryRim > 0.7);
+  assert.ok(wetBareWaterline.albedoDarkenMultiplier < 0.65);
+  assert.ok(wetBareWaterline.roughness < 0.5, `expected glossy wet concrete < 0.5, got ${wetBareWaterline.roughness}`);
+
+  const mossyCollar = computeConcreteWaterlineState({
+    worldY: 0.18,
+    organicNoise: 0.85,
+    medNoise: 0.5,
+    fineNoise: 0.95,
+  });
+  assert.ok(mossyCollar.algaeMask > 0.8, `expected strong moss collar mask, got ${mossyCollar.algaeMask}`);
+  assert.ok(mossyCollar.roughness > 0.86, `expected velvety moss roughness > 0.86, got ${mossyCollar.roughness}`);
+});
+

@@ -286,3 +286,40 @@ export function combineHybridShadow(
   const effectiveLive = lerp(clamp(liveShadow, 0, 1), 1.0, cascadeFade);
   return Math.min(effectiveLive, farVis);
 }
+
+export const UNDERWATER_SHADOW_EASE_CONFIG = {
+  waterLevel: 0.0,
+  /** Maximum shadow softening factor under water (Atlantis sh_light.js:236-240) */
+  maxEaseFraction: 0.46,
+  /** Submerged depth (world units) at which shadow easing reaches maxEaseFraction */
+  fullEaseDepth: 1.45,
+} as const;
+
+/**
+ * Pure TypeScript mirror of Atlantis's underwater refracted-sun shadow easing (`sh_light.js:236-240`):
+ * Refracted sunlight under water is steeper than air shadow maps assume, and sky/caustic light
+ * enters through the whole water surface. Dry surfaces (`worldY >= waterLevel + 0.05`) keep 100%
+ * of their crisp direct shadow, while submerged riverbeds and ruins soften up to 46%.
+ */
+export function computeUnderwaterShadowEase(
+  worldY: number,
+  waterLevel = UNDERWATER_SHADOW_EASE_CONFIG.waterLevel,
+): number {
+  if (!Number.isFinite(worldY)) return 0;
+  const subDepth = waterLevel - worldY;
+  return (
+    smoothstep(-0.05, UNDERWATER_SHADOW_EASE_CONFIG.fullEaseDepth, subDepth) *
+    UNDERWATER_SHADOW_EASE_CONFIG.maxEaseFraction
+  );
+}
+
+export function easeUnderwaterShadow(
+  rawShadow: number,
+  worldY: number,
+  waterLevel = UNDERWATER_SHADOW_EASE_CONFIG.waterLevel,
+): number {
+  const clamped = clamp(rawShadow, 0, 1);
+  const ease = computeUnderwaterShadowEase(worldY, waterLevel);
+  return lerp(clamped, 1.0, ease);
+}
+

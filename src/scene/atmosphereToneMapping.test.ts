@@ -4,6 +4,7 @@ import {
   FOG_SCATTER_PRESETS,
   TONE_EXPOSURE_BY_MODE,
   computeFogInScattering,
+  computeTwoStageAerialBlend,
   getToneMappingExposure,
   parseToneMappingMode,
 } from './atmosphereToneMapping';
@@ -124,3 +125,29 @@ test('computeFogInScattering preserves foreground clarity and handles degenerate
   assert.equal(degenerate.phase, 0);
   assert.equal(degenerate.scatterWeight, 0);
 });
+
+test('computeTwoStageAerialBlend tints near/mid canyon haze with open-sky blue and fades to horizon fog at distance', () => {
+  const nearCanyon = computeTwoStageAerialBlend({
+    fogDepth: 45,
+    worldY: 4,
+    nearSkyStrength: FOG_SCATTER_PRESETS.dusk.nearSkyStrength,
+  });
+  const midCanyon = computeTwoStageAerialBlend({
+    fogDepth: 170,
+    worldY: 16,
+    nearSkyStrength: FOG_SCATTER_PRESETS.dusk.nearSkyStrength,
+  });
+  const farHorizon = computeTwoStageAerialBlend({
+    fogDepth: 390,
+    worldY: 48,
+    nearSkyStrength: FOG_SCATTER_PRESETS.dusk.nearSkyStrength,
+  });
+
+  assert.equal(nearCanyon.horizonBlend, 0);
+  assert.equal(nearCanyon.nearSkyWeight, FOG_SCATTER_PRESETS.dusk.nearSkyStrength);
+  assert.ok(midCanyon.nearSkyWeight < nearCanyon.nearSkyWeight);
+  assert.ok(midCanyon.nearSkyWeight > 0.15);
+  assert.equal(farHorizon.horizonBlend, 1);
+  assert.equal(farHorizon.nearSkyWeight, 0);
+});
+

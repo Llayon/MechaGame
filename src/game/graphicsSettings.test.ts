@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAPHICS_PRESETS, GRAPHICS_STORAGE_KEY, MIN_RESOLUTION_SCALE, changeGraphicsSetting,
-  defaultGraphicsSettings, readGraphicsSettings, recommendAutoQuality, recommendGraphicsPreset,
-  resolveGraphicsRuntime, sanitizeGraphicsSettings, withGraphicsPreset,
+  GRAPHICS_CRASH_SENTINEL_KEY, GRAPHICS_PRESETS, GRAPHICS_STORAGE_KEY, MIN_RESOLUTION_SCALE,
+  beginGraphicsStartupSentinel, bootGraphicsSettings, changeGraphicsSetting,
+  clearGraphicsStartupSentinel, defaultGraphicsSettings, readGraphicsSettings,
+  recommendAutoQuality, recommendGraphicsPreset, resolveGraphicsRuntime,
+  sanitizeGraphicsSettings, stepDownGraphicsPreset, withGraphicsPreset,
 } from './graphicsSettings';
 
 test('quality presets are grounded in real renderer controls', () => {
@@ -71,3 +73,57 @@ test('recommendation never assumes that every phone has a powerful GPU', () => {
   assert.equal(recommendAutoQuality({mobile:false,deviceMemoryGB:4}), true);
   assert.equal(recommendAutoQuality({mobile:false,hardwareConcurrency:16}), false);
 });
+
+test('cold-start crash sentinel steps down one preset tier after interrupted startup and disarms after first frame', () => {
+  assert.equal(stepDownGraphicsPreset('ultra'), 'high');
+  assert.equal(stepDownGraphicsPreset('high'), 'balanced');
+  assert.equal(stepDownGraphicsPreset('balanced'), 'low');
+  assert.equal(stepDownGraphicsPreset('low'), 'low');
+
+  const store = new Map<string, string>();
+  const mockStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      store.set(k, v);
+    },
+    removeItem: (k: string) => {
+      store.delete(k);
+    },
+  };
+
+  store.set(GRAPHICS_STORAGE_KEY, JSON.stringify({ version: 1, settings: withGraphicsPreset('ultra') }));
+
+  // 1. Clean cold start: keeps 'ultra' and arms crash sentinel
+  const cleanBoot = bootGraphicsSettings(mockStorage);
+  assert.equal(cleanBoot.downgradedFromCrash, false);
+  assert.equal(cleanBoot.settings.preset, 'ultra');
+  assert.equal(store.get(GRAPHICS_CRASH_SENTINEL_KEY), '1');
+
+  // 2. Next boot WITHOUT clearGraphicsStartupSentinel (simulated tab/GPU driver crash during compile):
+  // steps down ultra -> high and persists safer preset
+  const crashRecovery1 = bootGraphicsSettings(mockStorage);
+  assert.equal(crashRecovery1.downgradedFromCrash, true);
+  assert.equal(crashRecovery1.settings.preset, 'high');
+  assert.equal(readGraphicsSettings(mockStorage).preset, 'high');
+  assert.equal(store.get(GRAPHICS_CRASH_SENTINEL_KEY), '1');
+
+  // 3. Another crash before first frame: steps down high -> balanced
+  const crashRecovery2 = bootGraphicsSettings(mockStorage);
+  assert.equal(crashRecovery2.downgradedFromCrash, true);
+  assert.equal(crashRecovery2.settings.preset, 'balanced');
+
+  // 4. First overview frame completes: clearGraphicsStartupSentinel disarms sentinel
+  clearGraphicsStartupSentinel(mockStorage);
+  assert.equal(store.has(GRAPHICS_CRASH_SENTINEL_KEY), false);
+
+  // 5. Subsequent normal reload keeps 'balanced' without stepping down
+  const afterCleanFinish = bootGraphicsSettings(mockStorage);
+  assert.equal(afterCleanFinish.downgradedFromCrash, false);
+  assert.equal(afterCleanFinish.settings.preset, 'balanced');
+
+  // Direct sentinel helpers also work independently
+  clearGraphicsStartupSentinel(mockStorage);
+  assert.deepEqual(beginGraphicsStartupSentinel(mockStorage), { hadUncleanStartup: false });
+  assert.deepEqual(beginGraphicsStartupSentinel(mockStorage), { hadUncleanStartup: true });
+});
+

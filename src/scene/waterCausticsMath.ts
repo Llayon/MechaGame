@@ -313,3 +313,78 @@ export function computeWallBounceCaustics({
     rgb[2] * tint[2] * scale,
   ];
 }
+
+export interface ConcreteWaterlineInput {
+  worldY: number;
+  waterLevel?: number;
+  baseRoughness?: number;
+  organicNoise?: number;
+  medNoise?: number;
+  fineNoise?: number;
+  wallMoss?: number;
+  roofMoss?: number;
+}
+
+export interface ConcreteWaterlineState {
+  wetZone: number;
+  capillaryRim: number;
+  algaeMask: number;
+  albedoDarkenMultiplier: number;
+  roughness: number;
+}
+
+/**
+ * Pure TypeScript mirror of Atlantis's capillary wet waterline & mossy collar (`sh_scene.js:339-341`):
+ * Computes capillary darkening, meniscus rim, ragged shoreline moss collar (`0..1.1` above `WATER_LEVEL`),
+ * and roughness modulation (glossy `~0.26` on wet stone vs matte `~0.92` on moss/algae).
+ */
+export function computeConcreteWaterlineState({
+  worldY,
+  waterLevel = CAUSTICS_CONFIG.waterLevel,
+  baseRoughness = 0.84,
+  organicNoise = 0.5,
+  medNoise = 0.5,
+  fineNoise = 0.5,
+  wallMoss = 0,
+  roofMoss = 0,
+}: ConcreteWaterlineInput): ConcreteWaterlineState {
+  const safeY = Number.isFinite(worldY) ? worldY : 999;
+  const aboveWater = safeY - waterLevel;
+  const cOrg = clamp(organicNoise, 0, 1);
+  const cMed = clamp(medNoise, 0, 1);
+  const cFine = clamp(fineNoise, 0, 1);
+
+  const wetZone = 1.0 - smoothstep(-0.3, 1.15, aboveWater - (cMed - 0.5) * 0.55);
+  const capillaryRim =
+    smoothstep(-0.08, 0.04, aboveWater) *
+    (1.0 - smoothstep(0.14, 0.48, aboveWater - (cFine - 0.5) * 0.16));
+
+  const algaeBand =
+    smoothstep(-0.65, 0.05, aboveWater) *
+    (1.0 - smoothstep(0.25, 0.95, aboveWater - (cOrg - 0.5) * 0.55));
+  const algaeMask = smoothstep(0.36, 0.66, algaeBand * (0.28 + cFine * 0.72));
+
+  const wetDarken = 1.0 - wetZone * 0.78 * 0.44;
+  const rimDarken = 1.0 - capillaryRim * 0.16;
+  const albedoDarkenMultiplier = clamp(wetDarken * rimDarken, 0.35, 1.0);
+
+  const totalMoss = clamp(
+    Math.max(clamp(wallMoss, 0, 1), Math.max(clamp(roofMoss, 0, 1), algaeMask)),
+    0,
+    1,
+  );
+  const wetGlossWeight = clamp(wetZone * (1.0 - algaeMask * 0.78), 0, 1);
+  let roughness = clamp(baseRoughness, 0.04, 0.98);
+  roughness = roughness + (0.26 - roughness) * wetGlossWeight;
+  roughness = roughness + (0.92 - roughness) * totalMoss;
+  roughness = clamp(roughness, 0.04, 0.98);
+
+  return {
+    wetZone,
+    capillaryRim,
+    algaeMask,
+    albedoDarkenMultiplier,
+    roughness,
+  };
+}
+

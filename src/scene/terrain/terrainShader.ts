@@ -40,7 +40,7 @@ export function createTerrainSurfaceMaterial(
     bumpScale,
   });
 
-  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v10';
+  mat.customProgramCacheKey = () => 'sector7-slope-height-terrain-v11';
 
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uPuddleTime = puddleTimeUniform;
@@ -75,6 +75,7 @@ vPuddleUp = normalize( mat3( viewMatrix ) * vec3( 0.0, 1.0, 0.0 ) );`,
         '#include <common>',
         `#include <common>
 #define S7_CUSTOM_AO
+#define S7_SUBMERGED_SHADOW_EASE
 uniform float uPuddleTime;
 varying vec3 vTerrWorldPos;
 varying vec3 vTerrWorldNormal;
@@ -380,6 +381,8 @@ vec3 colRoadDirt = terrSrgb2Lin( vec3( 0.341, 0.369, 0.400 ) );
 vec3 concreteCol = mix( colConcreteBase, colRockBase, terrMacro * 0.14 ) * ( 0.94 + terrFine * 0.12 );
 // Analytic pixel-footprint expansion joints on concrete pads (zero moire at any distance)
 float terrPadJoint = 0.0;
+float terrConcWetZone = 0.0;
+float terrConcMoss = 0.0;
 if ( terrConcrete > 0.02 ) {
   vec2 slabCoord = airConcrete > 0.5 ? airL : vTerrWorldPos.xz;
   float slabMinor = s7GridJointMask( slabCoord, vec2( 6.0, 6.0 ), 0.042 );
@@ -390,6 +393,18 @@ if ( terrConcrete > 0.02 ) {
   float slabTone = 0.97 + terrHash( slabId ) * 0.06;
   concreteCol *= slabTone;
   concreteCol *= mix( 1.0, 0.68, terrPadJoint );
+
+  // Capillary waterline darkening, dark meniscus rim & shoreline moss on concrete quays near river
+  if ( terrRiverVicinity > 0.02 && vTerrWorldPos.y < 1.5 ) {
+    terrConcWetZone = ( 1.0 - smoothstep( -0.30, 1.15, vTerrWorldPos.y - ( terrMid - 0.5 ) * 0.45 ) ) * terrRiverVicinity * terrConcrete;
+    float terrConcRim = smoothstep( -0.08, 0.04, vTerrWorldPos.y ) * ( 1.0 - smoothstep( 0.14, 0.48, vTerrWorldPos.y ) ) * terrRiverVicinity * terrConcrete;
+    float terrConcMossBand = smoothstep( -0.45, 0.05, vTerrWorldPos.y ) * ( 1.0 - smoothstep( 0.22, 0.90, vTerrWorldPos.y - ( terrMacro - 0.5 ) * 0.45 ) ) * terrRiverVicinity * terrConcrete;
+    terrConcMoss = smoothstep( 0.32, 0.64, terrConcMossBand * ( 0.28 + terrFine * 0.72 ) );
+    concreteCol *= mix( 1.0, 0.54, terrConcWetZone );
+    concreteCol *= 1.0 - terrConcRim * 0.18;
+    vec3 colQuayMoss = mix( colMossDeep, colMossRich, terrFine );
+    concreteCol = mix( concreteCol, colQuayMoss, terrConcMoss * 0.85 );
+  }
 }
 vec3 roadCol = mix( colRoadDirt, colRockDark, terrMid * 0.22 ) * ( 0.94 + terrFine * 0.12 );
 vec3 manmadeCol = mix( roadCol, concreteCol, clamp( terrConcrete / max( 0.001, terrManmade ), 0.0, 1.0 ) );
@@ -434,6 +449,7 @@ float terrCreviceOcc =
 float s7SkyVis = s7SampleCanyonSkyVis( vTerrWorldPos );
 float s7BakedFarShadow = s7SampleBakedFarShadow( vTerrWorldPos );
 float s7CascadeFade = s7ComputeCascadeFade( vTerrWorldPos );
+float s7SubmergedShadowEase = s7ComputeUnderwaterShadowEase( vTerrWorldPos.y );
 float s7CustomAO = clamp( ( 1.0 - terrCreviceOcc ) * s7SkyVis, 0.24, 1.0 );
 
 float terrWetness = clamp( waterMoisture * effectiveShore, 0.0, 1.0 ) * ( 1.0 - terrManmade );
@@ -471,6 +487,8 @@ terrTargetRough = mix( terrTargetRough, 0.78, effectiveShore );
 float terrWetRough = mix( 0.34, 0.58, smoothstep( 0.08, 0.36, terrPixelSize ) );
 terrTargetRough = mix( terrTargetRough, terrWetRough, terrWetness );
 terrTargetRough = mix( terrTargetRough, 0.82, terrManmade );
+terrTargetRough = mix( terrTargetRough, 0.26, terrConcWetZone * ( 1.0 - terrConcMoss * 0.78 ) );
+terrTargetRough = mix( terrTargetRough, 0.92, terrConcMoss );
 terrTargetRough = mix( terrTargetRough, 0.62, terrPuddleWetSoil );
 terrTargetRough = mix( terrTargetRough, 0.045, terrPuddleWater );
 roughnessFactor = clamp( terrTargetRough, 0.04, 0.98 );`,

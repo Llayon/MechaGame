@@ -208,6 +208,14 @@ float s7SampleCanyonSkyVis( vec3 worldPos ) {
   return mix( 1.0, rawSkyVis, atlasFade );
 }
 
+float s7ComputeUnderwaterShadowEase( float worldY ) {
+  return smoothstep( -0.05, 1.45, -worldY ) * 0.46;
+}
+
+float s7EaseUnderwaterShadow( float rawShadow, float worldY ) {
+  return mix( rawShadow, 1.0, s7ComputeUnderwaterShadowEase( worldY ) );
+}
+
 float s7SampleBakedFarShadow( vec3 worldPos ) {
   vec2 uv = worldPos.xz * uCanyonBounds.xy + 0.5;
   float edgeMax = max( abs( uv.x - 0.5 ), abs( uv.y - 0.5 ) );
@@ -217,6 +225,7 @@ float s7SampleBakedFarShadow( vec3 worldPos ) {
   vec2 suv = clamp( uv, vec2( 0.004 ), vec2( 0.996 ) );
   float rawVis = textureLod( uCanyonLightMap, suv, 0.0 ).g;
   float shaded = mix( 1.0, rawVis, uCanyonShadowParams.z );
+  shaded = s7EaseUnderwaterShadow( shaded, worldPos.y );
   return mix( 1.0, shaded, atlasFade );
 }
 
@@ -235,7 +244,8 @@ float s7CombineHybridShadow( float liveShadow, float farShadow, float cascadeFad
 /**
  * Patches `THREE.ShaderChunk.lights_fragment_begin` once (guarded by `#ifdef S7_HYBRID_TERRAIN_SHADOW`)
  * so the key sun (`directionalLights[0]`) seamlessly merges the tightened live shadow cascade with
- * the baked far mountain shadow map with zero double-darkening, and stays active on Low preset.
+ * the baked far mountain shadow map with zero double-darkening, softens underwater shadows per
+ * Atlantis `sh_light.js:236-240`, and stays active on Low preset.
  * Non-opting materials are completely untouched at compile time.
  */
 export function installHybridTerrainShadowShader(): void {
@@ -256,6 +266,9 @@ export function installHybridTerrainShadowShader(): void {
       `#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
 \t\tdirectionalLightShadow = directionalLightShadows[ i ];
 \t\tfloat s7DirShadow = ( directLight.visible && receiveShadow ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+\t\t#if defined( S7_SUBMERGED_SHADOW_EASE ) && ( UNROLLED_LOOP_INDEX == 0 )
+\t\ts7DirShadow = mix( s7DirShadow, 1.0, s7SubmergedShadowEase );
+\t\t#endif
 \t\t#if defined( S7_HYBRID_TERRAIN_SHADOW ) && ( UNROLLED_LOOP_INDEX == 0 )
 \t\ts7DirShadow = s7CombineHybridShadow( s7DirShadow, s7BakedFarShadow, s7CascadeFade );
 \t\t#endif

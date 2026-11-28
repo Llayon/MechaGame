@@ -4,6 +4,10 @@ export type ToneMappingMode = 'agx' | 'aces';
 
 export interface FogScatterPreset {
   sunColorHex: string;
+  /** Open-sky blue tint for near/mid-range canyon aerial perspective (sh_light.js:47-58) */
+  nearSkyColorHex: string;
+  /** Maximum blend weight of the open-sky blue tint in near/mid-range haze before dissolving into horizon fogColor */
+  nearSkyStrength: number;
   /** Exponent for the tight forward-scattering solar aureole lobe */
   power: number;
   /** Maximum blend weight of the in-scattered solar tint into base fogColor */
@@ -31,18 +35,24 @@ export const TONE_EXPOSURE_BY_MODE: Record<
 export const FOG_SCATTER_PRESETS: Record<LightingPreset, FogScatterPreset> = {
   dusk: {
     sunColorHex: '#E09158',
+    nearSkyColorHex: '#5B7898',
+    nearSkyStrength: 0.56,
     power: 5.5,
     strength: 0.62,
     defaultSunPos: [110, 106, -245],
   },
   day: {
     sunColorHex: '#D8E9FA',
+    nearSkyColorHex: '#69A8E6',
+    nearSkyStrength: 0.64,
     power: 7.0,
     strength: 0.34,
     defaultSunPos: [175, 160, -85],
   },
   night: {
     sunColorHex: '#3D5F8A',
+    nearSkyColorHex: '#152A42',
+    nearSkyStrength: 0.48,
     power: 8.5,
     strength: 0.18,
     defaultSunPos: [110, 115, -210],
@@ -150,3 +160,44 @@ export function computeFogInScattering({
     scatterWeight,
   };
 }
+
+export interface TwoStageAerialInput {
+  fogDepth: number;
+  worldY: number;
+  nearSkyStrength: number;
+}
+
+export interface TwoStageAerialResult {
+  /** 0 in near canyon haze -> 1 at distant horizon ridges */
+  horizonBlend: number;
+  /** Effective weight of open-sky blue tint mixed into base fogColor */
+  nearSkyWeight: number;
+}
+
+/**
+ * Pure TypeScript mirror of Atlantis's two-stage aerial perspective (`sh_light.js:47-58`):
+ * Near/mid-range canyon haze carries a cool open-sky blue tint for depth separation across the
+ * gorge, while distant ridges and the outer mountain ring dissolve smoothly into the horizon color.
+ */
+export function computeTwoStageAerialBlend({
+  fogDepth,
+  worldY,
+  nearSkyStrength,
+}: TwoStageAerialInput): TwoStageAerialResult {
+  const safeDepth = Number.isFinite(fogDepth) ? Math.max(0, fogDepth) : 0;
+  const safeY = Number.isFinite(worldY) ? worldY : 0;
+  const safeStrength = clamp(nearSkyStrength, 0, 1);
+
+  const horizonBlend = smoothstep(55.0, 340.0, safeDepth);
+  const canyonFloorBoost = 1.0 - 0.22 * smoothstep(18.0, 110.0, Math.max(0, safeY));
+  const nearSkyWeight = clamp(
+    (1.0 - horizonBlend) * safeStrength * canyonFloorBoost,
+    0.0,
+    1.0,
+  );
+  return {
+    horizonBlend,
+    nearSkyWeight,
+  };
+}
+

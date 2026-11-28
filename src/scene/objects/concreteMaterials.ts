@@ -71,7 +71,7 @@ export function getOvergrownConcreteMaterial(
   const mat = new THREE.MeshStandardMaterial(matParams);
 
   mat.userData.localConcrete = true;
-  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v5-${preset}`;
+  mat.customProgramCacheKey = () => `sector7-weathered-concrete-v6-${preset}`;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uWallMoss = { value: cfg.wallMoss };
     shader.uniforms.uRoofMoss = { value: cfg.roofMoss };
@@ -120,6 +120,7 @@ vConcWorldPos = cWp.xyz;`,
         '#include <common>',
         `#include <common>
 #define S7_CUSTOM_AO
+#define S7_SUBMERGED_SHADOW_EASE
 uniform float uWallMoss;
 uniform float uRoofMoss;
 uniform float uGrimeStrength;
@@ -172,17 +173,19 @@ vec3 cMossDark = concSrgb2Lin( vec3( 0.165, 0.245, 0.145 ) );
 vec3 cMossBright = concSrgb2Lin( vec3( 0.265, 0.355, 0.195 ) );
 vec3 cTurfCol = concSrgb2Lin( vec3( 0.235, 0.315, 0.185 ) );
 
-// 1. River waterline wetness & algae collar on submerged piers, abutments & island quays
+// 1. River capillary waterline wetness, dark meniscus rim & ragged moss/algae collar (Atlantis sh_scene.js:339-341)
 float aboveWater = vConcWorldPos.y - uWaterLevel;
-float wetZone = 1.0 - smoothstep( -0.3, 1.45 + ( cMed - 0.5 ) * 0.7, aboveWater );
+float wetZone = 1.0 - smoothstep( -0.30, 1.15, aboveWater - ( cMed - 0.5 ) * 0.55 );
+float capillaryRim = smoothstep( -0.08, 0.04, aboveWater ) * ( 1.0 - smoothstep( 0.14, 0.48, aboveWater - ( cFine - 0.5 ) * 0.16 ) );
 diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * 0.56, wetZone * 0.78 );
-float algaeBand = smoothstep( -0.65, 0.05, aboveWater ) * ( 1.0 - smoothstep( 0.25, 1.15 + ( cOrganic - 0.5 ) * 0.65, aboveWater ) );
-float algaeMask = smoothstep( 0.36, 0.66, algaeBand * ( 0.6 + cFine * 0.7 ) );
-diffuseColor.rgb = mix( diffuseColor.rgb, cMossDark * 0.85, algaeMask * 0.82 );
+diffuseColor.rgb *= ( 1.0 - capillaryRim * 0.16 );
+float algaeBand = smoothstep( -0.65, 0.05, aboveWater ) * ( 1.0 - smoothstep( 0.25, 0.95, aboveWater - ( cOrganic - 0.5 ) * 0.55 ) );
+float algaeMask = smoothstep( 0.36, 0.66, algaeBand * ( 0.28 + cFine * 0.72 ) );
+diffuseColor.rgb = mix( diffuseColor.rgb, mix( cMossDark * 0.82, cMossBright * 0.88, cFine * 0.45 ), algaeMask * 0.86 );
 
 // 2. Vertical wall dampness & creeping moss tongues rising from lower plinths/seams
 float wallFactor = 1.0 - smoothstep( 0.45, 0.78, abs( vConcWorldNormal.y ) );
-float localBottom = 1.0 - smoothstep( -1.1, 0.45 + ( cMed - 0.5 ) * 0.85, vConcLocalPos.y );
+float localBottom = 1.0 - smoothstep( -1.10, 0.45, vConcLocalPos.y - ( cMed - 0.5 ) * 0.65 );
 diffuseColor.rgb = mix( diffuseColor.rgb, cDampCol, localBottom * wallFactor * uGrimeStrength * 0.85 );
 
 float climbReach = smoothstep( 0.42, 0.78, cMacro * 0.6 + rainStreak * 0.4 );
@@ -220,7 +223,18 @@ diffuseColor.rgb *= ( 1.0 - concFlyby );
 float s7SkyVis = s7SampleCanyonSkyVis( vConcWorldPos );
 float s7BakedFarShadow = s7SampleBakedFarShadow( vConcWorldPos );
 float s7CascadeFade = s7ComputeCascadeFade( vConcWorldPos );
-float s7CustomAO = clamp( ( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18 - concSeamMask * 0.24 ) * s7SkyVis, 0.26, 1.0 );`,
+float s7SubmergedShadowEase = s7ComputeUnderwaterShadowEase( aboveWater );
+float s7CustomAO = clamp( ( 1.0 - localBottom * wallFactor * uGrimeStrength * 0.42 - wetZone * 0.18 - capillaryRim * 0.10 - concSeamMask * 0.24 ) * s7SkyVis, 0.26, 1.0 );`,
+      )
+      .replace(
+        '#include <roughnessmap_fragment>',
+        `#include <roughnessmap_fragment>
+// Capillary wet sheen near waterline (~0.26 roughness) vs velvety matte moss/turf (~0.92)
+float concWetGloss = clamp( wetZone * ( 1.0 - algaeMask * 0.78 ), 0.0, 1.0 );
+float concTotalMoss = clamp( max( wallMoss, max( roofMask, algaeMask ) ), 0.0, 1.0 );
+roughnessFactor = mix( roughnessFactor, 0.26, concWetGloss );
+roughnessFactor = mix( roughnessFactor, 0.92, concTotalMoss );
+roughnessFactor = clamp( roughnessFactor + concSeamMask * 0.08, 0.04, 0.98 );`,
       )
       .replace(
         '#include <lights_fragment_end>',

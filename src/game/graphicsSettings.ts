@@ -186,6 +186,101 @@ export function saveGraphicsSettings(settings: GraphicsSettings): void {
   }
 }
 
+export const GRAPHICS_CRASH_SENTINEL_KEY = 'mech-graphics-loading-v1';
+
+export function stepDownGraphicsPreset(
+  preset: GraphicsPreset,
+  objectDetail: ObjectDetail = 'balanced',
+): Exclude<GraphicsPreset, 'custom'> {
+  const effective = preset === 'custom' ? objectDetail : preset;
+  if (effective === 'ultra') return 'high';
+  if (effective === 'high') return 'balanced';
+  return 'low';
+}
+
+export function stepDownGraphicsSettings(
+  current: GraphicsSettings,
+): GraphicsSettings {
+  const lowerPreset = stepDownGraphicsPreset(current.preset, current.objectDetail);
+  const base = withGraphicsPreset(lowerPreset);
+  return lowerPreset === 'high' ? base : { ...base, autoQuality: true };
+}
+
+export function beginGraphicsStartupSentinel(
+  storage?: Pick<Storage, 'getItem' | 'setItem'> | null,
+): { hadUncleanStartup: boolean } {
+  const source =
+    storage === undefined
+      ? typeof localStorage !== 'undefined'
+        ? localStorage
+        : null
+      : storage;
+  let hadUncleanStartup = false;
+  try {
+    hadUncleanStartup = source?.getItem(GRAPHICS_CRASH_SENTINEL_KEY) === '1';
+  } catch {
+    hadUncleanStartup = false;
+  }
+  try {
+    source?.setItem(GRAPHICS_CRASH_SENTINEL_KEY, '1');
+  } catch {
+    // Ignore storage quota / privacy mode errors
+  }
+  return { hadUncleanStartup };
+}
+
+export function clearGraphicsStartupSentinel(
+  storage?: Pick<Storage, 'removeItem'> | null,
+): void {
+  const source =
+    storage === undefined
+      ? typeof localStorage !== 'undefined'
+        ? localStorage
+        : null
+      : storage;
+  try {
+    source?.removeItem(GRAPHICS_CRASH_SENTINEL_KEY);
+  } catch {
+    // Ignore blocked storage
+  }
+}
+
+/**
+ * Atlantis-style cold-start crash sentinel (`quality.js:3-28`):
+ * Marks startup as in-progress in localStorage before WebGL shader compilation and asset
+ * upload begin. If the previous visit crashed the tab or GPU driver before `clearGraphicsStartupSentinel()`
+ * was reached on the first rendered overview frame, automatically steps down one preset tier
+ * (`ultra -> high -> balanced -> low`) and persists the safer settings.
+ */
+export function bootGraphicsSettings(
+  storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null,
+): { settings: GraphicsSettings; downgradedFromCrash: boolean } {
+  const source =
+    storage === undefined
+      ? typeof localStorage !== 'undefined'
+        ? localStorage
+        : null
+      : storage;
+  const initial = readGraphicsSettings(source);
+  const { hadUncleanStartup } = beginGraphicsStartupSentinel(source);
+  if (!hadUncleanStartup) {
+    return { settings: initial, downgradedFromCrash: false };
+  }
+  const downgraded = stepDownGraphicsSettings(initial);
+  try {
+    source?.setItem(
+      GRAPHICS_STORAGE_KEY,
+      JSON.stringify({ version: 1, settings: sanitizeGraphicsSettings(downgraded) }),
+    );
+  } catch {
+    // Ignore blocked storage
+  }
+  return {
+    settings: downgraded,
+    downgradedFromCrash: downgraded.preset !== initial.preset || downgraded.objectDetail !== initial.objectDetail,
+  };
+}
+
 export function changeGraphicsSetting<K extends keyof QualityValues>(
   current: GraphicsSettings, key: K, value: QualityValues[K],
 ): GraphicsSettings {

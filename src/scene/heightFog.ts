@@ -16,11 +16,13 @@ let patched = false;
  */
 const fogSunDirPowerBuffer = new Float32Array([0.386, 0.372, -0.844, 5.5]);
 const fogSunColorStrengthBuffer = new Float32Array([0.74, 0.28, 0.1, 0.62]);
+const fogNearSkyColorStrengthBuffer = new Float32Array([0.11, 0.19, 0.32, 0.56]);
 const _scratchColor = new THREE.Color();
 
 /**
- * Updates the shared height-fog solar in-scattering uniforms in place for the active lighting
- * preset and sun direction. Zero allocations, zero material recompiles.
+ * Updates the shared height-fog solar in-scattering and two-stage aerial perspective
+ * uniforms in place for the active lighting preset and sun direction.
+ * Zero allocations, zero material recompiles.
  */
 export function syncHeightFogScatter(
   preset: LightingPreset,
@@ -45,6 +47,12 @@ export function syncHeightFogScatter(
   fogSunColorStrengthBuffer[1] = _scratchColor.g;
   fogSunColorStrengthBuffer[2] = _scratchColor.b;
   fogSunColorStrengthBuffer[3] = cfg.strength;
+
+  _scratchColor.set(cfg.nearSkyColorHex);
+  fogNearSkyColorStrengthBuffer[0] = _scratchColor.r;
+  fogNearSkyColorStrengthBuffer[1] = _scratchColor.g;
+  fogNearSkyColorStrengthBuffer[2] = _scratchColor.b;
+  fogNearSkyColorStrengthBuffer[3] = cfg.nearSkyStrength;
 }
 
 // Initialize default dusk buffers immediately at module load
@@ -52,9 +60,9 @@ syncHeightFogScatter('dusk');
 
 /**
  * Replaces Three.js uniform distance fog with physically-inspired exponential
- * Height Fog + directional dual-lobe Mie solar in-scattering so atmospheric haze
- * pools inside the river gorge (~y <= 4) with a warm sunset/daylight horizon halo
- * while keeping high sunlit ridges, mountain peaks, and target silhouettes crisp.
+ * Height Fog + two-stage aerial perspective (open-sky blue in near/mid canyon gorge
+ * transitioning to horizon fog color at distance, per Atlantis `sh_light.js:47-58`)
+ * + directional dual-lobe Mie solar in-scattering.
  */
 export function installHeightFogShader(): void {
   if (patched) return;
@@ -63,6 +71,7 @@ export function installHeightFogShader(): void {
   const fogLib = THREE.UniformsLib.fog as Record<string, { value: unknown }>;
   fogLib.fogSunDirPower = { value: fogSunDirPowerBuffer };
   fogLib.fogSunColorStrength = { value: fogSunColorStrengthBuffer };
+  fogLib.fogNearSkyColorStrength = { value: fogNearSkyColorStrengthBuffer };
 
   THREE.ShaderChunk.fog_pars_vertex = /* glsl */ `
 #ifdef USE_FOG
@@ -93,6 +102,7 @@ export function installHeightFogShader(): void {
   uniform vec3 fogColor;
   uniform vec4 fogSunDirPower;
   uniform vec4 fogSunColorStrength;
+  uniform vec4 fogNearSkyColorStrength;
   varying float vFogDepth;
   varying vec3 vFogWorldPos;
 
@@ -152,6 +162,13 @@ export function installHeightFogShader(): void {
 
   #endif
 
+  // Two-stage aerial perspective (Atlantis sh_light.js:47-58):
+  // Near haze is open-sky blue for mid-ground canyon depth separation; far haze dissolves into horizon fogColor
+  float fogHorizonBlend = smoothstep( 55.0, 340.0, vFogDepth );
+  float fogCanyonFloorBoost = 1.0 - 0.22 * smoothstep( 18.0, 110.0, max( 0.0, vFogWorldPos.y ) );
+  float fogNearSkyWeight = clamp( ( 1.0 - fogHorizonBlend ) * fogNearSkyColorStrength.w * fogCanyonFloorBoost, 0.0, 1.0 );
+  vec3 baseAerialColor = mix( fogColor, fogNearSkyColorStrength.rgb, fogNearSkyWeight );
+
   // Directional dual-lobe Mie solar in-scattering in height fog
   vec3 fogViewRay = vFogWorldPos - cameraPosition;
   float fogViewLen = max( length( fogViewRay ), 0.0001 );
@@ -167,7 +184,7 @@ export function installHeightFogShader(): void {
     0.0,
     0.82
   );
-  vec3 effectiveFogColor = mix( fogColor, fogSunColorStrength.rgb, fogScatterWeight );
+  vec3 effectiveFogColor = mix( baseAerialColor, fogSunColorStrength.rgb, fogScatterWeight );
 
   gl_FragColor.rgb = mix( gl_FragColor.rgb, effectiveFogColor, fogFactor );
 

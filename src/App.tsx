@@ -12,8 +12,8 @@ import { TacticalHUD } from './components/TacticalHUD';
 import { PerformancePanel } from './perf/PerformancePanel';
 import { GraphicsSettingsMenu } from './components/GraphicsSettingsMenu';
 import {
-  GRAPHICS_PRESETS, readGraphicsSettings, resolveGraphicsRuntime,
-  saveGraphicsSettings, withGraphicsPreset,
+  GRAPHICS_PRESETS, bootGraphicsSettings, clearGraphicsStartupSentinel,
+  resolveGraphicsRuntime, saveGraphicsSettings, withGraphicsPreset,
 } from './game/graphicsSettings';
 import type { GraphicsSettings } from './game/graphicsSettings';
 import {
@@ -93,14 +93,6 @@ export default function App({ world, battle, onOverviewDraw }: {
   const [terrainReady, setTerrainReady] = useState(false);
   const driveMode = requestedDriveMode && terrainReady && Boolean(world);
   const loadingLabel = useRef<HTMLDivElement>(null);
-  const handleTerrainReady = useCallback(() => {
-    if (loadingLabel.current) loadingLabel.current.style.visibility = "hidden";
-    setTerrainReady(true);
-    onOverviewDraw();
-  }, [onOverviewDraw]);
-  const [paused, setPaused] = useState(false);
-  const [graphicsOpen, setGraphicsOpen] = useState(false);
-  const graphicsWasRunningRef = useRef(false);
   const urlGraphicsPreset = useRef<keyof typeof GRAPHICS_PRESETS | null>(
     (() => {
       if (typeof window === 'undefined') return null;
@@ -111,12 +103,24 @@ export default function App({ world, battle, onOverviewDraw }: {
     })(),
   ).current;
 
+  const handleTerrainReady = useCallback(() => {
+    if (loadingLabel.current) loadingLabel.current.style.visibility = "hidden";
+    if (!urlGraphicsPreset) {
+      clearGraphicsStartupSentinel();
+    }
+    setTerrainReady(true);
+    onOverviewDraw();
+  }, [onOverviewDraw, urlGraphicsPreset]);
+  const [paused, setPaused] = useState(false);
+  const [graphicsOpen, setGraphicsOpen] = useState(false);
+  const graphicsWasRunningRef = useRef(false);
+
   const [graphics, setGraphics] = useState<GraphicsSettings>(() => {
     // Explicit URL presets make CI A/B benchmarking reproducible.
     if (urlGraphicsPreset) {
       return withGraphicsPreset(urlGraphicsPreset);
     }
-    return readGraphicsSettings();
+    return bootGraphicsSettings().settings;
   });
 
   const [adaptation, setAdaptation] = useState<AdaptiveState>(() => {

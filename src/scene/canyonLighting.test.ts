@@ -4,12 +4,15 @@ import {
   CANYON_HEIGHT_MAX,
   CANYON_HEIGHT_MIN,
   CANYON_PRESETS,
+  UNDERWATER_SHADOW_EASE_CONFIG,
   bakeDirectionalTerrainShadowGrid,
   buildCanyonHeightGrid,
   combineHybridShadow,
   computeHybridShadowHalfExtent,
   computeSkyVisibilityFromMipHeights,
+  computeUnderwaterShadowEase,
   decodeTerrainHeightByte,
+  easeUnderwaterShadow,
   encodeTerrainHeightByte,
 } from './canyonLightingMath';
 
@@ -129,4 +132,20 @@ describe('canyonLightingMath', () => {
     const lowPresetShadow = combineHybridShadow(1.0, 0.0, 5, 60, false, 0.85);
     assert.ok(Math.abs(lowPresetShadow - 0.15) < 1e-6);
   });
+
+  it('easeUnderwaterShadow keeps dry shadows 100% crisp and softens submerged shadows up to 46%', () => {
+    assert.equal(computeUnderwaterShadowEase(2.5), 0);
+    assert.equal(computeUnderwaterShadowEase(0.05), 0);
+    assert.equal(easeUnderwaterShadow(0.18, 0.5), 0.18);
+
+    const shallowSubmerged = easeUnderwaterShadow(0.0, -0.35);
+    const midSubmerged = easeUnderwaterShadow(0.0, -0.65);
+    const deepSubmerged = easeUnderwaterShadow(0.0, -1.6);
+
+    assert.ok(shallowSubmerged > 0.07 && shallowSubmerged < midSubmerged);
+    assert.ok(midSubmerged > 0.18 && midSubmerged < UNDERWATER_SHADOW_EASE_CONFIG.maxEaseFraction);
+    assert.ok(Math.abs(deepSubmerged - UNDERWATER_SHADOW_EASE_CONFIG.maxEaseFraction) < 1e-6);
+    assert.equal(easeUnderwaterShadow(1.0, -2.0), 1.0);
+  });
 });
+
